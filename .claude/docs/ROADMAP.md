@@ -8,12 +8,12 @@
 - [x] git init, commit main, nhánh develop
 
 ## Giai đoạn 1 — Nền tảng (Auth + Khóa/Lớp)
-- [ ] Scaffold web/ (Next.js 15 + TS + Tailwind + shadcn/ui) + ai-service/ (FastAPI)
-- [ ] Migration SQL: toàn bộ schema + RLS + trigger profiles + storage buckets
-- [ ] Kết nối Supabase project thật (cần URL + keys từ user)
-- [ ] Đăng ký học viên (mã lớp) / đăng ký giáo viên (mã mời) / đăng nhập
-- [ ] Trang thông tin cá nhân
-- [ ] CRUD khóa học + lớp (gợi ý mã lớp kế tiếp), danh sách HV, chuyển lớp
+- [x] Scaffold web/ (Next.js 15 + TS + Tailwind + shadcn/ui) + ai-service/ (FastAPI)
+- [x] Migration SQL: toàn bộ schema + RLS + trigger profiles (kèm auto-enroll) + storage buckets
+- [ ] Kết nối Supabase project thật (cần URL + keys từ user) + `supabase db push` + gen types
+- [x] Đăng ký học viên (mã lớp) / đăng ký giáo viên (mã mời) / đăng nhập — code xong, CHƯA test với DB thật
+- [x] Trang thông tin cá nhân
+- [x] CRUD khóa học + lớp (gợi ý mã lớp kế tiếp), danh sách HV, chuyển lớp — code xong, CHƯA test với DB thật
 
 ## Giai đoạn 2 — Buổi học + Nhận xét
 - [ ] CRUD nội dung buổi học (tự sinh N buổi)

@@ -8,15 +8,24 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-11, bởi: Claude)
 
-**Đang làm:** Giai đoạn 1 — Nền tảng (scaffold + schema + auth)
+**Đang làm:** Giai đoạn 1 — Nền tảng, branch `feature/scaffold-foundation` (3 commit)
 
 **Tiến độ:**
 - [x] Giai đoạn 0: điền toàn bộ template .claude, tách docs 7 file, .gitignore, git init
-- [ ] Scaffold web/ + ai-service/
-- [ ] Migration SQL schema + RLS
-- [ ] Kết nối Supabase project thật + auth
+- [x] Scaffold web/ (Next 15.5 + Tailwind 4 + shadcn 16 components) + ai-service/
+  (FastAPI, 4 endpoint Gemini, pytest 4 passed)
+- [x] Migration SQL schema + RLS + trigger (auto profile + auto enroll theo
+  class_code trong metadata + auto sinh sessions)
+- [x] Code Giai đoạn 1: auth (login/signup HV bằng mã lớp/signup GV bằng mã mời),
+  redirect theo role, /teacher (CRUD khóa + lớp, gợi ý mã lớp kế tiếp, chi tiết
+  lớp, chuyển/xóa HV), /student, /profile. Lint + typecheck + build đều pass.
+- [ ] Kết nối Supabase project thật → `supabase db push` → test luồng auth thật
+  → `supabase gen types typescript` thay web/src/lib/types.ts
 
-**Đang dừng ở:** Vừa xong Giai đoạn 0, bắt đầu scaffold.
+**Đang dừng ở:** Toàn bộ code Giai đoạn 1 viết xong nhưng CHƯA chạy với Supabase
+thật (chưa có project/keys). Việc tiếp: user tạo Supabase project + Gemini key,
+điền web/.env.local và ai-service/.env theo .env.example, push migration, test
+end-to-end, rồi merge develop và sang Giai đoạn 2.
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
