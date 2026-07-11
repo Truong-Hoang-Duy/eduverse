@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# next.js
+web/.next/
+web/out/
+web/.vercel/
+*.tsbuildinfo
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# supabase local
+supabase/.temp/
+
+# os / editor
+.DS_Store
+Thumbs.db
+
+# cấu hình cá nhân — KHÔNG chia sẻ với team
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/agent-memory-local/

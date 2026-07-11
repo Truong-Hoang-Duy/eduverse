@@ -1,0 +1,60 @@
+# DATABASE.md — Schema + RLS (Supabase PostgreSQL)
+
+> Nguồn sự thật về dữ liệu. Migration nằm ở `supabase/migrations/`.
+> Sửa schema = tạo migration MỚI, không sửa migration đã push.
+
+## Quan hệ cốt lõi
+
+```
+courses (JSB, JSA, CSB...)          ← khóa học / chương trình
+  └── classes (JSB01, JSB02...)     ← lớp = một khóa mở của course
+        ├── enrollments             ← học viên trong lớp
+        ├── sessions                ← buổi học của LỚP (nội dung GV tự điền)
+        └── projects                ← sản phẩm cuối khóa của học viên
+  └── assignments (theo buổi)       ← đề bài của KHÓA, mỗi buổi MỘT đề khác nhau
+        └── submissions (theo lớp)  ← bài làm từng học viên (GV upload)
+              └── grades            ← kết quả AI chấm /100
+```
+
+## Bảng
+
+| Bảng | Cột chính | Ghi chú |
+|---|---|---|
+| `profiles` | id (=auth.users.id), full_name, role `teacher\|student`, age, school, hobbies, avatar_url | tạo bằng trigger sau signup |
+| `courses` | id, code UNIQUE (JSB/JSA/JSI/CSB/CSI...), name, description, teacher_id | |
+| `classes` | id, course_id, class_code UNIQUE (JSB01...), teacher_id, total_sessions, description | form gợi ý mã kế tiếp |
+| `enrollments` | id, class_id, student_id, joined_at, UNIQUE(class_id, student_id) | chuyển lớp = update class_id |
+| `sessions` | id, class_id, session_number, title, content, session_date, UNIQUE(class_id, session_number) | tự sinh N buổi khi tạo lớp |
+| `student_reviews` | id, session_id, student_id, strengths text[], improvements text[], advice, ai_generated_comment, created_by | nhận xét theo buổi |
+| `review_options` | id, teacher_id, category `strength\|improvement\|advice`, label | lựa chọn radio/checkbox |
+| `assignments` | id, course_id, session_number, title, spec_file_path, instructions, max_score DEFAULT 100, UNIQUE(course_id, session_number) | đề theo KHÓA + BUỔI |
+| `submissions` | id, assignment_id, class_id, student_id, code_file_paths text[], uploaded_by, uploaded_at | GV upload hộ |
+| `grades` | id, submission_id UNIQUE, score 0–100, criteria_breakdown JSONB, ai_comment, graded_at | GV sửa tay được |
+| `projects` | id, student_id, class_id, name, description, features text[], repo_url, drive_url, demo_url, extra_notes | sản phẩm cuối khóa |
+| `project_comments` | id, project_id, author_id, content, created_at | HV nhận xét lẫn nhau |
+| `zalo_templates` | id, teacher_id, name, template_text | mẫu tin nhắn Zalo |
+
+`criteria_breakdown` JSONB dạng:
+`[{"criterion": "Đúng yêu cầu đề", "score": 40, "max": 50}, ...]`
+
+## Storage buckets
+
+- `assignment-specs` — file đề bài (PDF/ảnh/text/md). Chỉ teacher đọc/ghi.
+- `submissions` — file bài làm học viên. Chỉ teacher đọc/ghi (GV upload hộ).
+
+## Quy tắc RLS (áp cho MỌI bảng — không bảng nào để trống RLS)
+
+- Teacher: full CRUD trên hàng thuộc mình (`teacher_id = auth.uid()` hoặc join
+  về class/course của mình).
+- Student: SELECT lớp/buổi/nhận xét CỦA MÌNH (`student_id = auth.uid()` hoặc
+  enrollment tồn tại); CRUD `projects` của chính mình; SELECT + INSERT
+  `project_comments` trong lớp mình học.
+- Student KHÔNG thấy: grades/submissions của học viên khác, review_options,
+  zalo_templates, assignments spec file.
+- Helper function `is_teacher_of_class(class_id)` / `is_enrolled(class_id)`
+  (SECURITY DEFINER) để tránh RLS đệ quy.
+
+## Đăng ký học viên bằng mã lớp
+
+Signup flow: tạo auth user → trigger tạo `profiles` → Server Action verify
+`class_code` tồn tại → insert `enrollments`. Mã sai → báo lỗi, không tạo enrollment.
