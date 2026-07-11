@@ -149,6 +149,9 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql security definer set search_path = public
 as $$
+declare
+  v_class_code text := new.raw_user_meta_data ->> 'class_code';
+  v_class_id uuid;
 begin
   insert into public.profiles (id, full_name, role, age, school, hobbies)
   values (
@@ -162,6 +165,22 @@ begin
     new.raw_user_meta_data ->> 'school',
     new.raw_user_meta_data ->> 'hobbies'
   );
+
+  -- Học viên đăng ký kèm mã lớp → tự ghi danh. Mã sai → chặn luôn việc tạo user.
+  if coalesce(new.raw_user_meta_data ->> 'role', 'student') = 'student' then
+    if v_class_code is null or trim(v_class_code) = '' then
+      raise exception 'Thiếu mã lớp';
+    end if;
+    select id into v_class_id
+    from public.classes
+    where class_code = upper(trim(v_class_code));
+    if v_class_id is null then
+      raise exception 'Mã lớp không tồn tại: %', v_class_code;
+    end if;
+    insert into public.enrollments (class_id, student_id)
+    values (v_class_id, new.id);
+  end if;
+
   return new;
 end;
 $$;
