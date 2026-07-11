@@ -1,0 +1,10 @@
+{
+  "name": "eduverse",
+  "private": true,
+  "scripts": {
+    "db:push": "supabase db push"
+  },
+  "devDependencies": {
+    "supabase": "^2.109.1"
+  }
+}
