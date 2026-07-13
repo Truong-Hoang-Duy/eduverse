@@ -23,7 +23,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    // suppressHydrationWarning: browser extension (Grammarly, dark mode...)
+    // chèn attribute vào <html> trước khi React hydrate gây warning giả.
+    <html lang="vi" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

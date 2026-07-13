@@ -18,7 +18,13 @@ export async function login(
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    return { error: "Email hoặc mật khẩu không đúng." };
+    if (error.message.includes("Email not confirmed")) {
+      return {
+        error:
+          "Email chưa được xác nhận. Kiểm tra hộp thư hoặc liên hệ giáo viên.",
+      };
+    }
+    return { error: "Email hoặc mật khẩu không đúng, hoặc tài khoản chưa được đăng ký." };
   }
   redirect("/");
 }
