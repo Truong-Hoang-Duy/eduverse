@@ -19,13 +19,19 @@
 - [x] Code Giai đoạn 1: auth (login/signup HV bằng mã lớp/signup GV bằng mã mời),
   redirect theo role, /teacher (CRUD khóa + lớp, gợi ý mã lớp kế tiếp, chi tiết
   lớp, chuyển/xóa HV), /student, /profile. Lint + typecheck + build đều pass.
-- [ ] Kết nối Supabase project thật → `supabase db push` → test luồng auth thật
-  → `supabase gen types typescript` thay web/src/lib/types.ts
+- [x] Supabase thật đã kết nối: migration áp qua SQL Editor (mạng công ty CHẶN
+  cổng 5432/6543 — `supabase db push` không dùng được, chỉ 443 mở; các migration
+  sau cũng phải dán tay vào SQL Editor). Types đã gen (`web/src/lib/database.types.ts`).
+- [x] E2E 13/13 PASS trên DB thật (`web/scripts/e2e-phase1.mjs`, chạy:
+  `node --env-file=.env.local scripts/e2e-phase1.mjs` trong web/) — trigger
+  auto-profile/auto-enroll/auto-sessions, RLS, chuyển lớp đều đúng.
+- [x] Gemini chạy thật: model `gemini-flash-latest` (gemini-2.5-flash bị Google
+  khóa với key mới từ 2026); đã fix bug genai.Client bị GC (cache lru_cache).
+- [x] Đã tắt "Confirm email" trong Supabase Auth (bắt buộc cho flow signup).
 
-**Đang dừng ở:** Toàn bộ code Giai đoạn 1 viết xong nhưng CHƯA chạy với Supabase
-thật (chưa có project/keys). Việc tiếp: user tạo Supabase project + Gemini key,
-điền web/.env.local và ai-service/.env theo .env.example, push migration, test
-end-to-end, rồi merge develop và sang Giai đoạn 2.
+**Đang dừng ở:** Giai đoạn 1 hoàn tất và verify đủ trên hạ tầng thật. Việc tiếp:
+user click-through UI lần cuối, merge `feature/scaffold-foundation` → `develop`,
+rồi bắt đầu Giai đoạn 2 (buổi học + nhận xét AI + tin Zalo) trên branch mới.
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
