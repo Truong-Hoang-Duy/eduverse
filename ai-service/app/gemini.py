@@ -2,6 +2,7 @@
 
 import json
 import logging
+from functools import lru_cache
 from typing import Any
 
 from fastapi import HTTPException
@@ -16,7 +17,10 @@ logger = logging.getLogger(__name__)
 QUOTA_MESSAGE = "AI đang bận, thử lại sau ít phút"
 
 
+@lru_cache
 def _client() -> genai.Client:
+    # Cache 1 client cho cả process: tạo mới mỗi request sẽ bị GC dọn ngay
+    # giữa chừng → httpx client đóng → "client has been closed".
     return genai.Client(api_key=get_settings().gemini_api_key)
 
 

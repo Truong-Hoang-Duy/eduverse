@@ -1,41 +1,15 @@
-// Types tạm cho các bảng DB. TODO: thay bằng database.types.ts sinh từ
-// `supabase gen types typescript` khi đã có Supabase project thật.
+// Alias từ types sinh tự động (supabase gen types typescript --linked).
+// Chạy lại lệnh đó khi schema đổi — không tự khai tay.
+import type { Database } from "@/lib/database.types";
+
+type Tables = Database["public"]["Tables"];
 
 export type Role = "teacher" | "student";
 
-export interface Profile {
-  id: string;
-  full_name: string;
-  role: Role;
-  age: number | null;
-  school: string | null;
-  hobbies: string | null;
-  avatar_url: string | null;
-}
-
-export interface Course {
-  id: string;
-  code: string;
-  name: string;
-  description: string | null;
-  teacher_id: string;
-}
-
-export interface Class {
-  id: string;
-  course_id: string;
-  class_code: string;
-  teacher_id: string;
-  total_sessions: number;
-  description: string | null;
-}
-
-export interface Enrollment {
-  id: string;
-  class_id: string;
-  student_id: string;
-  joined_at: string;
-}
+export type Profile = Tables["profiles"]["Row"] & { role: Role };
+export type Course = Tables["courses"]["Row"];
+export type Class = Tables["classes"]["Row"];
+export type Enrollment = Tables["enrollments"]["Row"];
 
 export interface ClassWithCourse extends Class {
   courses: Pick<Course, "code" | "name"> | null;

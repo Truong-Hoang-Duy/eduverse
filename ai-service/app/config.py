@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     ai_service_api_key: str = ""
     supabase_url: str = ""
     supabase_service_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-flash-latest"
 
 
 @lru_cache
