@@ -26,8 +26,7 @@ export interface StudentRow {
   enrollmentId: string;
   studentId: string;
   fullName: string;
-  age: number | null;
-  school: string | null;
+  username: string | null;
 }
 
 export interface ClassOption {
@@ -64,8 +63,7 @@ export function StudentsTable({
         <TableHeader>
           <TableRow>
             <TableHead>Họ tên</TableHead>
-            <TableHead>Tuổi</TableHead>
-            <TableHead>Trường</TableHead>
+            <TableHead>Tên tài khoản</TableHead>
             <TableHead className="w-[280px]">Chuyển lớp / Xóa</TableHead>
           </TableRow>
         </TableHeader>
@@ -73,8 +71,7 @@ export function StudentsTable({
           {students.map((student) => (
             <TableRow key={student.enrollmentId}>
               <TableCell className="font-medium">{student.fullName}</TableCell>
-              <TableCell>{student.age ?? "—"}</TableCell>
-              <TableCell>{student.school ?? "—"}</TableCell>
+              <TableCell>{student.username ?? "—"}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <form action={formAction} className="flex items-center gap-2">

@@ -34,37 +34,19 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       <form action={formAction}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
+            <Label>Tên tài khoản</Label>
+            <Input value={profile.username ?? ""} disabled />
+            <p className="text-xs text-muted-foreground">
+              Tên tài khoản dùng để đăng nhập, không đổi được.
+            </p>
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="full_name">Họ và tên *</Label>
             <Input
               id="full_name"
               name="full_name"
               defaultValue={profile.full_name}
               required
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="age">Tuổi</Label>
-              <Input
-                id="age"
-                name="age"
-                type="number"
-                min={5}
-                max={100}
-                defaultValue={profile.age ?? ""}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="school">Trường</Label>
-              <Input id="school" name="school" defaultValue={profile.school ?? ""} />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hobbies">Sở thích</Label>
-            <Input
-              id="hobbies"
-              name="hobbies"
-              defaultValue={profile.hobbies ?? ""}
             />
           </div>
           <FormMessage result={state} />

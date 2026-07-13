@@ -33,12 +33,24 @@ export function LoginForm() {
       <form action={formAction}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required autoFocus />
+            <Label htmlFor="username">Tên tài khoản</Label>
+            <Input
+              id="username"
+              name="username"
+              autoComplete="username"
+              required
+              autoFocus
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Mật khẩu</Label>
-            <Input id="password" name="password" type="password" required />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+            />
           </div>
           <FormMessage result={state} />
         </CardContent>

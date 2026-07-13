@@ -20,7 +20,7 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 
 | Bảng | Cột chính | Ghi chú |
 |---|---|---|
-| `profiles` | id (=auth.users.id), full_name, role `teacher\|student`, age, school, hobbies, avatar_url | tạo bằng trigger sau signup |
+| `profiles` | id (=auth.users.id), **username UNIQUE** (đăng nhập), full_name, role `teacher\|student`, age/school/hobbies (không còn thu thập), avatar_url | tạo bằng trigger sau signup |
 | `courses` | id, code UNIQUE (JSB/JSA/JSI/CSB/CSI...), name, description, teacher_id | |
 | `classes` | id, course_id, class_code UNIQUE (JSB01...), teacher_id, total_sessions, description | form gợi ý mã kế tiếp |
 | `enrollments` | id, class_id, student_id, joined_at, UNIQUE(class_id, student_id) | chuyển lớp = update class_id |
@@ -54,7 +54,15 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 - Helper function `is_teacher_of_class(class_id)` / `is_enrolled(class_id)`
   (SECURITY DEFINER) để tránh RLS đệ quy.
 
-## Đăng ký học viên bằng mã lớp
+## Auth bằng USERNAME (không dùng email thật)
 
-Signup flow: tạo auth user → trigger tạo `profiles` → Server Action verify
-`class_code` tồn tại → insert `enrollments`. Mã sai → báo lỗi, không tạo enrollment.
+- Email trong auth.users là email ẢO `<username>@eduverse.local` — Supabase chặn
+  domain ảo ở `signUp` thường nên Server Action tạo user qua **admin API**
+  (`auth.admin.createUser`, `email_confirm: true`) rồi `signInWithPassword`.
+- Đăng nhập: RPC `get_email_by_username(username)` (SECURITY DEFINER, join
+  auth.users) → email → `signInWithPassword`.
+- Combo box lớp ở form đăng ký: RPC `list_available_classes()` (SECURITY
+  DEFINER, anon gọi được) trả class_code + course_name.
+- Trigger `handle_new_user`: đọc `username` + `class_code` từ metadata; học viên
+  bắt buộc có class_code hợp lệ (sai → chặn tạo user); username unique (Server
+  Action pre-check trước bằng admin client cho thông báo lỗi thân thiện).

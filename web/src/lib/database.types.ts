@@ -241,6 +241,7 @@ export type Database = {
           id: string
           role: string
           school: string | null
+          username: string | null
         }
         Insert: {
           age?: number | null
@@ -251,6 +252,7 @@ export type Database = {
           id: string
           role?: string
           school?: string | null
+          username?: string | null
         }
         Update: {
           age?: number | null
@@ -261,6 +263,7 @@ export type Database = {
           id?: string
           role?: string
           school?: string | null
+          username?: string | null
         }
         Relationships: []
       }
@@ -579,9 +582,17 @@ export type Database = {
     }
     Functions: {
       get_class_id_by_code: { Args: { p_class_code: string }; Returns: string }
+      get_email_by_username: { Args: { p_username: string }; Returns: string }
       is_enrolled: { Args: { p_class_id: string }; Returns: boolean }
       is_teacher: { Args: never; Returns: boolean }
       is_teacher_of_class: { Args: { p_class_id: string }; Returns: boolean }
+      list_available_classes: {
+        Args: never
+        Returns: {
+          class_code: string
+          course_name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

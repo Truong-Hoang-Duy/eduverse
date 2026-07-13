@@ -41,12 +41,34 @@ export function TeacherSignupForm() {
             <Input id="full_name" name="full_name" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input id="email" name="email" type="email" required />
+            <Label htmlFor="username">Tên tài khoản *</Label>
+            <Input
+              id="username"
+              name="username"
+              placeholder="VD: thayduy"
+              autoComplete="username"
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Mật khẩu * (ít nhất 6 ký tự)</Label>
-            <Input id="password" name="password" type="password" required />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password_confirm">Nhập lại mật khẩu *</Label>
+            <Input
+              id="password_confirm"
+              name="password_confirm"
+              type="password"
+              autoComplete="new-password"
+              required
+            />
           </div>
           <FormMessage result={state} />
         </CardContent>

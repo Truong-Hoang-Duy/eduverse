@@ -16,7 +16,7 @@ export interface ClassWithCourse extends Class {
 }
 
 export interface EnrollmentWithStudent extends Enrollment {
-  profiles: Pick<Profile, "id" | "full_name" | "age" | "school"> | null;
+  profiles: Pick<Profile, "id" | "full_name" | "username"> | null;
 }
 
 /** Kết quả chuẩn của Server Action cho form (hiển thị lỗi tiếng Việt). */

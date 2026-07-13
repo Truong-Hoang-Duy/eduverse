@@ -35,7 +35,7 @@ export default async function ClassDetailPage({
         .single(),
       supabase
         .from("enrollments")
-        .select("*, profiles(id, full_name, age, school)")
+        .select("*, profiles(id, full_name, username)")
         .eq("class_id", id)
         .order("joined_at"),
       supabase.from("classes").select("id, class_code").order("class_code"),
@@ -54,8 +54,7 @@ export default async function ClassDetailPage({
       enrollmentId: e.id,
       studentId: e.profiles!.id,
       fullName: e.profiles!.full_name,
-      age: e.profiles!.age,
-      school: e.profiles!.school,
+      username: e.profiles!.username,
     }));
 
   const otherClasses: ClassOption[] = (

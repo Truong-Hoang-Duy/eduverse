@@ -15,10 +15,22 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { signupStudent } from "@/lib/actions/auth";
 import type { ActionResult } from "@/lib/types";
 
-export function SignupForm() {
+export interface ClassChoice {
+  class_code: string;
+  course_name: string;
+}
+
+export function SignupForm({ classes }: { classes: ClassChoice[] }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     signupStudent,
     {}
@@ -28,9 +40,7 @@ export function SignupForm() {
     <Card>
       <CardHeader>
         <CardTitle className="text-2xl">Đăng ký học viên</CardTitle>
-        <CardDescription>
-          Nhập mã lớp giáo viên đã gửi cho bạn (VD: JSB01)
-        </CardDescription>
+        <CardDescription>Chọn đúng lớp giáo viên đã thông báo cho bạn</CardDescription>
       </CardHeader>
       <form action={formAction}>
         <CardContent className="space-y-4">
@@ -38,42 +48,66 @@ export function SignupForm() {
             <Label htmlFor="full_name">Họ và tên *</Label>
             <Input id="full_name" name="full_name" required autoFocus />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="class_code">Mã lớp *</Label>
-              <Input
-                id="class_code"
-                name="class_code"
-                placeholder="JSB01"
-                className="uppercase"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="age">Tuổi</Label>
-              <Input id="age" name="age" type="number" min={5} max={100} />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="username">Tên tài khoản *</Label>
+            <Input
+              id="username"
+              name="username"
+              placeholder="VD: minh2014"
+              autoComplete="username"
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              3-20 ký tự: chữ thường, số, dấu chấm hoặc gạch dưới. Dùng để đăng nhập.
+            </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="school">Trường</Label>
-            <Input id="school" name="school" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hobbies">Sở thích</Label>
-            <Input id="hobbies" name="hobbies" placeholder="Game, vẽ, đá bóng..." />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
-            <Input id="email" name="email" type="email" required />
+            <Label>Lớp của bạn *</Label>
+            <Select name="class_code" required>
+              <SelectTrigger className="w-full">
+                <SelectValue
+                  placeholder={
+                    classes.length > 0 ? "Chọn lớp" : "Chưa có lớp nào được mở"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map((cls) => (
+                  <SelectItem key={cls.class_code} value={cls.class_code}>
+                    {cls.class_code} — {cls.course_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Mật khẩu * (ít nhất 6 ký tự)</Label>
-            <Input id="password" name="password" type="password" required />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password_confirm">Nhập lại mật khẩu *</Label>
+            <Input
+              id="password_confirm"
+              name="password_confirm"
+              type="password"
+              autoComplete="new-password"
+              required
+            />
           </div>
           <FormMessage result={state} />
         </CardContent>
         <CardFooter className="mt-4 flex flex-col gap-3">
-          <Button type="submit" className="w-full" disabled={pending}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={pending || classes.length === 0}
+          >
             {pending ? "Đang đăng ký..." : "Đăng ký"}
           </Button>
           <p className="text-sm text-muted-foreground">

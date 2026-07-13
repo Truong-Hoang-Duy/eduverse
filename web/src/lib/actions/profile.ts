@@ -10,9 +10,6 @@ export async function updateProfile(
   formData: FormData
 ): Promise<ActionResult> {
   const fullName = String(formData.get("full_name") ?? "").trim();
-  const age = String(formData.get("age") ?? "").trim();
-  const school = String(formData.get("school") ?? "").trim();
-  const hobbies = String(formData.get("hobbies") ?? "").trim();
 
   if (!fullName) {
     return { error: "Họ tên không được để trống." };
@@ -28,12 +25,7 @@ export async function updateProfile(
 
   const { error } = await supabase
     .from("profiles")
-    .update({
-      full_name: fullName,
-      age: age ? Number(age) : null,
-      school: school || null,
-      hobbies: hobbies || null,
-    })
+    .update({ full_name: fullName })
     .eq("id", user.id);
   if (error) {
     return { error: `Không cập nhật được: ${error.message}` };

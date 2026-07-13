@@ -29,9 +29,17 @@
   khóa với key mới từ 2026); đã fix bug genai.Client bị GC (cache lru_cache).
 - [x] Đã tắt "Confirm email" trong Supabase Auth (bắt buộc cho flow signup).
 
-**Đang dừng ở:** Giai đoạn 1 hoàn tất và verify đủ trên hạ tầng thật. Việc tiếp:
-user click-through UI lần cuối, merge `feature/scaffold-foundation` → `develop`,
-rồi bắt đầu Giai đoạn 2 (buổi học + nhận xét AI + tin Zalo) trên branch mới.
+- [x] ĐỔI AUTH SANG USERNAME (yêu cầu user): không dùng email; email ảo
+  `<username>@eduverse.local` tạo qua admin API (signUp thường chặn domain ảo);
+  đăng nhập qua RPC get_email_by_username; combo box chọn lớp khi đăng ký (RPC
+  list_available_classes); bỏ thu thập tuổi/trường/sở thích; thêm nhập lại mật
+  khẩu. Migration 2 (20260713000000_username_auth.sql) đã áp qua SQL Editor.
+  E2E luồng mới 13/13 PASS.
+
+**Đang dừng ở:** Giai đoạn 1 hoàn tất (kèm đổi auth username) và verify trên hạ
+tầng thật. Việc tiếp: user click-through UI lần cuối, merge
+`feature/scaffold-foundation` → `develop`, rồi bắt đầu Giai đoạn 2 (buổi học +
+nhận xét AI + tin Zalo) trên branch mới.
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
