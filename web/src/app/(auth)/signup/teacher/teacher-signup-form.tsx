@@ -25,9 +25,9 @@ export function TeacherSignupForm() {
   );
 
   return (
-    <Card>
+    <Card className="border-border/60 shadow-xl shadow-black/5">
       <CardHeader>
-        <CardTitle className="text-2xl">Đăng ký giáo viên</CardTitle>
+        <CardTitle className="text-xl">Đăng ký giáo viên</CardTitle>
         <CardDescription>Cần mã mời để tạo tài khoản giáo viên</CardDescription>
       </CardHeader>
       <form action={formAction}>

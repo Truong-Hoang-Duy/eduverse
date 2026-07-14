@@ -11,9 +11,9 @@ export default async function StudentLayout({
   const profile = await requireRole("student");
 
   return (
-    <div className="min-h-screen bg-muted/20">
+    <div className="min-h-screen bg-muted/30">
       <AppNav profile={profile} />
-      <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
     </div>
   );
 }

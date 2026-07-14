@@ -54,44 +54,62 @@ export default async function TeacherDashboard() {
   }));
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Khóa học & lớp của tôi</h1>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Khóa học & lớp</h1>
+        <p className="text-sm text-muted-foreground">
+          Quản lý các khóa học và lớp bạn đang dạy
+        </p>
+      </div>
 
       {courses.length === 0 && (
-        <p className="text-muted-foreground">
-          Chưa có khóa học nào — tạo khóa học đầu tiên (VD: JSB — JavaScript
-          Basic), sau đó mở lớp cho học viên tham gia.
-        </p>
+        <div className="rounded-xl border border-dashed p-10 text-center">
+          <p className="font-medium">Chưa có khóa học nào</p>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+            Tạo khóa học đầu tiên (VD: JSB — JavaScript Basic) bằng form bên
+            dưới, sau đó mở lớp để học viên tham gia.
+          </p>
+        </div>
       )}
 
       {courses.map((course) => {
         const courseClasses = classes.filter((c) => c.course_id === course.id);
         return (
           <section key={course.id} className="space-y-3">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">
-                {course.code} — {course.name}
+            <div className="flex items-center gap-3">
+              <Badge className="rounded-md px-2.5 py-1 font-mono text-xs">
+                {course.code}
+              </Badge>
+              <h2 className="text-lg font-semibold tracking-tight">
+                {course.name}
               </h2>
-              <Badge variant="secondary">{courseClasses.length} lớp</Badge>
+              <span className="text-sm text-muted-foreground">
+                {courseClasses.length} lớp
+              </span>
             </div>
             {courseClasses.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Chưa có lớp nào trong khóa này.
-              </p>
+              <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+                Chưa có lớp nào — dùng form &quot;Mở lớp mới&quot; bên dưới.
+              </div>
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {courseClasses.map((cls) => (
                   <Link key={cls.id} href={`/teacher/classes/${cls.id}`}>
-                    <Card className="transition-colors hover:border-primary">
+                    <Card className="group h-full gap-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
                       <CardHeader>
-                        <CardTitle>{cls.class_code}</CardTitle>
-                        <CardDescription>
-                          {cls.total_sessions} buổi ·{" "}
-                          {cls.enrollments[0]?.count ?? 0} học viên
+                        <CardTitle className="flex items-center justify-between text-lg">
+                          {cls.class_code}
+                          <span className="text-xs font-normal text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+                            Xem lớp →
+                          </span>
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-3">
+                          <span>📅 {cls.total_sessions} buổi</span>
+                          <span>👧 {cls.enrollments[0]?.count ?? 0} học viên</span>
                         </CardDescription>
                       </CardHeader>
                       {cls.description && (
-                        <CardContent className="text-sm text-muted-foreground">
+                        <CardContent className="line-clamp-2 text-sm text-muted-foreground">
                           {cls.description}
                         </CardContent>
                       )}
@@ -104,10 +122,13 @@ export default async function TeacherDashboard() {
         );
       })}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <CourseForm />
-        <ClassForm courses={courseOptions} />
-      </div>
+      <section className="space-y-3 border-t pt-6">
+        <h2 className="text-lg font-semibold tracking-tight">Tạo mới</h2>
+        <div className="grid items-start gap-4 md:grid-cols-2">
+          <CourseForm />
+          <ClassForm courses={courseOptions} />
+        </div>
+      </section>
     </div>
   );
 }

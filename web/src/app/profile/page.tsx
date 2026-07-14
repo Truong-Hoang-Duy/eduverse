@@ -9,9 +9,15 @@ export default async function ProfilePage() {
   const profile = await requireProfile();
 
   return (
-    <div className="min-h-screen bg-muted/20">
+    <div className="min-h-screen bg-muted/30">
       <AppNav profile={profile} />
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto max-w-5xl px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight">Hồ sơ</h1>
+          <p className="text-sm text-muted-foreground">
+            Thông tin tài khoản của bạn
+          </p>
+        </div>
         <ProfileForm profile={profile} />
       </main>
     </div>

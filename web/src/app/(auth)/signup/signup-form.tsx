@@ -37,9 +37,9 @@ export function SignupForm({ classes }: { classes: ClassChoice[] }) {
   );
 
   return (
-    <Card>
+    <Card className="border-border/60 shadow-xl shadow-black/5">
       <CardHeader>
-        <CardTitle className="text-2xl">Đăng ký học viên</CardTitle>
+        <CardTitle className="text-xl">Đăng ký học viên</CardTitle>
         <CardDescription>Chọn đúng lớp giáo viên đã thông báo cho bạn</CardDescription>
       </CardHeader>
       <form action={formAction}>

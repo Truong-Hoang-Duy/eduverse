@@ -16,20 +16,24 @@ const STUDENT_LINKS = [
 
 export function AppNav({ profile }: { profile: Profile }) {
   const links = profile.role === "teacher" ? TEACHER_LINKS : STUDENT_LINKS;
+  const initial = profile.full_name.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <header className="border-b bg-background">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-lg font-bold">
-            Eduverse
+          <Link href="/" className="flex items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+              E
+            </span>
+            <span className="text-base font-bold tracking-tight">Eduverse</span>
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
+          <nav className="flex items-center gap-1 text-sm">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-muted-foreground hover:text-foreground"
+                className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 {link.label}
               </Link>
@@ -37,12 +41,19 @@ export function AppNav({ profile }: { profile: Profile }) {
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-muted-foreground sm:inline">
-            {profile.full_name}
-            {profile.role === "teacher" ? " (GV)" : ""}
-          </span>
+          <div className="hidden items-center gap-2 sm:flex">
+            <span className="flex size-8 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
+              {initial}
+            </span>
+            <div className="leading-tight">
+              <p className="text-sm font-medium">{profile.full_name}</p>
+              <p className="text-xs text-muted-foreground">
+                {profile.role === "teacher" ? "Giáo viên" : "Học viên"}
+              </p>
+            </div>
+          </div>
           <form action={logout}>
-            <Button variant="outline" size="sm" type="submit">
+            <Button variant="ghost" size="sm" type="submit">
               Đăng xuất
             </Button>
           </form>

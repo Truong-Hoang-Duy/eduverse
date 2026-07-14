@@ -65,29 +65,31 @@ export default async function ClassDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <Link
-            href="/teacher"
-            className="text-sm text-muted-foreground hover:underline"
-          >
-            ← Quay lại danh sách lớp
-          </Link>
-          <h1 className="mt-1 flex items-center gap-3 text-2xl font-bold">
-            Lớp {cls.class_code}
-            <Badge variant="secondary">
-              {cls.courses ? `${cls.courses.code} — ${cls.courses.name}` : ""}
-            </Badge>
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {cls.total_sessions} buổi · {students.length} học viên
-            {cls.description ? ` · ${cls.description}` : ""}
-          </p>
+      <div>
+        <Link
+          href="/teacher"
+          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          ← Quay lại danh sách lớp
+        </Link>
+        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight">
+              Lớp {cls.class_code}
+              <Badge variant="secondary" className="rounded-md">
+                {cls.courses ? `${cls.courses.code} — ${cls.courses.name}` : ""}
+              </Badge>
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              📅 {cls.total_sessions} buổi · 👧 {students.length} học viên
+              {cls.description ? ` · ${cls.description}` : ""}
+            </p>
+          </div>
+          <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
         </div>
-        <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
       </div>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="text-base">Danh sách học viên</CardTitle>
         </CardHeader>

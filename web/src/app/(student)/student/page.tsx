@@ -36,21 +36,36 @@ export default async function StudentDashboard() {
   const myClasses = (data ?? []) as unknown as MyClassRow[];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Xin chào, {profile.full_name}!</h1>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Xin chào, {profile.full_name}! 👋
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Đây là các lớp học của bạn
+        </p>
+      </div>
 
       {myClasses.length === 0 ? (
-        <p className="text-muted-foreground">
-          Bạn chưa tham gia lớp nào. Liên hệ giáo viên để nhận mã lớp nhé.
-        </p>
+        <div className="rounded-xl border border-dashed p-10 text-center">
+          <p className="font-medium">Bạn chưa tham gia lớp nào</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Liên hệ giáo viên để được thêm vào lớp nhé.
+          </p>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {myClasses.map(
             (row) =>
               row.classes && (
-                <Card key={row.id}>
+                <Card
+                  key={row.id}
+                  className="gap-3 border-l-4 border-l-primary shadow-sm"
+                >
                   <CardHeader>
-                    <CardTitle>Lớp {row.classes.class_code}</CardTitle>
+                    <CardTitle className="text-lg">
+                      Lớp {row.classes.class_code}
+                    </CardTitle>
                     <CardDescription>
                       {row.classes.courses
                         ? `${row.classes.courses.code} — ${row.classes.courses.name}`
@@ -58,7 +73,7 @@ export default async function StudentDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="text-sm text-muted-foreground">
-                    <p>{row.classes.total_sessions} buổi học</p>
+                    <p>📅 {row.classes.total_sessions} buổi học</p>
                     {row.classes.description && <p>{row.classes.description}</p>}
                     <p className="mt-2 text-xs">
                       Tham gia ngày{" "}

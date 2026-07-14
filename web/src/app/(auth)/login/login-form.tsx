@@ -25,10 +25,10 @@ export function LoginForm() {
   );
 
   return (
-    <Card>
+    <Card className="border-border/60 shadow-xl shadow-black/5">
       <CardHeader>
-        <CardTitle className="text-2xl">Eduverse</CardTitle>
-        <CardDescription>Đăng nhập vào lớp học của bạn</CardDescription>
+        <CardTitle className="text-xl">Đăng nhập</CardTitle>
+        <CardDescription>Nhập tên tài khoản và mật khẩu của bạn</CardDescription>
       </CardHeader>
       <form action={formAction}>
         <CardContent className="space-y-4">
