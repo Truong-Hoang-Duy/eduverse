@@ -13,11 +13,15 @@ export interface NavLink {
 export function NavLinks({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
 
+  // Link khớp dài nhất thắng (VD /teacher/settings không làm sáng cả /teacher).
+  const activeHref = links
+    .filter((l) => pathname === l.href || pathname.startsWith(`${l.href}/`))
+    .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
   return (
     <nav className="flex items-center gap-1 text-sm">
       {links.map((link) => {
-        const active =
-          pathname === link.href || pathname.startsWith(`${link.href}/`);
+        const active = link.href === activeHref;
         return (
           <Link
             key={link.href}
