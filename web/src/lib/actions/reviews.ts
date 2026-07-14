@@ -49,6 +49,94 @@ export async function saveReview(
   return { success: "Đã lưu nhận xét." };
 }
 
+export interface StudentSummary {
+  qua_trinh_hoc: string;
+  diem_manh: string;
+  diem_yeu: string;
+  dinh_huong: string;
+  kho_khan: string;
+}
+
+interface SummaryReviewRow {
+  strengths: string[];
+  improvements: string[];
+  advice: string | null;
+  ai_generated_comment: string | null;
+  sessions: { session_number: number; title: string | null } | null;
+}
+
+/** Tổng hợp nhận xét 1 học viên từ TẤT CẢ buổi đã nhận xét trong lớp. */
+export async function generateStudentSummary(input: {
+  classId: string;
+  studentId: string;
+}): Promise<{ summary?: StudentSummary; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const [{ data: student }, { data: cls }, { data: reviewsData }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", input.studentId)
+        .single(),
+      supabase
+        .from("classes")
+        .select("class_code, courses(name)")
+        .eq("id", input.classId)
+        .single(),
+      supabase
+        .from("student_reviews")
+        .select(
+          "strengths, improvements, advice, ai_generated_comment, sessions!inner(session_number, title, class_id)"
+        )
+        .eq("student_id", input.studentId)
+        .eq("sessions.class_id", input.classId),
+    ]);
+
+  const reviews = (reviewsData ?? []) as unknown as SummaryReviewRow[];
+  if (reviews.length === 0) {
+    return {
+      error:
+        "Học viên này chưa có nhận xét buổi nào — hãy nhận xét trong các buổi học trước.",
+    };
+  }
+
+  try {
+    const summary = await callAiService<StudentSummary>(
+      "/generate-student-summary",
+      {
+        student_name: student?.full_name ?? "Học viên",
+        class_code: cls?.class_code ?? "",
+        course_name:
+          (cls as unknown as { courses: { name: string } | null })?.courses
+            ?.name ?? "",
+        reviews: reviews
+          .map((r) => ({
+            session_number: r.sessions?.session_number ?? 0,
+            session_title: r.sessions?.title ?? "",
+            strengths: r.strengths,
+            improvements: r.improvements,
+            advice: r.advice,
+            comment: r.ai_generated_comment,
+          }))
+          .sort((a, b) => a.session_number - b.session_number),
+      }
+    );
+    return { summary };
+  } catch (err) {
+    if (err instanceof AiServiceError) {
+      return { error: err.message };
+    }
+    return { error: "Không kết nối được AI service (thử lại sau 30 giây nếu server vừa thức dậy)." };
+  }
+}
+
 export interface GenerateReviewInput {
   studentName: string;
   sessionTitle: string;

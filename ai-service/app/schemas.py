@@ -37,6 +37,31 @@ class ZaloSummaryResponse(BaseModel):
     message: str
 
 
+# ---------- /generate-student-summary ----------
+class SessionReviewItem(BaseModel):
+    session_number: int
+    session_title: str = ""
+    strengths: list[str] = []
+    improvements: list[str] = []
+    advice: str | None = None
+    comment: str | None = None
+
+
+class StudentSummaryRequest(BaseModel):
+    student_name: str
+    class_code: str = ""
+    course_name: str = ""
+    reviews: list[SessionReviewItem]
+
+
+class StudentSummaryResponse(BaseModel):
+    qua_trinh_hoc: str
+    diem_manh: str
+    diem_yeu: str
+    dinh_huong: str
+    kho_khan: str
+
+
 # ---------- /suggest-features ----------
 class SuggestFeaturesRequest(BaseModel):
     project_name: str

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
 import { DeleteClassButton } from "./delete-class-button";
+import { StudentSummaryPanel } from "./student-summary-panel";
 import {
   StudentsTable,
   type ClassOption,
@@ -147,6 +149,28 @@ export default async function ClassDetailPage({
             classId={cls.id}
             students={students}
             otherClasses={otherClasses}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">
+            📝 Nhận xét tổng hợp từng học viên
+          </CardTitle>
+          <CardDescription>
+            AI tổng hợp từ tất cả các buổi đã nhận xét: quá trình học, điểm mạnh,
+            điểm yếu, định hướng sắp tới, khó khăn cần hỗ trợ — bấm Copy để gửi
+            riêng cho phụ huynh.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StudentSummaryPanel
+            classId={cls.id}
+            students={students.map((s) => ({
+              id: s.studentId,
+              fullName: s.fullName,
+            }))}
           />
         </CardContent>
       </Card>

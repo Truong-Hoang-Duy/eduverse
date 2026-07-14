@@ -26,6 +26,12 @@ Output: `{message: string}` — đánh giá chung tình hình lớp, ghép đún
 `template_text` (mẫu có placeholder như `{ten_lop}`, `{buoi}`, `{tom_tat}`,
 `{loi_nhan}`). GV copy dán vào nhóm Zalo.
 
+### POST /generate-student-summary — nhận xét TỔNG HỢP 1 học viên
+Input: `{student_name, class_code, course_name, reviews: [{session_number, session_title, strengths[], improvements[], advice?, comment?}]}`
+— toàn bộ nhận xét các buổi đã học của em đó trong lớp.
+Output: `{qua_trinh_hoc, diem_manh, diem_yeu, dinh_huong, kho_khan}` — 5 mục,
+mỗi mục 2-4 câu; UI ghép thành văn bản copy gửi riêng phụ huynh.
+
 ### POST /suggest-features — gợi ý tính năng cho sản phẩm học viên
 Input: `{project_name, description, existing_features[], course_code}`
 Output: `{suggestions: [{name, description, difficulty: easy|medium|hard}]}` —
@@ -54,6 +60,10 @@ và hiển thị thanh tiến trình; KHÔNG chấm cả lớp trong 1 request (
 
 - Luôn chỉ định: vai ("giáo viên dạy lập trình cho học sinh"), ngôn ngữ output
   (tiếng Việt), độ dài, và JSON schema.
+- Xưng hô với học viên: "em" hoặc gọi tên — KHÔNG BAO GIỜ dùng "con" (đã ghi
+  trong SYSTEM_ROLE).
+- Tin Zalo gửi phụ huynh: nhận xét CHUNG cả lớp, không nêu tên/định danh học
+  viên nào (nhận xét cá nhân dùng /generate-student-summary gửi riêng).
 - Chấm điểm: yêu cầu Gemini đọc đề trước, liệt kê yêu cầu, rồi đối chiếu code;
   điểm khắt khe nhưng nhận xét khích lệ, phù hợp học viên nhỏ tuổi.
 - Không đưa dữ liệu cá nhân ngoài tên học viên vào prompt.

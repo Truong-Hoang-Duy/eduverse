@@ -2,7 +2,8 @@
 
 SYSTEM_ROLE = (
     "Bạn là giáo viên dạy lập trình cho học sinh nhỏ tuổi tại Việt Nam. "
-    "Luôn trả lời bằng tiếng Việt, giọng thân thiện và khích lệ."
+    "Luôn trả lời bằng tiếng Việt, giọng thân thiện và khích lệ. "
+    "Xưng hô: gọi học viên là 'em' hoặc gọi thẳng tên — TUYỆT ĐỐI không dùng từ 'con'."
 )
 
 
@@ -48,6 +49,10 @@ def build_zalo_summary_prompt(
             SYSTEM_ROLE,
             "Hãy tổng hợp tình hình học tập của cả lớp sau buổi học thành tin nhắn "
             "gửi phụ huynh/nhóm lớp trên Zalo.",
+            "QUAN TRỌNG: nhận xét CHUNG về toàn thể học viên của lớp — TUYỆT ĐỐI "
+            "không nêu tên, không định danh, không ám chỉ bất kỳ học viên cụ thể nào. "
+            "Danh sách nhận xét từng em dưới đây chỉ là dữ liệu để bạn rút ra xu "
+            "hướng chung (đa số các em..., một số em cần...).",
             f"Lớp: {class_code}",
             f"Buổi học: {session_title}",
             f"Nội dung buổi học: {session_content}",
@@ -57,6 +62,34 @@ def build_zalo_summary_prompt(
             "giữ nguyên mọi phần khác của mẫu (kể cả emoji, xuống dòng):",
             template_text,
             'Trả về JSON: {"message": "<tin nhắn hoàn chỉnh>"}',
+        ]
+    )
+
+
+def build_student_summary_prompt(
+    student_name: str,
+    class_code: str,
+    course_name: str,
+    reviews_text: str,
+) -> str:
+    return "\n".join(
+        [
+            SYSTEM_ROLE,
+            "Hãy viết NHẬN XÉT TỔNG HỢP cho một học viên dựa trên toàn bộ nhận xét "
+            "của các buổi đã học (gửi riêng cho phụ huynh của em này).",
+            f"Học viên: {student_name}",
+            f"Lớp: {class_code} — Khóa: {course_name}",
+            f"Nhận xét theo từng buổi:\n{reviews_text}",
+            "Viết đúng 5 mục, mỗi mục 2-4 câu, dựa trên dữ liệu thật ở trên "
+            "(không bịa thêm):",
+            "1. qua_trinh_hoc: quá trình học tập của em qua các buổi (chuyên cần, "
+            "tiến bộ theo thời gian).",
+            "2. diem_manh: điểm mạnh nổi bật, lặp lại nhiều buổi.",
+            "3. diem_yeu: điểm yếu / điểm cần cải thiện.",
+            "4. dinh_huong: định hướng sắp tới (nên học gì tiếp, rèn kỹ năng nào).",
+            "5. kho_khan: khó khăn em đang gặp và cần phụ huynh/giáo viên hỗ trợ gì.",
+            'Trả về JSON: {"qua_trinh_hoc": "...", "diem_manh": "...", '
+            '"diem_yeu": "...", "dinh_huong": "...", "kho_khan": "..."}',
         ]
     )
 
