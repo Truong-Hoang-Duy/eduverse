@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { BrandMark } from "@/components/brand-mark";
+
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-6">
@@ -15,9 +17,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       <div className="w-full max-w-lg space-y-4">
         <div className="flex items-center justify-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground shadow-lg shadow-primary/25">
-            E
-          </div>
+          <BrandMark className="size-9 rounded-xl shadow-lg shadow-primary/25" />
           <div className="leading-tight">
             <p className="text-lg font-bold tracking-tight">Eduverse</p>
             <p className="text-xs text-muted-foreground">

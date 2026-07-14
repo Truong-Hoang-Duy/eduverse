@@ -3,9 +3,9 @@
 import { useActionState, useState, useTransition } from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
+import { MultiSelect } from "@/components/multi-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { generateAiReview, saveReview } from "@/lib/actions/reviews";
@@ -56,10 +56,6 @@ export function ReviewEditor({
 
   const strengthOptions = options.filter((o) => o.category === "strength");
   const improvementOptions = options.filter((o) => o.category === "improvement");
-
-  function toggle(list: string[], set: (v: string[]) => void, label: string) {
-    set(list.includes(label) ? list.filter((l) => l !== label) : [...list, label]);
-  }
 
   function handleGenerate() {
     setAiError("");
@@ -115,42 +111,25 @@ export function ReviewEditor({
         ))}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <p className="text-sm font-medium">💪 Điểm mạnh</p>
-            {strengthOptions.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                Chưa có lựa chọn — thêm trong trang Cài đặt.
-              </p>
-            )}
-            {strengthOptions.map((opt) => (
-              <Label
-                key={opt.id}
-                className="flex cursor-pointer items-center gap-2 text-sm font-normal"
-              >
-                <Checkbox
-                  checked={strengths.includes(opt.label)}
-                  onCheckedChange={() => toggle(strengths, setStrengths, opt.label)}
-                />
-                {opt.label}
-              </Label>
-            ))}
+            <MultiSelect
+              options={strengthOptions}
+              selected={strengths}
+              onChange={setStrengths}
+              placeholder="Chọn điểm mạnh..."
+              emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+            />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <p className="text-sm font-medium">🎯 Cần cải thiện</p>
-            {improvementOptions.map((opt) => (
-              <Label
-                key={opt.id}
-                className="flex cursor-pointer items-center gap-2 text-sm font-normal"
-              >
-                <Checkbox
-                  checked={improvements.includes(opt.label)}
-                  onCheckedChange={() =>
-                    toggle(improvements, setImprovements, opt.label)
-                  }
-                />
-                {opt.label}
-              </Label>
-            ))}
+            <MultiSelect
+              options={improvementOptions}
+              selected={improvements}
+              onChange={setImprovements}
+              placeholder="Chọn điểm cần cải thiện..."
+              emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+            />
           </div>
         </div>
 
