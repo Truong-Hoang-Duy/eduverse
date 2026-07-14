@@ -37,5 +37,6 @@
 
 ## Giai đoạn 5 — Tiện ích + Deploy
 - [ ] Random nhóm thuyết trình
-- [ ] Deploy Vercel + Render + Supabase production, env vars
+- [x] Chuẩn bị deploy: render.yaml + DEPLOY.md (hướng dẫn Vercel/Render/GitHub)
+- [ ] User thực hiện deploy theo DEPLOY.md (GitHub → Render → Vercel)
 - [ ] Kiểm thử end-to-end theo checklist Verification trong plan

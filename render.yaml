@@ -1,0 +1,24 @@
+# Render Blueprint — khi tạo service chọn "New +" → "Blueprint" và trỏ vào repo,
+# Render tự đọc file này. Xem DEPLOY.md để biết toàn bộ quy trình.
+services:
+  - type: web
+    name: eduverse-ai
+    runtime: python
+    rootDir: ai-service
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.6
+      - key: GEMINI_MODEL
+        value: gemini-flash-latest
+      - key: GEMINI_API_KEY
+        sync: false # nhập tay trong dashboard Render
+      - key: AI_SERVICE_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false

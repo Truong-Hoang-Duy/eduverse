@@ -36,10 +36,10 @@
   khẩu. Migration 2 (20260713000000_username_auth.sql) đã áp qua SQL Editor.
   E2E luồng mới 13/13 PASS.
 
-**Đang dừng ở:** Giai đoạn 1 hoàn tất (kèm đổi auth username) và verify trên hạ
-tầng thật. Việc tiếp: user click-through UI lần cuối, merge
-`feature/scaffold-foundation` → `develop`, rồi bắt đầu Giai đoạn 2 (buổi học +
-nhận xét AI + tin Zalo) trên branch mới.
+**Đang dừng ở:** Giai đoạn 1 + auth username + UI indigo đã được user DUYỆT,
+đã merge vào `develop` và `main`. Thêm render.yaml + DEPLOY.md — user tự deploy
+theo hướng dẫn (GitHub → Render → Vercel). Việc tiếp: hỗ trợ deploy nếu vướng,
+rồi mở branch mới từ develop cho Giai đoạn 2 (buổi học + nhận xét AI + tin Zalo).
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
