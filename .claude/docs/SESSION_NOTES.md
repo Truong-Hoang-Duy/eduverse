@@ -36,14 +36,15 @@
   khẩu. Migration 2 (20260713000000_username_auth.sql) đã áp qua SQL Editor.
   E2E luồng mới 13/13 PASS.
 
-**Đang dừng ở:** DEPLOY XONG (Vercel + Render + GitHub repo
-Truong-Hoang-Duy/eduverse; lưu ý default branch GitHub từng là develop, đã hướng
-dẫn đổi về main). Giai đoạn 2 CODE XONG trên branch `feature/sessions-reviews`:
-lưới buổi học trong trang lớp, trang buổi học (nội dung + nhận xét từng HV bằng
-checkbox + nút AI + panel tin Zalo copy clipboard), trang Cài đặt (danh mục nhận
-xét + mẫu Zalo, seed mặc định), HV xem buổi học + nhận xét của mình. E2E phase 2:
-10/10 PASS. Việc tiếp: user click-through UI phase 2 → merge develop → main →
-push (Vercel/Render tự deploy) → Giai đoạn 3 (chấm bài tập AI theo khóa học).
+**Đang dừng ở:** Giai đoạn 2 đã merge + push (`c6c6fee`, production tự deploy).
+Giai đoạn 3 CODE XONG trên branch `feature/ai-grading`: trang /teacher/assignments
+(đề theo khóa+buổi, upload đề lên bucket assignment-specs), trang chấm
+/teacher/assignments/[id] (tab lớp, upload bài từng HV lên bucket submissions,
+nút Chấm/Chấm tất cả có progress, badge màu theo điểm, sửa tay, xuất CSV).
+E2E phase 3: 12/12 PASS kèm chấm Gemini THẬT (điểm 95/100, tiêu chí tổng 100).
+Việc tiếp: user click-through UI phase 3 → merge + push → Giai đoạn 4 (sản phẩm
+cuối khóa: HV CRUD project, gallery + comment, AI gợi ý tính năng, trang hướng
+dẫn nộp bài).
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 

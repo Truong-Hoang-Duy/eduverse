@@ -7,6 +7,7 @@ import type { Profile } from "@/lib/types";
 
 const TEACHER_LINKS = [
   { href: "/teacher", label: "Lớp học" },
+  { href: "/teacher/assignments", label: "Chấm bài" },
   { href: "/teacher/settings", label: "Cài đặt" },
   { href: "/profile", label: "Hồ sơ" },
 ];
