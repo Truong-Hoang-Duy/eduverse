@@ -37,31 +37,36 @@ export function SignupForm({ classes }: { classes: ClassChoice[] }) {
   );
 
   return (
-    <Card className="border-border/60 shadow-xl shadow-black/5">
+    <Card className="gap-4 border-border/60 py-5 shadow-xl shadow-black/5">
       <CardHeader>
-        <CardTitle className="text-xl">Đăng ký học viên</CardTitle>
-        <CardDescription>Chọn đúng lớp giáo viên đã thông báo cho bạn</CardDescription>
+        <CardTitle className="text-lg">Đăng ký học viên</CardTitle>
+        <CardDescription>
+          Chọn đúng lớp giáo viên đã thông báo cho bạn
+        </CardDescription>
       </CardHeader>
       <form action={formAction}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Họ và tên *</Label>
-            <Input id="full_name" name="full_name" required autoFocus />
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="full_name">Họ và tên *</Label>
+              <Input id="full_name" name="full_name" required autoFocus />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="username">Tên tài khoản *</Label>
+              <Input
+                id="username"
+                name="username"
+                placeholder="VD: minh2014"
+                autoComplete="username"
+                required
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="username">Tên tài khoản *</Label>
-            <Input
-              id="username"
-              name="username"
-              placeholder="VD: minh2014"
-              autoComplete="username"
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              3-20 ký tự: chữ thường, số, dấu chấm hoặc gạch dưới. Dùng để đăng nhập.
-            </p>
-          </div>
-          <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Tên tài khoản dùng để đăng nhập: 3-20 ký tự gồm chữ thường, số, dấu
+            chấm hoặc gạch dưới.
+          </p>
+          <div className="space-y-1.5">
             <Label>Lớp của bạn *</Label>
             <Select name="class_code" required>
               <SelectTrigger className="w-full">
@@ -80,29 +85,33 @@ export function SignupForm({ classes }: { classes: ClassChoice[] }) {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Mật khẩu * (ít nhất 6 ký tự)</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password_confirm">Nhập lại mật khẩu *</Label>
-            <Input
-              id="password_confirm"
-              name="password_confirm"
-              type="password"
-              autoComplete="new-password"
-              required
-            />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Mật khẩu *</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password_confirm">Nhập lại mật khẩu *</Label>
+              <Input
+                id="password_confirm"
+                name="password_confirm"
+                type="password"
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+            </div>
           </div>
           <FormMessage result={state} />
         </CardContent>
-        <CardFooter className="mt-4 flex flex-col gap-3">
+        <CardFooter className="mt-3 flex flex-col gap-2">
           <Button
             type="submit"
             className="w-full"

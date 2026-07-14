@@ -25,54 +25,60 @@ export function TeacherSignupForm() {
   );
 
   return (
-    <Card className="border-border/60 shadow-xl shadow-black/5">
+    <Card className="gap-4 border-border/60 py-5 shadow-xl shadow-black/5">
       <CardHeader>
-        <CardTitle className="text-xl">Đăng ký giáo viên</CardTitle>
+        <CardTitle className="text-lg">Đăng ký giáo viên</CardTitle>
         <CardDescription>Cần mã mời để tạo tài khoản giáo viên</CardDescription>
       </CardHeader>
       <form action={formAction}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
             <Label htmlFor="invite_code">Mã mời *</Label>
             <Input id="invite_code" name="invite_code" required autoFocus />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="full_name">Họ và tên *</Label>
-            <Input id="full_name" name="full_name" required />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="full_name">Họ và tên *</Label>
+              <Input id="full_name" name="full_name" required />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="username">Tên tài khoản *</Label>
+              <Input
+                id="username"
+                name="username"
+                placeholder="VD: thayduy"
+                autoComplete="username"
+                required
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="username">Tên tài khoản *</Label>
-            <Input
-              id="username"
-              name="username"
-              placeholder="VD: thayduy"
-              autoComplete="username"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Mật khẩu * (ít nhất 6 ký tự)</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password_confirm">Nhập lại mật khẩu *</Label>
-            <Input
-              id="password_confirm"
-              name="password_confirm"
-              type="password"
-              autoComplete="new-password"
-              required
-            />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Mật khẩu *</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password_confirm">Nhập lại mật khẩu *</Label>
+              <Input
+                id="password_confirm"
+                name="password_confirm"
+                type="password"
+                autoComplete="new-password"
+                minLength={6}
+                required
+              />
+            </div>
           </div>
           <FormMessage result={state} />
         </CardContent>
-        <CardFooter className="mt-4 flex flex-col gap-3">
+        <CardFooter className="mt-3 flex flex-col gap-2">
           <Button type="submit" className="w-full" disabled={pending}>
             {pending ? "Đang đăng ký..." : "Đăng ký"}
           </Button>

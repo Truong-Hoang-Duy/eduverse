@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { NavLinks } from "@/components/nav-links";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/actions/auth";
 import type { Profile } from "@/lib/types";
@@ -28,17 +29,7 @@ export function AppNav({ profile }: { profile: Profile }) {
             </span>
             <span className="text-base font-bold tracking-tight">Eduverse</span>
           </Link>
-          <nav className="flex items-center gap-1 text-sm">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-md px-3 py-1.5 font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <NavLinks links={links} />
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden items-center gap-2 sm:flex">

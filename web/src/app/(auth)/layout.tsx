@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background p-4">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-6">
       {/* Nền trang trí: hai mảng màu mờ ở góc */}
       <div
         aria-hidden
@@ -13,15 +13,17 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         className="pointer-events-none absolute -right-32 -bottom-32 size-96 rounded-full bg-primary/10 blur-3xl"
       />
 
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-primary-foreground shadow-lg shadow-primary/25">
+      <div className="w-full max-w-lg space-y-4">
+        <div className="flex items-center justify-center gap-2.5">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground shadow-lg shadow-primary/25">
             E
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Eduverse</h1>
-          <p className="text-sm text-muted-foreground">
-            Lớp học lập trình của bạn
-          </p>
+          <div className="leading-tight">
+            <p className="text-lg font-bold tracking-tight">Eduverse</p>
+            <p className="text-xs text-muted-foreground">
+              Lớp học lập trình của bạn
+            </p>
+          </div>
         </div>
         {children}
       </div>
