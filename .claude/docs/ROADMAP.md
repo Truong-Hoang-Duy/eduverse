@@ -27,10 +27,12 @@
 - [ ] User click-through UI phase 2 rồi merge develop
 
 ## Giai đoạn 3 — Chấm bài tập bằng AI
-- [ ] Quản lý đề bài theo khóa + buổi (upload Storage)
-- [ ] Trang chấm: gắn file bài làm từng học viên
-- [ ] /grade-submission + chấm lần lượt có tiến trình
-- [ ] Bảng kết quả: màu theo điểm, sort/filter, sửa tay, xuất CSV
+- [x] Quản lý đề bài theo khóa + buổi (/teacher/assignments, upload đề lên Storage, unique mỗi buổi 1 đề)
+- [x] Trang chấm /teacher/assignments/[id]: tab lớp, upload bài từng học viên (nộp lại xóa điểm cũ)
+- [x] /grade-submission + nút "Chấm tất cả" chạy lần lượt có progress bar (dừng khi lỗi để không phí quota)
+- [x] Bảng kết quả: badge màu theo điểm (<50 đỏ, 50-79 vàng, ≥80 xanh), tiêu chí chi tiết, sửa tay điểm/nhận xét, xuất CSV (BOM cho Excel)
+- [x] E2E phase 3: 12/12 PASS kèm chấm Gemini thật (scripts/e2e-phase3.mjs)
+- [ ] User click-through UI phase 3 rồi merge develop + main
 
 ## Giai đoạn 4 — Sản phẩm cuối khóa
 - [ ] HV CRUD sản phẩm
