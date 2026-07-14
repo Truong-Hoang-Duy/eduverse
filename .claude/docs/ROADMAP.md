@@ -8,12 +8,13 @@
 - [x] git init, commit main, nhánh develop
 
 ## Giai đoạn 1 — Nền tảng (Auth + Khóa/Lớp)
-- [ ] Scaffold web/ (Next.js 15 + TS + Tailwind + shadcn/ui) + ai-service/ (FastAPI)
-- [ ] Migration SQL: toàn bộ schema + RLS + trigger profiles + storage buckets
-- [ ] Kết nối Supabase project thật (cần URL + keys từ user)
-- [ ] Đăng ký học viên (mã lớp) / đăng ký giáo viên (mã mời) / đăng nhập
-- [ ] Trang thông tin cá nhân
-- [ ] CRUD khóa học + lớp (gợi ý mã lớp kế tiếp), danh sách HV, chuyển lớp
+- [x] Scaffold web/ (Next.js 15 + TS + Tailwind + shadcn/ui) + ai-service/ (FastAPI)
+- [x] Migration SQL: toàn bộ schema + RLS + trigger profiles (kèm auto-enroll) + storage buckets
+- [x] Kết nối Supabase project thật + migration đã áp (qua SQL Editor — mạng chặn cổng 5432) + gen types
+- [x] Đăng ký học viên (mã lớp) / đăng ký giáo viên (mã mời) / đăng nhập — e2e 13/13 PASS trên DB thật
+- [x] Trang thông tin cá nhân
+- [x] CRUD khóa học + lớp (gợi ý mã lớp kế tiếp), danh sách HV, chuyển lớp — e2e PASS
+- [x] Gemini hoạt động thật (model `gemini-flash-latest`) — nhận xét tiếng Việt OK
 
 ## Giai đoạn 2 — Buổi học + Nhận xét
 - [ ] CRUD nội dung buổi học (tự sinh N buổi)
@@ -36,5 +37,6 @@
 
 ## Giai đoạn 5 — Tiện ích + Deploy
 - [ ] Random nhóm thuyết trình
-- [ ] Deploy Vercel + Render + Supabase production, env vars
+- [x] Chuẩn bị deploy: render.yaml + DEPLOY.md (hướng dẫn Vercel/Render/GitHub)
+- [ ] User thực hiện deploy theo DEPLOY.md (GitHub → Render → Vercel)
 - [ ] Kiểm thử end-to-end theo checklist Verification trong plan

@@ -2,13 +2,15 @@
 
 > Nguồn sự thật về UX/nghiệp vụ. Đọc phần liên quan đến task, không đọc cả file.
 
-## Vai trò & đăng nhập
+## Vai trò & đăng nhập (KHÔNG dùng email)
 
-- **Đăng ký học viên:** email + mật khẩu + họ tên, mã lớp (VD JSB01 — bắt buộc,
-  phải tồn tại), tuổi, trường, sở thích. Thành công → vào dashboard học viên.
+- **Đăng nhập:** tên tài khoản (username) + mật khẩu.
+- **Đăng ký học viên:** họ tên + tên tài khoản (3-20 ký tự, chữ thường/số/./_,
+  duy nhất) + **combo box chọn lớp** (danh sách lớp GV đã mở, kèm tên khóa) +
+  mật khẩu + nhập lại mật khẩu. KHÔNG thu thập email/tuổi/trường/sở thích.
 - **Đăng ký giáo viên:** trang riêng `/signup/teacher`, cần mã mời
-  (env `TEACHER_INVITE_CODE`) để không ai tự thành giáo viên.
-- **Thông tin cá nhân:** cả 2 vai trò sửa được tên, tuổi, trường, sở thích, avatar.
+  (env `TEACHER_INVITE_CODE`) + username + nhập lại mật khẩu.
+- **Thông tin cá nhân:** sửa họ tên; username hiển thị read-only.
 
 ## Giáo viên
 

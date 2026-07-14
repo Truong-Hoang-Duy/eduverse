@@ -8,15 +8,38 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-11, bởi: Claude)
 
-**Đang làm:** Giai đoạn 1 — Nền tảng (scaffold + schema + auth)
+**Đang làm:** Giai đoạn 1 — Nền tảng, branch `feature/scaffold-foundation` (3 commit)
 
 **Tiến độ:**
 - [x] Giai đoạn 0: điền toàn bộ template .claude, tách docs 7 file, .gitignore, git init
-- [ ] Scaffold web/ + ai-service/
-- [ ] Migration SQL schema + RLS
-- [ ] Kết nối Supabase project thật + auth
+- [x] Scaffold web/ (Next 15.5 + Tailwind 4 + shadcn 16 components) + ai-service/
+  (FastAPI, 4 endpoint Gemini, pytest 4 passed)
+- [x] Migration SQL schema + RLS + trigger (auto profile + auto enroll theo
+  class_code trong metadata + auto sinh sessions)
+- [x] Code Giai đoạn 1: auth (login/signup HV bằng mã lớp/signup GV bằng mã mời),
+  redirect theo role, /teacher (CRUD khóa + lớp, gợi ý mã lớp kế tiếp, chi tiết
+  lớp, chuyển/xóa HV), /student, /profile. Lint + typecheck + build đều pass.
+- [x] Supabase thật đã kết nối: migration áp qua SQL Editor (mạng công ty CHẶN
+  cổng 5432/6543 — `supabase db push` không dùng được, chỉ 443 mở; các migration
+  sau cũng phải dán tay vào SQL Editor). Types đã gen (`web/src/lib/database.types.ts`).
+- [x] E2E 13/13 PASS trên DB thật (`web/scripts/e2e-phase1.mjs`, chạy:
+  `node --env-file=.env.local scripts/e2e-phase1.mjs` trong web/) — trigger
+  auto-profile/auto-enroll/auto-sessions, RLS, chuyển lớp đều đúng.
+- [x] Gemini chạy thật: model `gemini-flash-latest` (gemini-2.5-flash bị Google
+  khóa với key mới từ 2026); đã fix bug genai.Client bị GC (cache lru_cache).
+- [x] Đã tắt "Confirm email" trong Supabase Auth (bắt buộc cho flow signup).
 
-**Đang dừng ở:** Vừa xong Giai đoạn 0, bắt đầu scaffold.
+- [x] ĐỔI AUTH SANG USERNAME (yêu cầu user): không dùng email; email ảo
+  `<username>@eduverse.local` tạo qua admin API (signUp thường chặn domain ảo);
+  đăng nhập qua RPC get_email_by_username; combo box chọn lớp khi đăng ký (RPC
+  list_available_classes); bỏ thu thập tuổi/trường/sở thích; thêm nhập lại mật
+  khẩu. Migration 2 (20260713000000_username_auth.sql) đã áp qua SQL Editor.
+  E2E luồng mới 13/13 PASS.
+
+**Đang dừng ở:** Giai đoạn 1 + auth username + UI indigo đã được user DUYỆT,
+đã merge vào `develop` và `main`. Thêm render.yaml + DEPLOY.md — user tự deploy
+theo hướng dẫn (GitHub → Render → Vercel). Việc tiếp: hỗ trợ deploy nếu vướng,
+rồi mở branch mới từ develop cho Giai đoạn 2 (buổi học + nhận xét AI + tin Zalo).
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
