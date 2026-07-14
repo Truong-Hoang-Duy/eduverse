@@ -17,11 +17,14 @@
 - [x] Gemini hoạt động thật (model `gemini-flash-latest`) — nhận xét tiếng Việt OK
 
 ## Giai đoạn 2 — Buổi học + Nhận xét
-- [ ] CRUD nội dung buổi học (tự sinh N buổi)
-- [ ] Quản lý danh mục review_options
-- [ ] Form nhận xét học viên theo buổi (radio/checkbox + lời khuyên)
-- [ ] Nút AI tạo nhận xét (/generate-review)
-- [ ] Mẫu tin Zalo + AI tổng hợp + Copy clipboard (/generate-zalo-summary)
+- [x] CRUD nội dung buổi học (lưới buổi trong trang lớp + trang buổi học riêng)
+- [x] Quản lý danh mục review_options (trang Cài đặt, có nút seed 12 lựa chọn mặc định)
+- [x] Form nhận xét học viên theo buổi (checkbox điểm mạnh/cải thiện + lời khuyên)
+- [x] Nút AI tạo nhận xét (/generate-review) — GV sửa được trước khi lưu
+- [x] Mẫu tin Zalo + AI tổng hợp + Copy clipboard (/generate-zalo-summary)
+- [x] HV xem nội dung buổi học + nhận xét của mình trong dashboard
+- [x] E2E phase 2: 10/10 PASS trên DB thật (scripts/e2e-phase2.mjs)
+- [ ] User click-through UI phase 2 rồi merge develop
 
 ## Giai đoạn 3 — Chấm bài tập bằng AI
 - [ ] Quản lý đề bài theo khóa + buổi (upload Storage)

@@ -5,6 +5,8 @@ from app.gemini import generate_json
 from app.schemas import (
     GenerateReviewRequest,
     GenerateReviewResponse,
+    StudentSummaryRequest,
+    StudentSummaryResponse,
     ZaloSummaryRequest,
     ZaloSummaryResponse,
 )
@@ -32,6 +34,46 @@ def generate_review(body: GenerateReviewRequest) -> GenerateReviewResponse:
         },
     )
     return GenerateReviewResponse(**data)
+
+
+@router.post("/generate-student-summary", response_model=StudentSummaryResponse)
+def generate_student_summary(body: StudentSummaryRequest) -> StudentSummaryResponse:
+    reviews_text = "\n".join(
+        f"- Buổi {r.session_number} ({r.session_title or 'chưa có tiêu đề'}): "
+        f"mạnh [{', '.join(r.strengths) or 'chưa ghi'}]; "
+        f"cần cải thiện [{', '.join(r.improvements) or 'chưa ghi'}]"
+        + (f"; lời khuyên: {r.advice}" if r.advice else "")
+        + (f"; nhận xét: {r.comment}" if r.comment else "")
+        for r in body.reviews
+    ) or "(chưa có nhận xét buổi nào)"
+
+    prompt = prompts.build_student_summary_prompt(
+        student_name=body.student_name,
+        class_code=body.class_code,
+        course_name=body.course_name,
+        reviews_text=reviews_text,
+    )
+    data = generate_json(
+        prompt,
+        response_schema={
+            "type": "object",
+            "properties": {
+                "qua_trinh_hoc": {"type": "string"},
+                "diem_manh": {"type": "string"},
+                "diem_yeu": {"type": "string"},
+                "dinh_huong": {"type": "string"},
+                "kho_khan": {"type": "string"},
+            },
+            "required": [
+                "qua_trinh_hoc",
+                "diem_manh",
+                "diem_yeu",
+                "dinh_huong",
+                "kho_khan",
+            ],
+        },
+    )
+    return StudentSummaryResponse(**data)
 
 
 @router.post("/generate-zalo-summary", response_model=ZaloSummaryResponse)

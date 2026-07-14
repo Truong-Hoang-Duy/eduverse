@@ -36,10 +36,14 @@
   khẩu. Migration 2 (20260713000000_username_auth.sql) đã áp qua SQL Editor.
   E2E luồng mới 13/13 PASS.
 
-**Đang dừng ở:** Giai đoạn 1 + auth username + UI indigo đã được user DUYỆT,
-đã merge vào `develop` và `main`. Thêm render.yaml + DEPLOY.md — user tự deploy
-theo hướng dẫn (GitHub → Render → Vercel). Việc tiếp: hỗ trợ deploy nếu vướng,
-rồi mở branch mới từ develop cho Giai đoạn 2 (buổi học + nhận xét AI + tin Zalo).
+**Đang dừng ở:** DEPLOY XONG (Vercel + Render + GitHub repo
+Truong-Hoang-Duy/eduverse; lưu ý default branch GitHub từng là develop, đã hướng
+dẫn đổi về main). Giai đoạn 2 CODE XONG trên branch `feature/sessions-reviews`:
+lưới buổi học trong trang lớp, trang buổi học (nội dung + nhận xét từng HV bằng
+checkbox + nút AI + panel tin Zalo copy clipboard), trang Cài đặt (danh mục nhận
+xét + mẫu Zalo, seed mặc định), HV xem buổi học + nhận xét của mình. E2E phase 2:
+10/10 PASS. Việc tiếp: user click-through UI phase 2 → merge develop → main →
+push (Vercel/Render tự deploy) → Giai đoạn 3 (chấm bài tập AI theo khóa học).
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
