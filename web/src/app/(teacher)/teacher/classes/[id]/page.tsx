@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ProjectCard, type ProjectView } from "@/components/project-card";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
@@ -33,6 +34,7 @@ export default async function ClassDetailPage({
     { data: enrollmentsData },
     { data: allClasses },
     { data: sessionsData },
+    { data: projectsData },
   ] = await Promise.all([
     supabase
       .from("classes")
@@ -50,6 +52,13 @@ export default async function ClassDetailPage({
       .select("id, session_number, title, content, session_date")
       .eq("class_id", id)
       .order("session_number"),
+    supabase
+      .from("projects")
+      .select(
+        "id, name, description, features, repo_url, drive_url, demo_url, extra_notes, profiles!projects_student_id_fkey(full_name)"
+      )
+      .eq("class_id", id)
+      .order("updated_at", { ascending: false }),
   ]);
 
   if (!classData) {
@@ -73,6 +82,32 @@ export default async function ClassDetailPage({
   )
     .filter((c) => c.id !== id)
     .map((c) => ({ id: c.id, classCode: c.class_code }));
+
+  const projects = (
+    (projectsData ?? []) as unknown as {
+      id: string;
+      name: string;
+      description: string | null;
+      features: string[];
+      repo_url: string | null;
+      drive_url: string | null;
+      demo_url: string | null;
+      extra_notes: string | null;
+      profiles: { full_name: string } | null;
+    }[]
+  ).map(
+    (p): ProjectView => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      features: p.features,
+      repo_url: p.repo_url,
+      drive_url: p.drive_url,
+      demo_url: p.demo_url,
+      extra_notes: p.extra_notes,
+      authorName: p.profiles?.full_name ?? "Học viên",
+    })
+  );
 
   return (
     <div className="space-y-6">
@@ -172,6 +207,33 @@ export default async function ClassDetailPage({
               fullName: s.fullName,
             }))}
           />
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">
+            🚀 Sản phẩm cuối khóa ({projects.length})
+          </CardTitle>
+          <CardDescription>
+            Sản phẩm học viên trong lớp đã khai báo
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {projects.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Chưa có học viên nào khai báo sản phẩm.
+            </p>
+          ) : (
+            projects.map((project, i) => (
+              <div
+                key={project.id}
+                className={i > 0 ? "border-t pt-4" : undefined}
+              >
+                <ProjectCard project={project} />
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
     </div>

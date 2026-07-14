@@ -35,10 +35,13 @@
 - [ ] User click-through UI phase 3 rồi merge develop + main
 
 ## Giai đoạn 4 — Sản phẩm cuối khóa
-- [ ] HV CRUD sản phẩm
-- [ ] Gallery lớp + bình luận
-- [ ] AI gợi ý tính năng (/suggest-features)
-- [ ] Trang hướng dẫn nộp bài (video YouTube)
+- [x] HV CRUD sản phẩm (/student/projects, 1 sản phẩm/lớp, unique)
+- [x] Gallery lớp + bình luận (/student/gallery, xóa comment của mình)
+- [x] AI gợi ý tính năng (/suggest-features) — bấm để thêm vào danh sách chức năng
+- [x] Trang hướng dẫn nộp bài (/student/guide, YouTube embed — ID để trống chờ user điền)
+- [x] GV xem sản phẩm lớp trong trang chi tiết lớp
+- [x] E2E phase 4: 10/10 PASS kèm AI thật (scripts/e2e-phase4.mjs)
+- [ ] User click-through UI phase 4 rồi merge develop + main
 
 ## Giai đoạn 5 — Tiện ích + Deploy
 - [ ] Random nhóm thuyết trình
