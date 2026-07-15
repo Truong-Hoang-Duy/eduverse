@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,16 +47,21 @@ function OptionColumn({
             className="flex items-center justify-between gap-2 rounded-md border px-3 py-1.5 text-sm"
           >
             {opt.label}
-            <form action={deleteReviewOption}>
-              <input type="hidden" name="id" value={opt.id} />
-              <button
-                type="submit"
-                aria-label={`Xóa ${opt.label}`}
-                className="text-muted-foreground transition-colors hover:text-destructive"
-              >
-                ✕
-              </button>
-            </form>
+            <ConfirmDialog
+              trigger={
+                <button
+                  type="button"
+                  aria-label={`Xóa ${opt.label}`}
+                  className="text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  ✕
+                </button>
+              }
+              title="Xóa lựa chọn này?"
+              description={`"${opt.label}" sẽ không còn hiện khi nhận xét học viên. Các nhận xét đã lưu trước đó không bị ảnh hưởng.`}
+              action={deleteReviewOption}
+              fields={{ id: opt.id }}
+            />
           </li>
         ))}
         {options.length === 0 && (

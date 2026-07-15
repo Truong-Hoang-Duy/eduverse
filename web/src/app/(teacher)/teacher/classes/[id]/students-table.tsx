@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import {
@@ -101,28 +102,21 @@ export function StudentsTable({
                       Chuyển
                     </Button>
                   </form>
-                  <form
+                  <ConfirmDialog
+                    trigger={
+                      <Button variant="ghost" size="sm">
+                        Xóa
+                      </Button>
+                    }
+                    title={`Xóa ${student.fullName} khỏi lớp?`}
+                    description="Học viên sẽ bị gỡ khỏi lớp này cùng các nhận xét trong lớp. Tài khoản của em vẫn còn — có thể cho tham gia lại bằng mã lớp."
+                    confirmLabel="Xóa khỏi lớp"
                     action={removeStudent}
-                    onSubmit={(e) => {
-                      if (
-                        !confirm(
-                          `Xóa ${student.fullName} khỏi lớp? (không xóa tài khoản)`
-                        )
-                      ) {
-                        e.preventDefault();
-                      }
+                    fields={{
+                      enrollment_id: student.enrollmentId,
+                      class_id: classId,
                     }}
-                  >
-                    <input
-                      type="hidden"
-                      name="enrollment_id"
-                      value={student.enrollmentId}
-                    />
-                    <input type="hidden" name="class_id" value={classId} />
-                    <Button type="submit" variant="ghost" size="sm">
-                      Xóa
-                    </Button>
-                  </form>
+                  />
                 </div>
               </TableCell>
             </TableRow>

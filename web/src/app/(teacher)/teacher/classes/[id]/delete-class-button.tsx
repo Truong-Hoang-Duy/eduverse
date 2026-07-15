@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { deleteClass } from "@/lib/actions/classes";
 
@@ -11,22 +12,17 @@ export function DeleteClassButton({
   classCode: string;
 }) {
   return (
-    <form
+    <ConfirmDialog
+      trigger={
+        <Button variant="destructive" size="sm">
+          Xóa lớp
+        </Button>
+      }
+      title={`Xóa lớp ${classCode}?`}
+      description="Toàn bộ buổi học, nhận xét, sản phẩm và danh sách học viên của lớp sẽ bị xóa vĩnh viễn. Không thể hoàn tác."
+      confirmLabel="Xóa lớp"
       action={deleteClass}
-      onSubmit={(e) => {
-        if (
-          !confirm(
-            `Xóa lớp ${classCode}? Toàn bộ buổi học, nhận xét và danh sách học viên của lớp sẽ bị xóa vĩnh viễn.`
-          )
-        ) {
-          e.preventDefault();
-        }
-      }}
-    >
-      <input type="hidden" name="id" value={classId} />
-      <Button type="submit" variant="destructive" size="sm">
-        Xóa lớp
-      </Button>
-    </form>
+      fields={{ id: classId }}
+    />
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { deleteAssignment } from "@/lib/actions/grading";
 
 export function DeleteAssignmentButton({
@@ -10,26 +11,21 @@ export function DeleteAssignmentButton({
   title: string;
 }) {
   return (
-    <form
+    <ConfirmDialog
+      trigger={
+        <button
+          type="button"
+          aria-label={`Xóa đề ${title}`}
+          className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
+        >
+          ✕
+        </button>
+      }
+      title="Xóa đề bài?"
+      description={`Đề "${title}" sẽ bị xóa vĩnh viễn cùng file đề đã upload. Không thể hoàn tác.`}
+      confirmLabel="Xóa đề"
       action={deleteAssignment}
-      onSubmit={(e) => {
-        if (
-          !confirm(
-            `Xóa đề "${title}"? Mọi bài nộp và điểm của đề này cũng bị xóa.`
-          )
-        ) {
-          e.preventDefault();
-        }
-      }}
-    >
-      <input type="hidden" name="id" value={assignmentId} />
-      <button
-        type="submit"
-        aria-label={`Xóa đề ${title}`}
-        className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
-      >
-        ✕
-      </button>
-    </form>
+      fields={{ id: assignmentId }}
+    />
   );
 }
