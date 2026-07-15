@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -45,12 +46,10 @@ export default async function StudentProjectsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Sản phẩm cuối khóa</h1>
-        <p className="text-sm text-muted-foreground">
-          Khai báo dự án cuối khóa của bạn cho từng lớp
-        </p>
-      </div>
+      <PageHeader
+        title="Sản phẩm cuối khóa"
+        description="Khai báo dự án cuối khóa của bạn cho từng lớp"
+      />
 
       {classes.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center">

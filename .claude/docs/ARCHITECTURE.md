@@ -25,10 +25,13 @@
 ```
 web/src/
 ├── app/(auth)/          # login, signup (student + teacher-invite)
-├── app/(teacher)/       # dashboard GV: courses, classes, sessions, grading, zalo
-├── app/(student)/       # dashboard HV: projects, gallery
+├── app/(teacher)/       # GV: courses+classes, sessions, assignments (chấm bài), settings
+├── app/(student)/       # HV: nav "Lớp học" (/student) + 3 tab: projects, gallery, guide
+├── components/          # dùng chung: app-shell/nav/footer, page-header, stat-card,
+│                        # confirm-dialog, theme-toggle, student-tabs, project-card
 ├── components/ui/       # shadcn/ui
-├── lib/supabase/        # client (browser/server), database.types.ts
+├── lib/supabase/        # client (browser/server), admin (service key), database.types.ts
+├── lib/file-check.ts    # chặn file bị DLP mã hóa trước khi upload
 └── lib/ai-client.ts     # gọi ai-service, duy nhất nơi biết AI_SERVICE_API_KEY
 ai-service/app/
 ├── main.py              # FastAPI app + auth middleware
@@ -53,8 +56,11 @@ supabase/migrations/     # SQL schema + RLS
   → ai-service `/generate-review` → GV sửa → lưu `student_reviews`.
 - **Tạo nội dung buổi học:** GV điền nội dung từng buổi của lớp (bảng `sessions`,
   tự sinh N buổi theo `total_sessions` khi tạo lớp).
-- **Chấm bài AI:** đề thuộc course + session_number → GV upload bài từng học viên
-  (Storage) → lặp từng HV gọi `/grade-submission` → lưu `grades` → bảng tổng kết /100.
+- **Chấm bài AI (công cụ độc lập, KHÔNG theo lớp):** đề thuộc course +
+  session_number, file đề lưu Storage — **thứ duy nhất được lưu**. GV chọn đề →
+  upload file bài làm 1 học sinh → file gửi **inline base64** qua Server Action →
+  `/grade-submission` → trả `{score, bullets}` hiện ra để copy. **Không ghi DB,
+  không lưu file bài làm.**
 
 ## Điểm dễ nhầm (gotchas)
 

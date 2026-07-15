@@ -3,8 +3,17 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
+class AiRequest(BaseModel):
+    """Mọi request AI đều có thể kèm key riêng của người dùng.
+
+    None → ai-service dùng key mặc định trong biến môi trường.
+    """
+
+    api_key: str | None = None
+
+
 # ---------- /generate-review ----------
-class GenerateReviewRequest(BaseModel):
+class GenerateReviewRequest(AiRequest):
     student_name: str
     session_title: str
     session_content: str = ""
@@ -25,7 +34,7 @@ class StudentReviewItem(BaseModel):
     improvements: list[str] = []
 
 
-class ZaloSummaryRequest(BaseModel):
+class ZaloSummaryRequest(AiRequest):
     class_code: str
     session_title: str
     session_content: str = ""
@@ -47,7 +56,7 @@ class SessionReviewItem(BaseModel):
     comment: str | None = None
 
 
-class StudentSummaryRequest(BaseModel):
+class StudentSummaryRequest(AiRequest):
     student_name: str
     class_code: str = ""
     course_name: str = ""
@@ -63,7 +72,7 @@ class StudentSummaryResponse(BaseModel):
 
 
 # ---------- /suggest-features ----------
-class SuggestFeaturesRequest(BaseModel):
+class SuggestFeaturesRequest(AiRequest):
     project_name: str
     description: str = ""
     existing_features: list[str] = []
@@ -81,22 +90,22 @@ class SuggestFeaturesResponse(BaseModel):
 
 
 # ---------- /grade-submission ----------
-class GradeSubmissionRequest(BaseModel):
-    spec_file_path: str
-    code_file_paths: list[str]
+class InlineFile(BaseModel):
+    """File bài làm gửi thẳng nội dung — KHÔNG lưu ở Storage."""
+
+    name: str
+    mime_type: str | None = None
+    content_b64: str
+
+
+class GradeSubmissionRequest(AiRequest):
+    spec_file_path: str  # đề bài (bucket assignment-specs) — thứ duy nhất được lưu
+    files: list[InlineFile] = Field(min_length=1)
     course_name: str
     assignment_title: str
     instructions: str | None = None
-    student_name: str
-
-
-class CriterionScore(BaseModel):
-    criterion: str
-    score: int = Field(ge=0)
-    max: int = Field(gt=0)
 
 
 class GradeSubmissionResponse(BaseModel):
     score: int = Field(ge=0, le=100)
-    criteria_breakdown: list[CriterionScore]
-    comment: str
+    bullets: list[str] = Field(min_length=1)

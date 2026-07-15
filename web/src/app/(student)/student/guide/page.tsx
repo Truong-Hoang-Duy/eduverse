@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ const VIDEOS = {
   github: "https://www.youtube.com/watch?v=jVAeaIb-Kyg",
   drive: "https://www.youtube.com/watch?v=NWEu-bCUuLM",
   deploy: "https://www.youtube.com/watch?v=X6boIuWzBhg",
+  apikey: "https://www.youtube.com/watch?v=JZCjL3hrvcY",
 };
 
 /** Tách video ID từ link YouTube mọi dạng; trả "" nếu không nhận ra. */
@@ -60,6 +62,19 @@ const SECTIONS = [
       "Copy link dán vào ô 'Link demo'.",
     ],
   },
+  {
+    key: "apikey" as const,
+    title: "4. Lấy API key Gemini miễn phí (để dùng AI riêng)",
+    description:
+      "Cả lớp đang dùng chung một key nên dễ hết lượt. Có key riêng thì bạn có hạn mức riêng: 1.500 lượt/ngày, miễn phí, không cần thẻ.",
+    steps: [
+      "Mở aistudio.google.com/apikey, đăng nhập bằng tài khoản Google.",
+      'Bấm "Create API key" → chọn project bất kỳ (hoặc tạo mới).',
+      "Copy key vừa hiện ra (bắt đầu bằng AIza...).",
+      "Vào Hồ sơ (menu góc phải) → dán vào ô API key → Lưu.",
+      "Không chia sẻ key cho ai — người có key sẽ dùng hết lượt của bạn.",
+    ],
+  },
 ];
 
 export default async function GuidePage() {
@@ -67,12 +82,10 @@ export default async function GuidePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Hướng dẫn nộp bài</h1>
-        <p className="text-sm text-muted-foreground">
-          Cách đưa sản phẩm cuối khóa lên GitHub, Google Drive và deploy demo
-        </p>
-      </div>
+      <PageHeader
+        title="Hướng dẫn nộp bài"
+        description="Cách đưa sản phẩm cuối khóa lên GitHub, Google Drive và deploy demo"
+      />
 
       {SECTIONS.map((section) => {
         const videoId = toVideoId(VIDEOS[section.key]);

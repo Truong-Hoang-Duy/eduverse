@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
 import {
   Card,
   CardContent,
@@ -8,7 +10,7 @@ import {
 import { requireRole } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Lớp của tôi — Eduverse" };
+export const metadata = { title: "Lớp học — Eduverse" };
 
 interface MyClassRow {
   id: string;
@@ -22,56 +24,45 @@ interface MyClassRow {
   } | null;
 }
 
-interface SessionRow {
-  id: string;
-  class_id: string;
-  session_number: number;
-  title: string | null;
-  content: string | null;
-  session_date: string | null;
-}
-
-interface MyReviewRow {
-  session_id: string;
-  ai_generated_comment: string | null;
-  strengths: string[];
-}
-
 export default async function StudentDashboard() {
   const profile = await requireRole("student");
   const supabase = await createClient();
 
-  const [{ data }, { data: sessionsData }, { data: reviewsData }] =
-    await Promise.all([
-      supabase
-        .from("enrollments")
-        .select(
-          "id, joined_at, classes(id, class_code, total_sessions, description, courses(code, name))"
-        )
-        .eq("student_id", profile.id),
-      supabase
-        .from("sessions")
-        .select("id, class_id, session_number, title, content, session_date")
-        .order("session_number"),
-      supabase
-        .from("student_reviews")
-        .select("session_id, ai_generated_comment, strengths")
-        .eq("student_id", profile.id),
-    ]);
+  // Chỉ lấy thông tin lớp: không liệt kê buổi học, không lấy nhận xét cá nhân.
+  const [{ data }, { count: projectCount }] = await Promise.all([
+    supabase
+      .from("enrollments")
+      .select(
+        "id, joined_at, classes(id, class_code, total_sessions, description, courses(code, name))"
+      )
+      .eq("student_id", profile.id),
+    supabase
+      .from("projects")
+      .select("id", { count: "exact", head: true })
+      .eq("student_id", profile.id),
+  ]);
 
   const myClasses = (data ?? []) as unknown as MyClassRow[];
-  const sessions = (sessionsData ?? []) as SessionRow[];
-  const reviews = (reviewsData ?? []) as MyReviewRow[];
+  const totalSessions = myClasses.reduce(
+    (sum, row) => sum + (row.classes?.total_sessions ?? 0),
+    0
+  );
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Xin chào, {profile.full_name}! 👋
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Đây là các lớp học của bạn
-        </p>
+      <PageHeader
+        title={`Xin chào, ${profile.full_name}! 👋`}
+        description="Đây là các lớp học của bạn"
+      />
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Lớp học" value={myClasses.length} hint="Lớp đang tham gia" />
+        <StatCard label="Tổng buổi" value={totalSessions} hint="Số buổi của khóa" />
+        <StatCard
+          label="Sản phẩm"
+          value={projectCount ?? 0}
+          hint="Sản phẩm cuối khóa đã khai báo"
+        />
       </div>
 
       {myClasses.length === 0 ? (
@@ -82,89 +73,36 @@ export default async function StudentDashboard() {
           </p>
         </div>
       ) : (
-        myClasses.map((row) => {
-          if (!row.classes) return null;
-          const classSessions = sessions.filter(
-            (s) => s.class_id === row.classes!.id
-          );
-          return (
-            <Card
-              key={row.id}
-              className="gap-4 border-l-4 border-l-primary shadow-sm"
-            >
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  Lớp {row.classes.class_code}
-                </CardTitle>
-                <CardDescription>
-                  {row.classes.courses
-                    ? `${row.classes.courses.code} — ${row.classes.courses.name}`
-                    : ""}{" "}
-                  · 📅 {row.classes.total_sessions} buổi
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {classSessions.filter((s) => s.content || s.title).length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Chưa có nội dung buổi học nào.
+        <div className="grid gap-4 sm:grid-cols-2">
+          {myClasses.map((row) => {
+            if (!row.classes) return null;
+            return (
+              <Card
+                key={row.id}
+                className="gap-3 border-l-4 border-l-primary shadow-sm"
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Lớp {row.classes.class_code}
+                  </CardTitle>
+                  <CardDescription>
+                    {row.classes.courses
+                      ? `${row.classes.courses.code} — ${row.classes.courses.name}`
+                      : ""}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-1 text-sm text-muted-foreground">
+                  <p>📅 {row.classes.total_sessions} buổi</p>
+                  {row.classes.description && <p>{row.classes.description}</p>}
+                  <p className="text-xs">
+                    Tham gia ngày{" "}
+                    {new Date(row.joined_at).toLocaleDateString("vi-VN")}
                   </p>
-                ) : (
-                  classSessions
-                    .filter((s) => s.content || s.title)
-                    .map((session) => {
-                      const review = reviews.find(
-                        (r) => r.session_id === session.id
-                      );
-                      return (
-                        <details
-                          key={session.id}
-                          className="group rounded-lg border"
-                        >
-                          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3 text-sm [&::-webkit-details-marker]:hidden">
-                            <span className="font-medium">
-                              Buổi {session.session_number}
-                              {session.title ? `: ${session.title}` : ""}
-                            </span>
-                            <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                              {review?.ai_generated_comment && (
-                                <span className="text-primary">
-                                  💬 Có nhận xét
-                                </span>
-                              )}
-                              {session.session_date &&
-                                new Date(session.session_date).toLocaleDateString(
-                                  "vi-VN"
-                                )}
-                              <span className="transition-transform group-open:rotate-180">
-                                ▼
-                              </span>
-                            </span>
-                          </summary>
-                          <div className="space-y-2 border-t p-3 text-sm">
-                            {session.content && (
-                              <p className="whitespace-pre-wrap text-muted-foreground">
-                                {session.content}
-                              </p>
-                            )}
-                            {review?.ai_generated_comment && (
-                              <div className="rounded-md bg-accent p-3">
-                                <p className="mb-1 text-xs font-semibold text-accent-foreground">
-                                  💬 Nhận xét của giáo viên
-                                </p>
-                                <p className="whitespace-pre-wrap">
-                                  {review.ai_generated_comment}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </details>
-                      );
-                    })
-                )}
-              </CardContent>
-            </Card>
-          );
-        })
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       )}
     </div>
   );

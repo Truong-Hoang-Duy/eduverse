@@ -1,15 +1,18 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createAssignment } from "@/lib/actions/grading";
+import { checkFileReadable } from "@/lib/file-check";
 import { createClient } from "@/lib/supabase/client";
 import type { ActionResult } from "@/lib/types";
 
@@ -43,11 +47,23 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
     createAssignment,
     {}
   );
+  const [open, setOpen] = useState(false);
   const [courseId, setCourseId] = useState("");
   const [specPath, setSpecPath] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Tạo xong thì đóng popup và dọn form cho lần tạo sau.
+  useEffect(() => {
+    if (state.success) {
+      setOpen(false);
+      setSpecPath("");
+      setCourseId("");
+      setUploadError("");
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }, [state.success]);
 
   async function handleFileChange(file: File | undefined) {
     setUploadError("");
@@ -56,6 +72,15 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
       if (file && !courseId) setUploadError("Chọn khóa học trước khi upload đề.");
       return;
     }
+
+    // Chặn sớm file bị DLP mã hóa — upload lên AI cũng không đọc được.
+    const unreadable = await checkFileReadable(file);
+    if (unreadable) {
+      setUploadError(unreadable);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
     setUploading(true);
     const supabase = createClient();
     const path = `${courseId}/${Date.now()}-${sanitizeFileName(file.name)}`;
@@ -71,14 +96,21 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Tạo đề bài mới</CardTitle>
-      </CardHeader>
-      <form action={formAction}>
-        <input type="hidden" name="course_id" value={courseId} />
-        <input type="hidden" name="spec_file_path" value={specPath} />
-        <CardContent className="space-y-3">
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">+ Tạo đề bài mới</Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Tạo đề bài mới</DialogTitle>
+          <DialogDescription>
+            Đề thuộc khóa học, mỗi buổi một đề — dùng chung mọi lớp cùng khóa
+          </DialogDescription>
+        </DialogHeader>
+        <form action={formAction}>
+          <input type="hidden" name="course_id" value={courseId} />
+          <input type="hidden" name="spec_file_path" value={specPath} />
+          <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
             <div className="space-y-1.5">
               <Label>Khóa học *</Label>
@@ -129,7 +161,9 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
               <p className="text-xs text-muted-foreground">Đang upload...</p>
             )}
             {specPath && (
-              <p className="text-xs text-green-600">✓ Đã upload file đề</p>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                ✓ Đã upload file đề
+              </p>
             )}
             {uploadError && (
               <p className="text-xs text-destructive">{uploadError}</p>
@@ -144,12 +178,18 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
               placeholder="VD: Ưu tiên đúng logic vòng lặp; không trừ điểm lỗi chính tả trong chuỗi..."
             />
           </div>
-          <FormMessage result={state} />
-          <Button type="submit" size="sm" disabled={pending || uploading || !specPath}>
-            {pending ? "Đang tạo..." : "Tạo đề bài"}
-          </Button>
-        </CardContent>
-      </form>
-    </Card>
+            <FormMessage result={state} />
+          </div>
+          <DialogFooter className="mt-4">
+            <Button
+              type="submit"
+              disabled={pending || uploading || !specPath}
+            >
+              {pending ? "Đang tạo..." : "Tạo đề bài"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

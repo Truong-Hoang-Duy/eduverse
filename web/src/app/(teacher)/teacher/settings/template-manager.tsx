@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,16 +42,22 @@ export function TemplateManager({ templates }: { templates: TemplateRow[] }) {
           <li key={t.id} className="rounded-lg border p-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-medium">{t.name}</p>
-              <form action={deleteZaloTemplate}>
-                <input type="hidden" name="id" value={t.id} />
-                <button
-                  type="submit"
-                  aria-label={`Xóa mẫu ${t.name}`}
-                  className="text-muted-foreground transition-colors hover:text-destructive"
-                >
-                  ✕
-                </button>
-              </form>
+              <ConfirmDialog
+                trigger={
+                  <button
+                    type="button"
+                    aria-label={`Xóa mẫu ${t.name}`}
+                    className="text-muted-foreground transition-colors hover:text-destructive"
+                  >
+                    ✕
+                  </button>
+                }
+                title="Xóa mẫu tin này?"
+                description={`Mẫu "${t.name}" sẽ bị xóa vĩnh viễn. Các tin nhắn đã tạo và copy trước đó không bị ảnh hưởng.`}
+                confirmLabel="Xóa mẫu"
+                action={deleteZaloTemplate}
+                fields={{ id: t.id }}
+              />
             </div>
             <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-2 text-xs whitespace-pre-wrap text-muted-foreground">
               {t.template_text}

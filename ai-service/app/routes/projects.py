@@ -38,5 +38,6 @@ def suggest_features(body: SuggestFeaturesRequest) -> SuggestFeaturesResponse:
             },
             "required": ["suggestions"],
         },
+        api_key=body.api_key,
     )
     return SuggestFeaturesResponse(**data)

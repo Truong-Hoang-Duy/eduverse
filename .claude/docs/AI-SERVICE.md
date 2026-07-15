@@ -4,6 +4,12 @@
 
 ## Cấu hình chung
 
+- **API key theo từng người dùng**: mọi request kế thừa `AiRequest` → có field
+  `api_key: str | None`. Có key → dùng key đó (client cache theo key bằng
+  `lru_cache`); `None` → dùng `GEMINI_API_KEY` trong env. Phía web,
+  `lib/actions/api-key.ts → getMyApiKey()` đọc key của user hiện tại từ bảng
+  `user_secrets` và mọi action AI đều truyền vào. Key sai → 400 kèm hướng dẫn;
+  hết quota → 503 (message khác nhau tùy dùng key riêng hay key hệ thống).
 - Model: `gemini-2.5-flash` qua SDK `google-genai` (free tier 1.500 req/ngày).
 - Auth: mọi endpoint yêu cầu header `X-API-Key` khớp env `AI_SERVICE_API_KEY`.
   Sai/thiếu → 401. Chỉ Next.js server-side biết key này.
@@ -37,24 +43,34 @@ Input: `{project_name, description, existing_features[], course_code}`
 Output: `{suggestions: [{name, description, difficulty: easy|medium|hard}]}` —
 3–5 tính năng phù hợp trình độ khóa học (JSB = cơ bản, JSI = nâng cao...).
 
-### POST /grade-submission — chấm bài 1 học viên
-Input: `{spec_file_path, code_file_paths[], course_name, assignment_title, instructions?, student_name}`
-— path là đường dẫn trong Supabase Storage; service tự tải về, đề PDF/ảnh đưa
-thẳng vào Gemini (multimodal).
-Output:
+### POST /grade-submission — chấm bài 1 học sinh
+Input:
 ```json
 {
-  "score": 85,
-  "criteria_breakdown": [
-    {"criterion": "Đúng yêu cầu đề", "score": 45, "max": 50},
-    {"criterion": "Chất lượng code", "score": 25, "max": 30},
-    {"criterion": "Sáng tạo", "score": 15, "max": 20}
-  ],
-  "comment": "nhận xét chi tiết tiếng Việt"
+  "spec_file_path": "<path trong bucket assignment-specs>",
+  "files": [{"name": "bai-lam.js", "mime_type": "text/javascript", "content_b64": "..."}],
+  "course_name": "JavaScript Basic",
+  "assignment_title": "Tính tổng hai số",
+  "instructions": null
 }
 ```
-Tổng max các tiêu chí luôn = 100. Next.js lặp qua từng học viên (1 request/HV)
-và hiển thị thanh tiến trình; KHÔNG chấm cả lớp trong 1 request (tránh timeout).
+**Đề bài** tải từ Storage (thứ duy nhất được lưu). **Bài làm gửi INLINE base64**
+— không qua Storage, không lưu ở đâu. Không có `student_name`.
+
+Output:
+```json
+{ "score": 85, "bullets": ["ý ngắn 1", "ý ngắn 2", "..."] }
+```
+Điểm hiện ở ô riêng trên UI; `bullets` là 3-6 ý ngắn (mỗi ý 1-2 câu, không tự
+thêm ký tự `-`/`•` — UI tự thêm) để giáo viên copy.
+
+Lỗi: file đề không tồn tại → 404; thiếu `files` → 422; base64 hỏng → 400.
+
+⚠️ **File bị DLP mã hóa**: máy công ty của user có phần mềm mã hóa file, trình
+duyệt đọc ra bytes rác ("SECURE FILE : This file is encrypted") và upload lên.
+Gemini trả 400 "Unable to process input image" rất khó hiểu. `storage.py` chặn
+sớm bằng marker + magic bytes (PNG/JPEG/GIF/PDF) → 400 kèm hướng dẫn tiếng Việt;
+`web/src/lib/file-check.ts` chặn thêm ở trình duyệt. Đừng gỡ 2 lớp này.
 
 ## Nguyên tắc prompt
 
@@ -65,5 +81,6 @@ và hiển thị thanh tiến trình; KHÔNG chấm cả lớp trong 1 request (
 - Tin Zalo gửi phụ huynh: nhận xét CHUNG cả lớp, không nêu tên/định danh học
   viên nào (nhận xét cá nhân dùng /generate-student-summary gửi riêng).
 - Chấm điểm: yêu cầu Gemini đọc đề trước, liệt kê yêu cầu, rồi đối chiếu code;
-  điểm khắt khe nhưng nhận xét khích lệ, phù hợp học viên nhỏ tuổi.
-- Không đưa dữ liệu cá nhân ngoài tên học viên vào prompt.
+  điểm khắt khe (thang 100) nhưng nhận xét khích lệ, phù hợp học viên nhỏ tuổi.
+  Nhận xét NGẮN GỌN dạng gạch đầu dòng, không lời chào, không nhắc tên.
+- Không đưa dữ liệu cá nhân vào prompt.

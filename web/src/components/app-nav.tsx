@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { BrandMark } from "@/components/brand-mark";
 import { NavLinks } from "@/components/nav-links";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import type { Profile } from "@/lib/types";
 
@@ -10,12 +11,9 @@ const TEACHER_LINKS = [
   { href: "/teacher/assignments", label: "Chấm bài" },
 ];
 
-const STUDENT_LINKS = [
-  { href: "/student", label: "Lớp của tôi" },
-  { href: "/student/projects", label: "Sản phẩm" },
-  { href: "/student/gallery", label: "Sản phẩm của lớp" },
-  { href: "/student/guide", label: "Hướng dẫn" },
-];
+// Học viên: 3 tab (student-tabs.tsx) là con của "Lớp học" nên nav này sáng
+// suốt cả khu /student/* — không dùng exact.
+const STUDENT_LINKS = [{ href: "/student", label: "Lớp học" }];
 
 export function AppNav({ profile }: { profile: Profile }) {
   const links = profile.role === "teacher" ? TEACHER_LINKS : STUDENT_LINKS;
@@ -28,9 +26,12 @@ export function AppNav({ profile }: { profile: Profile }) {
             <BrandMark />
             <span className="text-base font-bold tracking-tight">Eduverse</span>
           </Link>
-          <NavLinks links={links} />
+          {links.length > 0 && <NavLinks links={links} />}
         </div>
-        <UserMenu profile={profile} />
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <UserMenu profile={profile} />
+        </div>
       </div>
     </header>
   );

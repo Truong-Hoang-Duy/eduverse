@@ -2,6 +2,7 @@
 
 import { useActionState, useRef } from "react";
 
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,16 +49,21 @@ export function CommentSection({
                 <p className="text-muted-foreground">{c.content}</p>
               </div>
               {c.authorId === currentUserId && (
-                <form action={deleteComment}>
-                  <input type="hidden" name="id" value={c.id} />
-                  <button
-                    type="submit"
-                    aria-label="Xóa nhận xét"
-                    className="text-muted-foreground transition-colors hover:text-destructive"
-                  >
-                    ✕
-                  </button>
-                </form>
+                <ConfirmDialog
+                  trigger={
+                    <button
+                      type="button"
+                      aria-label="Xóa nhận xét"
+                      className="text-muted-foreground transition-colors hover:text-destructive"
+                    >
+                      ✕
+                    </button>
+                  }
+                  title="Xóa nhận xét của bạn?"
+                  description="Nhận xét này sẽ bị xóa vĩnh viễn khỏi sản phẩm."
+                  action={deleteComment}
+                  fields={{ id: c.id }}
+                />
               )}
             </li>
           ))}

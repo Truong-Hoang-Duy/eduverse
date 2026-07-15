@@ -73,6 +73,9 @@ Luôn chạy lint + typecheck + test liên quan trước khi coi task là hoàn 
 - Next.js KHÔNG gọi Gemini trực tiếp; mọi việc AI đi qua `ai-service/` (header `X-API-Key`).
 - Client component KHÔNG dùng Supabase service-role key; key đó chỉ tồn tại server-side.
 - Đề bài (`assignments`) thuộc KHÓA HỌC (course), không thuộc lớp — mỗi buổi một đề.
+- Chấm bài là công cụ ĐỘC LẬP: chỉ lưu đề bài; file bài làm + kết quả chấm KHÔNG
+  lưu (bảng `submissions`/`grades` là schema chết — đừng dùng lại).
+- Mọi hành động xóa dùng `ConfirmDialog`; không dùng `confirm()` của trình duyệt.
 - Không thêm dependency mới khi chưa hỏi ý kiến user.
 
 ## 7. Git Workflow (chi tiết trong .claude/rules/git-workflow.md)

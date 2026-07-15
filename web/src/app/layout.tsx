@@ -17,15 +17,28 @@ export const metadata: Metadata = {
   description: "Dashboard quản lý học viên cho lớp học lập trình",
 };
 
+// Chạy TRƯỚC khi paint để tránh nháy trắng khi đang ở chế độ tối.
+const THEME_SCRIPT = `
+try {
+  var t = localStorage.getItem('theme');
+  if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+  }
+} catch (e) {}
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    // suppressHydrationWarning: browser extension (Grammarly, dark mode...)
-    // chèn attribute vào <html> trước khi React hydrate gây warning giả.
+    // suppressHydrationWarning: script theme bên dưới (và các extension như
+    // Grammarly) sửa attribute của <html> trước khi React hydrate.
     <html lang="vi" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

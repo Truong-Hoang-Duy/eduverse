@@ -5,7 +5,11 @@ export function FormMessage({ result }: { result: ActionResult }) {
     return <p className="text-sm text-destructive">{result.error}</p>;
   }
   if (result.success) {
-    return <p className="text-sm text-green-600">{result.success}</p>;
+    return (
+      <p className="text-sm text-green-600 dark:text-green-400">
+        {result.success}
+      </p>
+    );
   }
   return null;
 }

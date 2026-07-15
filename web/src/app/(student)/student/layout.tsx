@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
-import { AppNav } from "@/components/app-nav";
+import { AppShell } from "@/components/app-shell";
+import { StudentTabs } from "@/components/student-tabs";
 import { requireRole } from "@/lib/get-profile";
 
 export default async function StudentLayout({
@@ -11,9 +12,9 @@ export default async function StudentLayout({
   const profile = await requireRole("student");
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <AppNav profile={profile} />
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
-    </div>
+    <AppShell profile={profile}>
+      <StudentTabs />
+      {children}
+    </AppShell>
   );
 }

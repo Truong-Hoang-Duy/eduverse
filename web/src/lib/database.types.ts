@@ -579,6 +579,32 @@ export type Database = {
           },
         ]
       }
+      user_secrets: {
+        Row: {
+          gemini_api_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          gemini_api_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          gemini_api_key?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_secrets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zalo_templates: {
         Row: {
           id: string
