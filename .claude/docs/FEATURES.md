@@ -23,7 +23,12 @@
   mật khẩu + nhập lại mật khẩu. KHÔNG thu thập email/tuổi/trường/sở thích.
 - **Đăng ký giáo viên:** trang riêng `/signup/teacher`, cần mã mời
   (env `TEACHER_INVITE_CODE`) + username + nhập lại mật khẩu.
-- **Thông tin cá nhân:** sửa họ tên; username hiển thị read-only.
+- **Thông tin cá nhân** (`/profile`, cả 2 vai trò): sửa họ tên; username read-only.
+- **API key Gemini riêng** (`/profile`): tùy chọn, cho CẢ giáo viên và học viên.
+  Chưa đặt → dùng key hệ thống (dùng chung, dễ hết lượt). Đặt rồi → mọi tính năng
+  AI của người đó dùng key riêng (1.500 lượt/ngày/key). Hiển thị dạng che
+  (`AIzaSyD•••••••••••v4k2`), có hướng dẫn lấy key ngay cạnh ô nhập. Lưu ở bảng
+  `user_secrets` — xem DATABASE.md để biết vì sao KHÔNG để trong `profiles`.
 
 ## Giáo viên
 
@@ -84,8 +89,9 @@ layout nên hiện ở mọi trang — ở `/student` không tab nào sáng).
   Chỉ trong lớp mình (RLS + lọc lại ở UI).
   ⚠️ Ô = bạn **đã khai báo sản phẩm**, không phải cả lớp — RLS chỉ cho HV thấy
   dòng enrollment của chính mình nên không liệt kê được bạn cùng lớp.
-- **Hướng dẫn:** video YouTube (GitHub / Drive / deploy). Sửa link ở biến
-  `VIDEOS` đầu `guide/page.tsx` — nhận cả link đầy đủ lẫn ID thuần.
+- **Hướng dẫn:** 4 mục — GitHub / Drive / deploy / **lấy API key Gemini miễn phí**.
+  Sửa link video ở biến `VIDEOS` đầu `guide/page.tsx` — nhận cả link đầy đủ lẫn
+  ID thuần; để `""` thì hiện ô chờ.
 
 ## Ràng buộc phân quyền (nhắc lại)
 

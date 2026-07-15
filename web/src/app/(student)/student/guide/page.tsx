@@ -16,6 +16,7 @@ const VIDEOS = {
   github: "https://www.youtube.com/watch?v=jVAeaIb-Kyg",
   drive: "https://www.youtube.com/watch?v=NWEu-bCUuLM",
   deploy: "https://www.youtube.com/watch?v=X6boIuWzBhg",
+  apikey: "https://www.youtube.com/watch?v=JZCjL3hrvcY",
 };
 
 /** Tách video ID từ link YouTube mọi dạng; trả "" nếu không nhận ra. */
@@ -59,6 +60,19 @@ const SECTIONS = [
       "Với Next.js/React: đăng nhập Vercel bằng GitHub, import repo, bấm Deploy.",
       "Chờ deploy xong, lấy link dạng ...vercel.app hoặc ...github.io.",
       "Copy link dán vào ô 'Link demo'.",
+    ],
+  },
+  {
+    key: "apikey" as const,
+    title: "4. Lấy API key Gemini miễn phí (để dùng AI riêng)",
+    description:
+      "Cả lớp đang dùng chung một key nên dễ hết lượt. Có key riêng thì bạn có hạn mức riêng: 1.500 lượt/ngày, miễn phí, không cần thẻ.",
+    steps: [
+      "Mở aistudio.google.com/apikey, đăng nhập bằng tài khoản Google.",
+      'Bấm "Create API key" → chọn project bất kỳ (hoặc tạo mới).',
+      "Copy key vừa hiện ra (bắt đầu bằng AIza...).",
+      "Vào Hồ sơ (menu góc phải) → dán vào ô API key → Lưu.",
+      "Không chia sẻ key cho ai — người có key sẽ dùng hết lượt của bạn.",
     ],
   },
 ];

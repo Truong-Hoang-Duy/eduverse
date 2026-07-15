@@ -4,6 +4,12 @@
 
 ## Cấu hình chung
 
+- **API key theo từng người dùng**: mọi request kế thừa `AiRequest` → có field
+  `api_key: str | None`. Có key → dùng key đó (client cache theo key bằng
+  `lru_cache`); `None` → dùng `GEMINI_API_KEY` trong env. Phía web,
+  `lib/actions/api-key.ts → getMyApiKey()` đọc key của user hiện tại từ bảng
+  `user_secrets` và mọi action AI đều truyền vào. Key sai → 400 kèm hướng dẫn;
+  hết quota → 503 (message khác nhau tùy dùng key riêng hay key hệ thống).
 - Model: `gemini-2.5-flash` qua SDK `google-genai` (free tier 1.500 req/ngày).
 - Auth: mọi endpoint yêu cầu header `X-API-Key` khớp env `AI_SERVICE_API_KEY`.
   Sai/thiếu → 401. Chỉ Next.js server-side biết key này.

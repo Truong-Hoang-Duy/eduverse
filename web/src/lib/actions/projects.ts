@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
@@ -144,6 +145,7 @@ export async function suggestFeatures(input: {
     const data = await callAiService<{ suggestions: FeatureSuggestion[] }>(
       "/suggest-features",
       {
+        api_key: await getMyApiKey(),
         project_name: input.projectName,
         description: input.description,
         existing_features: input.existingFeatures,

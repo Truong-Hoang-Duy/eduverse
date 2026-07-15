@@ -35,6 +35,9 @@ rồi merge** → develop → main → push (Vercel tự deploy). Nội dung đ�
    Hướng dẫn) ở `student-tabs.tsx`. Trang "Lớp học" CHỈ hiện thẻ lớp — bỏ hẳn
    danh sách buổi và nhận xét cá nhân. Gallery = ô từng người + popup chi tiết.
 4. **Chặn file bị DLP mã hóa** ở cả client (`lib/file-check.ts`) lẫn ai-service.
+5. **API key Gemini riêng từng người** (GV + HV) ở `/profile` → bảng `user_secrets`
+   (migration `20260716000000`). Chưa đặt → fallback key env. Hướng dẫn lấy key
+   ở `/profile` + tab Hướng dẫn.
 
 E2E: phase1 13/13, phase2 10/10, phase3 10/10 (viết lại), phase4 10/10, phase5 8/8.
 

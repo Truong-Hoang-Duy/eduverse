@@ -32,6 +32,7 @@ def generate_review(body: GenerateReviewRequest) -> GenerateReviewResponse:
             "properties": {"comment": {"type": "string"}},
             "required": ["comment"],
         },
+        api_key=body.api_key,
     )
     return GenerateReviewResponse(**data)
 
@@ -72,6 +73,7 @@ def generate_student_summary(body: StudentSummaryRequest) -> StudentSummaryRespo
                 "kho_khan",
             ],
         },
+        api_key=body.api_key,
     )
     return StudentSummaryResponse(**data)
 
@@ -98,5 +100,6 @@ def generate_zalo_summary(body: ZaloSummaryRequest) -> ZaloSummaryResponse:
             "properties": {"message": {"type": "string"}},
             "required": ["message"],
         },
+        api_key=body.api_key,
     )
     return ZaloSummaryResponse(**data)

@@ -11,9 +11,9 @@ const TEACHER_LINKS = [
   { href: "/teacher/assignments", label: "Chấm bài" },
 ];
 
-// Học viên: nav chỉ có Lớp học; 3 khu còn lại đi bằng tab (student-tabs.tsx).
-// exact: tránh "Lớp học" sáng khi đang ở /student/projects.
-const STUDENT_LINKS = [{ href: "/student", label: "Lớp học", exact: true }];
+// Học viên: 3 tab (student-tabs.tsx) là con của "Lớp học" nên nav này sáng
+// suốt cả khu /student/* — không dùng exact.
+const STUDENT_LINKS = [{ href: "/student", label: "Lớp học" }];
 
 export function AppNav({ profile }: { profile: Profile }) {
   const links = profile.role === "teacher" ? TEACHER_LINKS : STUDENT_LINKS;

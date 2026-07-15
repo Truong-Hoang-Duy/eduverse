@@ -40,5 +40,10 @@ def grade_submission(body: GradeSubmissionRequest) -> GradeSubmissionResponse:
         assignment_title=body.assignment_title,
         instructions=body.instructions,
     )
-    data = generate_json(prompt, response_schema=GRADING_SCHEMA, file_parts=file_parts)
+    data = generate_json(
+        prompt,
+        response_schema=GRADING_SCHEMA,
+        file_parts=file_parts,
+        api_key=body.api_key,
+    )
     return GradeSubmissionResponse(**data)

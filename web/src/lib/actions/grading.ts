@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
@@ -100,6 +101,7 @@ export async function gradeFiles(input: {
 
   try {
     const grade = await callAiService<GradeResult>("/grade-submission", {
+      api_key: await getMyApiKey(),
       spec_file_path: assignment.spec_file_path,
       files: input.files.map((f) => ({
         name: f.name,

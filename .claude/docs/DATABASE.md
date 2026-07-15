@@ -34,6 +34,12 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 | `project_comments` | id, project_id, author_id, content, created_at | HV nhận xét lẫn nhau |
 | `zalo_templates` | id, teacher_id, name, template_text | mẫu tin nhắn Zalo |
 | `presentation_groups` | id, class_id UNIQUE, groups JSONB, created_at, updated_at | kết quả random nhóm gần nhất (1/lớp, lưu đè) |
+| `user_secrets` | user_id PK, gemini_api_key, updated_at | API key Gemini riêng của từng người (GV + HV) |
+
+🔐 **Vì sao API key nằm ở bảng riêng, KHÔNG phải `profiles`**: RLS của Postgres là
+theo DÒNG chứ không theo CỘT. `profiles_select` cho GV đọc profile học viên và bạn
+cùng lớp đọc profile của nhau → để key trong `profiles` là lộ key. `user_secrets`
+chỉ có policy `user_id = auth.uid()`, không ai khác đọc được (kể cả GV).
 
 `criteria_breakdown` JSONB dạng:
 `[{"criterion": "Đúng yêu cầu đề", "score": 40, "max": 50}, ...]`

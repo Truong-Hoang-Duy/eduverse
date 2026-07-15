@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
@@ -111,6 +112,7 @@ export async function generateStudentSummary(input: {
     const summary = await callAiService<StudentSummary>(
       "/generate-student-summary",
       {
+        api_key: await getMyApiKey(),
         student_name: student?.full_name ?? "Học viên",
         class_code: cls?.class_code ?? "",
         course_name:
@@ -162,6 +164,7 @@ export async function generateAiReview(
 
   try {
     const data = await callAiService<{ comment: string }>("/generate-review", {
+      api_key: await getMyApiKey(),
       student_name: input.studentName,
       session_title: input.sessionTitle,
       session_content: input.sessionContent,

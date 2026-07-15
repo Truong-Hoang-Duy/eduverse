@@ -1,5 +1,6 @@
 "use server";
 
+import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
 
@@ -62,6 +63,7 @@ export async function generateZaloSummary(input: {
     const data = await callAiService<{ message: string }>(
       "/generate-zalo-summary",
       {
+        api_key: await getMyApiKey(),
         class_code: classCode,
         session_title: session.title ?? `Buổi ${session.session_number}`,
         session_content: session.content ?? "",

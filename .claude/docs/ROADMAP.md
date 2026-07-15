@@ -71,6 +71,10 @@
 - [x] Khu học viên: nav "Lớp học" + 3 tab (SP, SP của lớp, Hướng dẫn); trang
       "Lớp học" chỉ còn thẻ lớp (bỏ danh sách buổi + nhận xét cá nhân); gallery
       dạng ô từng người + popup chi tiết
+- [x] Học viên: nav "Lớp học" sáng suốt cả khu (3 tab là con của nó)
+- [x] **API key Gemini riêng cho từng người** (GV + HV) ở `/profile` — bảng
+      `user_secrets`, RLS chỉ chính chủ; chưa đặt thì fallback key hệ thống.
+      Hướng dẫn lấy key ở cả `/profile` lẫn tab Hướng dẫn.
 - [ ] Merge `feature/grading-rework-ui` → develop → main → push
 
 ## Ý tưởng còn để ngỏ (chưa làm)
