@@ -33,17 +33,12 @@ interface SessionRow {
   session_date: string | null;
 }
 
-interface MyReviewRow {
-  session_id: string;
-  ai_generated_comment: string | null;
-  strengths: string[];
-}
-
 export default async function StudentDashboard() {
   const profile = await requireRole("student");
   const supabase = await createClient();
 
-  const [{ data }, { data: sessionsData }, { data: reviewsData }, { count: projectCount }] =
+  // Không lấy nhận xét cá nhân: học viên không xem nhận xét của giáo viên ở đây.
+  const [{ data }, { data: sessionsData }, { count: projectCount }] =
     await Promise.all([
       supabase
         .from("enrollments")
@@ -56,10 +51,6 @@ export default async function StudentDashboard() {
         .select("id, class_id, session_number, title, content, session_date")
         .order("session_number"),
       supabase
-        .from("student_reviews")
-        .select("session_id, ai_generated_comment, strengths")
-        .eq("student_id", profile.id),
-      supabase
         .from("projects")
         .select("id", { count: "exact", head: true })
         .eq("student_id", profile.id),
@@ -67,9 +58,7 @@ export default async function StudentDashboard() {
 
   const myClasses = (data ?? []) as unknown as MyClassRow[];
   const sessions = (sessionsData ?? []) as SessionRow[];
-  const reviews = (reviewsData ?? []) as MyReviewRow[];
-
-  const commentCount = reviews.filter((r) => r.ai_generated_comment).length;
+  const learnedSessions = sessions.filter((s) => s.content).length;
 
   return (
     <div className="space-y-8">
@@ -81,14 +70,14 @@ export default async function StudentDashboard() {
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Lớp học" value={myClasses.length} hint="Lớp đang tham gia" />
         <StatCard
+          label="Buổi đã học"
+          value={learnedSessions}
+          hint="Buổi đã có nội dung"
+        />
+        <StatCard
           label="Sản phẩm"
           value={projectCount ?? 0}
           hint="Sản phẩm cuối khóa đã khai báo"
-        />
-        <StatCard
-          label="Nhận xét"
-          value={commentCount}
-          hint="Nhận xét từ giáo viên"
         />
       </div>
 
@@ -102,9 +91,9 @@ export default async function StudentDashboard() {
       ) : (
         myClasses.map((row) => {
           if (!row.classes) return null;
-          const classSessions = sessions.filter(
-            (s) => s.class_id === row.classes!.id
-          );
+          const classSessions = sessions
+            .filter((s) => s.class_id === row.classes!.id)
+            .filter((s) => s.content || s.title);
           return (
             <Card
               key={row.id}
@@ -122,62 +111,41 @@ export default async function StudentDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
-                {classSessions.filter((s) => s.content || s.title).length === 0 ? (
+                {classSessions.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     Chưa có nội dung buổi học nào.
                   </p>
                 ) : (
-                  classSessions
-                    .filter((s) => s.content || s.title)
-                    .map((session) => {
-                      const review = reviews.find(
-                        (r) => r.session_id === session.id
-                      );
-                      return (
-                        <details
-                          key={session.id}
-                          className="group rounded-lg border"
-                        >
-                          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3 text-sm [&::-webkit-details-marker]:hidden">
-                            <span className="font-medium">
-                              Buổi {session.session_number}
-                              {session.title ? `: ${session.title}` : ""}
-                            </span>
-                            <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                              {review?.ai_generated_comment && (
-                                <span className="text-primary">
-                                  💬 Có nhận xét
-                                </span>
-                              )}
-                              {session.session_date &&
-                                new Date(session.session_date).toLocaleDateString(
-                                  "vi-VN"
-                                )}
-                              <span className="transition-transform group-open:rotate-180">
-                                ▼
-                              </span>
-                            </span>
-                          </summary>
-                          <div className="space-y-2 border-t p-3 text-sm">
-                            {session.content && (
-                              <p className="whitespace-pre-wrap text-muted-foreground">
-                                {session.content}
-                              </p>
+                  classSessions.map((session) => (
+                    <details key={session.id} className="group rounded-lg border">
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3 text-sm [&::-webkit-details-marker]:hidden">
+                        <span className="font-medium">
+                          Buổi {session.session_number}
+                          {session.title ? `: ${session.title}` : ""}
+                        </span>
+                        <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {session.session_date &&
+                            new Date(session.session_date).toLocaleDateString(
+                              "vi-VN"
                             )}
-                            {review?.ai_generated_comment && (
-                              <div className="rounded-md bg-accent p-3">
-                                <p className="mb-1 text-xs font-semibold text-accent-foreground">
-                                  💬 Nhận xét của giáo viên
-                                </p>
-                                <p className="whitespace-pre-wrap">
-                                  {review.ai_generated_comment}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        </details>
-                      );
-                    })
+                          <span className="transition-transform group-open:rotate-180">
+                            ▼
+                          </span>
+                        </span>
+                      </summary>
+                      <div className="border-t p-3 text-sm">
+                        {session.content ? (
+                          <p className="whitespace-pre-wrap text-muted-foreground">
+                            {session.content}
+                          </p>
+                        ) : (
+                          <p className="text-muted-foreground">
+                            Buổi này chưa có nội dung chi tiết.
+                          </p>
+                        )}
+                      </div>
+                    </details>
+                  ))
                 )}
               </CardContent>
             </Card>

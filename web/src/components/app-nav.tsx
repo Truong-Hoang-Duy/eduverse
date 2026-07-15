@@ -11,12 +11,8 @@ const TEACHER_LINKS = [
   { href: "/teacher/assignments", label: "Chấm bài" },
 ];
 
-const STUDENT_LINKS = [
-  { href: "/student", label: "Lớp của tôi" },
-  { href: "/student/projects", label: "Sản phẩm" },
-  { href: "/student/gallery", label: "Sản phẩm của lớp" },
-  { href: "/student/guide", label: "Hướng dẫn" },
-];
+// Học viên điều hướng bằng tab (student-tabs.tsx), nav chỉ còn logo + menu tài khoản.
+const STUDENT_LINKS: { href: string; label: string }[] = [];
 
 export function AppNav({ profile }: { profile: Profile }) {
   const links = profile.role === "teacher" ? TEACHER_LINKS : STUDENT_LINKS;
@@ -29,7 +25,7 @@ export function AppNav({ profile }: { profile: Profile }) {
             <BrandMark />
             <span className="text-base font-bold tracking-tight">Eduverse</span>
           </Link>
-          <NavLinks links={links} />
+          {links.length > 0 && <NavLinks links={links} />}
         </div>
         <div className="flex items-center gap-1">
           <ThemeToggle />
