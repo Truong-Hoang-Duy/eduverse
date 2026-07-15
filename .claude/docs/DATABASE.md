@@ -33,6 +33,7 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 | `projects` | id, student_id, class_id, name, description, features text[], repo_url, drive_url, demo_url, extra_notes | sản phẩm cuối khóa |
 | `project_comments` | id, project_id, author_id, content, created_at | HV nhận xét lẫn nhau |
 | `zalo_templates` | id, teacher_id, name, template_text | mẫu tin nhắn Zalo |
+| `presentation_groups` | id, class_id UNIQUE, groups JSONB, created_at, updated_at | kết quả random nhóm gần nhất (1/lớp, lưu đè) |
 
 `criteria_breakdown` JSONB dạng:
 `[{"criterion": "Đúng yêu cầu đề", "score": 40, "max": 50}, ...]`

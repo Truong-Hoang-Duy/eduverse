@@ -44,8 +44,12 @@ Giai đoạn 4 CODE XONG trên branch `feature/final-projects`: /student/project
 /student/guide (hướng dẫn GitHub/Drive/deploy, YouTube embed — VIDEOS ID để trống
 trong page.tsx chờ user điền), GV xem sản phẩm ở trang chi tiết lớp. Nav HV thêm
 Sản phẩm/Sản phẩm của lớp/Hướng dẫn. E2E phase 4: 10/10 PASS kèm AI thật.
-Việc tiếp: user click-through UI phase 4 → merge + push → Giai đoạn 5 (random
-nhóm thuyết trình) — là phase tính năng CUỐI trước khi hoàn thiện.
+Giai đoạn 4 đã merge + push (`b12d0f1`). Giai đoạn 5 CODE XONG trên branch
+`feature/presentation-groups`: mục 🎲 Random nhóm thuyết trình trong trang chi
+tiết lớp (chia theo số nhóm / số người/nhóm, hiệu ứng xáo ~0.8s, random lại, nút
+Lưu). Migration `20260715000000_presentation_groups.sql` ĐÃ áp lên Supabase, types
+đã regen. E2E phase 5: 8/8 PASS. Việc tiếp: user click-through → merge + push.
+**Toàn bộ tính năng theo plan đã xong** — sau đó chỉ còn hoàn thiện/đánh bóng.
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
