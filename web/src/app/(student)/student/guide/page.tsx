@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -67,12 +68,10 @@ export default async function GuidePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Hướng dẫn nộp bài</h1>
-        <p className="text-sm text-muted-foreground">
-          Cách đưa sản phẩm cuối khóa lên GitHub, Google Drive và deploy demo
-        </p>
-      </div>
+      <PageHeader
+        title="Hướng dẫn nộp bài"
+        description="Cách đưa sản phẩm cuối khóa lên GitHub, Google Drive và deploy demo"
+      />
 
       {SECTIONS.map((section) => {
         const videoId = toVideoId(VIDEOS[section.key]);

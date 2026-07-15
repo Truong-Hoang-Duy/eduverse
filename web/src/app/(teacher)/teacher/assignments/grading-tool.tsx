@@ -40,8 +40,8 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 80) return "text-green-600";
-  if (score >= 50) return "text-yellow-600";
+  if (score >= 80) return "text-green-600 dark:text-green-400";
+  if (score >= 50) return "text-yellow-600 dark:text-yellow-400";
   return "text-destructive";
 }
 

@@ -164,7 +164,7 @@ export function GroupRandomizer({
 
       {message && (
         <p
-          className={`text-sm ${message.startsWith("✓") ? "text-green-600" : "text-destructive"}`}
+          className={`text-sm ${message.startsWith("✓") ? "text-green-600 dark:text-green-400" : "text-destructive"}`}
         >
           {message}
         </p>

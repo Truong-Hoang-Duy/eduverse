@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -32,12 +33,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Cài đặt</h1>
-        <p className="text-sm text-muted-foreground">
-          Danh mục nhận xét và mẫu tin Zalo dùng chung cho mọi lớp
-        </p>
-      </div>
+      <PageHeader
+        title="Cài đặt"
+        description="Danh mục nhận xét và mẫu tin Zalo dùng chung cho mọi lớp"
+      />
 
       <Card className="shadow-sm">
         <CardHeader>

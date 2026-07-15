@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ProjectCard, type ProjectView } from "@/components/project-card";
+import { StatCard } from "@/components/stat-card";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
@@ -94,6 +95,14 @@ export default async function ClassDetailPage({
 
   const savedGroups = ((groupsData?.groups ?? []) as unknown as PresentationGroup[]) ?? [];
 
+  const sessions = sessionsData ?? [];
+  const filledSessions = sessions.filter((s) => Boolean(s.content)).length;
+  // Tiến độ lớp = tỉ lệ buổi đã soạn nội dung.
+  const progressPercent =
+    cls.total_sessions > 0
+      ? Math.round((filledSessions / cls.total_sessions) * 100)
+      : 0;
+
   const projects = (
     (projectsData ?? []) as unknown as {
       id: string;
@@ -137,13 +146,33 @@ export default async function ClassDetailPage({
                 {cls.courses ? `${cls.courses.code} — ${cls.courses.name}` : ""}
               </Badge>
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              📅 {cls.total_sessions} buổi · 👧 {students.length} học viên
-              {cls.description ? ` · ${cls.description}` : ""}
-            </p>
+            {cls.description && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {cls.description}
+              </p>
+            )}
           </div>
           <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
         </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Sĩ số" value={students.length} hint="Học viên trong lớp" />
+        <StatCard
+          label="Buổi đã soạn"
+          value={`${filledSessions}/${cls.total_sessions}`}
+          hint="Buổi đã có nội dung"
+        />
+        <StatCard
+          label="Sản phẩm"
+          value={projects.length}
+          hint="Sản phẩm cuối khóa đã khai báo"
+        />
+        <StatCard
+          label="Tiến độ lớp"
+          value={`${progressPercent}%`}
+          progress={progressPercent}
+        />
       </div>
 
       <Card className="shadow-sm">
@@ -152,7 +181,7 @@ export default async function ClassDetailPage({
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {(sessionsData ?? []).map((session) => {
+            {sessions.map((session) => {
               const filled = Boolean(session.content);
               return (
                 <Link key={session.id} href={`/teacher/sessions/${session.id}`}>

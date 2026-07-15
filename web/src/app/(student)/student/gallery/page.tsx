@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectCard, type ProjectView } from "@/components/project-card";
 import { requireRole } from "@/lib/get-profile";
@@ -64,12 +65,10 @@ export default async function GalleryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Sản phẩm của lớp</h1>
-        <p className="text-sm text-muted-foreground">
-          Xem sản phẩm của các bạn cùng lớp và để lại nhận xét
-        </p>
-      </div>
+      <PageHeader
+        title="Sản phẩm của lớp"
+        description="Xem sản phẩm của các bạn cùng lớp và để lại nhận xét"
+      />
 
       {projects.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center">

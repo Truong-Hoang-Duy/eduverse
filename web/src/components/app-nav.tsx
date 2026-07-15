@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { BrandMark } from "@/components/brand-mark";
 import { NavLinks } from "@/components/nav-links";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import type { Profile } from "@/lib/types";
 
@@ -30,7 +31,10 @@ export function AppNav({ profile }: { profile: Profile }) {
           </Link>
           <NavLinks links={links} />
         </div>
-        <UserMenu profile={profile} />
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <UserMenu profile={profile} />
+        </div>
       </div>
     </header>
   );

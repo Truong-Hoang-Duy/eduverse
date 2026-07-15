@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -50,12 +51,10 @@ export default async function AssignmentsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Chấm bài</h1>
-        <p className="text-sm text-muted-foreground">
-          Chọn khóa và đề, tải file bài làm lên — AI chấm điểm và nhận xét để bạn copy
-        </p>
-      </div>
+      <PageHeader
+        title="Chấm bài"
+        description="Chọn khóa và đề, tải file bài làm lên — AI chấm điểm và nhận xét để bạn copy"
+      />
 
       {courses.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center">

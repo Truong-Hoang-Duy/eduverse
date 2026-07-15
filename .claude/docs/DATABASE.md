@@ -28,8 +28,8 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 | `student_reviews` | id, session_id, student_id, strengths text[], improvements text[], advice, ai_generated_comment, created_by | nhận xét theo buổi |
 | `review_options` | id, teacher_id, category `strength\|improvement\|advice`, label | lựa chọn radio/checkbox |
 | `assignments` | id, course_id, session_number, title, spec_file_path, instructions, max_score DEFAULT 100, UNIQUE(course_id, session_number) | đề theo KHÓA + BUỔI |
-| `submissions` | id, assignment_id, class_id, student_id, code_file_paths text[], uploaded_by, uploaded_at | GV upload hộ |
-| `grades` | id, submission_id UNIQUE, score 0–100, criteria_breakdown JSONB, ai_comment, graded_at | GV sửa tay được |
+| ~~`submissions`~~ | id, assignment_id, class_id, student_id, code_file_paths text[], uploaded_by, uploaded_at | ⚠️ **SCHEMA CHẾT** — không còn code nào dùng |
+| ~~`grades`~~ | id, submission_id UNIQUE, score 0–100, criteria_breakdown JSONB, ai_comment, graded_at | ⚠️ **SCHEMA CHẾT** — không còn code nào dùng |
 | `projects` | id, student_id, class_id, name, description, features text[], repo_url, drive_url, demo_url, extra_notes | sản phẩm cuối khóa |
 | `project_comments` | id, project_id, author_id, content, created_at | HV nhận xét lẫn nhau |
 | `zalo_templates` | id, teacher_id, name, template_text | mẫu tin nhắn Zalo |
@@ -40,8 +40,13 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 
 ## Storage buckets
 
-- `assignment-specs` — file đề bài (PDF/ảnh/text/md). Chỉ teacher đọc/ghi.
-- `submissions` — file bài làm học viên. Chỉ teacher đọc/ghi (GV upload hộ).
+- `assignment-specs` — file đề bài (PDF/ảnh/text/md). Chỉ teacher đọc/ghi. **Đang dùng.**
+- ~~`submissions`~~ — ⚠️ **KHÔNG CÒN DÙNG**: từ bản chấm bài mới, file bài làm gửi
+  thẳng (base64) sang ai-service và không lưu ở đâu cả.
+
+> **Schema chết**: `submissions` + `grades` + bucket `submissions` là tàn dư của
+> bản chấm bài cũ (chấm theo lớp, lưu điểm). Chức năng chấm bài giờ không lưu gì.
+> Giữ lại trong DB theo yêu cầu user; đừng dùng khi viết tính năng mới.
 
 ## Quy tắc RLS (áp cho MỌI bảng — không bảng nào để trống RLS)
 

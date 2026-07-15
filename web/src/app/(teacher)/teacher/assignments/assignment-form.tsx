@@ -129,7 +129,9 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
               <p className="text-xs text-muted-foreground">Đang upload...</p>
             )}
             {specPath && (
-              <p className="text-xs text-green-600">✓ Đã upload file đề</p>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                ✓ Đã upload file đề
+              </p>
             )}
             {uploadError && (
               <p className="text-xs text-destructive">{uploadError}</p>

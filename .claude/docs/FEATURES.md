@@ -31,14 +31,19 @@
 - CRUD mẫu tin (`zalo_templates`) với placeholder `{ten_lop}` `{buoi}` `{tom_tat}` `{loi_nhan}`.
 - Chọn lớp + buổi → AI tổng hợp từ các nhận xét đã lưu → preview → nút **Copy**.
 
-### Chấm bài tập bằng AI (theo KHÓA HỌC)
-- Trang đề bài: chọn khóa → danh sách buổi → mỗi buổi 1 đề (tiêu đề, file đề
-  PDF/ảnh/text/md, hướng dẫn chấm tùy chọn). Đề dùng chung mọi lớp cùng khóa.
-- Trang chấm: chọn khóa → đề (buổi) → lớp → gắn file bài làm cho từng học viên
-  → bấm "Chấm" → chấm lần lượt có thanh tiến trình.
-- Kết quả: bảng cả lớp (tên, điểm /100, điểm tiêu chí, nhận xét), tô màu theo
-  mức điểm (đỏ <50, vàng 50–79, xanh ≥80), sort/filter, **xuất CSV**,
-  GV **sửa tay điểm/nhận xét** trước khi lưu chốt.
+### Chấm bài bằng AI — công cụ ĐỘC LẬP, KHÔNG theo lớp
+Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.
+
+- **Đề bài (thứ DUY NHẤT được lưu)**: thuộc khóa + số buổi, mỗi buổi 1 đề
+  (unique), file đề PDF/ảnh/text/md lưu ở bucket `assignment-specs`, kèm hướng
+  dẫn chấm tùy chọn. Dùng chung mọi lớp cùng khóa.
+- **Chấm**: chọn khóa → chọn đề → upload file bài làm của **một học sinh mỗi
+  lượt** (nhiều file được) → bấm Chấm. KHÔNG nhập tên học sinh.
+- **Kết quả**: **ô điểm riêng** (/100, tô màu: đỏ <50, vàng 50–79, xanh ≥80) +
+  nhận xét **ngắn gọn dạng gạch đầu dòng** (3-6 ý) + nút **Copy**.
+- **KHÔNG lưu gì**: file bài làm gửi inline (base64) sang ai-service, không qua
+  Storage; kết quả không ghi DB → tải lại trang là mất. Chấm xong copy rồi làm
+  em tiếp theo.
 
 ### Sản phẩm cuối khóa (góc nhìn GV)
 - Xem tất cả sản phẩm của lớp, trang chi tiết để kiểm tra (tên, mô tả, chức năng,

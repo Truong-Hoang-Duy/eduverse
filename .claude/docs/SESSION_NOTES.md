@@ -21,9 +21,15 @@ merge và xóa. Giai đoạn tiếp theo là hoàn thiện/mở rộng theo yêu
 - [x] Deploy: Vercel (web) + Render (ai-service) + Supabase — chi phí 0đ/tháng
 - [x] E2E tổng 43/43 PASS trên DB thật (`web/scripts/e2e-phase{1..5}.mjs`)
 
-**Đang dừng ở:** Vừa sửa trang `/student/guide`: user dán link YouTube đầy đủ
-nhưng code chỉ ghép ID → thêm hàm `toVideoId()` tách ID từ mọi dạng link
-(watch?v= / youtu.be / embed / shorts / ID thuần), 11/11 case PASS.
+**Đang dừng ở:** branch `feature/grading-rework-ui` — CHỜ USER DUYỆT rồi merge.
+1. **Chấm bài viết lại hoàn toàn** (user yêu cầu): độc lập, KHÔNG theo lớp. Chọn
+   khóa → chọn đề (vẫn lưu theo khóa+buổi) → upload file 1 học sinh → điểm ở ô
+   riêng + nhận xét gạch đầu dòng + Copy. KHÔNG lưu kết quả/file (gửi base64
+   inline sang ai-service). `submissions`/`grades` thành schema chết.
+2. **Giao diện mới**: dark mode (nút trên nav, script chống FOUC trong layout),
+   thẻ số liệu (dashboard GV/HV + chi tiết lớp), ô tìm lớp, footer, `AppShell` +
+   `PageHeader` dùng chung. Giữ thương hiệu Eduverse.
+E2E: phase1 13/13, phase2 10/10, phase3 10/10 (mới), phase5 8/8.
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 

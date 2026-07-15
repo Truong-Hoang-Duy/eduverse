@@ -1,3 +1,5 @@
+import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
 import {
   Card,
   CardContent,
@@ -41,7 +43,7 @@ export default async function StudentDashboard() {
   const profile = await requireRole("student");
   const supabase = await createClient();
 
-  const [{ data }, { data: sessionsData }, { data: reviewsData }] =
+  const [{ data }, { data: sessionsData }, { data: reviewsData }, { count: projectCount }] =
     await Promise.all([
       supabase
         .from("enrollments")
@@ -57,21 +59,37 @@ export default async function StudentDashboard() {
         .from("student_reviews")
         .select("session_id, ai_generated_comment, strengths")
         .eq("student_id", profile.id),
+      supabase
+        .from("projects")
+        .select("id", { count: "exact", head: true })
+        .eq("student_id", profile.id),
     ]);
 
   const myClasses = (data ?? []) as unknown as MyClassRow[];
   const sessions = (sessionsData ?? []) as SessionRow[];
   const reviews = (reviewsData ?? []) as MyReviewRow[];
 
+  const commentCount = reviews.filter((r) => r.ai_generated_comment).length;
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Xin chào, {profile.full_name}! 👋
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Đây là các lớp học của bạn
-        </p>
+      <PageHeader
+        title={`Xin chào, ${profile.full_name}! 👋`}
+        description="Đây là các lớp học của bạn"
+      />
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Lớp học" value={myClasses.length} hint="Lớp đang tham gia" />
+        <StatCard
+          label="Sản phẩm"
+          value={projectCount ?? 0}
+          hint="Sản phẩm cuối khóa đã khai báo"
+        />
+        <StatCard
+          label="Nhận xét"
+          value={commentCount}
+          hint="Nhận xét từ giáo viên"
+        />
       </div>
 
       {myClasses.length === 0 ? (
