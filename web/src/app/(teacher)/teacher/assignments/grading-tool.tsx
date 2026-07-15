@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gradeFiles, type GradeResult } from "@/lib/actions/grading";
+import { checkFileReadable } from "@/lib/file-check";
 
 import type { CourseChoice } from "./assignment-form";
 
@@ -75,6 +76,15 @@ export function GradingTool({
     setCopied(false);
     startGrade(async () => {
       try {
+        // Chặn sớm file bị DLP mã hóa — gửi lên AI cũng chỉ nhận bytes rác.
+        for (const f of files) {
+          const unreadable = await checkFileReadable(f);
+          if (unreadable) {
+            setError(unreadable);
+            return;
+          }
+        }
+
         const payload = await Promise.all(
           files.map(async (f) => ({
             name: f.name,

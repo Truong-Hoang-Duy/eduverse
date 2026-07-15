@@ -54,6 +54,7 @@ export default async function AssignmentsPage() {
       <PageHeader
         title="Chấm bài"
         description="Chọn khóa và đề, tải file bài làm lên — AI chấm điểm và nhận xét để bạn copy"
+        action={courses.length > 0 ? <AssignmentForm courses={courses} /> : null}
       />
 
       {courses.length === 0 ? (
@@ -127,10 +128,6 @@ export default async function AssignmentsPage() {
                 </div>
               );
             })}
-
-            <div className="max-w-xl pt-2">
-              <AssignmentForm courses={courses} />
-            </div>
           </section>
         </>
       )}

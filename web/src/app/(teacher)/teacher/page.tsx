@@ -67,6 +67,12 @@ export default async function TeacherDashboard() {
       <PageHeader
         title="Khóa học & lớp"
         description="Quản lý các khóa học và lớp bạn đang dạy"
+        action={
+          <div className="flex gap-2">
+            <CourseForm />
+            <ClassForm courses={courseOptions} />
+          </div>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -94,14 +100,6 @@ export default async function TeacherDashboard() {
       ) : (
         <ClassList classes={classItems} />
       )}
-
-      <section className="space-y-3 border-t pt-6">
-        <h2 className="text-lg font-semibold tracking-tight">Tạo mới</h2>
-        <div className="grid items-start gap-4 md:grid-cols-2">
-          <CourseForm />
-          <ClassForm courses={courseOptions} />
-        </div>
-      </section>
     </div>
   );
 }
