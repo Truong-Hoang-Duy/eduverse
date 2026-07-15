@@ -27,8 +27,20 @@ khi sửa code.
 - [x] Đợt 3: font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp sang khóa khác,
       thêm HV bằng tìm kiếm, hồ sơ full width, responsive cho điện thoại
 - [x] Deploy: Vercel + Render + Supabase — 0đ/tháng
-- [x] **E2E 59/59 PASS** trên DB thật: `e2e-phase{1..5}.mjs` + `e2e-api-key.mjs`
-      (phase3/4 cần ai-service chạy vì gọi Gemini thật)
+- [x] **E2E 74/74 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+
+| Script | Số test | Lệnh |
+|---|---|---|
+| `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/e2e-phase1.mjs` |
+| `e2e-phase2.mjs` | 10 | như trên |
+| `e2e-phase5.mjs` | 8 | như trên |
+| `e2e-api-key.mjs` | 8 | như trên |
+| `e2e-class-admin.mjs` | 15 | như trên |
+| `e2e-phase3.mjs` | 10 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
+| `e2e-phase4.mjs` | 10 | như phase3 |
+
+Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu),
+`scripts/check-user.mjs <username>` (tra 1 tài khoản).
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
@@ -52,9 +64,25 @@ khi sửa code.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
+### Việc USER cần làm (đang treo)
+- 🔴 **Đề bài trong DB đang HỎNG, chấm bài sẽ báo lỗi**: file đề
+  `Screenshot_...png` bị DLP công ty mã hóa (nội dung thật là "SECURE FILE : This
+  file is encrypted"). User phải **xóa đề đó và tạo lại bằng file `.txt`/`.md`**
+  (gõ đề vào Notepad rồi lưu). Hệ thống giờ chặn sớm + báo lỗi rõ, nhưng file cũ
+  đã nằm trong DB từ trước khi có kiểm tra.
+- 🟡 **Chưa ai test responsive bằng trình duyệt thật** — máy không có
+  playwright/puppeteer, tôi chỉ rà tĩnh + sửa các chỗ chắc chắn tràn. User cần mở
+  trên điện thoại (hoặc DevTools Ctrl+Shift+M) kiểm lại.
+- 🟡 Tùy chọn: quay video cho mục "Lấy API key" ở tab Hướng dẫn (`VIDEOS.apikey`
+  đang để trống nên hiện ô chờ).
+
+### Ràng buộc môi trường (không sửa được, phải sống chung)
 - **Migration phải dán tay vào Supabase SQL Editor** — mạng của user CHẶN cổng
   5432/6543, `supabase db push` không dùng được (chỉ cổng 443 mở). Gen types thì
   chạy được: `./node_modules/.bin/supabase gen types typescript --linked`.
+- **DLP công ty mã hóa file** trên máy user → trình duyệt đọc ra bytes rác khi
+  upload. Đã chặn ở `web/src/lib/file-check.ts` + `ai-service/app/storage.py`.
+  Nếu sau này DLP mã hóa cả file code → cần thêm ô dán code dạng text.
 - **`git push --force` bị `.claude/settings.json` chặn** — nếu cần force-push
   (VD viết lại lịch sử), phải đưa lệnh cho user tự chạy.
 - **Git identity**: repo này đặt `user.email = truonghoangduy2612@gmail.com`

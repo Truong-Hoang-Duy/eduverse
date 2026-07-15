@@ -94,16 +94,18 @@ cd ../ai-service
 .venv/Scripts/python -m pytest
 ```
 
-**Test end-to-end trên database thật** (tự tạo và tự xóa dữ liệu test):
+**Test end-to-end trên database thật** — 74 kiểm tra, tự tạo và tự xóa dữ liệu test:
 ```bash
 cd web
-node --env-file=.env.local scripts/e2e-phase1.mjs   # auth, khóa/lớp, RLS
-node --env-file=.env.local scripts/e2e-phase2.mjs   # buổi học, nhận xét
-node --env-file=.env.local scripts/e2e-phase5.mjs   # random nhóm
+node --env-file=.env.local scripts/e2e-phase1.mjs      # auth, khóa/lớp, RLS       (13)
+node --env-file=.env.local scripts/e2e-phase2.mjs      # buổi học, nhận xét        (10)
+node --env-file=.env.local scripts/e2e-phase5.mjs      # random nhóm                (8)
+node --env-file=.env.local scripts/e2e-api-key.mjs     # API key riêng + RLS        (8)
+node --env-file=.env.local scripts/e2e-class-admin.mjs # sửa khóa/lớp, thêm HV     (15)
 
 # 2 bộ này gọi Gemini thật → cần ai-service đang chạy
-node --env-file=.env.local --env-file=../ai-service/.env scripts/e2e-phase3.mjs  # chấm bài
-node --env-file=.env.local --env-file=../ai-service/.env scripts/e2e-phase4.mjs  # sản phẩm
+node --env-file=.env.local --env-file=../ai-service/.env scripts/e2e-phase3.mjs  # chấm bài  (10)
+node --env-file=.env.local --env-file=../ai-service/.env scripts/e2e-phase4.mjs  # sản phẩm  (10)
 ```
 
 Công cụ chẩn đoán:
