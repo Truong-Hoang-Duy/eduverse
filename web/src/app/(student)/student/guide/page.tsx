@@ -9,13 +9,22 @@ import { requireRole } from "@/lib/get-profile";
 
 export const metadata = { title: "Hướng dẫn nộp bài — Eduverse" };
 
-// Điền YouTube video ID vào đây (phần sau "watch?v=" hoặc "youtu.be/").
-// Để trống ("") thì hiện ô chờ thay vì video.
+// Dán link YouTube đầy đủ (watch?v=... / youtu.be/... / shorts/...) hoặc ID
+// thuần đều được. Để trống ("") thì hiện ô chờ thay vì video.
 const VIDEOS = {
-  github: "",
-  drive: "",
-  deploy: "",
+  github: "https://www.youtube.com/watch?v=jVAeaIb-Kyg",
+  drive: "https://www.youtube.com/watch?v=NWEu-bCUuLM",
+  deploy: "https://www.youtube.com/watch?v=X6boIuWzBhg",
 };
+
+/** Tách video ID từ link YouTube mọi dạng; trả "" nếu không nhận ra. */
+function toVideoId(input: string): string {
+  const raw = input.trim();
+  if (!raw) return "";
+  if (/^[\w-]{11}$/.test(raw)) return raw; // đã là ID thuần
+  const match = raw.match(/(?:youtu\.be\/|[?&]v=|\/embed\/|\/shorts\/)([\w-]{11})/);
+  return match?.[1] ?? "";
+}
 
 const SECTIONS = [
   {
@@ -66,7 +75,7 @@ export default async function GuidePage() {
       </div>
 
       {SECTIONS.map((section) => {
-        const videoId = VIDEOS[section.key];
+        const videoId = toVideoId(VIDEOS[section.key]);
         return (
           <Card key={section.key} className="shadow-sm">
             <CardHeader>
