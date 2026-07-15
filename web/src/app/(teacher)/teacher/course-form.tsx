@@ -44,7 +44,7 @@ export function CourseForm() {
         </DialogHeader>
         <form action={formAction}>
           <div className="space-y-3">
-            <div className="grid grid-cols-[100px_1fr] gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[100px_1fr]">
               <div className="space-y-1.5">
                 <Label htmlFor="course-code">Mã *</Label>
                 <Input

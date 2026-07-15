@@ -70,13 +70,13 @@ export function ClassList({ classes }: { classes: ClassItem[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold tracking-tight">Danh sách lớp</h2>
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="🔍 Tìm theo mã lớp hoặc tên khóa..."
-          className="h-9 max-w-xs"
+          className="h-9 w-full sm:max-w-xs"
         />
       </div>
 

@@ -42,6 +42,7 @@ export default async function ClassDetailPage({
     { data: sessionsData },
     { data: projectsData },
     { data: groupsData },
+    { data: coursesData },
   ] = await Promise.all([
     supabase
       .from("classes")
@@ -71,6 +72,7 @@ export default async function ClassDetailPage({
       .select("groups")
       .eq("class_id", id)
       .maybeSingle(),
+    supabase.from("courses").select("id, code, name").order("code"),
   ]);
 
   if (!classData) {
@@ -142,7 +144,7 @@ export default async function ClassDetailPage({
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight">
+            <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-2xl font-bold tracking-tight">
               Lớp {cls.class_code}
               <Badge variant="secondary" className="rounded-md">
                 {cls.courses ? `${cls.courses.code} — ${cls.courses.name}` : ""}
@@ -158,7 +160,9 @@ export default async function ClassDetailPage({
             <EditClassDialog
               classId={cls.id}
               classCode={cls.class_code}
+              courseId={cls.course_id}
               description={cls.description}
+              courses={coursesData ?? []}
             />
             <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
           </div>

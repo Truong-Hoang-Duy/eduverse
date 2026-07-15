@@ -83,7 +83,11 @@
 - [x] GV sửa được khóa học (mã/tên/mô tả) và mã lớp
 - [x] Thêm học viên vào lớp: tìm theo tên hoặc tên tài khoản (RPC `search_students`)
 - [x] Nới khoảng cách nút/icon; sửa lỗi 2 nút trong popup dính nhau (`sm:gap-0`)
-- [x] E2E `e2e-class-admin.mjs` 13/13
+- [x] E2E `e2e-class-admin.mjs` 15/15
+- [x] Sửa lớp: chuyển được sang khóa học khác (giữ nguyên HV + buổi học)
+- [x] Hồ sơ full chiều rộng (2 cột trên máy rộng)
+- [x] Rà responsive toàn app: mọi grid nhiều cột có breakpoint, nav gọn trên
+      điện thoại, ô tìm lớp full width, tiêu đề lớp wrap
 - [ ] Merge lên production
 
 ## Ý tưởng còn để ngỏ (chưa làm)

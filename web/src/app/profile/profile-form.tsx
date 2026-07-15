@@ -24,7 +24,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   );
 
   return (
-    <Card className="max-w-lg">
+    <Card>
       <CardHeader>
         <CardTitle>Thông tin cá nhân</CardTitle>
         <CardDescription>

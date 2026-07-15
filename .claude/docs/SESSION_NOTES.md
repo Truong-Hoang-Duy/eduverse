@@ -70,7 +70,13 @@ ngỏ" trong ROADMAP.md.
   (layout đặt `--font-geist-sans`) → **app xưa nay chạy font mặc định trình
   duyệt, Geist chưa từng được áp**. Đã sửa bằng cách đặt tên biến `--font-sans`.
   Cũng tìm ra 2 nút trong popup dính nhau do `sm:gap-0` đè `gap-2` của DialogFooter.
-- E2E: `e2e-class-admin.mjs` 13/13 (gồm: HV gọi RPC tìm kiếm → rỗng).
+- E2E: `e2e-class-admin.mjs` 15/15 (gồm: HV gọi RPC tìm kiếm → rỗng; chuyển lớp
+  sang khóa khác không mất HV/buổi học).
+- Bổ sung: chuyển lớp sang khóa học khác (trong popup Sửa lớp); hồ sơ full width;
+  rà responsive toàn app (mọi grid nhiều cột có breakpoint).
+- ⚠️ **Chưa test responsive bằng trình duyệt thật** — máy không có
+  playwright/puppeteer và không tự thêm dependency. Mới rà tĩnh + sửa các chỗ
+  chắc chắn tràn. Nếu user báo lỗi hiển thị trên điện thoại thì kiểm chỗ đó trước.
 
 ### 2026-07-16 — Claude / Merge Đợt 2 lên production
 - Làm gì: merge `feature/grading-rework-ui` (8 commit) → develop → main → push

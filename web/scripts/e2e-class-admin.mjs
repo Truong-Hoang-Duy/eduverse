@@ -133,6 +133,42 @@ async function main() {
     .eq("id", cls.id);
   check("Mã lớp trùng lớp khác → bị chặn", dupClass?.code === "23505");
 
+  // ---- Chuyển lớp sang khóa học khác ----
+  const { error: moveErr } = await teacher
+    .from("classes")
+    .update({ course_id: course2.id, class_code: `${CODE2}09` })
+    .eq("id", cls.id);
+  const { data: movedCls } = await teacher
+    .from("classes")
+    .select("course_id, class_code, courses(code)")
+    .eq("id", cls.id)
+    .single();
+  check(
+    "GV chuyển lớp sang khóa học khác",
+    !moveErr && movedCls.course_id === course2.id && movedCls.courses.code === CODE2,
+    moveErr?.message
+  );
+
+  // Chuyển khóa xong: học viên + buổi học vẫn còn nguyên
+  const { data: afterMove } = await teacher
+    .from("enrollments")
+    .select("student_id")
+    .eq("class_id", cls.id);
+  const { data: sessionsAfter } = await teacher
+    .from("sessions")
+    .select("id")
+    .eq("class_id", cls.id);
+  check(
+    "Chuyển khóa không mất học viên và buổi học",
+    afterMove?.some((e) => e.student_id === inClass.id) && sessionsAfter?.length === 3
+  );
+
+  // Chuyển về khóa cũ để phần test sau dùng đúng mã
+  await teacher
+    .from("classes")
+    .update({ course_id: course.id, class_code: `${CODE}09` })
+    .eq("id", cls.id);
+
   // ---- Tìm học viên ----
   const { data: byName } = await teacher.rpc("search_students", {
     p_query: "Ngoài",

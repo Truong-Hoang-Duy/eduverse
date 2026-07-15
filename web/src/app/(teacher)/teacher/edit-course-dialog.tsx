@@ -54,14 +54,14 @@ export function EditCourseDialog({
         <DialogHeader>
           <DialogTitle>Sửa khóa học {code}</DialogTitle>
           <DialogDescription>
-            Đổi mã khóa không làm đổi mã các lớp đã mở (VD lớp JSB01 vẫn giữ tên
-            cũ) — sửa từng lớp nếu muốn.
+            Đổi mã khóa không tự đổi mã các lớp đã mở (VD lớp JSB01 vẫn giữ tên
+            cũ) — vào từng lớp bấm &quot;Sửa lớp&quot; nếu muốn đổi cho khớp.
           </DialogDescription>
         </DialogHeader>
         <form action={formAction}>
           <input type="hidden" name="id" value={courseId} />
           <div className="space-y-3">
-            <div className="grid grid-cols-[100px_1fr] gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[100px_1fr]">
               <div className="space-y-1.5">
                 <Label htmlFor="edit-course-code">Mã *</Label>
                 <Input

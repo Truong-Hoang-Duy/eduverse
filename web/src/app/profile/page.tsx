@@ -16,8 +16,11 @@ export default async function ProfilePage() {
     <AppShell profile={profile}>
       <div className="space-y-6">
         <PageHeader title="Hồ sơ" description="Thông tin tài khoản của bạn" />
-        <ProfileForm profile={profile} />
-        <ApiKeyForm maskedKey={maskedKey} />
+        {/* Full chiều rộng; máy rộng thì xếp 2 cột cho đỡ trống. */}
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          <ProfileForm profile={profile} />
+          <ApiKeyForm maskedKey={maskedKey} />
+        </div>
       </div>
     </AppShell>
   );

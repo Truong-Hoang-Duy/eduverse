@@ -60,13 +60,14 @@ export async function updateClass(
   formData: FormData
 ): Promise<ActionResult> {
   const id = String(formData.get("id") ?? "");
+  const courseId = String(formData.get("course_id") ?? "");
   const classCode = String(formData.get("class_code") ?? "")
     .trim()
     .toUpperCase();
   const description = String(formData.get("description") ?? "").trim();
 
-  if (!id || !classCode) {
-    return { error: "Vui lòng nhập mã lớp." };
+  if (!id || !classCode || !courseId) {
+    return { error: "Vui lòng chọn khóa học và nhập mã lớp." };
   }
   if (!CLASS_CODE_PATTERN.test(classCode)) {
     return { error: "Mã lớp gồm mã khóa + số thứ tự, VD: JSB01, CSI03." };
@@ -75,7 +76,11 @@ export async function updateClass(
   const supabase = await createClient();
   const { error } = await supabase
     .from("classes")
-    .update({ class_code: classCode, description: description || null })
+    .update({
+      course_id: courseId,
+      class_code: classCode,
+      description: description || null,
+    })
     .eq("id", id);
   if (error) {
     if (error.code === "23505") {
