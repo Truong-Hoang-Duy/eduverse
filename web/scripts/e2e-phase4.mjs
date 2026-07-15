@@ -52,11 +52,10 @@ async function main() {
     .insert({ course_id: course.id, class_code: `${CODE}01`, teacher_id: gv.id, total_sessions: 3 })
     .select()
     .single();
-  const { data: clsB } = await teacher
+  // Lớp thứ 2 để test RLS khác lớp (Carol tham gia qua class_code).
+  await teacher
     .from("classes")
-    .insert({ course_id: course.id, class_code: `${CODE}02`, teacher_id: gv.id, total_sessions: 3 })
-    .select()
-    .single();
+    .insert({ course_id: course.id, class_code: `${CODE}02`, teacher_id: gv.id, total_sessions: 3 });
 
   const alice = await makeUser(`e4.alice.${ts}`, { full_name: "Alice", role: "student", class_code: `${CODE}01` });
   const bob = await makeUser(`e4.bob.${ts}`, { full_name: "Bob", role: "student", class_code: `${CODE}01` });

@@ -231,6 +231,38 @@ export type Database = {
           },
         ]
       }
+      presentation_groups: {
+        Row: {
+          class_id: string
+          created_at: string
+          groups: Json
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          groups?: Json
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          groups?: Json
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_groups_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: true
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null

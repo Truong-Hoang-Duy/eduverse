@@ -44,7 +44,9 @@
 - [ ] User click-through UI phase 4 rồi merge develop + main
 
 ## Giai đoạn 5 — Tiện ích + Deploy
-- [ ] Random nhóm thuyết trình
+- [x] Random nhóm thuyết trình (mục trong trang chi tiết lớp: chia theo số nhóm
+      hoặc số người/nhóm, hiệu ứng xáo trộn, random lại, lưu kết quả cuối —
+      bảng `presentation_groups`, 1 kết quả/lớp). E2E phase 5: 8/8 PASS.
 - [x] Chuẩn bị deploy: render.yaml + DEPLOY.md (hướng dẫn Vercel/Render/GitHub)
 - [ ] User thực hiện deploy theo DEPLOY.md (GitHub → Render → Vercel)
 - [ ] Kiểm thử end-to-end theo checklist Verification trong plan

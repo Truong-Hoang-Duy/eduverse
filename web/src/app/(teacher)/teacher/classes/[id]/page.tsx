@@ -13,7 +13,10 @@ import { ProjectCard, type ProjectView } from "@/components/project-card";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
+import type { PresentationGroup } from "@/lib/actions/groups";
+
 import { DeleteClassButton } from "./delete-class-button";
+import { GroupRandomizer } from "./group-randomizer";
 import { StudentSummaryPanel } from "./student-summary-panel";
 import {
   StudentsTable,
@@ -35,6 +38,7 @@ export default async function ClassDetailPage({
     { data: allClasses },
     { data: sessionsData },
     { data: projectsData },
+    { data: groupsData },
   ] = await Promise.all([
     supabase
       .from("classes")
@@ -59,6 +63,11 @@ export default async function ClassDetailPage({
       )
       .eq("class_id", id)
       .order("updated_at", { ascending: false }),
+    supabase
+      .from("presentation_groups")
+      .select("groups")
+      .eq("class_id", id)
+      .maybeSingle(),
   ]);
 
   if (!classData) {
@@ -82,6 +91,8 @@ export default async function ClassDetailPage({
   )
     .filter((c) => c.id !== id)
     .map((c) => ({ id: c.id, classCode: c.class_code }));
+
+  const savedGroups = ((groupsData?.groups ?? []) as unknown as PresentationGroup[]) ?? [];
 
   const projects = (
     (projectsData ?? []) as unknown as {
@@ -206,6 +217,23 @@ export default async function ClassDetailPage({
               id: s.studentId,
               fullName: s.fullName,
             }))}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">🎲 Random nhóm thuyết trình</CardTitle>
+          <CardDescription>
+            Chia nhóm ngẫu nhiên theo số nhóm hoặc số người mỗi nhóm — random lại
+            thoải mái, bấm Lưu để giữ kết quả cuối.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <GroupRandomizer
+            classId={cls.id}
+            students={students.map((s) => ({ id: s.studentId, name: s.fullName }))}
+            savedGroups={savedGroups}
           />
         </CardContent>
       </Card>
