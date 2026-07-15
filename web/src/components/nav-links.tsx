@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 export interface NavLink {
   href: string;
   label: string;
+  /** Chỉ sáng khi URL trùng khít, không tính trang con. */
+  exact?: boolean;
 }
 
 export function NavLinks({ links }: { links: NavLink[] }) {
@@ -15,7 +17,11 @@ export function NavLinks({ links }: { links: NavLink[] }) {
 
   // Link khớp dài nhất thắng (VD /teacher/settings không làm sáng cả /teacher).
   const activeHref = links
-    .filter((l) => pathname === l.href || pathname.startsWith(`${l.href}/`))
+    .filter((l) =>
+      l.exact
+        ? pathname === l.href
+        : pathname === l.href || pathname.startsWith(`${l.href}/`)
+    )
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   return (

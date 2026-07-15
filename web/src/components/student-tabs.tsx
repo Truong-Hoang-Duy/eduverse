@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
+// "Lớp học" nằm ở nav, không phải tab. Ở /student sẽ không tab nào sáng.
 const TABS = [
-  { href: "/student", label: "Lớp của tôi" },
   { href: "/student/projects", label: "Sản phẩm" },
   { href: "/student/gallery", label: "Sản phẩm của lớp" },
   { href: "/student/guide", label: "Hướng dẫn" },

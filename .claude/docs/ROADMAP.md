@@ -68,8 +68,9 @@
 - [x] Form tạo mới (khóa/lớp/đề) chuyển sang popup; mọi hành động xóa có
       `ConfirmDialog`; con trỏ bàn tay toàn cục
 - [x] Chặn file bị DLP công ty mã hóa + báo lỗi rõ (cả client lẫn ai-service)
-- [x] Khu học viên: 4 tab; "Lớp của tôi" bỏ nhận xét cá nhân; gallery dạng ô
-      từng người + popup chi tiết
+- [x] Khu học viên: nav "Lớp học" + 3 tab (SP, SP của lớp, Hướng dẫn); trang
+      "Lớp học" chỉ còn thẻ lớp (bỏ danh sách buổi + nhận xét cá nhân); gallery
+      dạng ô từng người + popup chi tiết
 - [ ] Merge `feature/grading-rework-ui` → develop → main → push
 
 ## Ý tưởng còn để ngỏ (chưa làm)

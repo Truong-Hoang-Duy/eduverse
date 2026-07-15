@@ -31,8 +31,9 @@ rồi merge** → develop → main → push (Vercel tự deploy). Nội dung đ�
 2. **Giao diện**: dark mode (không FOUC), stat card, ô tìm lớp, footer,
    `AppShell`/`PageHeader`; form tạo mới → popup; xóa → `ConfirmDialog`; con trỏ
    bàn tay toàn cục. Giữ thương hiệu Eduverse.
-3. **Khu học viên**: 4 tab (`student-tabs.tsx` ở layout, nav không còn link);
-   "Lớp của tôi" bỏ hẳn nhận xét cá nhân; gallery = ô từng người + popup chi tiết.
+3. **Khu học viên**: nav có "Lớp học" (`/student`) + 3 tab (Sản phẩm, SP của lớp,
+   Hướng dẫn) ở `student-tabs.tsx`. Trang "Lớp học" CHỈ hiện thẻ lớp — bỏ hẳn
+   danh sách buổi và nhận xét cá nhân. Gallery = ô từng người + popup chi tiết.
 4. **Chặn file bị DLP mã hóa** ở cả client (`lib/file-check.ts`) lẫn ai-service.
 
 E2E: phase1 13/13, phase2 10/10, phase3 10/10 (viết lại), phase4 10/10, phase5 8/8.

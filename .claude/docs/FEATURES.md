@@ -68,11 +68,14 @@ Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.
 
 ## Học viên
 
-Điều hướng bằng **4 tab** (`components/student-tabs.tsx`, render ở layout — nav
-trên cùng KHÔNG có link cho học viên):
+Điều hướng: nav trên cùng có **"Lớp học"** (`exact: true` để không sáng khi đang
+ở tab con); 3 khu còn lại đi bằng **tab** (`components/student-tabs.tsx`, render ở
+layout nên hiện ở mọi trang — ở `/student` không tab nào sáng).
 
-- **Lớp của tôi:** nội dung từng buổi học. **KHÔNG hiện nhận xét cá nhân của giáo
-  viên** (không query luôn `student_reviews` — nhận xét chỉ để GV gửi phụ huynh).
+- **Lớp học** (nav, `/student`): CHỈ thẻ thông tin lớp — mã lớp, khóa, tổng số
+  buổi, ngày tham gia. **KHÔNG liệt kê từng buổi** và **KHÔNG hiện nhận xét cá
+  nhân** (không query `sessions` lẫn `student_reviews`; nhận xét chỉ để GV gửi
+  phụ huynh).
 - **Sản phẩm:** CRUD sản phẩm của chính mình (1 sản phẩm/lớp) — tên, mô tả, danh
   sách chức năng, link GitHub/Drive/demo, ghi chú. Nút **AI gợi ý tính năng** →
   3–5 gợi ý kèm độ khó, bấm để thêm vào danh sách.

@@ -26,7 +26,7 @@
 web/src/
 ├── app/(auth)/          # login, signup (student + teacher-invite)
 ├── app/(teacher)/       # GV: courses+classes, sessions, assignments (chấm bài), settings
-├── app/(student)/       # HV: 4 tab — lớp, projects, gallery, guide
+├── app/(student)/       # HV: nav "Lớp học" (/student) + 3 tab: projects, gallery, guide
 ├── components/          # dùng chung: app-shell/nav/footer, page-header, stat-card,
 │                        # confirm-dialog, theme-toggle, student-tabs, project-card
 ├── components/ui/       # shadcn/ui
