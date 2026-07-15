@@ -16,7 +16,9 @@ import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
 import type { PresentationGroup } from "@/lib/actions/groups";
 
+import { AddStudentDialog } from "./add-student-dialog";
 import { DeleteClassButton } from "./delete-class-button";
+import { EditClassDialog } from "./edit-class-dialog";
 import { GroupRandomizer } from "./group-randomizer";
 import { StudentSummaryPanel } from "./student-summary-panel";
 import {
@@ -40,6 +42,7 @@ export default async function ClassDetailPage({
     { data: sessionsData },
     { data: projectsData },
     { data: groupsData },
+    { data: coursesData },
   ] = await Promise.all([
     supabase
       .from("classes")
@@ -69,6 +72,7 @@ export default async function ClassDetailPage({
       .select("groups")
       .eq("class_id", id)
       .maybeSingle(),
+    supabase.from("courses").select("id, code, name").order("code"),
   ]);
 
   if (!classData) {
@@ -140,7 +144,7 @@ export default async function ClassDetailPage({
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="flex items-center gap-3 text-2xl font-bold tracking-tight">
+            <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-2xl font-bold tracking-tight">
               Lớp {cls.class_code}
               <Badge variant="secondary" className="rounded-md">
                 {cls.courses ? `${cls.courses.code} — ${cls.courses.name}` : ""}
@@ -152,7 +156,16 @@ export default async function ClassDetailPage({
               </p>
             )}
           </div>
-          <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
+          <div className="flex flex-wrap items-center gap-2">
+            <EditClassDialog
+              classId={cls.id}
+              classCode={cls.class_code}
+              courseId={cls.course_id}
+              description={cls.description}
+              courses={coursesData ?? []}
+            />
+            <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
+          </div>
         </div>
       </div>
 
@@ -216,8 +229,15 @@ export default async function ClassDetailPage({
       </Card>
 
       <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Danh sách học viên</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <CardTitle className="text-base">
+            Danh sách học viên ({students.length})
+          </CardTitle>
+          <AddStudentDialog
+            classId={cls.id}
+            classCode={cls.class_code}
+            existingStudentIds={students.map((s) => s.studentId)}
+          />
         </CardHeader>
         <CardContent>
           <StudentsTable

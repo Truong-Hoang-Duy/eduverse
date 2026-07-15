@@ -651,6 +651,14 @@ export type Database = {
           course_name: string
         }[]
       }
+      search_students: {
+        Args: { p_query: string }
+        Returns: {
+          full_name: string
+          id: string
+          username: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

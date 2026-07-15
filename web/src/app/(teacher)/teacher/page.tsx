@@ -54,6 +54,7 @@ export default async function TeacherDashboard() {
       courseId: cls.course_id,
       courseCode: course?.code ?? "",
       courseName: course?.name ?? "",
+      courseDescription: course?.description ?? null,
       totalSessions: cls.total_sessions,
       studentCount: cls.enrollments[0]?.count ?? 0,
       description: cls.description,

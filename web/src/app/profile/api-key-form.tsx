@@ -32,7 +32,7 @@ export function ApiKeyForm({ maskedKey }: { maskedKey: string | null }) {
   const [editing, setEditing] = useState(false);
 
   return (
-    <Card className="max-w-lg">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">🔑 API key Gemini của riêng bạn</CardTitle>
         <CardDescription>

@@ -68,6 +68,15 @@ chỉ có policy `user_id = auth.uid()`, không ai khác đọc được (kể c
 CỦA CHÍNH MÌNH → **học viên không liệt kê được bạn cùng lớp**. Muốn hiện danh
 sách lớp cho HV (VD gallery hiện cả bạn chưa có sản phẩm) thì phải viết migration
 mở policy này. Hiện gallery đi vòng: lấy từ `projects` (HV cùng lớp xem được).
+
+## RPC (SECURITY DEFINER — đi vòng RLS, tự kiểm quyền bên trong)
+
+| Hàm | Ai gọi | Việc |
+|---|---|---|
+| `get_class_id_by_code(code)` | anon | tra lớp khi HV đăng ký |
+| `list_available_classes()` | anon | combo box chọn lớp lúc đăng ký |
+| `get_email_by_username(username)` | anon | đổi username → email ảo để đăng nhập |
+| `search_students(query)` | **chỉ teacher** (`is_teacher()`) | tìm HV theo tên/username để thêm vào lớp — cần RPC vì `profiles_select` chỉ cho GV thấy HV ĐÃ ở lớp mình. Chỉ trả id/full_name/username. |
 - Helper function `is_teacher_of_class(class_id)` / `is_enrolled(class_id)`
   (SECURITY DEFINER) để tránh RLS đệ quy.
 

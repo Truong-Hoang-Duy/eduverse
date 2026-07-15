@@ -62,6 +62,22 @@ ngỏ" trong ROADMAP.md.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
 
+### 2026-07-16 (sau) — Claude / Đợt 3: font, sửa khóa/lớp, thêm HV
+- Làm gì: font Be Vietnam Pro; GV sửa được khóa học + mã lớp; thêm HV vào lớp
+  bằng tìm kiếm tên/username (RPC `search_students`, migration `20260717000000`);
+  nới khoảng cách nút/icon.
+- Phát hiện: `--font-sans` trong globals.css trỏ vào biến layout không hề đặt
+  (layout đặt `--font-geist-sans`) → **app xưa nay chạy font mặc định trình
+  duyệt, Geist chưa từng được áp**. Đã sửa bằng cách đặt tên biến `--font-sans`.
+  Cũng tìm ra 2 nút trong popup dính nhau do `sm:gap-0` đè `gap-2` của DialogFooter.
+- E2E: `e2e-class-admin.mjs` 15/15 (gồm: HV gọi RPC tìm kiếm → rỗng; chuyển lớp
+  sang khóa khác không mất HV/buổi học).
+- Bổ sung: chuyển lớp sang khóa học khác (trong popup Sửa lớp); hồ sơ full width;
+  rà responsive toàn app (mọi grid nhiều cột có breakpoint).
+- ⚠️ **Chưa test responsive bằng trình duyệt thật** — máy không có
+  playwright/puppeteer và không tự thêm dependency. Mới rà tĩnh + sửa các chỗ
+  chắc chắn tràn. Nếu user báo lỗi hiển thị trên điện thoại thì kiểm chỗ đó trước.
+
 ### 2026-07-16 — Claude / Merge Đợt 2 lên production
 - Làm gì: merge `feature/grading-rework-ui` (8 commit) → develop → main → push
   (`7399f06`), xóa nhánh. Trước đó thêm API key riêng từng người + hướng dẫn lấy key.

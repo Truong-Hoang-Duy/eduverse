@@ -74,7 +74,7 @@ export function StudentsTable({
               <TableCell className="font-medium">{student.fullName}</TableCell>
               <TableCell>{student.username ?? "—"}</TableCell>
               <TableCell>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <form action={formAction} className="flex items-center gap-2">
                     <input
                       type="hidden"

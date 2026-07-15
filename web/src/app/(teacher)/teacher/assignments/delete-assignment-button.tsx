@@ -16,7 +16,7 @@ export function DeleteAssignmentButton({
         <button
           type="button"
           aria-label={`Xóa đề ${title}`}
-          className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
+          className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
         >
           ✕
         </button>

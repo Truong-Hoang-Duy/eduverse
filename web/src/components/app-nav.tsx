@@ -20,15 +20,18 @@ export function AppNav({ profile }: { profile: Profile }) {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3 sm:gap-4">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+          <Link href="/" className="flex shrink-0 items-center gap-2">
             <BrandMark />
-            <span className="text-base font-bold tracking-tight">Eduverse</span>
+            {/* Ẩn chữ trên điện thoại để nav không tràn — logo là đủ nhận diện. */}
+            <span className="hidden text-base font-bold tracking-tight sm:inline">
+              Eduverse
+            </span>
           </Link>
           {links.length > 0 && <NavLinks links={links} />}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <ThemeToggle />
           <UserMenu profile={profile} />
         </div>
