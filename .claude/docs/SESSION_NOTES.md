@@ -6,17 +6,20 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude — /handoff)
 
-**Đang làm:** Không có task dở. **Toàn bộ 5 giai đoạn + 3 đợt cải tiến đã merge và
-chạy trên production** (`main` = `develop` = `origin/main` = `c73a998`). Không còn
-nhánh feature nào. Việc tiếp theo tùy yêu cầu mới của user — xem "Ý tưởng còn để
-ngỏ" trong ROADMAP.md.
+**Đang làm:** KHÔNG có task dở, không có blocker về code. **5 giai đoạn + 3 đợt
+cải tiến đều đã merge và chạy production**; `main` = `develop` = `origin` =
+`fe5f4d5`; working tree sạch; không còn nhánh feature. Việc tiếp theo tùy yêu cầu
+user — xem "Ý tưởng còn để ngỏ" ở cuối ROADMAP.md.
 
-⚠️ **Nhắc bản thân**: đợt 3 tôi đã lỡ commit thẳng vào `main` (vi phạm
-`.claude/rules/git-workflow.md`), phải tách lại sang nhánh feature rồi merge.
-Mỗi đợt việc mới: `git checkout develop && git checkout -b feature/<slug>` TRƯỚC
-khi sửa code.
+**Bắt đầu phiên sau thế nào:** đọc mục "Vấn đề đang mở" bên dưới TRƯỚC (có 1 việc
+🔴 của user đang treo), rồi `git checkout develop && git checkout -b feature/<slug>`
+**trước khi sửa bất kỳ dòng code nào**.
+
+⚠️ **Bài học phiên này**: tôi đã lỡ commit thẳng 2 commit vào `main` (vi phạm
+`.claude/rules/git-workflow.md`), phải `git branch feature/x <sha>` +
+`git reset --hard origin/main` rồi merge lại đúng luồng. May là chưa push.
 
 **Tiến độ (chi tiết ở ROADMAP.md):**
 - [x] GĐ 1–5: auth username, khóa/lớp, buổi học + nhận xét AI, tin Zalo, chấm bài
@@ -61,6 +64,14 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   Chỉ lưu ĐỀ BÀI; file bài làm + kết quả KHÔNG lưu (gửi inline, copy xong là hết).
   AI trả `{score, bullets}` — điểm ô riêng, nhận xét gạch đầu dòng ngắn.
 - Quy mô nhỏ: 1 giáo viên + học viên của mình (<200) → free tier dư.
+- **API key Gemini để ở bảng `user_secrets` riêng, KHÔNG phải cột trong `profiles`**
+  — RLS Postgres theo DÒNG không theo CỘT, mà GV đọc được profile của HV và HV
+  cùng lớp đọc được của nhau → để trong `profiles` là lộ key.
+- **Font Be Vietnam Pro**, biến CSS phải tên `--font-sans` để khớp `@theme` trong
+  globals.css. Đặt tên khác → font không áp mà KHÔNG báo lỗi gì (đã dính 1 lần:
+  app chạy font mặc định trình duyệt suốt từ đầu dự án đến 2026-07-16).
+- **Chuyển lớp sang khóa khác được**, nhưng `total_sessions` KHÔNG cho sửa —
+  sessions sinh 1 lần bằng trigger lúc tạo lớp, đổi số sẽ lệch dữ liệu.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
@@ -97,45 +108,43 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
 
-### 2026-07-16 (sau) — Claude / Đợt 3: font, sửa khóa/lớp, thêm HV
-- Làm gì: font Be Vietnam Pro; GV sửa được khóa học + mã lớp; thêm HV vào lớp
-  bằng tìm kiếm tên/username (RPC `search_students`, migration `20260717000000`);
-  nới khoảng cách nút/icon.
-- Phát hiện: `--font-sans` trong globals.css trỏ vào biến layout không hề đặt
-  (layout đặt `--font-geist-sans`) → **app xưa nay chạy font mặc định trình
-  duyệt, Geist chưa từng được áp**. Đã sửa bằng cách đặt tên biến `--font-sans`.
-  Cũng tìm ra 2 nút trong popup dính nhau do `sm:gap-0` đè `gap-2` của DialogFooter.
-- E2E: `e2e-class-admin.mjs` 15/15 (gồm: HV gọi RPC tìm kiếm → rỗng; chuyển lớp
-  sang khóa khác không mất HV/buổi học).
-- Bổ sung: chuyển lớp sang khóa học khác (trong popup Sửa lớp); hồ sơ full width;
-  rà responsive toàn app (mọi grid nhiều cột có breakpoint).
-- ⚠️ **Chưa test responsive bằng trình duyệt thật** — máy không có
-  playwright/puppeteer và không tự thêm dependency. Mới rà tĩnh + sửa các chỗ
-  chắc chắn tràn. Nếu user báo lỗi hiển thị trên điện thoại thì kiểm chỗ đó trước.
+### 2026-07-16 — Claude / Đợt 3 + merge Đợt 2 (`3e09924` → `fe5f4d5`)
+**Xong & đã lên production:**
+- Merge Đợt 2 (`feature/grading-rework-ui`, 8 commit → `7399f06`).
+- Đợt 3 (`feature/class-admin-ui` → `c73a998`): font **Be Vietnam Pro**; GV sửa
+  khóa học (mã/tên/mô tả) + mã lớp + **chuyển lớp sang khóa khác**; **thêm HV vào
+  lớp bằng tìm kiếm tên/username** (RPC `search_students`, migration
+  `20260717000000` — đã áp); hồ sơ full width 2 cột; rà responsive; nới khoảng
+  cách nút/icon.
+- File chính mới: `edit-course-dialog.tsx`, `classes/[id]/edit-class-dialog.tsx`,
+  `classes/[id]/add-student-dialog.tsx`, `scripts/e2e-class-admin.mjs`.
 
-### 2026-07-16 — Claude / Merge Đợt 2 lên production
-- Làm gì: merge `feature/grading-rework-ui` (8 commit) → develop → main → push
-  (`7399f06`), xóa nhánh. Trước đó thêm API key riêng từng người + hướng dẫn lấy key.
+**3 lỗi âm thầm tìm ra (đáng nhớ):**
+1. `--font-sans` trong globals.css trỏ vào biến layout chưa từng đặt (layout đặt
+   `--font-geist-sans`) → **app chạy font mặc định trình duyệt từ đầu dự án**,
+   không hề báo lỗi. Sửa: đặt tên biến font là `--font-sans`.
+2. 2 nút trong popup dính nhau do `ConfirmDialog` truyền `sm:gap-0` đè `gap-2`
+   mặc định của `DialogFooter`.
+3. Tôi commit thẳng vào `main` → phải tách nhánh + reset rồi merge lại.
+
+**Kiểm chứng:** E2E **74/74** (`e2e-class-admin.mjs` 15/15 mới), pytest 4/4,
+build sạch — chạy lại SAU merge chứ không chỉ trước.
+
+**Còn treo:** xem mục "Vấn đề đang mở" — 🔴 đề bài trong DB bị DLP mã hóa (user
+phải tạo lại bằng `.txt`/`.md`), 🟡 chưa test responsive trên trình duyệt thật.
+
+### 2026-07-16 (trước) — Claude / API key riêng từng người
+- Làm gì: thêm API key Gemini riêng cho GV + HV (`user_secrets`, migration
+  `20260716000000`) + hướng dẫn lấy key ở `/profile` và tab Hướng dẫn.
 - Kết quả: E2E 59/59, pytest 4/4, build sạch. Production đã có bản mới.
 - Việc để lại: **user phải tạo lại đề bài** (file cũ bị DLP mã hóa nên không chấm
   được); có thể quay video cho mục "Lấy API key" trong tab Hướng dẫn (`VIDEOS.apikey`).
 
-### 2026-07-15 (chiều) — Claude / Viết lại chấm bài + làm mới giao diện
-- Làm gì: xem ROADMAP mục "Đợt 2" — chấm bài thành công cụ độc lập, dark mode,
-  stat card, popup tạo/xóa, khu học viên chia tab, gallery dạng ô từng người.
-- Phát hiện đáng nhớ: lỗi "Lỗi khi gọi AI" khi chấm KHÔNG do nhiều file — file đề
-  (screenshot .png) bị **DLP công ty mã hóa**, nội dung thật là "SECURE FILE :
-  This file is encrypted" → Gemini trả 400 "Unable to process input image".
-  Đã chặn sớm + báo lỗi rõ. **User cần tạo lại đề bằng file .txt/.md hoặc file
-  lưu ở thư mục không bị mã hóa.**
-- Việc để lại: user duyệt → merge `feature/grading-rework-ui` → push.
-
-### 2026-07-15 (sáng) — Claude / Hoàn tất GĐ 4-5 + fix video hướng dẫn
-- Làm gì: merge GĐ 3+UI (`c12ef37`) → GĐ 4 sản phẩm cuối khóa (`b12d0f1`) → GĐ 5
-  random nhóm (`e959b2e`), tất cả đã push production. Fix Vercel chặn deploy do
-  git author là email công ty (viết lại toàn bộ lịch sử sang identity cá nhân,
-  user tự force-push). Fix `/student/guide` nhận link YouTube đầy đủ.
-- Kết quả: **dự án hoàn tất toàn bộ tính năng theo plan**, E2E 43/43.
-- Việc để lại: không có task bắt buộc. Ý tưởng mở rộng: hiện nhóm thuyết trình cho
-  HV xem (RLS đã cho phép SELECT, chỉ thiếu UI), đánh bóng UI, tính năng mới theo
-  yêu cầu user.
+### 2026-07-15 — Claude / Đợt 2 (chấm bài + giao diện) & hoàn tất GĐ 4-5
+- Đợt 2 (chi tiết ở ROADMAP): chấm bài thành công cụ độc lập không lưu gì, dark
+  mode, stat card, popup, ConfirmDialog, khu HV chia tab, gallery ô từng người.
+- Merge GĐ 4 (`b12d0f1`) + GĐ 5 (`e959b2e`) → hoàn tất toàn bộ tính năng theo plan.
+- Chẩn đoán quan trọng: lỗi "Lỗi khi gọi AI" **không phải do nhiều file** — file
+  đề bị DLP mã hóa (xem "Vấn đề đang mở"). Fix Vercel chặn deploy do git author
+  là email công ty (xem "Ràng buộc môi trường"). Fix `/student/guide` nhận link
+  YouTube đầy đủ chứ không chỉ ID.
