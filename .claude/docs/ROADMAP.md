@@ -60,7 +60,7 @@
 - [x] AI: xưng "em" (không "con"); tin Zalo nhận xét CHUNG, không nêu tên HV
 - [x] Thêm nhận xét tổng hợp từng HV (5 tiêu chí) — `/generate-student-summary`
 
-### Đợt 2 (branch `feature/grading-rework-ui`, CHỜ USER DUYỆT → merge)
+### Đợt 2 (đã merge lên production — `7399f06`)
 - [x] **Chấm bài viết lại**: công cụ độc lập, không theo lớp; chỉ lưu đề bài;
       file bài làm gửi inline (không lưu); kết quả = ô điểm riêng + bullets + Copy
 - [x] Giao diện: dark mode (không FOUC), stat card, ô tìm lớp, footer,
@@ -75,7 +75,7 @@
 - [x] **API key Gemini riêng cho từng người** (GV + HV) ở `/profile` — bảng
       `user_secrets`, RLS chỉ chính chủ; chưa đặt thì fallback key hệ thống.
       Hướng dẫn lấy key ở cả `/profile` lẫn tab Hướng dẫn.
-- [ ] Merge `feature/grading-rework-ui` → develop → main → push
+- [x] Merge `feature/grading-rework-ui` → develop → main → push (Vercel tự deploy)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)

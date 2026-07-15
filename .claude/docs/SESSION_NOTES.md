@@ -6,40 +6,22 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-15, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude)
 
-**Đang làm:** Không có task dở. **Toàn bộ 5 giai đoạn theo plan đã xong và chạy
-trên production.** Nhánh `main` = `develop` = `origin/main`; các nhánh feature đã
-merge và xóa. Giai đoạn tiếp theo là hoàn thiện/mở rộng theo yêu cầu mới của user.
+**Đang làm:** Không có task dở. **Toàn bộ 5 giai đoạn + 2 đợt cải tiến đã merge và
+chạy trên production** (`main` = `develop` = `origin/main` = `7399f06`). Không còn
+nhánh feature nào. Việc tiếp theo tùy yêu cầu mới của user — xem "Ý tưởng còn để
+ngỏ" trong ROADMAP.md.
 
-**Tiến độ (xem chi tiết ROADMAP.md):**
-- [x] GĐ 1 — Auth bằng username (không dùng email) + CRUD khóa học/lớp, chuyển lớp
-- [x] GĐ 2 — Buổi học, nhận xét AI theo buổi, tin Zalo (copy tay), nhận xét tổng hợp/HV
-- [x] GĐ 3 — Chấm bài AI theo đề của khóa (upload đề + bài làm, bảng điểm /100, CSV)
-- [x] GĐ 4 — Sản phẩm cuối khóa, gallery + bình luận, AI gợi ý tính năng, trang hướng dẫn
-- [x] GĐ 5 — Random nhóm thuyết trình (chia đều, lưu kết quả cuối)
-- [x] Deploy: Vercel (web) + Render (ai-service) + Supabase — chi phí 0đ/tháng
-- [x] E2E tổng 43/43 PASS trên DB thật (`web/scripts/e2e-phase{1..5}.mjs`)
-
-**Đang dừng ở:** branch `feature/grading-rework-ui` (5 commit) — **CHỜ USER DUYỆT
-rồi merge** → develop → main → push (Vercel tự deploy). Nội dung đợt này:
-
-1. **Chấm bài viết lại**: công cụ độc lập, KHÔNG theo lớp/học viên. Chọn khóa →
-   chọn đề (vẫn lưu theo khóa+buổi) → upload file 1 học sinh → **ô điểm riêng** +
-   nhận xét gạch đầu dòng + Copy. KHÔNG lưu kết quả/file (gửi base64 inline).
-   `submissions`/`grades` thành schema chết.
-2. **Giao diện**: dark mode (không FOUC), stat card, ô tìm lớp, footer,
-   `AppShell`/`PageHeader`; form tạo mới → popup; xóa → `ConfirmDialog`; con trỏ
-   bàn tay toàn cục. Giữ thương hiệu Eduverse.
-3. **Khu học viên**: nav có "Lớp học" (`/student`) + 3 tab (Sản phẩm, SP của lớp,
-   Hướng dẫn) ở `student-tabs.tsx`. Trang "Lớp học" CHỈ hiện thẻ lớp — bỏ hẳn
-   danh sách buổi và nhận xét cá nhân. Gallery = ô từng người + popup chi tiết.
-4. **Chặn file bị DLP mã hóa** ở cả client (`lib/file-check.ts`) lẫn ai-service.
-5. **API key Gemini riêng từng người** (GV + HV) ở `/profile` → bảng `user_secrets`
-   (migration `20260716000000`). Chưa đặt → fallback key env. Hướng dẫn lấy key
-   ở `/profile` + tab Hướng dẫn.
-
-E2E: phase1 13/13, phase2 10/10, phase3 10/10 (viết lại), phase4 10/10, phase5 8/8.
+**Tiến độ (chi tiết ở ROADMAP.md):**
+- [x] GĐ 1–5: auth username, khóa/lớp, buổi học + nhận xét AI, tin Zalo, chấm bài
+      AI, sản phẩm cuối khóa + gallery, random nhóm thuyết trình
+- [x] Đợt 1: đổi auth sang username, UI indigo, AI xưng "em", nhận xét tổng hợp/HV
+- [x] Đợt 2: chấm bài viết lại (độc lập, không lưu), dark mode + stat card + popup
+      + ConfirmDialog, khu HV chia tab, chặn file DLP, API key riêng từng người
+- [x] Deploy: Vercel + Render + Supabase — 0đ/tháng
+- [x] **E2E 59/59 PASS** trên DB thật: `e2e-phase{1..5}.mjs` + `e2e-api-key.mjs`
+      (phase3/4 cần ai-service chạy vì gọi Gemini thật)
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
@@ -79,6 +61,13 @@ E2E: phase1 13/13, phase2 10/10, phase3 10/10 (viết lại), phase4 10/10, phas
 - Trang `/student/guide`: 3 video đã điền; sửa link trong biến `VIDEOS` ở đầu file.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-16 — Claude / Merge Đợt 2 lên production
+- Làm gì: merge `feature/grading-rework-ui` (8 commit) → develop → main → push
+  (`7399f06`), xóa nhánh. Trước đó thêm API key riêng từng người + hướng dẫn lấy key.
+- Kết quả: E2E 59/59, pytest 4/4, build sạch. Production đã có bản mới.
+- Việc để lại: **user phải tạo lại đề bài** (file cũ bị DLP mã hóa nên không chấm
+  được); có thể quay video cho mục "Lấy API key" trong tab Hướng dẫn (`VIDEOS.apikey`).
 
 ### 2026-07-15 (chiều) — Claude / Viết lại chấm bài + làm mới giao diện
 - Làm gì: xem ROADMAP mục "Đợt 2" — chấm bài thành công cụ độc lập, dark mode,
