@@ -4,6 +4,9 @@
 
 ## Quy ước giao diện (dùng lại, đừng viết mới)
 
+- Font: **Be Vietnam Pro** (sans-serif, thiết kế riêng cho dấu tiếng Việt) +
+  Geist Mono cho mã lớp/khóa. Biến font PHẢI đặt tên `--font-sans` để khớp
+  `@theme` trong globals.css — đặt tên khác là font không áp mà không báo lỗi.
 - Khung trang: `AppShell` (nav + main + footer) — đừng tự dựng lại layout.
 - Tiêu đề trang: `PageHeader` (title + description + `action` cho nút bên phải).
 - Số liệu: `StatCard`. Form tạo mới: bọc trong `Dialog`, nút mở đặt ở `action`
@@ -33,10 +36,17 @@
 ## Giáo viên
 
 ### Khóa học & lớp
-- CRUD khóa học: mã tiền tố (JSB, JSA, JSI, CSB, CSI...), tên, mô tả.
+- CRUD khóa học: mã tiền tố (JSB, JSA, JSI, CSB, CSI...), tên, mô tả. **Sửa được**
+  mã + tên + mô tả (nút ✏️ cạnh tên khóa ở danh sách lớp). Đổi mã khóa KHÔNG đổi
+  mã các lớp đã mở.
 - CRUD lớp thuộc khóa: mã lớp GV tự đặt, form gợi ý số kế tiếp (JSB01 → JSB02);
-  số buổi (`total_sessions` — quyết định số session sinh ra), mô tả.
+  số buổi (`total_sessions` — quyết định số session sinh ra), mô tả. **Sửa được**
+  mã lớp + mô tả ("✏️ Sửa lớp" ở trang chi tiết). Đổi mã lớp không ảnh hưởng HV
+  đang học; `total_sessions` KHÔNG sửa được (sessions sinh 1 lần bằng trigger).
 - Danh sách học viên trong lớp; **chuyển học viên sang lớp khác** (kể cả khác khóa).
+- **Thêm học viên vào lớp**: nút "+ Thêm học viên" → tìm theo **họ tên hoặc tên
+  tài khoản** → bấm Thêm. Dùng RPC `search_students` (SECURITY DEFINER) vì
+  `profiles_select` chỉ cho GV thấy HV đã ở trong lớp mình — xem DATABASE.md.
 - Xóa lớp → confirm (mất enrollment, session, review).
 
 ### Buổi học & nhận xét

@@ -40,11 +40,11 @@ function OptionColumn({
   return (
     <div className="space-y-3">
       <p className="text-sm font-medium">{CATEGORY_LABELS[category]}</p>
-      <ul className="space-y-1.5">
+      <ul className="space-y-2">
         {options.map((opt) => (
           <li
             key={opt.id}
-            className="flex items-center justify-between gap-2 rounded-md border px-3 py-1.5 text-sm"
+            className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
           >
             {opt.label}
             <ConfirmDialog
@@ -52,7 +52,7 @@ function OptionColumn({
                 <button
                   type="button"
                   aria-label={`Xóa ${opt.label}`}
-                  className="text-muted-foreground transition-colors hover:text-destructive"
+                  className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
                 >
                   ✕
                 </button>

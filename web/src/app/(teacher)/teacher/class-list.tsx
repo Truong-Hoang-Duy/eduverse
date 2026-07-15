@@ -13,12 +13,15 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
+import { EditCourseDialog } from "./edit-course-dialog";
+
 export interface ClassItem {
   id: string;
   classCode: string;
   courseId: string;
   courseCode: string;
   courseName: string;
+  courseDescription: string | null;
   totalSessions: number;
   studentCount: number;
   description: string | null;
@@ -40,14 +43,25 @@ export function ClassList({ classes }: { classes: ClassItem[] }) {
 
   // Gom theo khóa, giữ thứ tự mã khóa.
   const groups = useMemo(() => {
-    const map = new Map<string, { code: string; name: string; items: ClassItem[] }>();
+    const map = new Map<
+      string,
+      {
+        id: string;
+        code: string;
+        name: string;
+        description: string | null;
+        items: ClassItem[];
+      }
+    >();
     for (const cls of filtered) {
       const group = map.get(cls.courseId);
       if (group) group.items.push(cls);
       else
         map.set(cls.courseId, {
+          id: cls.courseId,
           code: cls.courseCode,
           name: cls.courseName,
+          description: cls.courseDescription,
           items: [cls],
         });
     }
@@ -84,6 +98,12 @@ export function ClassList({ classes }: { classes: ClassItem[] }) {
             <span className="text-sm text-muted-foreground">
               {group.items.length} lớp
             </span>
+            <EditCourseDialog
+              courseId={group.id}
+              code={group.code}
+              name={group.name}
+              description={group.description}
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {group.items.map((cls) => (

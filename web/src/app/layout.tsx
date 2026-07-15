@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Be_Vietnam_Pro, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// Be Vietnam Pro: sans-serif hiện đại, thiết kế riêng cho dấu tiếng Việt nên
+// các dấu (ắ, ệ, ỡ...) cân đối, không bị chồng lên chữ như font Latin thường.
+// Tên biến PHẢI là --font-sans để khớp @theme trong globals.css.
+const beVietnamPro = Be_Vietnam_Pro({
+  variable: "--font-sans",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
+// Mono chỉ dùng cho mã lớp/mã khóa (ASCII) nên không cần subset vietnamese.
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -40,7 +46,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${beVietnamPro.variable} ${geistMono.variable} antialiased`}
       >
         {children}
       </body>

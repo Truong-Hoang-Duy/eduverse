@@ -60,22 +60,32 @@ export async function updateClass(
   formData: FormData
 ): Promise<ActionResult> {
   const id = String(formData.get("id") ?? "");
+  const classCode = String(formData.get("class_code") ?? "")
+    .trim()
+    .toUpperCase();
   const description = String(formData.get("description") ?? "").trim();
 
-  if (!id) {
-    return { error: "Thiếu thông tin lớp." };
+  if (!id || !classCode) {
+    return { error: "Vui lòng nhập mã lớp." };
+  }
+  if (!CLASS_CODE_PATTERN.test(classCode)) {
+    return { error: "Mã lớp gồm mã khóa + số thứ tự, VD: JSB01, CSI03." };
   }
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("classes")
-    .update({ description: description || null })
+    .update({ class_code: classCode, description: description || null })
     .eq("id", id);
   if (error) {
+    if (error.code === "23505") {
+      return { error: `Mã lớp ${classCode} đã được dùng cho lớp khác.` };
+    }
     return { error: `Không cập nhật được: ${error.message}` };
   }
 
   revalidatePath(`/teacher/classes/${id}`);
+  revalidatePath("/teacher");
   return { success: "Đã cập nhật lớp." };
 }
 
@@ -118,6 +128,51 @@ export async function transferStudent(
 
   revalidatePath(`/teacher/classes/${currentClassId}`);
   return { success: "Đã chuyển lớp cho học viên." };
+}
+
+export interface StudentSearchResult {
+  id: string;
+  full_name: string;
+  username: string | null;
+}
+
+/** Tìm học viên theo tên hoặc tên tài khoản (RPC vì RLS chặn GV thấy HV lạ). */
+export async function searchStudents(
+  query: string
+): Promise<{ students?: StudentSearchResult[]; error?: string }> {
+  if (!query.trim()) {
+    return { students: [] };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("search_students", {
+    p_query: query,
+  });
+  if (error) {
+    return { error: `Không tìm được: ${error.message}` };
+  }
+  return { students: (data ?? []) as StudentSearchResult[] };
+}
+
+/** GV thêm thẳng học viên vào lớp (không cần em tự nhập mã lớp). */
+export async function addStudentToClass(input: {
+  classId: string;
+  studentId: string;
+}): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("enrollments").insert({
+    class_id: input.classId,
+    student_id: input.studentId,
+  });
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "Học viên đã có trong lớp này rồi." };
+    }
+    return { error: `Không thêm được: ${error.message}` };
+  }
+
+  revalidatePath(`/teacher/classes/${input.classId}`);
+  return { success: "Đã thêm học viên vào lớp." };
 }
 
 export async function removeStudent(formData: FormData): Promise<void> {

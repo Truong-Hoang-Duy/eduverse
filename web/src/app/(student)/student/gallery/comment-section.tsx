@@ -39,7 +39,7 @@ export function CommentSection({
           {comments.map((c) => (
             <li
               key={c.id}
-              className="flex items-start justify-between gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
+              className="flex items-start justify-between gap-3 rounded-md bg-muted/50 px-3 py-2 text-sm"
             >
               <div>
                 <span className="font-medium">{c.authorName}</span>{" "}
@@ -54,7 +54,7 @@ export function CommentSection({
                     <button
                       type="button"
                       aria-label="Xóa nhận xét"
-                      className="text-muted-foreground transition-colors hover:text-destructive"
+                      className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
                     >
                       ✕
                     </button>

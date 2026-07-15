@@ -52,19 +52,26 @@ export async function updateCourse(
   formData: FormData
 ): Promise<ActionResult> {
   const id = String(formData.get("id") ?? "");
+  const code = String(formData.get("code") ?? "").trim().toUpperCase();
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
 
-  if (!id || !name) {
-    return { error: "Thiếu thông tin khóa học." };
+  if (!id || !code || !name) {
+    return { error: "Vui lòng nhập mã và tên khóa học." };
+  }
+  if (!COURSE_CODE_PATTERN.test(code)) {
+    return { error: "Mã khóa học là 2-6 chữ cái in hoa, VD: JSB, CSB." };
   }
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("courses")
-    .update({ name, description: description || null })
+    .update({ code, name, description: description || null })
     .eq("id", id);
   if (error) {
+    if (error.code === "23505") {
+      return { error: `Mã khóa học ${code} đã được dùng cho khóa khác.` };
+    }
     return { error: `Không cập nhật được: ${error.message}` };
   }
 

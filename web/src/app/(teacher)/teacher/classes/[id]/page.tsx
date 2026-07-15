@@ -16,7 +16,9 @@ import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
 import type { PresentationGroup } from "@/lib/actions/groups";
 
+import { AddStudentDialog } from "./add-student-dialog";
 import { DeleteClassButton } from "./delete-class-button";
+import { EditClassDialog } from "./edit-class-dialog";
 import { GroupRandomizer } from "./group-randomizer";
 import { StudentSummaryPanel } from "./student-summary-panel";
 import {
@@ -152,7 +154,14 @@ export default async function ClassDetailPage({
               </p>
             )}
           </div>
-          <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
+          <div className="flex flex-wrap items-center gap-2">
+            <EditClassDialog
+              classId={cls.id}
+              classCode={cls.class_code}
+              description={cls.description}
+            />
+            <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
+          </div>
         </div>
       </div>
 
@@ -216,8 +225,15 @@ export default async function ClassDetailPage({
       </Card>
 
       <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Danh sách học viên</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
+          <CardTitle className="text-base">
+            Danh sách học viên ({students.length})
+          </CardTitle>
+          <AddStudentDialog
+            classId={cls.id}
+            classCode={cls.class_code}
+            existingStudentIds={students.map((s) => s.studentId)}
+          />
         </CardHeader>
         <CardContent>
           <StudentsTable
