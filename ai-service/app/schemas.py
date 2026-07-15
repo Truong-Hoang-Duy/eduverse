@@ -81,22 +81,22 @@ class SuggestFeaturesResponse(BaseModel):
 
 
 # ---------- /grade-submission ----------
+class InlineFile(BaseModel):
+    """File bài làm gửi thẳng nội dung — KHÔNG lưu ở Storage."""
+
+    name: str
+    mime_type: str | None = None
+    content_b64: str
+
+
 class GradeSubmissionRequest(BaseModel):
-    spec_file_path: str
-    code_file_paths: list[str]
+    spec_file_path: str  # đề bài (bucket assignment-specs) — thứ duy nhất được lưu
+    files: list[InlineFile] = Field(min_length=1)
     course_name: str
     assignment_title: str
     instructions: str | None = None
-    student_name: str
-
-
-class CriterionScore(BaseModel):
-    criterion: str
-    score: int = Field(ge=0)
-    max: int = Field(gt=0)
 
 
 class GradeSubmissionResponse(BaseModel):
     score: int = Field(ge=0, le=100)
-    criteria_breakdown: list[CriterionScore]
-    comment: str
+    bullets: list[str] = Field(min_length=1)

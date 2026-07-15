@@ -1,4 +1,4 @@
-"""Tải file đề bài / bài làm từ Supabase Storage bằng service key."""
+"""Dựng Part cho Gemini từ file Storage (đề bài) hoặc bytes inline (bài làm)."""
 
 import mimetypes
 
@@ -8,10 +8,30 @@ from supabase import Client, create_client
 
 from app.config import get_settings
 
+_CODE_EXTENSIONS = {
+    ".py", ".js", ".ts", ".jsx", ".tsx", ".html", ".css", ".json",
+    ".java", ".c", ".cpp", ".cs", ".md", ".sql", ".txt",
+}
+
 
 def _supabase() -> Client:
     settings = get_settings()
     return create_client(settings.supabase_url, settings.supabase_service_key)
+
+
+def _is_code_file(name: str) -> bool:
+    return any(name.lower().endswith(ext) for ext in _CODE_EXTENSIONS)
+
+
+def bytes_to_part(name: str, data: bytes, mime: str | None = None) -> types.Part:
+    """Bọc bytes thành Part: code/text đưa dạng text, còn lại (PDF/ảnh) dạng nhị phân."""
+    if mime is None:
+        mime, _ = mimetypes.guess_type(name)
+
+    if mime is None or mime.startswith("text/") or _is_code_file(name):
+        text = data.decode("utf-8", errors="replace")
+        return types.Part.from_text(text=f"--- File: {name} ---\n{text}")
+    return types.Part.from_bytes(data=data, mime_type=mime)
 
 
 def download_as_part(bucket: str, path: str) -> types.Part:
@@ -23,19 +43,4 @@ def download_as_part(bucket: str, path: str) -> types.Part:
             status_code=404, detail=f"Không tải được file: {bucket}/{path}"
         ) from exc
 
-    mime, _ = mimetypes.guess_type(path)
-    if mime is None or mime.startswith("text/") or _is_code_file(path):
-        # Code/text đưa vào dạng text để Gemini đọc trực tiếp.
-        text = data.decode("utf-8", errors="replace")
-        return types.Part.from_text(text=f"--- File: {path} ---\n{text}")
-    return types.Part.from_bytes(data=data, mime_type=mime)
-
-
-_CODE_EXTENSIONS = {
-    ".py", ".js", ".ts", ".jsx", ".tsx", ".html", ".css", ".json",
-    ".java", ".c", ".cpp", ".cs", ".md", ".sql",
-}
-
-
-def _is_code_file(path: str) -> bool:
-    return any(path.lower().endswith(ext) for ext in _CODE_EXTENSIONS)
+    return bytes_to_part(path, data)

@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      // File bài làm (PDF/ảnh) gửi qua Server Action; mặc định chỉ 1MB.
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
 export default nextConfig;

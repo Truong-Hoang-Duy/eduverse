@@ -1,5 +1,5 @@
-// E2E Giai đoạn 3: đề bài + bài nộp + chấm AI THẬT (Gemini) + RLS. Tự dọn sạch.
-// Yêu cầu: ai-service chạy ở localhost:8000. Chạy trong web/:
+// E2E Chấm bài (luồng mới: độc lập, không theo lớp, không lưu kết quả).
+// Yêu cầu ai-service chạy ở localhost:8000. Chạy trong web/:
 //   node --env-file=.env.local --env-file=../ai-service/.env scripts/e2e-phase3.mjs
 import { createClient } from "@supabase/supabase-js";
 
@@ -18,7 +18,6 @@ const admin = createClient(URL, SERVICE, { auth: { autoRefreshToken: false } });
 const results = [];
 const userIds = [];
 const specPaths = [];
-const subPaths = [];
 
 function check(name, ok, extra = "") {
   results.push(ok);
@@ -42,6 +41,26 @@ async function makeUser(username, metadata) {
   return { client, id: data.user.id };
 }
 
+/** Gọi ai-service đúng như Server Action gradeFiles làm. */
+async function grade(specPath, files, title = "Tính tổng hai số") {
+  const res = await fetch(`${AI_URL}/grade-submission`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-API-Key": AI_KEY },
+    body: JSON.stringify({
+      spec_file_path: specPath,
+      files: files.map((f) => ({
+        name: f.name,
+        mime_type: f.mime ?? null,
+        content_b64: Buffer.from(f.content, "utf8").toString("base64"),
+      })),
+      course_name: "JavaScript Basic",
+      assignment_title: title,
+      instructions: null,
+    }),
+  });
+  return { ok: res.ok, status: res.status, body: res.ok ? await res.json() : null };
+}
+
 async function main() {
   const gv = await makeUser(`e3g.gv.${ts}`, { full_name: "GV P3", role: "teacher" });
   const teacher = gv.client;
@@ -51,38 +70,23 @@ async function main() {
     .insert({ code: COURSE_CODE, name: "JavaScript Basic", teacher_id: gv.id })
     .select()
     .single();
-  const { data: cls } = await teacher
-    .from("classes")
-    .insert({
-      course_id: course.id,
-      class_code: `${COURSE_CODE}01`,
-      teacher_id: gv.id,
-      total_sessions: 3,
-    })
-    .select()
-    .single();
-  const hv = await makeUser(`e3g.hv.${ts}`, {
-    full_name: "HV P3",
-    role: "student",
-    class_code: `${COURSE_CODE}01`,
-  });
 
-  // 1. GV upload file đề lên bucket assignment-specs
+  // 1. Upload file đề — thứ DUY NHẤT được lưu
   const specPath = `${course.id}/de-buoi-1.md`;
   specPaths.push(specPath);
-  const specContent = [
+  const spec = [
     "# Đề bài buổi 1: Tính tổng",
     "Viết chương trình JavaScript:",
-    "1. Khai báo 2 biến a=5, b=7 bằng let hoặc const (2đ... tổng 100 điểm)",
+    "1. Khai báo 2 biến a=5, b=7 bằng let hoặc const",
     "2. Tính tổng và in ra console dạng `Tong: 12`",
     "3. Đặt tên biến rõ nghĩa",
   ].join("\n");
-  const { error: upSpecErr } = await teacher.storage
+  const { error: upErr } = await teacher.storage
     .from("assignment-specs")
-    .upload(specPath, new Blob([specContent], { type: "text/markdown" }));
-  check("GV upload file đề lên Storage", !upSpecErr, upSpecErr?.message);
+    .upload(specPath, new Blob([spec], { type: "text/markdown" }));
+  check("GV upload file đề lên Storage", !upErr, upErr?.message);
 
-  // 2. Tạo assignment; đề thứ 2 cùng buổi phải bị chặn (unique)
+  // 2. Lưu đề (khóa + buổi)
   const { data: assignment, error: aErr } = await teacher
     .from("assignments")
     .insert({
@@ -93,7 +97,7 @@ async function main() {
     })
     .select()
     .single();
-  check("GV tạo đề bài", !aErr, aErr?.message);
+  check("GV lưu đề bài", !aErr, aErr?.message);
 
   const { error: dupErr } = await teacher.from("assignments").insert({
     course_id: course.id,
@@ -102,112 +106,92 @@ async function main() {
   });
   check("Mỗi buổi một đề (unique) — đề trùng bị chặn", dupErr?.code === "23505");
 
-  // 3. GV upload bài làm của học viên (bài TỐT)
-  const codePath = `${assignment.id}/${hv.id}/bai-lam.js`;
-  subPaths.push(codePath);
-  const goodCode = [
-    "const soThuNhat = 5;",
-    "const soThuHai = 7;",
-    "const tong = soThuNhat + soThuHai;",
-    "console.log(`Tong: ${tong}`);",
-  ].join("\n");
-  const { error: upCodeErr } = await teacher.storage
-    .from("submissions")
-    .upload(codePath, new Blob([goodCode], { type: "text/javascript" }));
-  check("GV upload bài làm học viên", !upCodeErr, upCodeErr?.message);
+  // Chụp số dòng TRƯỚC khi chấm — bảng có thể còn dữ liệu cũ từ UI chấm bài cũ,
+  // nên phải đo THAY ĐỔI chứ không đòi bảng rỗng.
+  const countRows = async (table) => {
+    const { count } = await admin.from(table).select("id", { count: "exact", head: true });
+    return count ?? 0;
+  };
+  const before = {
+    submissions: await countRows("submissions"),
+    grades: await countRows("grades"),
+  };
 
-  const { data: submission, error: subErr } = await teacher
-    .from("submissions")
-    .upsert(
-      {
-        assignment_id: assignment.id,
-        class_id: cls.id,
-        student_id: hv.id,
-        code_file_paths: [codePath],
-        uploaded_by: gv.id,
-      },
-      { onConflict: "assignment_id,student_id" }
-    )
-    .select()
-    .single();
-  check("Lưu submission", !subErr, subErr?.message);
-
-  // 4. RLS: học viên KHÔNG đọc được file trong 2 bucket
-  const { data: stuDownload } = await hv.client.storage
-    .from("assignment-specs")
-    .download(specPath)
-    .catch(() => ({ data: null }));
-  check("RLS Storage chặn học viên tải file đề", !stuDownload);
-
-  // 5. Chấm AI THẬT qua ai-service (Gemini đọc đề + code)
-  const res = await fetch(`${AI_URL}/grade-submission`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-API-Key": AI_KEY },
-    body: JSON.stringify({
-      spec_file_path: specPath,
-      code_file_paths: [codePath],
-      course_name: "JavaScript Basic",
-      assignment_title: "Tính tổng hai số",
-      instructions: null,
-      student_name: "HV P3",
-    }),
-  });
-  const grade = res.ok ? await res.json() : null;
-  check(
-    "AI chấm bài thật (Gemini multimodal)",
-    Boolean(grade && grade.score >= 0 && grade.score <= 100 && grade.comment),
-    res.ok ? "" : `HTTP ${res.status}`
-  );
-  if (grade) {
-    const sumMax = grade.criteria_breakdown.reduce((s, c) => s + c.max, 0);
-    check(`Tổng max tiêu chí = 100 (thực tế ${sumMax})`, sumMax === 100);
-    console.log(
-      `   → Điểm: ${grade.score}/100 | ${grade.criteria_breakdown
-        .map((c) => `${c.criterion}: ${c.score}/${c.max}`)
-        .join(" | ")}`
-    );
-    console.log(`   → Nhận xét: ${grade.comment.slice(0, 160)}...`);
-
-    // 6. Lưu grade + học viên chỉ xem điểm CỦA MÌNH, không sửa được
-    const { data: savedGrade, error: gErr } = await teacher
-      .from("grades")
-      .upsert(
-        {
-          submission_id: submission.id,
-          score: grade.score,
-          criteria_breakdown: grade.criteria_breakdown,
-          ai_comment: grade.comment,
-        },
-        { onConflict: "submission_id" }
-      )
-      .select()
-      .single();
-    check("Lưu điểm vào bảng grades", !gErr, gErr?.message);
-
-    const { error: editErr } = await teacher
-      .from("grades")
-      .update({ score: 95, ai_comment: "GV sửa tay" })
-      .eq("id", savedGrade.id);
-    check("GV sửa tay điểm", !editErr, editErr?.message);
-
-    const { data: myGrade } = await hv.client
-      .from("grades")
-      .select("score")
-      .eq("submission_id", submission.id);
-    check("HV xem được điểm của mình (đã sửa = 95)", myGrade?.[0]?.score === 95);
-
-    const { data: hacked } = await hv.client
-      .from("grades")
-      .update({ score: 100 })
-      .eq("id", savedGrade.id)
-      .select();
-    check("RLS chặn HV tự sửa điểm", (hacked ?? []).length === 0);
+  // 3. Chấm bài TỐT — file gửi inline, không qua Storage
+  const good = await grade(specPath, [
+    {
+      name: "bai-lam.js",
+      mime: "text/javascript",
+      content: [
+        "const soThuNhat = 5;",
+        "const soThuHai = 7;",
+        "const tong = soThuNhat + soThuHai;",
+        "console.log(`Tong: ${tong}`);",
+      ].join("\n"),
+    },
+  ]);
+  const goodOk =
+    good.ok &&
+    Number.isInteger(good.body.score) &&
+    good.body.score >= 0 &&
+    good.body.score <= 100 &&
+    Array.isArray(good.body.bullets) &&
+    good.body.bullets.length > 0;
+  check("AI chấm bài tốt (file inline)", goodOk, good.ok ? "" : `HTTP ${good.status}`);
+  if (good.body) {
+    console.log(`   → Điểm: ${good.body.score}/100, ${good.body.bullets.length} gạch đầu dòng`);
+    good.body.bullets.forEach((b) => console.log(`     • ${b}`));
   }
+
+  // 4. Nhận xét phải NGẮN GỌN và không tự thêm dấu gạch đầu dòng
+  if (good.body) {
+    const bullets = good.body.bullets;
+    check(
+      "Bullets ngắn gọn (mỗi ý < 300 ký tự)",
+      bullets.every((b) => b.length < 300)
+    );
+    check(
+      "Bullets không tự thêm ký tự '-' hoặc '•' ở đầu",
+      bullets.every((b) => !/^\s*[-•*]/.test(b))
+    );
+  }
+
+  // 5. Chấm bài KÉM → điểm phải thấp hơn bài tốt
+  const bad = await grade(specPath, [
+    { name: "bai-lam.js", mime: "text/javascript", content: "console.log('hello');" },
+  ]);
+  check(
+    "Bài thiếu yêu cầu bị điểm thấp hơn bài tốt",
+    bad.ok && good.body && bad.body.score < good.body.score,
+    bad.ok ? `tốt=${good.body?.score} vs kém=${bad.body?.score}` : `HTTP ${bad.status}`
+  );
+
+  // 6. Không lưu gì: số dòng submissions/grades KHÔNG tăng sau khi chấm
+  const after = {
+    submissions: await countRows("submissions"),
+    grades: await countRows("grades"),
+  };
+  check(
+    "Chấm bài không ghi DB (submissions/grades không tăng)",
+    after.submissions === before.submissions && after.grades === before.grades,
+    `submissions ${before.submissions}→${after.submissions}, grades ${before.grades}→${after.grades}`
+  );
+
+  // 7. Đề sai đường dẫn → báo lỗi rõ ràng, không crash
+  const missing = await grade("khong-ton-tai/de.md", [
+    { name: "a.js", mime: "text/javascript", content: "console.log(1);" },
+  ]);
+  check("File đề không tồn tại → 404, không crash", missing.status === 404);
+
+  // 8. Thiếu file bài làm → 422 (schema chặn)
+  const empty = await grade(specPath, []);
+  check("Không có file bài làm → 422", empty.status === 422);
+
+  console.log(`   (đề bài vẫn còn: assignment id ${assignment.id})`);
 }
 
 async function cleanup() {
   if (specPaths.length) await admin.storage.from("assignment-specs").remove(specPaths);
-  if (subPaths.length) await admin.storage.from("submissions").remove(subPaths);
   for (const id of userIds) await admin.auth.admin.deleteUser(id);
   await admin.from("courses").delete().eq("code", COURSE_CODE);
   console.log("Đã dọn sạch dữ liệu test.");

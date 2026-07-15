@@ -121,7 +121,6 @@ def build_grading_prompt(
     course_name: str,
     assignment_title: str,
     instructions: str | None,
-    student_name: str,
 ) -> str:
     parts = [
         SYSTEM_ROLE,
@@ -129,19 +128,21 @@ def build_grading_prompt(
         "các file sau là BÀI LÀM của học viên.",
         f"Khóa học: {course_name}",
         f"Bài tập: {assignment_title}",
-        f"Học viên: {student_name}",
     ]
     if instructions:
         parts.append(f"Hướng dẫn chấm của giáo viên (ưu tiên tuân theo): {instructions}")
     parts.append(
         "Cách chấm: (1) đọc kỹ đề và liệt kê các yêu cầu; (2) đối chiếu bài làm với "
-        "từng yêu cầu; (3) chấm theo 3 tiêu chí: Đúng yêu cầu đề (tối đa 50), "
-        "Chất lượng code (tối đa 30), Sáng tạo (tối đa 20). Tổng tối đa 100. "
-        "Chấm khắt khe, công bằng; nhận xét chi tiết nhưng khích lệ, chỉ rõ chỗ sai "
-        "và cách cải thiện."
+        "từng yêu cầu; (3) cho điểm trên thang 100, cân nhắc: đúng yêu cầu đề "
+        "(quan trọng nhất), chất lượng code, sự sáng tạo. Chấm khắt khe, công bằng."
     )
     parts.append(
-        'Trả về JSON: {"score": <0-100>, "criteria_breakdown": [{"criterion": "...", '
-        '"score": <int>, "max": <int>}], "comment": "<nhận xét tiếng Việt>"}'
+        "Nhận xét phải NGẮN GỌN, mỗi ý một gạch đầu dòng riêng (3-6 ý). Mỗi ý tối đa "
+        "1-2 câu, đi thẳng vào việc: làm được gì, sai/thiếu chỗ nào, sửa thế nào. "
+        "KHÔNG viết lời chào, KHÔNG nhắc tên học viên, KHÔNG viết đoạn văn dài. "
+        "Không tự thêm ký tự '-' hay '•' ở đầu mỗi ý (hệ thống tự thêm)."
+    )
+    parts.append(
+        'Trả về JSON: {"score": <0-100>, "bullets": ["<ý 1>", "<ý 2>", ...]}'
     )
     return "\n".join(parts)
