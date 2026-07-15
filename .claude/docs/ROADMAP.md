@@ -77,7 +77,7 @@
       Hướng dẫn lấy key ở cả `/profile` lẫn tab Hướng dẫn.
 - [x] Merge `feature/grading-rework-ui` → develop → main → push (Vercel tự deploy)
 
-### Đợt 3
+### Đợt 3 (đã merge lên production — `c73a998`)
 - [x] Font **Be Vietnam Pro** (chuẩn dấu tiếng Việt) — đồng thời sửa lỗi biến
       `--font-sans` rỗng khiến app xưa nay chạy font mặc định trình duyệt
 - [x] GV sửa được khóa học (mã/tên/mô tả) và mã lớp
@@ -88,7 +88,7 @@
 - [x] Hồ sơ full chiều rộng (2 cột trên máy rộng)
 - [x] Rà responsive toàn app: mọi grid nhiều cột có breakpoint, nav gọn trên
       điện thoại, ô tìm lớp full width, tiêu đề lớp wrap
-- [ ] Merge lên production
+- [x] Merge lên production
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)

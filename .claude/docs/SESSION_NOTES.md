@@ -8,10 +8,15 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude)
 
-**Đang làm:** Không có task dở. **Toàn bộ 5 giai đoạn + 2 đợt cải tiến đã merge và
-chạy trên production** (`main` = `develop` = `origin/main` = `7399f06`). Không còn
+**Đang làm:** Không có task dở. **Toàn bộ 5 giai đoạn + 3 đợt cải tiến đã merge và
+chạy trên production** (`main` = `develop` = `origin/main` = `c73a998`). Không còn
 nhánh feature nào. Việc tiếp theo tùy yêu cầu mới của user — xem "Ý tưởng còn để
 ngỏ" trong ROADMAP.md.
+
+⚠️ **Nhắc bản thân**: đợt 3 tôi đã lỡ commit thẳng vào `main` (vi phạm
+`.claude/rules/git-workflow.md`), phải tách lại sang nhánh feature rồi merge.
+Mỗi đợt việc mới: `git checkout develop && git checkout -b feature/<slug>` TRƯỚC
+khi sửa code.
 
 **Tiến độ (chi tiết ở ROADMAP.md):**
 - [x] GĐ 1–5: auth username, khóa/lớp, buổi học + nhận xét AI, tin Zalo, chấm bài
@@ -19,6 +24,8 @@ ngỏ" trong ROADMAP.md.
 - [x] Đợt 1: đổi auth sang username, UI indigo, AI xưng "em", nhận xét tổng hợp/HV
 - [x] Đợt 2: chấm bài viết lại (độc lập, không lưu), dark mode + stat card + popup
       + ConfirmDialog, khu HV chia tab, chặn file DLP, API key riêng từng người
+- [x] Đợt 3: font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp sang khóa khác,
+      thêm HV bằng tìm kiếm, hồ sơ full width, responsive cho điện thoại
 - [x] Deploy: Vercel + Render + Supabase — 0đ/tháng
 - [x] **E2E 59/59 PASS** trên DB thật: `e2e-phase{1..5}.mjs` + `e2e-api-key.mjs`
       (phase3/4 cần ai-service chạy vì gọi Gemini thật)
