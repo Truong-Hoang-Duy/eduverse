@@ -36,15 +36,16 @@
   khẩu. Migration 2 (20260713000000_username_auth.sql) đã áp qua SQL Editor.
   E2E luồng mới 13/13 PASS.
 
-**Đang dừng ở:** Giai đoạn 2 đã merge + push (`c6c6fee`, production tự deploy).
-Giai đoạn 3 CODE XONG trên branch `feature/ai-grading`: trang /teacher/assignments
-(đề theo khóa+buổi, upload đề lên bucket assignment-specs), trang chấm
-/teacher/assignments/[id] (tab lớp, upload bài từng HV lên bucket submissions,
-nút Chấm/Chấm tất cả có progress, badge màu theo điểm, sửa tay, xuất CSV).
-E2E phase 3: 12/12 PASS kèm chấm Gemini THẬT (điểm 95/100, tiêu chí tổng 100).
-Việc tiếp: user click-through UI phase 3 → merge + push → Giai đoạn 4 (sản phẩm
-cuối khóa: HV CRUD project, gallery + comment, AI gợi ý tính năng, trang hướng
-dẫn nộp bài).
+**Đang dừng ở:** Giai đoạn 2+3 đã merge vào main + push (`c12ef37`, production
+deploy OK sau khi fix git author identity — xem mục "TASK git author" trong plan).
+Giai đoạn 4 CODE XONG trên branch `feature/final-projects`: /student/projects
+(HV CRUD sản phẩm, 1/lớp, nút AI gợi ý tính năng bấm thêm vào danh sách),
+/student/gallery (xem + bình luận sản phẩm bạn cùng lớp, xóa comment của mình),
+/student/guide (hướng dẫn GitHub/Drive/deploy, YouTube embed — VIDEOS ID để trống
+trong page.tsx chờ user điền), GV xem sản phẩm ở trang chi tiết lớp. Nav HV thêm
+Sản phẩm/Sản phẩm của lớp/Hướng dẫn. E2E phase 4: 10/10 PASS kèm AI thật.
+Việc tiếp: user click-through UI phase 4 → merge + push → Giai đoạn 5 (random
+nhóm thuyết trình) — là phase tính năng CUỐI trước khi hoàn thiện.
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 

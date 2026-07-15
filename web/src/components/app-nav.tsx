@@ -10,7 +10,12 @@ const TEACHER_LINKS = [
   { href: "/teacher/assignments", label: "Chấm bài" },
 ];
 
-const STUDENT_LINKS = [{ href: "/student", label: "Lớp của tôi" }];
+const STUDENT_LINKS = [
+  { href: "/student", label: "Lớp của tôi" },
+  { href: "/student/projects", label: "Sản phẩm" },
+  { href: "/student/gallery", label: "Sản phẩm của lớp" },
+  { href: "/student/guide", label: "Hướng dẫn" },
+];
 
 export function AppNav({ profile }: { profile: Profile }) {
   const links = profile.role === "teacher" ? TEACHER_LINKS : STUDENT_LINKS;
