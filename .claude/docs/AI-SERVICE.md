@@ -60,6 +60,12 @@ thêm ký tự `-`/`•` — UI tự thêm) để giáo viên copy.
 
 Lỗi: file đề không tồn tại → 404; thiếu `files` → 422; base64 hỏng → 400.
 
+⚠️ **File bị DLP mã hóa**: máy công ty của user có phần mềm mã hóa file, trình
+duyệt đọc ra bytes rác ("SECURE FILE : This file is encrypted") và upload lên.
+Gemini trả 400 "Unable to process input image" rất khó hiểu. `storage.py` chặn
+sớm bằng marker + magic bytes (PNG/JPEG/GIF/PDF) → 400 kèm hướng dẫn tiếng Việt;
+`web/src/lib/file-check.ts` chặn thêm ở trình duyệt. Đừng gỡ 2 lớp này.
+
 ## Nguyên tắc prompt
 
 - Luôn chỉ định: vai ("giáo viên dạy lập trình cho học sinh"), ngôn ngữ output

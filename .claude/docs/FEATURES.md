@@ -2,6 +2,19 @@
 
 > Nguồn sự thật về UX/nghiệp vụ. Đọc phần liên quan đến task, không đọc cả file.
 
+## Quy ước giao diện (dùng lại, đừng viết mới)
+
+- Khung trang: `AppShell` (nav + main + footer) — đừng tự dựng lại layout.
+- Tiêu đề trang: `PageHeader` (title + description + `action` cho nút bên phải).
+- Số liệu: `StatCard`. Form tạo mới: bọc trong `Dialog`, nút mở đặt ở `action`
+  của PageHeader.
+- **Mọi hành động xóa PHẢI dùng `ConfirmDialog`** — không dùng `confirm()` của
+  trình duyệt, không xóa thẳng. Description phải nói rõ mất gì / còn gì.
+- Dark mode: script chống nháy trắng trong `app/layout.tsx`, nút ở `AppNav`.
+  Dùng token theme (`bg-card`, `text-muted-foreground`...), tránh màu hard-code;
+  màu cố định (green/yellow) phải có biến thể `dark:`.
+- Con trỏ bàn tay đã set toàn cục trong `globals.css` — không cần thêm class.
+
 ## Vai trò & đăng nhập (KHÔNG dùng email)
 
 - **Đăng nhập:** tên tài khoản (username) + mật khẩu.
@@ -55,12 +68,21 @@ Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.
 
 ## Học viên
 
-- **Sản phẩm cuối khóa:** CRUD của chính mình — tên dự án, mô tả, danh sách chức
-  năng, link GitHub, link Google Drive, link demo, ghi chú nghiên cứu thêm.
-- **Gallery lớp:** xem sản phẩm của bạn cùng lớp, bình luận lẫn nhau.
-- **AI gợi ý tính năng:** nút trên trang sản phẩm của mình → 3–5 gợi ý kèm độ khó.
-- **Trang hướng dẫn nộp bài:** video nhúng YouTube — đưa code lên GitHub,
-  Google Drive, deploy demo miễn phí (Vercel / GitHub Pages).
+Điều hướng bằng **4 tab** (`components/student-tabs.tsx`, render ở layout — nav
+trên cùng KHÔNG có link cho học viên):
+
+- **Lớp của tôi:** nội dung từng buổi học. **KHÔNG hiện nhận xét cá nhân của giáo
+  viên** (không query luôn `student_reviews` — nhận xét chỉ để GV gửi phụ huynh).
+- **Sản phẩm:** CRUD sản phẩm của chính mình (1 sản phẩm/lớp) — tên, mô tả, danh
+  sách chức năng, link GitHub/Drive/demo, ghi chú. Nút **AI gợi ý tính năng** →
+  3–5 gợi ý kèm độ khó, bấm để thêm vào danh sách.
+- **Sản phẩm của lớp:** lưới **ô từng người** (avatar, tên, tên dự án, số chức
+  năng, số bình luận) → bấm mở **popup chi tiết** + nhận xét ngay trong popup.
+  Chỉ trong lớp mình (RLS + lọc lại ở UI).
+  ⚠️ Ô = bạn **đã khai báo sản phẩm**, không phải cả lớp — RLS chỉ cho HV thấy
+  dòng enrollment của chính mình nên không liệt kê được bạn cùng lớp.
+- **Hướng dẫn:** video YouTube (GitHub / Drive / deploy). Sửa link ở biến
+  `VIDEOS` đầu `guide/page.tsx` — nhận cả link đầy đủ lẫn ID thuần.
 
 ## Ràng buộc phân quyền (nhắc lại)
 

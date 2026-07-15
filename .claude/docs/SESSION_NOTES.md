@@ -21,15 +21,21 @@ merge và xóa. Giai đoạn tiếp theo là hoàn thiện/mở rộng theo yêu
 - [x] Deploy: Vercel (web) + Render (ai-service) + Supabase — chi phí 0đ/tháng
 - [x] E2E tổng 43/43 PASS trên DB thật (`web/scripts/e2e-phase{1..5}.mjs`)
 
-**Đang dừng ở:** branch `feature/grading-rework-ui` — CHỜ USER DUYỆT rồi merge.
-1. **Chấm bài viết lại hoàn toàn** (user yêu cầu): độc lập, KHÔNG theo lớp. Chọn
-   khóa → chọn đề (vẫn lưu theo khóa+buổi) → upload file 1 học sinh → điểm ở ô
-   riêng + nhận xét gạch đầu dòng + Copy. KHÔNG lưu kết quả/file (gửi base64
-   inline sang ai-service). `submissions`/`grades` thành schema chết.
-2. **Giao diện mới**: dark mode (nút trên nav, script chống FOUC trong layout),
-   thẻ số liệu (dashboard GV/HV + chi tiết lớp), ô tìm lớp, footer, `AppShell` +
-   `PageHeader` dùng chung. Giữ thương hiệu Eduverse.
-E2E: phase1 13/13, phase2 10/10, phase3 10/10 (mới), phase5 8/8.
+**Đang dừng ở:** branch `feature/grading-rework-ui` (5 commit) — **CHỜ USER DUYỆT
+rồi merge** → develop → main → push (Vercel tự deploy). Nội dung đợt này:
+
+1. **Chấm bài viết lại**: công cụ độc lập, KHÔNG theo lớp/học viên. Chọn khóa →
+   chọn đề (vẫn lưu theo khóa+buổi) → upload file 1 học sinh → **ô điểm riêng** +
+   nhận xét gạch đầu dòng + Copy. KHÔNG lưu kết quả/file (gửi base64 inline).
+   `submissions`/`grades` thành schema chết.
+2. **Giao diện**: dark mode (không FOUC), stat card, ô tìm lớp, footer,
+   `AppShell`/`PageHeader`; form tạo mới → popup; xóa → `ConfirmDialog`; con trỏ
+   bàn tay toàn cục. Giữ thương hiệu Eduverse.
+3. **Khu học viên**: 4 tab (`student-tabs.tsx` ở layout, nav không còn link);
+   "Lớp của tôi" bỏ hẳn nhận xét cá nhân; gallery = ô từng người + popup chi tiết.
+4. **Chặn file bị DLP mã hóa** ở cả client (`lib/file-check.ts`) lẫn ai-service.
+
+E2E: phase1 13/13, phase2 10/10, phase3 10/10 (viết lại), phase4 10/10, phase5 8/8.
 
 ## 📌 Quyết định đã chốt (không hỏi lại)
 
@@ -46,8 +52,9 @@ E2E: phase1 13/13, phase2 10/10, phase3 10/10 (mới), phase5 8/8.
 - Xưng hô với học viên trong mọi output AI: **"em"**, tuyệt đối không dùng "con".
 - Mô hình dữ liệu: courses (JSB/CSB...) → classes (JSB01, JSB02...). Đề bài thuộc
   KHÓA + số buổi (mỗi buổi một đề), dùng chung mọi lớp cùng khóa.
-- Chấm bài: GV upload bài làm TỪNG học viên (HV không tự nộp), AI chấm thang 100,
-  GV sửa tay được, xuất CSV.
+- Chấm bài (đã viết lại 2026-07-15): **công cụ độc lập, không theo lớp/học viên**.
+  Chỉ lưu ĐỀ BÀI; file bài làm + kết quả KHÔNG lưu (gửi inline, copy xong là hết).
+  AI trả `{score, bullets}` — điểm ô riêng, nhận xét gạch đầu dòng ngắn.
 - Quy mô nhỏ: 1 giáo viên + học viên của mình (<200) → free tier dư.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
@@ -69,7 +76,17 @@ E2E: phase1 13/13, phase2 10/10, phase3 10/10 (mới), phase5 8/8.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
 
-### 2026-07-15 — Claude / Hoàn tất GĐ 4-5 + fix video hướng dẫn
+### 2026-07-15 (chiều) — Claude / Viết lại chấm bài + làm mới giao diện
+- Làm gì: xem ROADMAP mục "Đợt 2" — chấm bài thành công cụ độc lập, dark mode,
+  stat card, popup tạo/xóa, khu học viên chia tab, gallery dạng ô từng người.
+- Phát hiện đáng nhớ: lỗi "Lỗi khi gọi AI" khi chấm KHÔNG do nhiều file — file đề
+  (screenshot .png) bị **DLP công ty mã hóa**, nội dung thật là "SECURE FILE :
+  This file is encrypted" → Gemini trả 400 "Unable to process input image".
+  Đã chặn sớm + báo lỗi rõ. **User cần tạo lại đề bằng file .txt/.md hoặc file
+  lưu ở thư mục không bị mã hóa.**
+- Việc để lại: user duyệt → merge `feature/grading-rework-ui` → push.
+
+### 2026-07-15 (sáng) — Claude / Hoàn tất GĐ 4-5 + fix video hướng dẫn
 - Làm gì: merge GĐ 3+UI (`c12ef37`) → GĐ 4 sản phẩm cuối khóa (`b12d0f1`) → GĐ 5
   random nhóm (`e959b2e`), tất cả đã push production. Fix Vercel chặn deploy do
   git author là email công ty (viết lại toàn bộ lịch sử sang identity cá nhân,

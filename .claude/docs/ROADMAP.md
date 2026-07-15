@@ -48,5 +48,32 @@
       hoặc số người/nhóm, hiệu ứng xáo trộn, random lại, lưu kết quả cuối —
       bảng `presentation_groups`, 1 kết quả/lớp). E2E phase 5: 8/8 PASS.
 - [x] Chuẩn bị deploy: render.yaml + DEPLOY.md (hướng dẫn Vercel/Render/GitHub)
-- [ ] User thực hiện deploy theo DEPLOY.md (GitHub → Render → Vercel)
-- [ ] Kiểm thử end-to-end theo checklist Verification trong plan
+- [x] Deploy xong: GitHub → Render → Vercel, chạy production, 0đ/tháng
+
+---
+
+## Sau khi xong 5 giai đoạn — các đợt cải tiến theo yêu cầu user
+
+### Đợt 1 (đã merge lên production)
+- [x] Auth đổi sang username (bỏ email), combo box chọn lớp khi đăng ký
+- [x] UI: theme indigo, logo mũ tốt nghiệp + favicon, nav gọn + dropdown tài khoản
+- [x] AI: xưng "em" (không "con"); tin Zalo nhận xét CHUNG, không nêu tên HV
+- [x] Thêm nhận xét tổng hợp từng HV (5 tiêu chí) — `/generate-student-summary`
+
+### Đợt 2 (branch `feature/grading-rework-ui`, CHỜ USER DUYỆT → merge)
+- [x] **Chấm bài viết lại**: công cụ độc lập, không theo lớp; chỉ lưu đề bài;
+      file bài làm gửi inline (không lưu); kết quả = ô điểm riêng + bullets + Copy
+- [x] Giao diện: dark mode (không FOUC), stat card, ô tìm lớp, footer,
+      `AppShell`/`PageHeader` dùng chung
+- [x] Form tạo mới (khóa/lớp/đề) chuyển sang popup; mọi hành động xóa có
+      `ConfirmDialog`; con trỏ bàn tay toàn cục
+- [x] Chặn file bị DLP công ty mã hóa + báo lỗi rõ (cả client lẫn ai-service)
+- [x] Khu học viên: 4 tab; "Lớp của tôi" bỏ nhận xét cá nhân; gallery dạng ô
+      từng người + popup chi tiết
+- [ ] Merge `feature/grading-rework-ui` → develop → main → push
+
+## Ý tưởng còn để ngỏ (chưa làm)
+- Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
+- Gallery hiện cả bạn CHƯA có sản phẩm → cần migration mở RLS `enrollments`
+  cho HV cùng lớp thấy nhau
+- Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

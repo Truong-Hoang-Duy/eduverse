@@ -57,6 +57,11 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
   `project_comments` trong lớp mình học.
 - Student KHÔNG thấy: grades/submissions của học viên khác, review_options,
   zalo_templates, assignments spec file.
+
+⚠️ **Gotcha hay vấp**: `enrollments_student_select` chỉ cho HV thấy dòng ghi danh
+CỦA CHÍNH MÌNH → **học viên không liệt kê được bạn cùng lớp**. Muốn hiện danh
+sách lớp cho HV (VD gallery hiện cả bạn chưa có sản phẩm) thì phải viết migration
+mở policy này. Hiện gallery đi vòng: lấy từ `projects` (HV cùng lớp xem được).
 - Helper function `is_teacher_of_class(class_id)` / `is_enrolled(class_id)`
   (SECURITY DEFINER) để tránh RLS đệ quy.
 
