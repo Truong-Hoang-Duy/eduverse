@@ -2,8 +2,8 @@ import { PageHeader } from "@/components/page-header";
 import { requireRole } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
-import type { CommentItem } from "./comment-section";
-import { ProjectGrid, type GalleryProject } from "./project-grid";
+import type { CommentItem } from "@/components/gallery/comment-section";
+import { ProjectGrid, type GalleryProject } from "@/components/gallery/project-grid";
 
 export const metadata = { title: "Sản phẩm của lớp — Eduverse" };
 
@@ -80,6 +80,7 @@ export default async function GalleryPage() {
       demo_url: p.demo_url,
       extra_notes: p.extra_notes,
       authorName: p.profiles?.full_name ?? "Học viên",
+      classId: p.class_id,
       classCode: classCodeById.get(p.class_id) ?? "",
       isMine: p.student_id === profile.id,
       comments: comments

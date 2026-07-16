@@ -15,6 +15,7 @@ import {
 import { CommentSection, type CommentItem } from "./comment-section";
 
 export interface GalleryProject extends ProjectView {
+  classId: string;
   classCode: string;
   comments: CommentItem[];
   isMine: boolean;
@@ -23,9 +24,14 @@ export interface GalleryProject extends ProjectView {
 export function ProjectGrid({
   projects,
   currentUserId,
+  canModerate = false,
+  commentPlaceholder,
 }: {
   projects: GalleryProject[];
   currentUserId: string;
+  /** GV: xóa được nhận xét bất kỳ trong lớp mình. */
+  canModerate?: boolean;
+  commentPlaceholder?: string;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const selected = projects.find((p) => p.id === openId) ?? null;
@@ -98,6 +104,8 @@ export function ProjectGrid({
                   projectId={selected.id}
                   comments={selected.comments}
                   currentUserId={currentUserId}
+                  canModerate={canModerate}
+                  placeholder={commentPlaceholder}
                 />
               </div>
             </>
