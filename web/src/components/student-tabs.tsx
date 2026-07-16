@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { NavLinkLabel } from "@/components/nav-link-label";
 import { cn } from "@/lib/utils";
 
 // "Lớp học" nằm ở nav, không phải tab. Ở /student sẽ không tab nào sáng.
@@ -36,7 +37,7 @@ export function StudentTabs() {
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {tab.label}
+            <NavLinkLabel>{tab.label}</NavLinkLabel>
           </Link>
         );
       })}

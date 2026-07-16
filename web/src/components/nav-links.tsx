@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { NavLinkLabel } from "@/components/nav-link-label";
 import { cn } from "@/lib/utils";
 
 export interface NavLink {
@@ -40,7 +41,7 @@ export function NavLinks({ links }: { links: NavLink[] }) {
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}
           >
-            {link.label}
+            <NavLinkLabel>{link.label}</NavLinkLabel>
           </Link>
         );
       })}
