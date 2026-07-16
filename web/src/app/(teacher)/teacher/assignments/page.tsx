@@ -16,6 +16,7 @@ import {
   type AssignmentChoice,
   type CourseChoice,
 } from "./grading-tool";
+import { ViewSpecDialog } from "./view-spec-dialog";
 
 export const metadata = { title: "Chấm bài — Eduverse" };
 
@@ -115,7 +116,14 @@ export default async function AssignmentsPage() {
                           <p className="min-w-0 flex-1 truncate text-sm font-medium">
                             {a.title}
                           </p>
-                          <div className="opacity-0 transition-opacity group-hover:opacity-100">
+                          {/* Trên điện thoại không có hover — nút luôn hiện, chỉ
+                              mờ đi cho đỡ rối trên máy rộng. */}
+                          <div className="flex shrink-0 items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                            <ViewSpecDialog
+                              assignmentId={a.id}
+                              sessionNumber={a.session_number}
+                              title={a.title}
+                            />
                             <DeleteAssignmentButton
                               assignmentId={a.id}
                               title={a.title}

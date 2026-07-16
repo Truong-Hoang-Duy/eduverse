@@ -16,6 +16,7 @@ import { gradeFiles, type GradeResult } from "@/lib/actions/grading";
 import { checkFileReadable } from "@/lib/file-check";
 
 import type { CourseChoice } from "./assignment-form";
+import { ViewSpecDialog } from "./view-spec-dialog";
 
 export type { CourseChoice };
 
@@ -62,6 +63,7 @@ export function GradingTool({
   const [pending, startGrade] = useTransition();
 
   const courseAssignments = assignments.filter((a) => a.courseId === courseId);
+  const selectedAssignment = assignments.find((a) => a.id === assignmentId);
 
   function handleCourseChange(id: string) {
     setCourseId(id);
@@ -134,7 +136,17 @@ export function GradingTool({
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label>Đề bài *</Label>
+          <div className="flex items-center justify-between gap-2">
+            <Label>Đề bài *</Label>
+            {selectedAssignment && (
+              <ViewSpecDialog
+                assignmentId={selectedAssignment.id}
+                sessionNumber={selectedAssignment.sessionNumber}
+                title={selectedAssignment.title}
+                variant="link"
+              />
+            )}
+          </div>
           <Select
             value={assignmentId}
             onValueChange={setAssignmentId}
