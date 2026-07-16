@@ -23,7 +23,8 @@
 - Route App Router theo nhóm vai trò: `app/(teacher)/...`, `app/(student)/...`, `app/(auth)/...`.
 
 ## Import/Export
-- Named exports, không default export (trừ page.tsx/layout.tsx do Next.js yêu cầu).
+- Named exports, không default export (trừ page.tsx/layout.tsx/loading.tsx do
+  Next.js yêu cầu).
 - Thứ tự import: builtin → external → alias `@/` → relative.
 
 ## Error handling
