@@ -76,6 +76,10 @@ Luôn chạy lint + typecheck + test liên quan trước khi coi task là hoàn 
 - Chấm bài là công cụ ĐỘC LẬP: chỉ lưu đề bài; file bài làm + kết quả chấm KHÔNG
   lưu (bảng `submissions`/`grades` là schema chết — đừng dùng lại).
 - Mọi hành động xóa dùng `ConfirmDialog`; không dùng `confirm()` của trình duyệt.
+- Xóa là XÓA SẠCH: DB cascade sẵn nhưng **Storage không cascade** — xóa dòng có
+  file (VD `assignments.spec_file_path`) phải đọc path TRƯỚC rồi gọi
+  `removeSpecFiles` (`web/src/lib/spec-storage.ts`). Không upload file lên Storage
+  trước khi dòng DB được tạo thành công.
 - Không thêm dependency mới khi chưa hỏi ý kiến user.
 
 ## 7. Git Workflow (chi tiết trong .claude/rules/git-workflow.md)

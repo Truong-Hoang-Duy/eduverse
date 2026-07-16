@@ -90,6 +90,23 @@
       điện thoại, ô tìm lớp full width, tiêu đề lớp wrap
 - [x] Merge lên production
 
+### Đợt 4 (`feature/teacher-gallery-spec-viewer`)
+- [x] **GV xem + nhận xét sản phẩm học viên** (`/teacher/gallery`, nav "Sản phẩm"):
+      nhóm theo lớp, GV xóa được nhận xét bất kỳ trong lớp mình. Không cần
+      migration — RLS vốn đã cho phép, chỉ thiếu UI.
+- [x] Tách `ProjectGrid` + `CommentSection` sang `components/gallery/` dùng chung
+      cho cả HV lẫn GV (trước nằm trong route học viên)
+- [x] **Xem nội dung đề bài trên giao diện**: text đọc thẳng, ảnh/PDF qua link ký
+      10 phút; file bị DLP mã hóa thì báo rõ thay vì hiện bytes rác
+- [x] **Xóa là xóa sạch**: `deleteAssignment` + `deleteCourse` dọn luôn file đề
+      trong Storage (DB cascade sẵn, Storage thì KHÔNG)
+- [x] Upload file đề chuyển vào `createAssignment` (server) — chọn file rồi bỏ dở
+      không còn để lại rác; tạo dòng hỏng thì tự dọn file vừa upload
+- [x] Sửa cleanup của 7 script E2E: xóa khóa TRƯỚC tài khoản (FK
+      `student_reviews.created_by` không cascade) + không nuốt lỗi `deleteUser`
+- [x] E2E `e2e-gallery-storage.mjs` 17/17; thêm `scripts/purge-test-users.mjs`
+- [ ] Merge lên production
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
 - Gallery hiện cả bạn CHƯA có sản phẩm → cần migration mở RLS `enrollments`

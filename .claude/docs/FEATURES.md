@@ -72,6 +72,12 @@ Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.
 - **Đề bài (thứ DUY NHẤT được lưu)**: thuộc khóa + số buổi, mỗi buổi 1 đề
   (unique), file đề PDF/ảnh/text/md lưu ở bucket `assignment-specs`, kèm hướng
   dẫn chấm tùy chọn. Dùng chung mọi lớp cùng khóa.
+- **Xem đề** (nút 👁 ở thẻ đề, và link "Xem đề" cạnh ô chọn khi chấm): mở popup
+  hiện nội dung — file chữ (.txt/.md/code) đọc thẳng, ảnh/PDF xem qua link ký
+  10 phút (bucket private). File bị DLP mã hóa thì báo rõ và bảo tạo lại bằng
+  .txt/.md thay vì hiện bytes rác.
+- **Upload file đề xảy ra lúc bấm "Tạo đề bài"**, không phải lúc chọn file —
+  chọn xong rồi đổi file/đóng popup/tạo hụt đều KHÔNG để lại file rác trong bucket.
 - **Chấm**: chọn khóa → chọn đề → upload file bài làm của **một học sinh mỗi
   lượt** (nhiều file được) → bấm Chấm. KHÔNG nhập tên học sinh.
 - **Kết quả**: **ô điểm riêng** (/100, tô màu: đỏ <50, vàng 50–79, xanh ≥80) +
@@ -81,8 +87,16 @@ Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.
   em tiếp theo.
 
 ### Sản phẩm cuối khóa (góc nhìn GV)
-- Xem tất cả sản phẩm của lớp, trang chi tiết để kiểm tra (tên, mô tả, chức năng,
-  link code, link demo, ghi chú).
+Trang `/teacher/gallery` (nav "Sản phẩm") — dùng CHUNG component với gallery của
+học viên (`components/gallery/`), khác ở 3 chỗ: nhóm theo lớp, xưng "em", và GV
+xóa được nhận xét bất kỳ.
+
+- Sản phẩm nhóm theo từng lớp GV dạy; bấm vào từng em → popup chi tiết (tên, mô
+  tả, chức năng, link code/demo/drive, ghi chú) + khu nhận xét.
+- **GV nhận xét như học viên** (cùng bảng `project_comments`), và xóa được nhận
+  xét của bất kỳ ai trong lớp mình (`project_comments_delete` đã cho phép sẵn).
+- Không cần migration: `projects_class_select` + `project_comments_*` vốn đã mở
+  cho `is_teacher_of_class`; trước đây chỉ thiếu giao diện.
 
 ### Random nhóm thuyết trình
 - Chọn lớp → nhập số nhóm HOẶC số người/nhóm → shuffle, hiển thị kết quả có
