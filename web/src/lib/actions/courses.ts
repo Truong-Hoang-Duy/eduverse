@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { removeSpecFiles, specPathsOfCourses } from "@/lib/spec-storage";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
@@ -84,6 +85,14 @@ export async function deleteCourse(formData: FormData): Promise<void> {
   if (!id) return;
 
   const supabase = await createClient();
+
+  // Xóa khóa thì assignments cascade theo, nhưng file đề trong Storage thì không —
+  // phải gom path lại trước khi dòng biến mất.
+  const paths = await specPathsOfCourses(supabase, [id]);
+
   await supabase.from("courses").delete().eq("id", id);
+  await removeSpecFiles(supabase, paths);
+
   revalidatePath("/teacher");
+  revalidatePath("/teacher/assignments");
 }

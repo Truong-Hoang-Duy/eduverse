@@ -7,6 +7,16 @@ import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
+/**
+ * Sản phẩm + nhận xét hiện ở 3 trang: khu HV (sản phẩm của mình, gallery lớp) và
+ * gallery của GV. Đổi ở đâu cũng phải làm mới cả ba, nếu không trang kia còn cache cũ.
+ */
+function revalidateGallery(): void {
+  revalidatePath("/student/projects");
+  revalidatePath("/student/gallery");
+  revalidatePath("/teacher/gallery");
+}
+
 /** Tách textarea nhiều dòng thành mảng chức năng (bỏ dòng trống). */
 function parseFeatures(raw: string): string[] {
   return raw
@@ -64,8 +74,7 @@ export async function saveProject(
     return { error: `Không lưu được: ${error.message}` };
   }
 
-  revalidatePath("/student/projects");
-  revalidatePath("/student/gallery");
+  revalidateGallery();
   return { success: "Đã lưu sản phẩm." };
 }
 
@@ -75,7 +84,7 @@ export async function deleteProject(formData: FormData): Promise<void> {
 
   const supabase = await createClient();
   await supabase.from("projects").delete().eq("id", id);
-  revalidatePath("/student/projects");
+  revalidateGallery();
 }
 
 export async function addComment(
@@ -104,7 +113,7 @@ export async function addComment(
     return { error: `Không gửi được nhận xét: ${error.message}` };
   }
 
-  revalidatePath("/student/gallery");
+  revalidateGallery();
   return { success: "Đã gửi nhận xét." };
 }
 
@@ -114,7 +123,7 @@ export async function deleteComment(formData: FormData): Promise<void> {
 
   const supabase = await createClient();
   await supabase.from("project_comments").delete().eq("id", id);
-  revalidatePath("/student/gallery");
+  revalidateGallery();
 }
 
 export interface FeatureSuggestion {

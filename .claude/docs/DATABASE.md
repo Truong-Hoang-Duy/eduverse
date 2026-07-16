@@ -64,7 +64,21 @@ chỉ có policy `user_id = auth.uid()`, không ai khác đọc được (kể c
 - Student KHÔNG thấy: grades/submissions của học viên khác, review_options,
   zalo_templates, assignments spec file.
 
-⚠️ **Gotcha hay vấp**: `enrollments_student_select` chỉ cho HV thấy dòng ghi danh
+⚠️ **Gotcha 1 — Storage KHÔNG cascade**: mọi FK trong DB đều `on delete cascade`,
+nên xóa khóa/lớp là các dòng con tự đi theo. Nhưng file trong bucket
+`assignment-specs` thì KHÔNG ai dọn. Xóa dòng `assignments` mà quên
+`storage.remove(spec_file_path)` là bỏ rác vĩnh viễn (đã dính: đề xóa 2026-07-15,
+file nằm lại tới 2026-07-16). Dùng `web/src/lib/spec-storage.ts`
+(`removeSpecFiles`, `specPathsOfCourses`) và nhớ **đọc path TRƯỚC khi xóa dòng**.
+
+⚠️ **Gotcha 2 — `student_reviews.created_by` KHÔNG cascade** (khác mọi FK còn
+lại): còn nhận xét do GV đó tạo thì `auth.admin.deleteUser(gv)` FAIL vì vi phạm
+FK. Tệ hơn: `deleteUser` trả lỗi trong `{ error }` chứ không throw → nuốt lỗi là
+tài khoản rác nằm lại im ru (đã dính: 10 tài khoản `e2f.gv.*`/`e3g.gv.*` tích tụ
+nhiều ngày). Luôn xóa **khóa học trước, tài khoản sau**, và kiểm `error`.
+Dọn rác: `node --env-file=.env.local scripts/purge-test-users.mjs [--yes]`.
+
+⚠️ **Gotcha 3 hay vấp**: `enrollments_student_select` chỉ cho HV thấy dòng ghi danh
 CỦA CHÍNH MÌNH → **học viên không liệt kê được bạn cùng lớp**. Muốn hiện danh
 sách lớp cho HV (VD gallery hiện cả bạn chưa có sản phẩm) thì phải viết migration
 mở policy này. Hiện gallery đi vòng: lấy từ `projects` (HV cùng lớp xem được).

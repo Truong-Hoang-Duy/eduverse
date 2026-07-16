@@ -9,6 +9,7 @@ import type { Profile } from "@/lib/types";
 const TEACHER_LINKS = [
   { href: "/teacher", label: "Lớp học" },
   { href: "/teacher/assignments", label: "Chấm bài" },
+  { href: "/teacher/gallery", label: "Sản phẩm" },
 ];
 
 // Học viên: 3 tab (student-tabs.tsx) là con của "Lớp học" nên nav này sáng
