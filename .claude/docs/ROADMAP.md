@@ -90,6 +90,19 @@
       điện thoại, ô tìm lớp full width, tiêu đề lớp wrap
 - [x] Merge lên production
 
+### Đợt 5 (`feature/nav-loading-feedback`) — phản hồi khi chuyển trang
+- [x] **Khung xương khi tải trang**: `loading.tsx` cho khu teacher / student /
+      profile + `PageSkeleton` dùng chung + `ui/skeleton.tsx` (shadcn CLI)
+- [x] **Spinner trên chính link vừa bấm** (`useLinkStatus`, Next 15.3+) —
+      `NavLinkLabel` đấu vào `nav-links.tsx` + `student-tabs.tsx`
+- [x] **Bật lại prefetch**: đo trên production build, payload prefetch
+      `/teacher/settings` **215 bytes → 10.328 bytes** sau khi có ranh giới loading
+- [x] **Tra profile 2 lần → 1 lần/request** (`cache()` trong `get-profile.ts`) — đo
+      được trên server đang chạy
+- [x] Tách `profile/layout.tsx` (trước đây page tự dựng `AppShell` nên khung xương
+      không có chỗ bám)
+- [ ] Merge lên production
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
 - Gallery hiện cả bạn CHƯA có sản phẩm → cần migration mở RLS `enrollments`
