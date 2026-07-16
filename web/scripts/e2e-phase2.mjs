@@ -167,8 +167,14 @@ async function main() {
 }
 
 async function cleanup() {
-  for (const id of userIds) await admin.auth.admin.deleteUser(id);
+  // Khóa học TRƯỚC, tài khoản SAU: student_reviews.created_by trỏ tới profiles mà
+  // KHÔNG có on delete cascade → còn nhận xét là xóa GV không nổi, và
+  // deleteUser nuốt lỗi nên tài khoản rác nằm lại im ru trong auth.
   await admin.from("courses").delete().eq("code", COURSE_CODE);
+  for (const id of userIds) {
+    const { error } = await admin.auth.admin.deleteUser(id);
+    if (error) console.error(`Không xóa được user ${id}: ${error.message}`);
+  }
   console.log("Đã dọn sạch dữ liệu test.");
 }
 
