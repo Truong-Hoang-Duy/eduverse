@@ -12,9 +12,10 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
         ├── sessions                ← buổi học của LỚP (nội dung GV tự điền)
         └── projects                ← sản phẩm cuối khóa của học viên
   └── assignments (theo buổi)       ← đề bài của KHÓA, mỗi buổi MỘT đề khác nhau
-        └── submissions (theo lớp)  ← bài làm từng học viên (GV upload)
-              └── grades            ← kết quả AI chấm /100
 ```
+
+> Chấm bài KHÔNG lưu gì: file bài làm + kết quả gửi inline sang ai-service rồi
+> mất. `assignments` (đề bài + file đề trong Storage) là thứ DUY NHẤT được lưu.
 
 ## Bảng
 
@@ -28,8 +29,6 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 | `student_reviews` | id, session_id, student_id, strengths text[], improvements text[], advice, ai_generated_comment, created_by | nhận xét theo buổi |
 | `review_options` | id, teacher_id, category `strength\|improvement\|advice`, label | lựa chọn radio/checkbox |
 | `assignments` | id, course_id, session_number, title, spec_file_path, instructions, max_score DEFAULT 100, UNIQUE(course_id, session_number) | đề theo KHÓA + BUỔI |
-| ~~`submissions`~~ | id, assignment_id, class_id, student_id, code_file_paths text[], uploaded_by, uploaded_at | ⚠️ **SCHEMA CHẾT** — không còn code nào dùng |
-| ~~`grades`~~ | id, submission_id UNIQUE, score 0–100, criteria_breakdown JSONB, ai_comment, graded_at | ⚠️ **SCHEMA CHẾT** — không còn code nào dùng |
 | `projects` | id, student_id, class_id, name, description, features text[], repo_url, drive_url, demo_url, extra_notes | sản phẩm cuối khóa |
 | `project_comments` | id, project_id, author_id, content, created_at | HV nhận xét lẫn nhau |
 | `zalo_templates` | id, teacher_id, name, template_text | mẫu tin nhắn Zalo |
@@ -41,18 +40,14 @@ theo DÒNG chứ không theo CỘT. `profiles_select` cho GV đọc profile họ
 cùng lớp đọc profile của nhau → để key trong `profiles` là lộ key. `user_secrets`
 chỉ có policy `user_id = auth.uid()`, không ai khác đọc được (kể cả GV).
 
-`criteria_breakdown` JSONB dạng:
-`[{"criterion": "Đúng yêu cầu đề", "score": 40, "max": 50}, ...]`
-
 ## Storage buckets
 
 - `assignment-specs` — file đề bài (PDF/ảnh/text/md). Chỉ teacher đọc/ghi. **Đang dùng.**
-- ~~`submissions`~~ — ⚠️ **KHÔNG CÒN DÙNG**: từ bản chấm bài mới, file bài làm gửi
-  thẳng (base64) sang ai-service và không lưu ở đâu cả.
 
-> **Schema chết**: `submissions` + `grades` + bucket `submissions` là tàn dư của
-> bản chấm bài cũ (chấm theo lớp, lưu điểm). Chức năng chấm bài giờ không lưu gì.
-> Giữ lại trong DB theo yêu cầu user; đừng dùng khi viết tính năng mới.
+> **Đã xóa schema chết** (migration `20260718000000`): bảng `submissions` + `grades`
+> + bucket `submissions` — tàn dư của bản chấm bài cũ (chấm theo lớp, lưu điểm).
+> Chấm bài giờ không lưu gì nên không còn code nào dùng. Migration này phải dán tay
+> vào Supabase SQL Editor + regen types (xem đầu file migration).
 
 ## Quy tắc RLS (áp cho MỌI bảng — không bảng nào để trống RLS)
 
@@ -61,8 +56,8 @@ chỉ có policy `user_id = auth.uid()`, không ai khác đọc được (kể c
 - Student: SELECT lớp/buổi/nhận xét CỦA MÌNH (`student_id = auth.uid()` hoặc
   enrollment tồn tại); CRUD `projects` của chính mình; SELECT + INSERT
   `project_comments` trong lớp mình học.
-- Student KHÔNG thấy: grades/submissions của học viên khác, review_options,
-  zalo_templates, assignments spec file.
+- Student KHÔNG thấy: review_options, zalo_templates, assignments (đề bài +
+  spec file), nhận xét của bạn khác.
 
 ⚠️ **Gotcha 1 — Storage KHÔNG cascade**: mọi FK trong DB đều `on delete cascade`,
 nên xóa khóa/lớp là các dòng con tự đi theo. Nhưng file trong bucket

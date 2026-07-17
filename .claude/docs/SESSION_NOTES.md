@@ -8,24 +8,27 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude — /handoff)
 
-**Đang làm:** **Đợt 6 xong code + test, CHƯA merge.** Nhánh
-`feature/student-profile-timeline` (từ `develop`) — trang hồ sơ học viên xuyên khóa
-cho GV. E2E **94/94**, pytest 4/4, lint/typecheck/build sạch. Đợt 4 + Đợt 5 đã chạy
-production. Việc tiếp theo: merge Đợt 6 → develop → main → push (Vercel tự deploy).
+**Đang làm:** Đợt 6 + dọn dẹp gộp vào develop, chuẩn bị deploy. GĐ 1–5 + Đợt 1–5 đã
+production. Nhánh cuối: `chore/cleanup-dead-code` (đã có Đợt 6 + dọn dẹp).
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
 - Đợt 5 (`feature/nav-loading-feedback`): phản hồi khi chuyển trang — khung xương
   + spinner + cache() profile. Prefetch sống lại (215B→10KB). **Đã production.**
 - Đợt 6 (`feature/student-profile-timeline`): hồ sơ HV xuyên khóa cho GV (timeline
-  nhận xét gốc + AI tổng hợp). 0 migration. **Chưa merge.**
+  nhận xét gốc + AI tổng hợp). 0 migration. E2E 94/94.
+- Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; migration
+  `20260718000000` xóa schema chết `submissions`/`grades` + bucket; rà lại docs.
+
+⚠️ **SAU KHI MERGE, USER PHẢI LÀM 2 việc thủ công cho migration schema chết:**
+1. Dán `supabase/migrations/20260718000000_drop_dead_submissions_grades.sql` vào
+   Supabase SQL Editor (mạng chặn cổng 5432 nên `db push` không dùng được).
+2. Regen types: `cd web && ./node_modules/.bin/supabase gen types typescript --linked
+   > src/lib/database.types.ts` (bỏ type submissions/grades). Chưa làm thì types cũ
+   còn nằm đó nhưng VÔ HẠI (không code nào dùng).
 
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
-**trước khi sửa bất kỳ dòng code nào**.
-
-⚠️ **Bài học (2026-07-16)**: Claude đã lỡ commit thẳng 2 commit vào `main` (vi phạm
-`.claude/rules/git-workflow.md`), phải `git branch feature/x <sha>` +
-`git reset --hard origin/main` rồi merge lại đúng luồng. May là chưa push.
+**trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
 
 **Tiến độ (chi tiết ở ROADMAP.md):**
 - [x] GĐ 1–5: auth username, khóa/lớp, buổi học + nhận xét AI, tin Zalo, chấm bài
@@ -36,12 +39,14 @@ production. Việc tiếp theo: merge Đợt 6 → develop → main → push (Ve
 - [x] Đợt 3: font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp sang khóa khác,
       thêm HV bằng tìm kiếm, hồ sơ full width, responsive cho điện thoại
 - [x] Deploy: Vercel + Render + Supabase — 0đ/tháng
-- [x] **E2E 91/91 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+- [x] **E2E 94/94 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu).
+      ⚠️ Trước khi chạy phase3/4 (AI): `netstat :8000` chắc chỉ 1 listener ai-service
+      — 2 instance chồng port → instance mới không bind, E2E gọi vào cái cũ → 502 giả:
 
 | Script | Số test | Lệnh |
 |---|---|---|
 | `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/e2e-phase1.mjs` |
-| `e2e-phase2.mjs` | 10 | như trên |
+| `e2e-phase2.mjs` | 13 | như trên (gồm 3 check hồ sơ HV xuyên khóa) |
 | `e2e-phase5.mjs` | 8 | như trên |
 | `e2e-api-key.mjs` | 8 | như trên |
 | `e2e-class-admin.mjs` | 15 | như trên |
@@ -106,8 +111,8 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   RLS + cascade + Storage trên DB thật, nhưng thân hàm action thì test không chạm
   tới (Server Action không gọi được từ Node). Đổi logic trong action mà quên đổi
   script là test vẫn xanh — cẩn thận.
-- 🟡 Bảng `submissions`/`grades` + bucket `submissions` vẫn là **schema chết**
-  (user chốt giữ lại). Đừng dùng cho tính năng mới.
+- ✅ Schema chết `submissions`/`grades` + bucket: đã có migration xóa (Đợt dọn dẹp).
+  Chờ user dán tay + regen types (xem mục ⚠️ ở "Trạng thái hiện tại").
 
 ### Ràng buộc môi trường (không sửa được, phải sống chung)
 - **Migration phải dán tay vào Supabase SQL Editor** — mạng của user CHẶN cổng
@@ -130,6 +135,18 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   link trong biến `VIDEOS` ở đầu file.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-16 (Dọn dẹp) — Claude / Xóa code + schema thừa + rà docs
+User: "chỉnh sửa tài liệu đầy đủ, deploy, dọn dẹp phần dư thừa". Khảo sát trước khi
+xóa: đếm lượt dùng từng `ui/*` → 5 file 0 lượt (avatar, checkbox, radio-group,
+sonner, tabs); truy dep → `sonner` + `next-themes` chỉ được `ui/sonner.tsx` dùng
+(dark mode dùng `documentElement.classList`, không cần next-themes). Xóa 5 file +
+`pnpm remove sonner next-themes` → typecheck/build vẫn sạch. Schema chết
+`submissions`/`grades` (user trước chốt giữ, giờ chốt xóa): migration
+`20260718000000` DROP + thu policy storage về 1 bucket — **user dán tay + regen
+types**. Rà docs: DATABASE bỏ schema chết; ARCHITECTURE sửa auth email→username,
+Storage bỏ "bài nộp", model → `gemini-flash-latest`, thêm hồ sơ HV; AI-SERVICE sửa
+model; CLAUDE cập nhật luật schema chết.
 
 ### 2026-07-16 (Đợt 6) — Claude / Hồ sơ học viên xuyên khóa (GV) — CHƯA merge
 User: "nghiên cứu hệ thống, tìm thêm tính năng". 2 Explore agent khảo sát → chọn

@@ -10,7 +10,8 @@
   `lib/actions/api-key.ts → getMyApiKey()` đọc key của user hiện tại từ bảng
   `user_secrets` và mọi action AI đều truyền vào. Key sai → 400 kèm hướng dẫn;
   hết quota → 503 (message khác nhau tùy dùng key riêng hay key hệ thống).
-- Model: `gemini-2.5-flash` qua SDK `google-genai` (free tier 1.500 req/ngày).
+- Model: **`gemini-flash-latest`** (alias) qua SDK `google-genai` (free tier
+  1.500 req/ngày). `gemini-2.5-flash` bị Google khóa với API key mới từ 2026.
 - Auth: mọi endpoint yêu cầu header `X-API-Key` khớp env `AI_SERVICE_API_KEY`.
   Sai/thiếu → 401. Chỉ Next.js server-side biết key này.
 - Quota Gemini hết (429) → trả 503 `{"detail": "AI đang bận, thử lại sau ít phút"}`.

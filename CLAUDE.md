@@ -74,7 +74,8 @@ Luôn chạy lint + typecheck + test liên quan trước khi coi task là hoàn 
 - Client component KHÔNG dùng Supabase service-role key; key đó chỉ tồn tại server-side.
 - Đề bài (`assignments`) thuộc KHÓA HỌC (course), không thuộc lớp — mỗi buổi một đề.
 - Chấm bài là công cụ ĐỘC LẬP: chỉ lưu đề bài; file bài làm + kết quả chấm KHÔNG
-  lưu (bảng `submissions`/`grades` là schema chết — đừng dùng lại).
+  lưu (bảng `submissions`/`grades` + bucket `submissions` đã bị XÓA — migration
+  `20260718000000`; đừng hồi sinh, chấm bài không lưu gì).
 - Mọi hành động xóa dùng `ConfirmDialog`; không dùng `confirm()` của trình duyệt.
 - Xóa là XÓA SẠCH: DB cascade sẵn nhưng **Storage không cascade** — xóa dòng có
   file (VD `assignments.spec_file_path`) phải đọc path TRƯỚC rồi gọi

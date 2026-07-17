@@ -126,7 +126,15 @@
       lớp không đổi); tái dùng `PageSkeleton` cho loading.
 - [x] **0 migration** — `student_reviews_teacher_all` đã cho GV đọc, HV không xem
       được (giữ ranh giới cũ). E2E `e2e-phase2.mjs` +3 (timeline + cô lập RLS).
-- [ ] Merge lên production
+
+### Dọn dẹp (`chore/cleanup-dead-code`)
+- [x] Xóa 5 file `ui/` không dùng (avatar, checkbox, radio-group, sonner, tabs)
+      + gỡ 2 dep mồ côi theo đó (`sonner`, `next-themes` — dark mode dùng cách riêng)
+- [x] Migration `20260718000000` XÓA schema chết `submissions`/`grades` + bucket
+      `submissions` (⚠️ user phải dán tay + regen types — xem đầu file migration)
+- [x] Rà lại toàn bộ tài liệu (DATABASE/ARCHITECTURE/CLAUDE/AI-SERVICE): bỏ schema
+      chết, sửa auth email→username, model → `gemini-flash-latest`, thêm hồ sơ HV.
+- [ ] Merge Đợt 6 + dọn dẹp lên production
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
