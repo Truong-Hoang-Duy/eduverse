@@ -76,6 +76,16 @@ async function main() {
     .single();
   check("Học viên tạo sản phẩm", !pErr, pErr?.message);
 
+  // 1b. Trạng thái nộp (migration 20260719000000): mặc định draft, đổi được sang submitted
+  check("Sản phẩm mới mặc định trạng thái 'draft'", proj?.status === "draft", `status=${proj?.status}`);
+  const { data: submitted, error: stErr } = await alice.client
+    .from("projects")
+    .update({ status: "submitted" })
+    .eq("id", proj.id)
+    .select("status")
+    .single();
+  check("HV đổi trạng thái sang 'submitted'", !stErr && submitted?.status === "submitted", stErr?.message);
+
   // 2. UNIQUE(class_id, student_id): tạo sản phẩm thứ 2 cùng lớp bị chặn
   const { error: dupErr } = await alice.client.from("projects").insert({
     student_id: alice.id,
@@ -134,6 +144,16 @@ async function main() {
     .eq("class_id", clsA.id);
   check("GV xem được sản phẩm lớp mình", (gvSees ?? []).length === 1);
 
+  // 9b. RLS: Bob KHÔNG xóa được sản phẩm của Alice (deleteProject dựa RLS này)
+  await bob.client.from("projects").delete().eq("id", proj.id);
+  const { data: stillThere } = await admin.from("projects").select("id").eq("id", proj.id);
+  check("RLS: HV khác KHÔNG xóa được sản phẩm", (stillThere ?? []).length === 1);
+
+  // 9c. Alice xóa được sản phẩm của chính mình (đường của nút Xóa mới thêm)
+  await alice.client.from("projects").delete().eq("id", proj.id);
+  const { data: gone } = await admin.from("projects").select("id").eq("id", proj.id);
+  check("HV xóa được sản phẩm của mình", (gone ?? []).length === 0);
+
   // 10. AI gợi ý tính năng (thật)
   const res = await fetch(`${AI_URL}/suggest-features`, {
     method: "POST",
@@ -143,6 +163,7 @@ async function main() {
       description: "Web quản lý mượn trả sách cho trường học",
       existing_features: ["Đăng nhập", "Tìm sách"],
       course_code: CODE,
+      desired_difficulty: "easy",
     }),
   });
   const data = res.ok ? await res.json() : null;
