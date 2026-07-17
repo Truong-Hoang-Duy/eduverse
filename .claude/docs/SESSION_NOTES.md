@@ -8,27 +8,25 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude — /handoff)
 
-**Đang làm:** Đợt 6 + dọn dẹp gộp vào develop, chuẩn bị deploy. GĐ 1–5 + Đợt 1–5 đã
-production. Nhánh cuối: `chore/cleanup-dead-code` (đã có Đợt 6 + dọn dẹp).
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–6 + dọn dẹp đều đã production
+(`main` = `origin` = `9aa73cf`). Không nhánh feature nào treo. Việc tiếp tùy user.
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
 - Đợt 5 (`feature/nav-loading-feedback`): phản hồi khi chuyển trang — khung xương
   + spinner + cache() profile. Prefetch sống lại (215B→10KB). **Đã production.**
 - Đợt 6 (`feature/student-profile-timeline`): hồ sơ HV xuyên khóa cho GV (timeline
-  nhận xét gốc + AI tổng hợp). 0 migration. E2E 94/94.
-- Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; migration
-  `20260718000000` xóa schema chết `submissions`/`grades` + bucket; rà lại docs.
+  nhận xét gốc + AI tổng hợp). 0 migration. E2E 94/94. **Đã production.**
+- Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; **XÓA XONG**
+  schema chết `submissions`/`grades` (user dán SQL) + bucket (Storage API) + type
+  chết trong `database.types.ts` (bỏ tay 2 khối). **Đã production.**
 
-⚠️ **Migration schema chết — trạng thái:**
-- ✅ Bucket `submissions` (rỗng): ĐÃ xóa qua Storage API phiên này
-  (`scripts/drop-submissions-bucket.mjs --yes`). SQL KHÔNG xóa được bucket —
-  Supabase chặn DELETE trực tiếp vào storage tables (lỗi 42501 `protect_delete`).
-- 🔴 **USER phải dán SQL** `supabase/migrations/20260718000000...sql` vào Supabase
-  SQL Editor để drop 2 bảng + thu policy (lần đầu bị rollback vì 2 dòng xóa bucket,
-  giờ đã bỏ — chạy lại sạch, mọi câu idempotent).
-- 🟡 Sau đó regen types: `cd web && ./node_modules/.bin/supabase gen types typescript
-  --linked > src/lib/database.types.ts`. Chưa làm thì types cũ vô hại (0 code dùng).
+✅ **Schema chết đã dọn HẾT** (không còn việc thủ công): 2 bảng dropped (user chạy
+SQL, xác minh qua PostgREST live schema — không còn phơi ra); bucket xóa qua
+`scripts/drop-submissions-bucket.mjs`; `database.types.ts` bỏ 2 khối type.
+⚠️ **Bài học:** lệnh `... > database.types.ts` với CLI supabase KHÔNG cài local →
+lệnh lỗi nhưng dấu `>` đã CẮT TRẮNG file trước → suýt vỡ build. CLI supabase không
+có ở `node_modules/.bin/`; muốn regen phải `pnpm dlx supabase` + login + link.
 
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
