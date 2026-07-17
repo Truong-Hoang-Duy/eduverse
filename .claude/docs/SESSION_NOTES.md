@@ -8,15 +8,18 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude — /handoff)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–6 + dọn dẹp đều đã production
-(`main` = `origin` = `9aa73cf`). Không nhánh feature nào treo. Việc tiếp tùy user.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–7 + dọn dẹp đều đã production.
+Không nhánh feature nào treo. **E2E 98/98**, pytest 4/4. Việc tiếp tùy user.
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
 - Đợt 5 (`feature/nav-loading-feedback`): phản hồi khi chuyển trang — khung xương
   + spinner + cache() profile. Prefetch sống lại (215B→10KB). **Đã production.**
 - Đợt 6 (`feature/student-profile-timeline`): hồ sơ HV xuyên khóa cho GV (timeline
-  nhận xét gốc + AI tổng hợp). 0 migration. E2E 94/94. **Đã production.**
+  nhận xét gốc + AI tổng hợp). 0 migration. **Đã production.**
+- Đợt 7 (`feature/project-entry-improvements`): HV nhập sản phẩm — nút Xóa, chip
+  chức năng, form controlled, validate link, AI chọn độ khó + "thêm tất cả",
+  **trạng thái nộp** (migration `20260719000000` — user ĐÃ áp). **Đã production.**
 - Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; **XÓA XONG**
   schema chết `submissions`/`grades` (user dán SQL) + bucket (Storage API) + type
   chết trong `database.types.ts` (bỏ tay 2 khối). **Đã production.**
@@ -137,6 +140,31 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
 
+### 2026-07-17 (Đợt 7) — Claude / Cải tiến HV nhập sản phẩm + sửa README
+Khảo sát tìm ra: **không có nút Xóa** (`deleteProject` viết rồi mà chưa nối UI),
+textarea "mỗi dòng một chức năng" dễ lỗi, 4 trường `defaultValue` nên form không
+phản ánh sau khi lưu, không validate link, AI bỏ mất mô tả cách làm. Làm cả 3 hướng
+user chọn: hoàn thiện form + AI tốt hơn + trạng thái nộp.
+
+**Thứ tự bắt buộc (nhớ cho lần sau):** code ghi cột mới → **áp migration TRƯỚC khi
+deploy**, không thì mọi lần lưu vỡ. Đã: code → user dán migration → probe cột →
+E2E 98/98 → deploy. Cột thêm có DEFAULT nên an toàn với code đang chạy.
+
+**Thiết kế:** `features` vẫn `text[]` (chỉ tên) → mô tả cách làm của AI nối vào ô
+**Ghi chú** để không mất.
+
+**Sửa README (5 lỗi thật):** 74→**98** test (phase2 13, phase4 14, thiếu hẳn
+`e2e-gallery-storage` 17); lệnh regen types trỏ `./node_modules/.bin/supabase`
+**không tồn tại** — lệnh lỗi nhưng `>` đã cắt trắng `database.types.ts` (đã xảy ra
+thật); `cp .env.example .env.local` **hỏng trên clone mới** vì `web/.gitignore` có
+`.env*` KHÔNG kèm `!.env.example` → `web/.env.example` chưa bao giờ vào repo (root
+.gitignore có nên ai-service thì được); thiếu `purge-test-users`; thiếu bẫy 2
+ai-service chồng cổng 8000.
+
+**Để ngỏ cho user:** muốn `cp .env.example` chạy trên máy mới → thêm `!.env.example`
+vào `web/.gitignore` rồi commit file. Claude KHÔNG tự làm: không đọc được file env
+(chặn quyền) mà không commit thứ chưa xem (lỡ có key thật).
+
 ### 2026-07-16 (Dọn dẹp) — Claude / Xóa code + schema thừa + rà docs
 User: "chỉnh sửa tài liệu đầy đủ, deploy, dọn dẹp phần dư thừa". Khảo sát trước khi
 xóa: đếm lượt dùng từng `ui/*` → 5 file 0 lượt (avatar, checkbox, radio-group,
@@ -149,33 +177,18 @@ types**. Rà docs: DATABASE bỏ schema chết; ARCHITECTURE sửa auth email→
 Storage bỏ "bài nộp", model → `gemini-flash-latest`, thêm hồ sơ HV; AI-SERVICE sửa
 model; CLAUDE cập nhật luật schema chết.
 
-### 2026-07-16 (Đợt 6) — Claude / Hồ sơ học viên xuyên khóa (GV) — CHƯA merge
-User: "nghiên cứu hệ thống, tìm thêm tính năng". 2 Explore agent khảo sát → chọn
-làm **hồ sơ HV xuyên khóa cho GV** (0 migration). User chốt: chỉ GV, HV KHÔNG xem
-nhận xét (giữ ranh giới cũ).
+### 2026-07-16 (Đợt 6) — Hồ sơ HV xuyên khóa (GV) — ĐÃ PRODUCTION
+Trang `/teacher/classes/[id]/students/[studentId]` (bấm tên HV trong bảng lớp):
+timeline nhận xét gốc từng buổi + 3 thẻ số liệu + AI tổng hợp. Query GIỐNG
+`generateStudentSummary` (đã chạy prod) nên RLS chắc chắn OK → **0 migration**.
+`StudentSummaryPanel` thêm prop `lockedStudent` (tương thích ngược). HV KHÔNG xem
+nhận xét (giữ ranh giới cũ). **Bẫy:** phase3/4 fail 502 hóa ra do **2 ai-service
+chồng port 8000** (cái mới không bind, gọi vào cái cũ) — không phải lỗi code.
 
-**Làm:** trang `/teacher/classes/[id]/students/[studentId]` — bấm tên HV trong bảng
-lớp vào. Timeline nhận xét gốc từng buổi (điểm mạnh/yếu badge, lời khuyên, comment)
-+ 3 thẻ số liệu + AI tổng hợp toàn khóa. Query GIỐNG HỆT `generateStudentSummary`
-(đã chạy production) nên RLS chắc chắn cho GV đọc. Mở rộng `StudentSummaryPanel`
-prop `lockedStudent` (ẩn dropdown, khóa 1 HV) — tương thích ngược, trang lớp không đổi.
-
-**Kiểm chứng:** E2E **94/94** (phase2 +3: đọc timeline đúng shape + GV lớp khác đọc
-= rỗng), pytest 4/4, build sạch, route mới compile.
-
-**Bẫy đã dính (KHÔNG phải lỗi code):** chạy E2E thấy phase3/4 fail HTTP 502. Truy ra
-**2 instance ai-service chồng port 8000** — instance mới không bind được (`10048`),
-E2E gọi vào instance cũ chết một nửa. Kill sạch python + start đúng 1 instance →
-phase3/4 **10/10**. Bài học: trước khi chạy E2E AI, `netstat :8000` chắc chỉ 1 listener.
-
-### 2026-07-16 (Đợt 4+5) — Claude / Deploy 2 đợt lên production
-Merge `feature/teacher-gallery-spec-viewer` (Đợt 4) rồi `feature/nav-loading-feedback`
-(Đợt 5) → develop → main → push `7dc5b8d..22121c6`. Conflict docs (ROADMAP/SESSION_
-NOTES) resolve tay. Trước push: E2E 71/71 tất định + pytest 4/4 + build sạch. Dọn
-11 tài khoản test rác (`purge-test-users --yes`) → auth production còn 2 user thật.
-phase3/4 flake do Gemini 503 (Google high demand) — độc lập với deploy (diff không
-đụng ai-service). **User cần tự xác minh URL production** (URL trong `.env.local`,
-Claude không đọc secret).
+### 2026-07-16 (Đợt 4+5) — Deploy 2 đợt lên production (`7dc5b8d..22121c6`)
+Merge Đợt 4 rồi Đợt 5 → develop → main. Conflict docs resolve tay. Dọn 11 tài khoản
+test rác (`purge-test-users --yes`) → auth prod còn 2 user thật. phase3/4 lúc đó
+flake do **Gemini 503 (Google quá tải)** — độc lập với deploy.
 
 ### 2026-07-16 (Đợt 5) — Phản hồi khi chuyển trang — ĐÃ PRODUCTION
 `loading.tsx` (teacher/student/profile) + `PageSkeleton` + `NavLinkLabel`
@@ -194,15 +207,12 @@ vào `createAssignment`. **Lỗi âm thầm:** cleanup 7 script E2E xóa tài kh
 khóa (`student_reviews.created_by` không cascade → `deleteUser` fail bị nuốt lỗi →
 rò tài khoản rác). Đã đảo thứ tự + log lỗi.
 
-### 2026-07-16 (sau) — Claude / Dọn đề hỏng trong production — KHÔNG đổi code
-Dòng `assignments` user đã xóa từ trước; thứ sót lại là **file mồ côi trong bucket**
-(`...Screenshot_2026-07-15_081257.png`, 57 KB, 512 byte đầu = `SECURE FILE : This
-file is encrypted`) — vì `deleteAssignment` không xóa file (Đợt 4 đã sửa). Sao lưu
-rồi xóa; bucket + bảng đều rỗng. 2 việc 🟡 cũ: responsive user tự kiểm OK; video
-API key thì note cũ ghi sai — `VIDEOS.apikey` có link từ `1362cf9`, chưa bao giờ trống.
-
-**Mẹo:** script admin dùng `SUPABASE_SERVICE_ROLE_KEY` phải đặt TRONG `web/scripts/`
-— Node phân giải package theo vị trí script, để ngoài là `ERR_MODULE_NOT_FOUND`.
+### 2026-07-16 (sau) — Dọn đề hỏng trong production — KHÔNG đổi code
+File đề **mồ côi trong bucket** (bị DLP mã hóa: `SECURE FILE : This file is
+encrypted`) — dòng DB user đã xóa nhưng file ở lại vì `deleteAssignment` khi đó chưa
+xóa file (Đợt 4 sửa). Đã sao lưu rồi xóa. **Mẹo:** script admin dùng
+`SUPABASE_SERVICE_ROLE_KEY` phải đặt TRONG `web/scripts/` — Node phân giải package
+theo vị trí script, để ngoài là `ERR_MODULE_NOT_FOUND`.
 
 ### 2026-07-15→16 — Đợt 1-3 + API key + GĐ 4-5 (đều đã production, chi tiết ở ROADMAP)
 Đợt 3 (`c73a998`): font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp, thêm HV bằng

@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 
-import { ProjectCard, type ProjectView } from "@/components/project-card";
+import {
+  ProjectCard,
+  StatusBadge,
+  type ProjectView,
+} from "@/components/project-card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -63,7 +67,12 @@ export function ProjectGrid({
               </div>
             </div>
 
-            <p className="mt-3 truncate text-sm font-medium">{project.name}</p>
+            <div className="mt-3 flex items-center gap-2">
+              <p className="min-w-0 flex-1 truncate text-sm font-medium">
+                {project.name}
+              </p>
+              <StatusBadge status={project.status} />
+            </div>
             {project.description && (
               <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                 {project.description}

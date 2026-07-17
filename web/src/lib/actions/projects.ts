@@ -25,10 +25,38 @@ function parseFeatures(raw: string): string[] {
     .filter(Boolean);
 }
 
+/** URL http(s) hợp lệ (chuỗi rỗng được coi là hợp lệ — không bắt buộc). */
+function isValidUrl(value: string): boolean {
+  if (!value) return true;
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+export type ProjectStatus = "draft" | "submitted";
+
+/** Sản phẩm đã lưu, trả về để form phản ánh ngay (chuyển tạo→sửa không reload). */
+export interface SavedProject {
+  id: string;
+  name: string;
+  description: string | null;
+  features: string[];
+  repo_url: string | null;
+  drive_url: string | null;
+  demo_url: string | null;
+  extra_notes: string | null;
+  status: ProjectStatus;
+}
+
+export type SaveProjectResult = ActionResult & { project?: SavedProject };
+
 export async function saveProject(
-  _prev: ActionResult,
+  _prev: SaveProjectResult,
   formData: FormData
-): Promise<ActionResult> {
+): Promise<SaveProjectResult> {
   const id = String(formData.get("id") ?? "");
   const classId = String(formData.get("class_id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
@@ -38,9 +66,20 @@ export async function saveProject(
   const driveUrl = String(formData.get("drive_url") ?? "").trim();
   const demoUrl = String(formData.get("demo_url") ?? "").trim();
   const extraNotes = String(formData.get("extra_notes") ?? "").trim();
+  const status: ProjectStatus =
+    String(formData.get("status") ?? "") === "submitted" ? "submitted" : "draft";
 
   if (!classId || !name) {
     return { error: "Vui lòng nhập tên dự án." };
+  }
+  for (const [label, url] of [
+    ["GitHub", repoUrl],
+    ["Google Drive", driveUrl],
+    ["demo", demoUrl],
+  ] as const) {
+    if (!isValidUrl(url)) {
+      return { error: `Link ${label} không hợp lệ — phải bắt đầu bằng http:// hoặc https://` };
+    }
   }
 
   const supabase = await createClient();
@@ -61,12 +100,13 @@ export async function saveProject(
     drive_url: driveUrl || null,
     demo_url: demoUrl || null,
     extra_notes: extraNotes || null,
+    status,
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = id
-    ? await supabase.from("projects").update(row).eq("id", id)
-    : await supabase.from("projects").insert(row);
+  const { data: saved, error } = id
+    ? await supabase.from("projects").update(row).eq("id", id).select().single()
+    : await supabase.from("projects").insert(row).select().single();
   if (error) {
     if (error.code === "23505") {
       return { error: "Bạn đã có một sản phẩm cho lớp này rồi." };
@@ -75,7 +115,20 @@ export async function saveProject(
   }
 
   revalidateGallery();
-  return { success: "Đã lưu sản phẩm." };
+  return {
+    success: status === "submitted" ? "Đã nộp sản phẩm." : "Đã lưu nháp.",
+    project: {
+      id: saved.id,
+      name: saved.name,
+      description: saved.description,
+      features: saved.features,
+      repo_url: saved.repo_url,
+      drive_url: saved.drive_url,
+      demo_url: saved.demo_url,
+      extra_notes: saved.extra_notes,
+      status: saved.status as ProjectStatus,
+    },
+  };
 }
 
 export async function deleteProject(formData: FormData): Promise<void> {
@@ -138,6 +191,8 @@ export async function suggestFeatures(input: {
   description: string;
   existingFeatures: string[];
   courseCode: string;
+  /** Học viên muốn AI ưu tiên độ khó này; bỏ trống = để AI tự chọn theo khóa. */
+  desiredDifficulty?: FeatureSuggestion["difficulty"];
 }): Promise<{ suggestions?: FeatureSuggestion[]; error?: string }> {
   const supabase = await createClient();
   const {
@@ -159,6 +214,7 @@ export async function suggestFeatures(input: {
         description: input.description,
         existing_features: input.existingFeatures,
         course_code: input.courseCode,
+        desired_difficulty: input.desiredDifficulty ?? null,
       }
     );
     return { suggestions: data.suggestions };

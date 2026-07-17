@@ -99,13 +99,20 @@ def build_suggest_features_prompt(
     description: str,
     existing_features: list[str],
     course_code: str,
+    desired_difficulty: str | None = None,
 ) -> str:
+    difficulty_line = (
+        f"Học viên muốn các gợi ý chủ yếu ở độ khó '{desired_difficulty}' — "
+        "ưu tiên độ khó này nhưng vẫn phù hợp trình độ khóa."
+        if desired_difficulty
+        else "Chọn độ khó phù hợp trình độ khóa học."
+    )
     return "\n".join(
         [
             SYSTEM_ROLE,
             "Một học viên đang làm sản phẩm cuối khóa và cần gợi ý tính năng mới.",
-            f"Khóa học: {course_code} (JSB/CSB = cơ bản, JSA = trung cấp, JSI/CSI = nâng cao "
-            "— chọn độ khó phù hợp trình độ).",
+            f"Khóa học: {course_code} (JSB/CSB = cơ bản, JSA = trung cấp, JSI/CSI = nâng cao).",
+            difficulty_line,
             f"Tên dự án: {project_name}",
             f"Mô tả: {description}",
             f"Tính năng đã có: {', '.join(existing_features) or '(chưa có)'}",

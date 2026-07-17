@@ -14,6 +14,7 @@ def suggest_features(body: SuggestFeaturesRequest) -> SuggestFeaturesResponse:
         description=body.description,
         existing_features=body.existing_features,
         course_code=body.course_code,
+        desired_difficulty=body.desired_difficulty,
     )
     data = generate_json(
         prompt,
