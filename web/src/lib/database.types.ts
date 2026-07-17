@@ -196,41 +196,6 @@ export type Database = {
           },
         ]
       }
-      grades: {
-        Row: {
-          ai_comment: string | null
-          criteria_breakdown: Json
-          graded_at: string
-          id: string
-          score: number
-          submission_id: string
-        }
-        Insert: {
-          ai_comment?: string | null
-          criteria_breakdown?: Json
-          graded_at?: string
-          id?: string
-          score: number
-          submission_id: string
-        }
-        Update: {
-          ai_comment?: string | null
-          criteria_breakdown?: Json
-          graded_at?: string
-          id?: string
-          score?: number
-          submission_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "grades_submission_id_fkey"
-            columns: ["submission_id"]
-            isOneToOne: true
-            referencedRelation: "submissions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       presentation_groups: {
         Row: {
           class_id: string
@@ -514,65 +479,6 @@ export type Database = {
           {
             foreignKeyName: "student_reviews_student_id_fkey"
             columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      submissions: {
-        Row: {
-          assignment_id: string
-          class_id: string
-          code_file_paths: string[]
-          id: string
-          student_id: string
-          uploaded_at: string
-          uploaded_by: string
-        }
-        Insert: {
-          assignment_id: string
-          class_id: string
-          code_file_paths?: string[]
-          id?: string
-          student_id: string
-          uploaded_at?: string
-          uploaded_by: string
-        }
-        Update: {
-          assignment_id?: string
-          class_id?: string
-          code_file_paths?: string[]
-          id?: string
-          student_id?: string
-          uploaded_at?: string
-          uploaded_by?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "submissions_assignment_id_fkey"
-            columns: ["assignment_id"]
-            isOneToOne: false
-            referencedRelation: "assignments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "submissions_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "submissions_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "submissions_uploaded_by_fkey"
-            columns: ["uploaded_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
