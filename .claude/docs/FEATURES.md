@@ -17,6 +17,15 @@
   Dùng token theme (`bg-card`, `text-muted-foreground`...), tránh màu hard-code;
   màu cố định (green/yellow) phải có biến thể `dark:`.
 - Con trỏ bàn tay đã set toàn cục trong `globals.css` — không cần thêm class.
+- **Phản hồi khi chuyển trang (2 lớp, đừng bỏ lớp nào)**: `loading.tsx` ở mỗi khu
+  (teacher/student/profile) hiện `PageSkeleton`, **và** `NavLinkLabel` bọc nhãn link
+  để spinner hiện ngay trên link vừa bấm. Cần cả hai vì `loading.tsx` nằm BÊN TRONG
+  layout nên không che được `await requireRole()` của chính layout — lúc vào khu vực
+  từ ngoài hoặc F5 thì chỉ spinner (chạy ở client) mới kịp hiện.
+  ⚠️ Thêm trang/khu mới → **nhớ thêm `loading.tsx`**: thiếu nó thì route dynamic
+  không prefetch được gì (đo được: 215 bytes → 10.328 bytes khi có).
+  ⚠️ `useLinkStatus` phải gọi trong component CON của `<Link>`; gọi cùng chỗ khai
+  báo Link thì luôn trả `pending: false` mà **không báo lỗi gì**.
 - **Responsive (bắt buộc — app dùng cả trên điện thoại)**: mọi `grid-cols-2/3/4`
   phải có breakpoint (`grid-cols-1 sm:grid-cols-2`), không để lưới nhiều cột ở
   màn hình nhỏ. Hàng nút/ô chọn có bề rộng tối thiểu phải nằm trong `flex-wrap`.

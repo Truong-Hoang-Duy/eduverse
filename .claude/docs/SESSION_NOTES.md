@@ -8,14 +8,15 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude — /handoff)
 
-**Đang làm:** **Đợt 4 xong code + test, CHƯA merge.** Nhánh
-`feature/teacher-gallery-spec-viewer` (tách từ `develop` = `7dc5b8d`) có 3 tính năng
-user yêu cầu: GV xem/nhận xét sản phẩm, xem nội dung đề bài, xóa là xóa sạch.
-Kiểm chứng đủ: **E2E 91/91**, pytest 4/4, lint + typecheck + build sạch.
-GĐ 1–5 + Đợt 1–3 vẫn đang chạy production bình thường.
+**Đang làm:** KHÔNG có task dở. **Đợt 4 + Đợt 5 đã merge và đẩy lên production**
+(develop → main → push, Vercel + Render tự deploy). GĐ 1–5 + Đợt 1–5 đều đang chạy.
+Không nhánh feature nào còn treo. Việc tiếp theo tùy user — xem "Ý tưởng còn để
+ngỏ" cuối ROADMAP.md.
 
-**Việc tiếp theo:** merge `feature/teacher-gallery-spec-viewer` → `develop` → `main`
-→ push (Vercel tự deploy). Chạy lại E2E SAU merge chứ không chỉ trước.
+- Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
+  dung đề bài, xóa là xóa sạch (Storage). E2E 91/91.
+- Đợt 5 (`feature/nav-loading-feedback`): phản hồi khi chuyển trang — khung xương
+  + spinner trên link + cache() profile. Prefetch sống lại (215B→10KB).
 
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào**.
@@ -87,13 +88,11 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
-- 🟡 **Quyết định có xóa 10 tài khoản test rác trong auth production không**
-  (`e2f.gv.*` ×9, `e3g.gv.*` ×1 — rác tích từ 14–16/07, KHÔNG phải user thật).
-  Công cụ đã sẵn, mặc định chạy thử: `node --env-file=.env.local
-  scripts/purge-test-users.mjs` → thêm `--yes` để xóa thật. Claude không tự chạy
-  vì xóa tài khoản không hoàn tác được. Nguồn rò rỉ đã bịt (xem lịch sử phiên).
-- 🟡 Sau khi merge Đợt 4: mở thử `/teacher/gallery` + nút 👁 "Xem đề" trên điện
-  thoại/DevTools — máy không có playwright nên chưa ai xem bằng mắt thật.
+- 🟡 **Nghiệm thu Đợt 4 + Đợt 5 bằng mắt trên production** (máy không có playwright):
+  - Đợt 4: mở `/teacher/gallery` + nút 👁 "Xem đề" ở trang chấm bài.
+  - Đợt 5: **DevTools → Network → Throttling "Slow 4G"** (bắt buộc, mạng nhanh che
+    mất hiện tượng) → bấm nav: chữ mờ + spinner NGAY, rồi khung xương, rồi nội dung.
+    Thử cả `/teacher/classes/[id]` (7 query, ca tệ nhất) và 3 tab của học viên.
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng vào nó.** Script
@@ -126,9 +125,39 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
 
-### 2026-07-16 (Đợt 4) — Claude / GV xem sản phẩm + xem đề + xóa sạch
-Nhánh `feature/teacher-gallery-spec-viewer`, **chưa merge**. E2E 91/91, pytest 4/4,
-lint/typecheck/build sạch, smoke test `/teacher/gallery` → 307 về `/login` (guard OK).
+### 2026-07-16 (Đợt 5) — Claude / Phản hồi khi chuyển trang — ĐÃ MERGE PRODUCTION
+User báo "bấm chuyển trang không có hiện tượng gì". Không phải cảm giác: **toàn dự
+án không có một `loading.tsx` hay `<Suspense>` nào** → React không có gì để hiện,
+giữ nguyên trang cũ.
+
+**Làm 3 lớp (cần cả 3, không bỏ lớp nào):**
+- `loading.tsx` cho teacher/student/profile + `PageSkeleton` chung + `ui/skeleton.tsx`.
+- `NavLinkLabel` dùng `useLinkStatus` → spinner ngay trên link vừa bấm (client-side).
+- `cache()` cho profile lookup trong `get-profile.ts`.
+
+**Vì sao cần cả khung xương lẫn spinner:** `loading.tsx` nằm BÊN TRONG layout nên
+KHÔNG che được `await requireRole()` của chính layout → vào khu vực từ ngoài / F5
+thì khung xương không kịp hiện; spinner chạy ở client mới phủ được ca đó.
+
+**Đo được (không phải phỏng đoán):**
+- Prefetch `/teacher/settings` trên production build: **215 bytes → 10.328 bytes**
+  sau khi có `loading.tsx`. Route dynamic chỉ prefetch tới ranh giới loading gần
+  nhất → trước đây prefetch **trả về rỗng**, tức `<Link>` prefetch vô dụng suốt.
+- Tra profile mỗi request: `/teacher/settings` và `/profile` **2 lần → 1 lần**.
+- Cách đo: dựng cookie phiên thật (`base64-` + base64url(JSON session), tên
+  `sb-<ref>-auth-token`) rồi `fetch` kèm header `RSC: 1` + `Next-Router-Prefetch: 1`.
+  Script đã xóa sau khi đo — chép lại từ đây nếu cần đo lần nữa.
+
+**Bẫy đã dính:** chạy `pnpm build` trong khi `pnpm dev` đang chạy → `.next` bị giẫm
+→ mọi request 500 `ENOENT _buildManifest.js.tmp`. Không phải lỗi code (notes cũ đã
+cảnh báo). Tắt dev trước khi build, hoặc test bằng `pnpm start`.
+
+**Cố ý không làm:** thanh chạy ngang đầu trang (cần dep), `error.tsx`, đổi matcher
+middleware (footgun: soft-nav mãi không refresh token → văng ra `/login`).
+
+### 2026-07-16 (Đợt 4) — Claude / GV xem sản phẩm + xem đề + xóa sạch — ĐÃ MERGE
+E2E 91/91, pytest 4/4, lint/typecheck/build sạch, smoke test `/teacher/gallery`
+→ 307 về `/login` (guard OK).
 
 **1. GV xem + nhận xét sản phẩm** (`/teacher/gallery`): hóa ra **RLS đã cho phép sẵn**
 (`projects_class_select`, `project_comments_*` đều có `is_teacher_of_class`) — chỉ

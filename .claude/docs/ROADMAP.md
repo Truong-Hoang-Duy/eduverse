@@ -90,7 +90,7 @@
       điện thoại, ô tìm lớp full width, tiêu đề lớp wrap
 - [x] Merge lên production
 
-### Đợt 4 (`feature/teacher-gallery-spec-viewer`)
+### Đợt 4 (`feature/teacher-gallery-spec-viewer`) — đã merge lên production
 - [x] **GV xem + nhận xét sản phẩm học viên** (`/teacher/gallery`, nav "Sản phẩm"):
       nhóm theo lớp, GV xóa được nhận xét bất kỳ trong lớp mình. Không cần
       migration — RLS vốn đã cho phép, chỉ thiếu UI.
@@ -105,7 +105,18 @@
 - [x] Sửa cleanup của 7 script E2E: xóa khóa TRƯỚC tài khoản (FK
       `student_reviews.created_by` không cascade) + không nuốt lỗi `deleteUser`
 - [x] E2E `e2e-gallery-storage.mjs` 17/17; thêm `scripts/purge-test-users.mjs`
-- [ ] Merge lên production
+
+### Đợt 5 (`feature/nav-loading-feedback`) — phản hồi khi chuyển trang, đã merge production
+- [x] **Khung xương khi tải trang**: `loading.tsx` cho khu teacher / student /
+      profile + `PageSkeleton` dùng chung + `ui/skeleton.tsx` (shadcn CLI)
+- [x] **Spinner trên chính link vừa bấm** (`useLinkStatus`, Next 15.3+) —
+      `NavLinkLabel` đấu vào `nav-links.tsx` + `student-tabs.tsx`
+- [x] **Bật lại prefetch**: đo trên production build, payload prefetch
+      `/teacher/settings` **215 bytes → 10.328 bytes** sau khi có ranh giới loading
+- [x] **Tra profile 2 lần → 1 lần/request** (`cache()` trong `get-profile.ts`) — đo
+      được trên server đang chạy
+- [x] Tách `profile/layout.tsx` (trước đây page tự dựng `AppShell` nên khung xương
+      không có chỗ bám)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
