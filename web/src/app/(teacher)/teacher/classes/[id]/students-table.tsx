@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -71,7 +72,14 @@ export function StudentsTable({
         <TableBody>
           {students.map((student) => (
             <TableRow key={student.enrollmentId}>
-              <TableCell className="font-medium">{student.fullName}</TableCell>
+              <TableCell className="font-medium">
+                <Link
+                  href={`/teacher/classes/${classId}/students/${student.studentId}`}
+                  className="text-primary transition-colors hover:underline"
+                >
+                  {student.fullName}
+                </Link>
+              </TableCell>
               <TableCell>{student.username ?? "—"}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-3">

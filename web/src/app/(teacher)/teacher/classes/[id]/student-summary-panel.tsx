@@ -37,18 +37,23 @@ function toCopyText(studentName: string, summary: StudentSummary): string {
 export function StudentSummaryPanel({
   classId,
   students,
+  lockedStudent,
 }: {
   classId: string;
   students: { id: string; fullName: string }[];
+  /** Trang hồ sơ 1 học viên: khóa cứng vào em này, ẩn dropdown chọn. */
+  lockedStudent?: { id: string; fullName: string };
 }) {
-  const [studentId, setStudentId] = useState("");
+  const [studentId, setStudentId] = useState(lockedStudent?.id ?? "");
   const [summary, setSummary] = useState<StudentSummary | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [pending, startGenerate] = useTransition();
 
   const studentName =
-    students.find((s) => s.id === studentId)?.fullName ?? "Học viên";
+    lockedStudent?.fullName ??
+    students.find((s) => s.id === studentId)?.fullName ??
+    "Học viên";
 
   function handleGenerate() {
     setError("");
@@ -71,28 +76,30 @@ export function StudentSummaryPanel({
     setTimeout(() => setCopied(false), 2500);
   }
 
-  if (students.length === 0) {
+  if (!lockedStudent && students.length === 0) {
     return null;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-56 space-y-1.5">
-          <Label>Học viên</Label>
-          <Select value={studentId} onValueChange={setStudentId}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Chọn học viên" />
-            </SelectTrigger>
-            <SelectContent>
-              {students.map((s) => (
-                <SelectItem key={s.id} value={s.id}>
-                  {s.fullName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {!lockedStudent && (
+          <div className="min-w-56 space-y-1.5">
+            <Label>Học viên</Label>
+            <Select value={studentId} onValueChange={setStudentId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn học viên" />
+              </SelectTrigger>
+              <SelectContent>
+                {students.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.fullName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <Button
           onClick={handleGenerate}
           disabled={pending || !studentId}
