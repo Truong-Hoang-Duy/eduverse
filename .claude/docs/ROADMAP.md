@@ -118,6 +118,16 @@
 - [x] Tách `profile/layout.tsx` (trước đây page tự dựng `AppShell` nên khung xương
       không có chỗ bám)
 
+### Đợt 6 (`feature/student-profile-timeline`) — hồ sơ học viên xuyên khóa (GV)
+- [x] Trang `/teacher/classes/[id]/students/[studentId]`: timeline nhận xét gốc
+      từng buổi (điểm mạnh/yếu badge, lời khuyên, nhận xét đã lưu) + thẻ số liệu
+      + AI tổng hợp toàn khóa. Vào bằng cách bấm tên HV trong bảng lớp.
+- [x] Mở rộng `StudentSummaryPanel` prop `lockedStudent` (tương thích ngược, trang
+      lớp không đổi); tái dùng `PageSkeleton` cho loading.
+- [x] **0 migration** — `student_reviews_teacher_all` đã cho GV đọc, HV không xem
+      được (giữ ranh giới cũ). E2E `e2e-phase2.mjs` +3 (timeline + cô lập RLS).
+- [ ] Merge lên production
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
 - Gallery hiện cả bạn CHƯA có sản phẩm → cần migration mở RLS `enrollments`

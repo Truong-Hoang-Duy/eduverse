@@ -71,6 +71,20 @@
   thiện** từ danh mục `review_options` (GV tự quản lý danh mục này) + ô lời khuyên.
 - Nút **"AI tạo nhận xét"** → điền sẵn đoạn nhận xét → GV sửa → lưu.
 
+### Hồ sơ học viên xuyên khóa (CHỈ giáo viên)
+Trang `/teacher/classes/[id]/students/[studentId]` — vào bằng cách bấm tên học viên
+trong bảng danh sách lớp.
+
+- **Timeline nhận xét từng buổi**: điểm mạnh (badge xanh) / điểm cần cải thiện
+  (badge vàng) / lời khuyên / nhận xét đã lưu, sắp theo số buổi; mỗi mục link tới
+  trang buổi để sửa. Đây là nhận xét GỐC (khác với bản AI tóm tắt).
+- **Thẻ số liệu**: đã nhận xét X/N buổi, tổng lượt điểm mạnh, tổng lượt cần cải thiện.
+- **AI tổng hợp toàn khóa**: tái dùng `StudentSummaryPanel` (khóa cứng vào 1 HV,
+  không hiện dropdown) — Copy để gửi phụ huynh.
+- ⚠️ **Học viên KHÔNG xem được trang này** — nhận xét vẫn chỉ để GV gửi phụ huynh
+  (giữ nguyên ranh giới ở mục "Học viên"). RLS `student_reviews_teacher_all` chỉ
+  cho GV của lớp đọc; 0 migration, chỉ thêm UI.
+
 ### Tin nhắn Zalo (copy thủ công — KHÔNG dùng Zalo API)
 - CRUD mẫu tin (`zalo_templates`) với placeholder `{ten_lop}` `{buoi}` `{tom_tat}` `{loi_nhan}`.
 - Chọn lớp + buổi → AI tổng hợp từ các nhận xét đã lưu → preview → nút **Copy**.

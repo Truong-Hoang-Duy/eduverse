@@ -128,6 +128,56 @@ async function main() {
     joinErr?.message
   );
 
+  // 4b. Trang hồ sơ học viên xuyên khóa (Đợt 6): nhận xét buổi 2 để có timeline 2 mục
+  const session2 = sessions[1];
+  await teacher.from("sessions").update({ title: "Vòng lặp" }).eq("id", session2.id);
+  await teacher.from("student_reviews").upsert(
+    {
+      session_id: session2.id,
+      student_id: hv.id,
+      strengths: ["Chăm chỉ"],
+      improvements: ["Đặt tên biến rõ hơn"],
+      advice: "Luyện thêm bài tập vòng lặp",
+      created_by: gv.id,
+    },
+    { onConflict: "session_id,student_id" }
+  );
+
+  // Query GIỐNG HỆT trang hồ sơ: student_reviews join sessions của đúng lớp này.
+  const { data: timeline, error: tlErr } = await teacher
+    .from("student_reviews")
+    .select(
+      "session_id, strengths, improvements, advice, ai_generated_comment, sessions!inner(session_number, title, session_date, class_id)"
+    )
+    .eq("student_id", hv.id)
+    .eq("sessions.class_id", cls.id);
+  const ordered = (timeline ?? [])
+    .slice()
+    .sort((a, b) => a.sessions.session_number - b.sessions.session_number);
+  check(
+    "Trang hồ sơ: GV đọc được timeline 2 buổi đã nhận xét",
+    !tlErr && ordered.length === 2 && ordered[0].sessions.session_number === 1,
+    tlErr?.message
+  );
+  check(
+    "Timeline mang đủ dữ liệu buổi (session_number/title) để hiển thị",
+    ordered[1]?.sessions?.title === "Vòng lặp" && ordered[1]?.advice != null
+  );
+
+  // Cô lập RLS: GV lớp KHÁC không đọc được nhận xét của HV này (is_teacher_of_class).
+  const gv2 = await makeUser(`e2f.gv2.${ts}`, {
+    full_name: "GV Khác P2",
+    role: "teacher",
+  });
+  const { data: leaked } = await gv2.client
+    .from("student_reviews")
+    .select("session_id")
+    .eq("student_id", hv.id);
+  check(
+    "Bảo mật: GV lớp khác KHÔNG đọc được nhận xét học viên này",
+    (leaked ?? []).length === 0
+  );
+
   // 5. Mẫu Zalo
   const { error: tplErr } = await teacher.from("zalo_templates").insert({
     teacher_id: gv.id,

@@ -8,15 +8,17 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude — /handoff)
 
-**Đang làm:** KHÔNG có task dở. **Đợt 4 + Đợt 5 đã merge và đẩy lên production**
-(develop → main → push, Vercel + Render tự deploy). GĐ 1–5 + Đợt 1–5 đều đang chạy.
-Không nhánh feature nào còn treo. Việc tiếp theo tùy user — xem "Ý tưởng còn để
-ngỏ" cuối ROADMAP.md.
+**Đang làm:** **Đợt 6 xong code + test, CHƯA merge.** Nhánh
+`feature/student-profile-timeline` (từ `develop`) — trang hồ sơ học viên xuyên khóa
+cho GV. E2E **94/94**, pytest 4/4, lint/typecheck/build sạch. Đợt 4 + Đợt 5 đã chạy
+production. Việc tiếp theo: merge Đợt 6 → develop → main → push (Vercel tự deploy).
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
-  dung đề bài, xóa là xóa sạch (Storage). E2E 91/91.
+  dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
 - Đợt 5 (`feature/nav-loading-feedback`): phản hồi khi chuyển trang — khung xương
-  + spinner trên link + cache() profile. Prefetch sống lại (215B→10KB).
+  + spinner + cache() profile. Prefetch sống lại (215B→10KB). **Đã production.**
+- Đợt 6 (`feature/student-profile-timeline`): hồ sơ HV xuyên khóa cho GV (timeline
+  nhận xét gốc + AI tổng hợp). 0 migration. **Chưa merge.**
 
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào**.
@@ -88,11 +90,15 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
-- 🟡 **Nghiệm thu Đợt 4 + Đợt 5 bằng mắt trên production** (máy không có playwright):
+- 🔴 **Merge Đợt 6** (`feature/student-profile-timeline`) → develop → main → push.
+  Chỉ đụng docs + web (không ai-service). Conflict docs với origin có thể xảy ra nếu
+  Đợt 4+5 đã đổi cùng vùng — resolve tay như lần trước.
+- 🟡 **Nghiệm thu bằng mắt trên production** (máy không có playwright):
+  - Đợt 6: vào 1 lớp → bấm tên HV trong bảng → trang hồ sơ hiện timeline nhận xét
+    + thẻ số liệu + nút AI tổng hợp chạy. HV chưa nhận xét → empty state.
   - Đợt 4: mở `/teacher/gallery` + nút 👁 "Xem đề" ở trang chấm bài.
-  - Đợt 5: **DevTools → Network → Throttling "Slow 4G"** (bắt buộc, mạng nhanh che
-    mất hiện tượng) → bấm nav: chữ mờ + spinner NGAY, rồi khung xương, rồi nội dung.
-    Thử cả `/teacher/classes/[id]` (7 query, ca tệ nhất) và 3 tab của học viên.
+  - Đợt 5: **DevTools → Network → Throttling "Slow 4G"** → bấm nav: chữ mờ + spinner
+    NGAY, rồi khung xương, rồi nội dung. Thử `/teacher/classes/[id]` + 3 tab HV.
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng vào nó.** Script
@@ -125,63 +131,50 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
 
-### 2026-07-16 (Đợt 5) — Claude / Phản hồi khi chuyển trang — ĐÃ MERGE PRODUCTION
-User báo "bấm chuyển trang không có hiện tượng gì". Không phải cảm giác: **toàn dự
-án không có một `loading.tsx` hay `<Suspense>` nào** → React không có gì để hiện,
-giữ nguyên trang cũ.
+### 2026-07-16 (Đợt 6) — Claude / Hồ sơ học viên xuyên khóa (GV) — CHƯA merge
+User: "nghiên cứu hệ thống, tìm thêm tính năng". 2 Explore agent khảo sát → chọn
+làm **hồ sơ HV xuyên khóa cho GV** (0 migration). User chốt: chỉ GV, HV KHÔNG xem
+nhận xét (giữ ranh giới cũ).
 
-**Làm 3 lớp (cần cả 3, không bỏ lớp nào):**
-- `loading.tsx` cho teacher/student/profile + `PageSkeleton` chung + `ui/skeleton.tsx`.
-- `NavLinkLabel` dùng `useLinkStatus` → spinner ngay trên link vừa bấm (client-side).
-- `cache()` cho profile lookup trong `get-profile.ts`.
+**Làm:** trang `/teacher/classes/[id]/students/[studentId]` — bấm tên HV trong bảng
+lớp vào. Timeline nhận xét gốc từng buổi (điểm mạnh/yếu badge, lời khuyên, comment)
++ 3 thẻ số liệu + AI tổng hợp toàn khóa. Query GIỐNG HỆT `generateStudentSummary`
+(đã chạy production) nên RLS chắc chắn cho GV đọc. Mở rộng `StudentSummaryPanel`
+prop `lockedStudent` (ẩn dropdown, khóa 1 HV) — tương thích ngược, trang lớp không đổi.
 
-**Vì sao cần cả khung xương lẫn spinner:** `loading.tsx` nằm BÊN TRONG layout nên
-KHÔNG che được `await requireRole()` của chính layout → vào khu vực từ ngoài / F5
-thì khung xương không kịp hiện; spinner chạy ở client mới phủ được ca đó.
+**Kiểm chứng:** E2E **94/94** (phase2 +3: đọc timeline đúng shape + GV lớp khác đọc
+= rỗng), pytest 4/4, build sạch, route mới compile.
 
-**Đo được (không phải phỏng đoán):**
-- Prefetch `/teacher/settings` trên production build: **215 bytes → 10.328 bytes**
-  sau khi có `loading.tsx`. Route dynamic chỉ prefetch tới ranh giới loading gần
-  nhất → trước đây prefetch **trả về rỗng**, tức `<Link>` prefetch vô dụng suốt.
-- Tra profile mỗi request: `/teacher/settings` và `/profile` **2 lần → 1 lần**.
-- Cách đo: dựng cookie phiên thật (`base64-` + base64url(JSON session), tên
-  `sb-<ref>-auth-token`) rồi `fetch` kèm header `RSC: 1` + `Next-Router-Prefetch: 1`.
-  Script đã xóa sau khi đo — chép lại từ đây nếu cần đo lần nữa.
+**Bẫy đã dính (KHÔNG phải lỗi code):** chạy E2E thấy phase3/4 fail HTTP 502. Truy ra
+**2 instance ai-service chồng port 8000** — instance mới không bind được (`10048`),
+E2E gọi vào instance cũ chết một nửa. Kill sạch python + start đúng 1 instance →
+phase3/4 **10/10**. Bài học: trước khi chạy E2E AI, `netstat :8000` chắc chỉ 1 listener.
 
-**Bẫy đã dính:** chạy `pnpm build` trong khi `pnpm dev` đang chạy → `.next` bị giẫm
-→ mọi request 500 `ENOENT _buildManifest.js.tmp`. Không phải lỗi code (notes cũ đã
-cảnh báo). Tắt dev trước khi build, hoặc test bằng `pnpm start`.
+### 2026-07-16 (Đợt 4+5) — Claude / Deploy 2 đợt lên production
+Merge `feature/teacher-gallery-spec-viewer` (Đợt 4) rồi `feature/nav-loading-feedback`
+(Đợt 5) → develop → main → push `7dc5b8d..22121c6`. Conflict docs (ROADMAP/SESSION_
+NOTES) resolve tay. Trước push: E2E 71/71 tất định + pytest 4/4 + build sạch. Dọn
+11 tài khoản test rác (`purge-test-users --yes`) → auth production còn 2 user thật.
+phase3/4 flake do Gemini 503 (Google high demand) — độc lập với deploy (diff không
+đụng ai-service). **User cần tự xác minh URL production** (URL trong `.env.local`,
+Claude không đọc secret).
 
-**Cố ý không làm:** thanh chạy ngang đầu trang (cần dep), `error.tsx`, đổi matcher
-middleware (footgun: soft-nav mãi không refresh token → văng ra `/login`).
+### 2026-07-16 (Đợt 5) — Phản hồi khi chuyển trang — ĐÃ PRODUCTION
+`loading.tsx` (teacher/student/profile) + `PageSkeleton` + `NavLinkLabel`
+(`useLinkStatus`, spinner client-side) + `cache()` profile. **Cần cả khung xương
+lẫn spinner** vì `loading.tsx` nằm TRONG layout, không che được `requireRole()` khi
+vào từ ngoài/F5. Đo: prefetch `/teacher/settings` 215B→10.328B (route dynamic chỉ
+prefetch tới ranh giới loading → trước đó prefetch rỗng); tra profile 2→1 lần/request.
+**Bẫy:** `pnpm build` khi `pnpm dev` đang chạy → `.next` giẫm nhau → 500 `ENOENT
+_buildManifest`. Tắt dev trước khi build.
 
-### 2026-07-16 (Đợt 4) — Claude / GV xem sản phẩm + xem đề + xóa sạch — ĐÃ MERGE
-E2E 91/91, pytest 4/4, lint/typecheck/build sạch, smoke test `/teacher/gallery`
-→ 307 về `/login` (guard OK).
-
-**1. GV xem + nhận xét sản phẩm** (`/teacher/gallery`): hóa ra **RLS đã cho phép sẵn**
-(`projects_class_select`, `project_comments_*` đều có `is_teacher_of_class`) — chỉ
-thiếu UI, KHÔNG cần migration. Tách `ProjectGrid`/`CommentSection` từ route học viên
-sang `components/gallery/` dùng chung; thêm prop `canModerate` (GV xóa nhận xét bất kỳ).
-
-**2. Xem đề bài**: nút 👁 ở thẻ đề + link "Xem đề" khi chấm → `getAssignmentSpec`.
-Text đọc thẳng, ảnh/PDF qua link ký 10 phút (bucket private). Dùng `<img>` thường
-+ eslint-disable, KHÔNG `next/image` (link ký đổi mỗi lần mở → tối ưu vô nghĩa,
-lại phải khai remotePatterns).
-
-**3. Xóa sạch** — sửa tận gốc chứ không vá:
-- `deleteAssignment`/`deleteCourse` dọn file Storage (đọc path TRƯỚC khi xóa dòng).
-- **Upload file đề chuyển từ client (lúc chọn file) vào `createAssignment` (lúc bấm
-  tạo)** — gốc rễ của rác: đổi file/đóng popup/tạo hụt đều bỏ lại file. Tạo dòng
-  hỏng thì tự `removeSpecFiles`.
-- `deleteProject` xưa nay chỉ revalidate `/student/projects` → gallery còn cache
-  sản phẩm đã xóa. Gom thành `revalidateGallery()` cho cả 3 trang.
-
-**Lỗi âm thầm tìm ra:** chạy E2E xong đếm lại thấy auth tăng 11→12. Truy ra
-**cleanup của 7 script E2E xóa tài khoản TRƯỚC khóa học**, mà
-`student_reviews.created_by` không cascade → `deleteUser` fail, lại **nuốt lỗi**
-(không kiểm `{ error }`) → mỗi lần chạy phase2/phase3 đẻ thêm 1 tài khoản rác.
-Đã đảo thứ tự + log lỗi ở cả 7 script; chạy lại phase2 2 lần → vẫn 12, không tăng.
+### 2026-07-16 (Đợt 4) — GV xem sản phẩm + xem đề + xóa sạch — ĐÃ PRODUCTION
+`/teacher/gallery` (RLS đã cho sẵn, chỉ thiếu UI; tách `components/gallery/` dùng
+chung + prop `canModerate`); xem nội dung đề bài (`getAssignmentSpec`, link ký 10ph
+cho ảnh/PDF); `deleteAssignment`/`deleteCourse` dọn file Storage, upload đề chuyển
+vào `createAssignment`. **Lỗi âm thầm:** cleanup 7 script E2E xóa tài khoản TRƯỚC
+khóa (`student_reviews.created_by` không cascade → `deleteUser` fail bị nuốt lỗi →
+rò tài khoản rác). Đã đảo thứ tự + log lỗi.
 
 ### 2026-07-16 (sau) — Claude / Dọn đề hỏng trong production — KHÔNG đổi code
 Dòng `assignments` user đã xóa từ trước; thứ sót lại là **file mồ côi trong bucket**
@@ -193,22 +186,10 @@ API key thì note cũ ghi sai — `VIDEOS.apikey` có link từ `1362cf9`, chưa
 **Mẹo:** script admin dùng `SUPABASE_SERVICE_ROLE_KEY` phải đặt TRONG `web/scripts/`
 — Node phân giải package theo vị trí script, để ngoài là `ERR_MODULE_NOT_FOUND`.
 
-### 2026-07-16 — Claude / Đợt 3 + merge Đợt 2 (`3e09924` → `fe5f4d5`)
-Đợt 3 (`c73a998`): font Be Vietnam Pro; GV sửa khóa/mã lớp + chuyển lớp sang khóa
-khác; thêm HV bằng tìm kiếm (RPC `search_students`, migration `20260717000000`);
-hồ sơ full width; responsive. Merge Đợt 2 (`7399f06`). E2E 74/74, pytest 4/4.
-
-**Lỗi âm thầm đáng nhớ:** `--font-sans` trong globals.css trỏ vào biến layout chưa
-từng đặt (layout đặt `--font-geist-sans`) → **app chạy font mặc định trình duyệt từ
-đầu dự án**, không báo lỗi gì. Và `ConfirmDialog` truyền `sm:gap-0` đè `gap-2` của
-`DialogFooter` → 2 nút dính nhau.
-
-### 2026-07-16 (trước) — Claude / API key riêng từng người (`1362cf9`)
-API key Gemini riêng cho GV + HV (`user_secrets`, migration `20260716000000`) +
-hướng dẫn lấy key ở `/profile` và tab Hướng dẫn. E2E 59/59.
-
-### 2026-07-15 — Claude / Đợt 2 (chấm bài + giao diện) & hoàn tất GĐ 4-5
-Chấm bài thành công cụ độc lập không lưu gì; dark mode, stat card, popup,
-ConfirmDialog, khu HV chia tab, gallery ô từng người. Merge GĐ 4 (`b12d0f1`) +
-GĐ 5 (`e959b2e`). Chẩn đoán đáng nhớ: lỗi "Lỗi khi gọi AI" **không phải do nhiều
-file** mà do file đề bị DLP mã hóa; Vercel chặn deploy vì git author là email công ty.
+### 2026-07-15→16 — Đợt 1-3 + API key + GĐ 4-5 (đều đã production, chi tiết ở ROADMAP)
+Đợt 3 (`c73a998`): font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp, thêm HV bằng
+tìm kiếm (`search_students`), responsive. Đợt 2 (`7399f06`): chấm bài độc lập không
+lưu, dark mode, ConfirmDialog, khu HV chia tab. API key riêng từng người
+(`user_secrets`). **2 lỗi âm thầm đáng nhớ:** (1) `--font-sans` trỏ vào biến layout
+chưa từng đặt → app chạy font mặc định trình duyệt từ đầu dự án, không báo lỗi;
+(2) lỗi "Lỗi khi gọi AI" hóa ra do file đề bị DLP mã hóa, không phải do nhiều file.
