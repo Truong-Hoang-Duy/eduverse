@@ -20,12 +20,15 @@ production. Nhánh cuối: `chore/cleanup-dead-code` (đã có Đợt 6 + dọn 
 - Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; migration
   `20260718000000` xóa schema chết `submissions`/`grades` + bucket; rà lại docs.
 
-⚠️ **SAU KHI MERGE, USER PHẢI LÀM 2 việc thủ công cho migration schema chết:**
-1. Dán `supabase/migrations/20260718000000_drop_dead_submissions_grades.sql` vào
-   Supabase SQL Editor (mạng chặn cổng 5432 nên `db push` không dùng được).
-2. Regen types: `cd web && ./node_modules/.bin/supabase gen types typescript --linked
-   > src/lib/database.types.ts` (bỏ type submissions/grades). Chưa làm thì types cũ
-   còn nằm đó nhưng VÔ HẠI (không code nào dùng).
+⚠️ **Migration schema chết — trạng thái:**
+- ✅ Bucket `submissions` (rỗng): ĐÃ xóa qua Storage API phiên này
+  (`scripts/drop-submissions-bucket.mjs --yes`). SQL KHÔNG xóa được bucket —
+  Supabase chặn DELETE trực tiếp vào storage tables (lỗi 42501 `protect_delete`).
+- 🔴 **USER phải dán SQL** `supabase/migrations/20260718000000...sql` vào Supabase
+  SQL Editor để drop 2 bảng + thu policy (lần đầu bị rollback vì 2 dòng xóa bucket,
+  giờ đã bỏ — chạy lại sạch, mọi câu idempotent).
+- 🟡 Sau đó regen types: `cd web && ./node_modules/.bin/supabase gen types typescript
+  --linked > src/lib/database.types.ts`. Chưa làm thì types cũ vô hại (0 code dùng).
 
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).

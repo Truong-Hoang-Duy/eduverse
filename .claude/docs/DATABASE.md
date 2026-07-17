@@ -44,10 +44,11 @@ chỉ có policy `user_id = auth.uid()`, không ai khác đọc được (kể c
 
 - `assignment-specs` — file đề bài (PDF/ảnh/text/md). Chỉ teacher đọc/ghi. **Đang dùng.**
 
-> **Đã xóa schema chết** (migration `20260718000000`): bảng `submissions` + `grades`
-> + bucket `submissions` — tàn dư của bản chấm bài cũ (chấm theo lớp, lưu điểm).
-> Chấm bài giờ không lưu gì nên không còn code nào dùng. Migration này phải dán tay
-> vào Supabase SQL Editor + regen types (xem đầu file migration).
+> **Đã xóa schema chết** (tàn dư bản chấm bài cũ, không còn code dùng): bảng
+> `submissions` + `grades` qua migration `20260718000000` (dán tay vào SQL Editor +
+> regen types); bucket `submissions` qua Storage API
+> (`scripts/drop-submissions-bucket.mjs`) vì SQL không xóa được storage tables
+> (Supabase chặn — lỗi 42501). Chấm bài giờ không lưu gì.
 
 ## Quy tắc RLS (áp cho MỌI bảng — không bảng nào để trống RLS)
 
