@@ -77,6 +77,7 @@ class SuggestFeaturesRequest(AiRequest):
     description: str = ""
     existing_features: list[str] = []
     course_code: str = ""
+    desired_difficulty: Literal["easy", "medium", "hard"] | None = None
 
 
 class FeatureSuggestion(BaseModel):
