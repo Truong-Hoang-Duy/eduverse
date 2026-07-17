@@ -136,6 +136,21 @@
       chết, sửa auth email→username, model → `gemini-flash-latest`, thêm hồ sơ HV.
 - [ ] Merge Đợt 6 + dọn dẹp lên production
 
+### Đợt 7 (`feature/project-entry-improvements`) — cải tiến HV nhập sản phẩm
+- [x] **Nút Xóa sản phẩm** (`deleteProject` có sẵn nhưng chưa từng nối UI)
+- [x] **Chip nhập chức năng** (`feature-chips.tsx`) thay textarea "mỗi dòng một"
+- [x] Form controlled toàn bộ; `saveProject` trả row đã lưu → phản ánh ngay,
+      tự chuyển TẠO→SỬA không reload
+- [x] **Validate link** GitHub/Drive/demo ở server (chỉ http/https)
+- [x] **AI gợi ý**: chọn độ khó mong muốn (`desired_difficulty` → prompt), nút
+      "Thêm tất cả", giữ mô tả cách làm bằng cách nối vào ô Ghi chú
+- [x] **Trạng thái nộp** `status` draft/submitted (migration `20260719000000`, đã áp)
+      + badge & "Cập nhật lúc" ở gallery HV + GV
+- [x] E2E `e2e-phase4` 10→14 (status default/đổi, tự xóa, RLS chặn người khác xóa);
+      tổng **98/98**
+- [x] Sửa README: 74→98 test, thiếu `e2e-gallery-storage`, lệnh regen types sai
+      (CLI không cài + `>` cắt trắng file), `cp .env.example` hỏng trên clone mới
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
 - Gallery hiện cả bạn CHƯA có sản phẩm → cần migration mở RLS `enrollments`

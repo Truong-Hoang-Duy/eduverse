@@ -29,7 +29,7 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 | `student_reviews` | id, session_id, student_id, strengths text[], improvements text[], advice, ai_generated_comment, created_by | nhận xét theo buổi |
 | `review_options` | id, teacher_id, category `strength\|improvement\|advice`, label | lựa chọn radio/checkbox |
 | `assignments` | id, course_id, session_number, title, spec_file_path, instructions, max_score DEFAULT 100, UNIQUE(course_id, session_number) | đề theo KHÓA + BUỔI |
-| `projects` | id, student_id, class_id, name, description, features text[], repo_url, drive_url, demo_url, extra_notes | sản phẩm cuối khóa |
+| `projects` | id, student_id, class_id, name, description, features text[], repo_url, drive_url, demo_url, extra_notes, **status** `draft\|submitted`, created_at, updated_at, UNIQUE(class_id, student_id) | sản phẩm cuối khóa; `status` thêm ở migration `20260719000000` (mặc định `draft`) |
 | `project_comments` | id, project_id, author_id, content, created_at | HV nhận xét lẫn nhau |
 | `zalo_templates` | id, teacher_id, name, template_text | mẫu tin nhắn Zalo |
 | `presentation_groups` | id, class_id UNIQUE, groups JSONB, created_at, updated_at | kết quả random nhóm gần nhất (1/lớp, lưu đè) |

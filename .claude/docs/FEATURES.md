@@ -135,9 +135,21 @@ layout nên hiện ở mọi trang — ở `/student` không tab nào sáng).
   buổi, ngày tham gia. **KHÔNG liệt kê từng buổi** và **KHÔNG hiện nhận xét cá
   nhân** (không query `sessions` lẫn `student_reviews`; nhận xét chỉ để GV gửi
   phụ huynh).
-- **Sản phẩm:** CRUD sản phẩm của chính mình (1 sản phẩm/lớp) — tên, mô tả, danh
-  sách chức năng, link GitHub/Drive/demo, ghi chú. Nút **AI gợi ý tính năng** →
-  3–5 gợi ý kèm độ khó, bấm để thêm vào danh sách.
+- **Sản phẩm:** CRUD sản phẩm của chính mình (1 sản phẩm/lớp — mỗi lớp một form
+  riêng, không có dropdown chọn lớp) — tên, mô tả, chức năng, link GitHub/Drive/demo,
+  ghi chú. Có **nút Xóa** (ConfirmDialog).
+  - **Chức năng nhập dạng chip**: gõ + Enter (hoặc nút Thêm) để thêm từng cái, bấm
+    ✕ để bỏ; tự bỏ trùng. (Trước là textarea "mỗi dòng một" dễ lỗi.)
+  - **Trạng thái nộp**: "📝 Đang làm" (mặc định) / "✅ Đã nộp" — cột `status`
+    (migration `20260719000000`). Badge + "Cập nhật lúc" hiện ở CẢ gallery HV lẫn
+    gallery GV để GV biết ai đã hoàn thành.
+  - **Link** GitHub/Drive/demo validate ở server (chỉ nhận http/https).
+  - Form controlled hoàn toàn: lưu xong phản ánh đúng ngay, tự chuyển TẠO→SỬA
+    (hiện nút Xóa) mà không cần tải lại trang.
+  - Nút **AI gợi ý tính năng** → 3–5 gợi ý kèm độ khó; **chọn được độ khó mong
+    muốn** (Tùy AI / Dễ / Vừa / Khó); bấm 1 gợi ý hoặc **"Thêm tất cả"**. Tên vào
+    chip, còn **mô tả cách làm được nối vào ô Ghi chú** để không mất (cột `features`
+    là `text[]` chỉ lưu tên).
 - **Sản phẩm của lớp:** lưới **ô từng người** (avatar, tên, tên dự án, số chức
   năng, số bình luận) → bấm mở **popup chi tiết** + nhận xét ngay trong popup.
   Chỉ trong lớp mình (RLS + lọc lại ở UI).

@@ -8,15 +8,18 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude — /handoff)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–6 + dọn dẹp đều đã production
-(`main` = `origin` = `9aa73cf`). Không nhánh feature nào treo. Việc tiếp tùy user.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–7 + dọn dẹp đều đã production.
+Không nhánh feature nào treo. **E2E 98/98**, pytest 4/4. Việc tiếp tùy user.
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
 - Đợt 5 (`feature/nav-loading-feedback`): phản hồi khi chuyển trang — khung xương
   + spinner + cache() profile. Prefetch sống lại (215B→10KB). **Đã production.**
 - Đợt 6 (`feature/student-profile-timeline`): hồ sơ HV xuyên khóa cho GV (timeline
-  nhận xét gốc + AI tổng hợp). 0 migration. E2E 94/94. **Đã production.**
+  nhận xét gốc + AI tổng hợp). 0 migration. **Đã production.**
+- Đợt 7 (`feature/project-entry-improvements`): HV nhập sản phẩm — nút Xóa, chip
+  chức năng, form controlled, validate link, AI chọn độ khó + "thêm tất cả",
+  **trạng thái nộp** (migration `20260719000000` — user ĐÃ áp). **Đã production.**
 - Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; **XÓA XONG**
   schema chết `submissions`/`grades` (user dán SQL) + bucket (Storage API) + type
   chết trong `database.types.ts` (bỏ tay 2 khối). **Đã production.**
@@ -136,6 +139,32 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   link trong biến `VIDEOS` ở đầu file.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-17 (Đợt 7) — Claude / Cải tiến HV nhập sản phẩm + sửa README
+User: "phân tích và cải tiến phần HV nhập sản phẩm cuối khóa". Khảo sát tìm ra:
+**không có nút Xóa** (`deleteProject` viết rồi mà chưa từng nối UI), textarea "mỗi
+dòng một chức năng" dễ lỗi, 4 trường dùng `defaultValue` nên form không phản ánh
+sau khi lưu, gần như không validate link, AI bỏ mất mô tả cách làm. User chọn 3
+hướng: hoàn thiện form + AI tốt hơn + trạng thái nộp (migration).
+
+**Thứ tự bắt buộc đã áp dụng:** code ghi cột `status` → phải áp migration TRƯỚC khi
+deploy, nếu không mọi lần lưu sản phẩm vỡ. Đã: viết code → user dán migration →
+probe cột → E2E 98/98 → deploy. (Cột thêm có DEFAULT nên an toàn với code đang chạy.)
+
+**Quyết định thiết kế:** `features` vẫn là `text[]` (chỉ tên) → mô tả cách làm của AI
+nối vào ô **Ghi chú** để không mất; HV sửa/xóa tự do.
+
+**Sửa README (5 lỗi thật):** 74→**98** test (phase2 13 không phải 10, phase4 14,
+thiếu hẳn `e2e-gallery-storage` 17); lệnh regen types trỏ `./node_modules/.bin/supabase`
+**không tồn tại** — lệnh lỗi nhưng `>` đã cắt trắng `database.types.ts` (đúng thứ đã
+xảy ra thật); `cd web && cp .env.example .env.local` **hỏng trên clone mới** vì
+`web/.gitignore` có `.env*` KHÔNG kèm `!.env.example` (root .gitignore có nên
+ai-service thì được) → `web/.env.example` chưa bao giờ vào repo; thiếu
+`purge-test-users` ở mục chẩn đoán; bảng lỗi thiếu bẫy 2 ai-service chồng cổng 8000.
+
+**Còn để ngỏ cho user:** muốn `cp .env.example` chạy được trên máy mới thì thêm
+`!.env.example` vào `web/.gitignore` rồi commit file — Claude KHÔNG tự làm vì không
+đọc được file env (chặn quyền), mà không commit thứ chưa xem (lỡ có key thật).
 
 ### 2026-07-16 (Dọn dẹp) — Claude / Xóa code + schema thừa + rà docs
 User: "chỉnh sửa tài liệu đầy đủ, deploy, dọn dẹp phần dư thừa". Khảo sát trước khi
