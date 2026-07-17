@@ -315,6 +315,7 @@ export type Database = {
           id: string
           name: string
           repo_url: string | null
+          status: string
           student_id: string
           updated_at: string
         }
@@ -329,6 +330,7 @@ export type Database = {
           id?: string
           name: string
           repo_url?: string | null
+          status?: string
           student_id: string
           updated_at?: string
         }
@@ -343,6 +345,7 @@ export type Database = {
           id?: string
           name?: string
           repo_url?: string | null
+          status?: string
           student_id?: string
           updated_at?: string
         }
