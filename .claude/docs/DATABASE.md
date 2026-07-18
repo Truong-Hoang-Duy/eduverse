@@ -74,10 +74,14 @@ tài khoản rác nằm lại im ru (đã dính: 10 tài khoản `e2f.gv.*`/`e3g
 nhiều ngày). Luôn xóa **khóa học trước, tài khoản sau**, và kiểm `error`.
 Dọn rác: `node --env-file=.env.local scripts/purge-test-users.mjs [--yes]`.
 
-⚠️ **Gotcha 3 hay vấp**: `enrollments_student_select` chỉ cho HV thấy dòng ghi danh
-CỦA CHÍNH MÌNH → **học viên không liệt kê được bạn cùng lớp**. Muốn hiện danh
-sách lớp cho HV (VD gallery hiện cả bạn chưa có sản phẩm) thì phải viết migration
-mở policy này. Hiện gallery đi vòng: lấy từ `projects` (HV cùng lớp xem được).
+⚠️ **Gotcha 3 (đã xử lý ở migration `20260720000000`)**: policy gốc
+`enrollments_student_select` chỉ cho HV thấy dòng ghi danh CỦA CHÍNH MÌNH — giờ đã
+thay bằng `enrollments_classmates_select` (`is_enrolled(class_id)`, SECURITY
+DEFINER nên không đệ quy): HV liệt kê được bạn cùng lớp → gallery hiện cả bạn
+chưa có sản phẩm. Bài học còn giá trị: **subquery trong policy CHỊU RLS của bảng
+được tham chiếu** — nhánh "HV xem profile bạn cùng lớp" của `profiles_select`
+từng chết ngầm vì subquery enrollments không thấy dòng của bạn; muốn policy A
+dựa vào bảng B thì B phải cho đọc (hoặc dùng helper SECURITY DEFINER).
 
 ## RPC (SECURITY DEFINER — đi vòng RLS, tự kiểm quyền bên trong)
 

@@ -152,8 +152,19 @@
 - [x] Sửa README: 74→98 test, thiếu `e2e-gallery-storage`, lệnh regen types sai
       (CLI không cài + `>` cắt trắng file), `cp .env.example` hỏng trên clone mới
 
+### Đợt 8 (`feature/gallery-roster-visibility`) — gallery hiện cả bạn chưa có SP
+- [x] Migration `20260720000000`: policy `enrollments_classmates_select`
+      (`is_enrolled`, SECURITY DEFINER) thay `enrollments_student_select` —
+      HV thấy ghi danh bạn cùng lớp; nhánh classmate của `profiles_select`
+      nhờ đó mới thực sự hoạt động (user đã áp qua SQL Editor)
+- [x] `ProjectGrid` prop `membersWithoutProject`: thẻ mờ viền đứt cho bạn chưa
+      có sản phẩm, thẻ của chính mình kèm lời nhắc vào tab "Sản phẩm"
+- [x] Gallery HV query roster 1 lần (enrollments + classes + profiles) — chạy
+      đúng cả khi migration chưa áp (chỉ thấy mình)
+- [x] E2E `e2e-phase4` 14→17 (roster cùng lớp 2/2, join tên, khác lớp 0 dòng);
+      toàn bộ suite **101/101 PASS**
+- [x] Merge lên production
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
-- Gallery hiện cả bạn CHƯA có sản phẩm → cần migration mở RLS `enrollments`
-  cho HV cùng lớp thấy nhau
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
