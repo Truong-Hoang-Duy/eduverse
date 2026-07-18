@@ -3,7 +3,11 @@ import { requireRole } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
 import type { CommentItem } from "@/components/gallery/comment-section";
-import { ProjectGrid, type GalleryProject } from "@/components/gallery/project-grid";
+import {
+  ProjectGrid,
+  type GalleryProject,
+  type RosterMember,
+} from "@/components/gallery/project-grid";
 
 export const metadata = { title: "Sản phẩm của lớp — Eduverse" };
 
@@ -36,18 +40,22 @@ export default async function GalleryPage() {
   const profile = await requireRole("student");
   const supabase = await createClient();
 
-  // Lớp học viên đang học — RLS cũng chỉ cho xem sản phẩm trong các lớp này,
-  // không bao giờ thấy lớp khác.
+  // Toàn bộ ghi danh mà RLS cho thấy: dòng của mình + bạn cùng lớp
+  // (policy `enrollments_classmates_select`) — vừa suy ra lớp mình học,
+  // vừa có roster để hiện cả bạn CHƯA có sản phẩm.
   const { data: enrollmentsData } = await supabase
     .from("enrollments")
-    .select("class_id, classes(class_code)")
-    .eq("student_id", profile.id);
+    .select("class_id, student_id, classes(class_code), profiles(full_name)");
   const enrollments = (enrollmentsData ?? []) as unknown as {
     class_id: string;
+    student_id: string;
     classes: { class_code: string } | null;
+    profiles: { full_name: string } | null;
   }[];
   const classCodeById = new Map(
-    enrollments.map((e) => [e.class_id, e.classes?.class_code ?? ""])
+    enrollments
+      .filter((e) => e.student_id === profile.id)
+      .map((e) => [e.class_id, e.classes?.class_code ?? ""])
   );
 
   const [{ data: projectsData }, { data: commentsData }] = await Promise.all([
@@ -100,6 +108,26 @@ export default async function GalleryPage() {
         ),
     }));
 
+  // Bạn cùng lớp chưa có sản phẩm → thẻ mờ cuối lưới (chỉ lớp mình học).
+  const hasProject = new Set(
+    ((projectsData ?? []) as unknown as ProjectRow[]).map(
+      (p) => `${p.class_id}:${p.student_id}`
+    )
+  );
+  const membersWithoutProject: RosterMember[] = enrollments
+    .filter(
+      (e) =>
+        classCodeById.has(e.class_id) &&
+        !hasProject.has(`${e.class_id}:${e.student_id}`)
+    )
+    .map((e) => ({
+      key: `${e.class_id}:${e.student_id}`,
+      name: e.profiles?.full_name ?? "Học viên",
+      classCode: classCodeById.get(e.class_id) ?? "",
+      isMine: e.student_id === profile.id,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "vi"));
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -107,7 +135,7 @@ export default async function GalleryPage() {
         description="Bấm vào từng bạn để xem chi tiết sản phẩm và để lại nhận xét"
       />
 
-      {projects.length === 0 ? (
+      {projects.length === 0 && membersWithoutProject.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center">
           <p className="font-medium">Chưa có sản phẩm nào trong lớp</p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -115,7 +143,11 @@ export default async function GalleryPage() {
           </p>
         </div>
       ) : (
-        <ProjectGrid projects={projects} currentUserId={profile.id} />
+        <ProjectGrid
+          projects={projects}
+          membersWithoutProject={membersWithoutProject}
+          currentUserId={profile.id}
+        />
       )}
     </div>
   );

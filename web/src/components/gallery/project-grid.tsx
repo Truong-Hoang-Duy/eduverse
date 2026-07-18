@@ -25,13 +25,24 @@ export interface GalleryProject extends ProjectView {
   isMine: boolean;
 }
 
+export interface RosterMember {
+  /** Ổn định giữa các lớp: `${classId}:${studentId}`. */
+  key: string;
+  name: string;
+  classCode: string;
+  isMine: boolean;
+}
+
 export function ProjectGrid({
   projects,
+  membersWithoutProject = [],
   currentUserId,
   canModerate = false,
   commentPlaceholder,
 }: {
   projects: GalleryProject[];
+  /** Bạn cùng lớp CHƯA có sản phẩm — hiện thẻ mờ cuối lưới. */
+  membersWithoutProject?: RosterMember[];
   currentUserId: string;
   /** GV: xóa được nhận xét bất kỳ trong lớp mình. */
   canModerate?: boolean;
@@ -89,6 +100,35 @@ export function ProjectGrid({
               </span>
             </div>
           </button>
+        ))}
+
+        {membersWithoutProject.map((member) => (
+          <div
+            key={member.key}
+            className="rounded-xl border border-dashed bg-muted/30 p-4"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
+                {member.name.trim().charAt(0).toUpperCase() || "?"}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate font-medium text-muted-foreground">
+                  {member.name}
+                  {member.isMine && (
+                    <span className="ml-1 text-xs">(bạn)</span>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Lớp {member.classCode}
+                </p>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {member.isMine
+                ? "Bạn chưa khai báo sản phẩm — vào tab \"Sản phẩm\" nhé!"
+                : "Chưa có sản phẩm"}
+            </p>
+          </div>
         ))}
       </div>
 
