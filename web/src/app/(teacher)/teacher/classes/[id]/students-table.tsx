@@ -24,6 +24,8 @@ import {
 import { removeStudent, transferStudent } from "@/lib/actions/classes";
 import type { ActionResult } from "@/lib/types";
 
+import { ResetPasswordDialog } from "./reset-password-dialog";
+
 export interface StudentRow {
   enrollmentId: string;
   studentId: string;
@@ -66,7 +68,7 @@ export function StudentsTable({
           <TableRow>
             <TableHead>Họ tên</TableHead>
             <TableHead>Tên tài khoản</TableHead>
-            <TableHead className="w-[280px]">Chuyển lớp / Xóa</TableHead>
+            <TableHead className="w-[380px]">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -110,6 +112,10 @@ export function StudentsTable({
                       Chuyển
                     </Button>
                   </form>
+                  <ResetPasswordDialog
+                    studentId={student.studentId}
+                    studentName={student.fullName}
+                  />
                   <ConfirmDialog
                     trigger={
                       <Button variant="ghost" size="sm">

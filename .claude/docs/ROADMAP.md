@@ -199,6 +199,14 @@
       dẫn sang tổng kết
 - [ ] User nghiệm thu bằng mắt → merge/deploy
 
+### Đợt 12 (`feature/password-reset`) — đổi mật khẩu không cần mật khẩu cũ
+- [x] `/profile`: card 🔒 Đổi mật khẩu (mới ×2, không hỏi cũ) — cả GV lẫn HV
+- [x] Bảng học viên: nút 🔑 GV đặt mật khẩu mới cho em quên (sinh ngẫu nhiên
+      8 ký tự + Copy; admin API, action tự kiểm role teacher + enrollment RLS)
+- [x] E2E `e2e-class-admin` 15→18 (tự đổi → đăng nhập lại, mật khẩu cũ chết,
+      GV reset → em đăng nhập được); tổng **95/95 PASS**
+- [ ] User nghiệm thu → merge/deploy (kéo theo Đợt 11 vì stack)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

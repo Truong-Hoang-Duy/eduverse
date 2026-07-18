@@ -228,6 +228,53 @@ async function main() {
     .from("enrollments")
     .insert({ class_id: cls.id, student_id: outsider.id });
   check("Thêm học viên đã có trong lớp → bị chặn", dupEnroll?.code === "23505");
+
+  // ---- Đổi mật khẩu (không cần mật khẩu cũ) ----
+  // HV tự đổi mật khẩu của mình (đường changeMyPassword: auth.updateUser).
+  const NEW_PW = "mat-khau-moi-1";
+  const { error: selfPwErr } = await inClass.client.auth.updateUser({
+    password: NEW_PW,
+  });
+  const relogin = createClient(URL, ANON);
+  const { error: reloginErr } = await relogin.auth.signInWithPassword({
+    email: `ea.hv1.${ts}@${FAKE}`,
+    password: NEW_PW,
+  });
+  check("HV tự đổi mật khẩu rồi đăng nhập lại được", !selfPwErr && !reloginErr,
+    selfPwErr?.message ?? reloginErr?.message);
+
+  // Mật khẩu cũ phải hết dùng được.
+  const oldLogin = createClient(URL, ANON);
+  const { error: oldPwErr } = await oldLogin.auth.signInWithPassword({
+    email: `ea.hv1.${ts}@${FAKE}`,
+    password: PASSWORD,
+  });
+  check("Mật khẩu cũ không còn đăng nhập được", Boolean(oldPwErr));
+
+  // GV đặt lại mật khẩu cho HV lớp mình (đường resetStudentPassword):
+  // guard = role teacher + thấy enrollment qua RLS, rồi admin API đổi mật khẩu.
+  const { data: seenEnroll } = await teacher
+    .from("enrollments")
+    .select("id")
+    .eq("student_id", inClass.id)
+    .limit(1);
+  const RESET_PW = "gv-dat-lai-99";
+  let resetErr = null;
+  if ((seenEnroll ?? []).length > 0) {
+    ({ error: resetErr } = await admin.auth.admin.updateUserById(inClass.id, {
+      password: RESET_PW,
+    }));
+  }
+  const afterReset = createClient(URL, ANON);
+  const { error: afterResetErr } = await afterReset.auth.signInWithPassword({
+    email: `ea.hv1.${ts}@${FAKE}`,
+    password: RESET_PW,
+  });
+  check(
+    "GV đặt lại mật khẩu HV lớp mình → em đăng nhập được",
+    (seenEnroll ?? []).length > 0 && !resetErr && !afterResetErr,
+    resetErr?.message ?? afterResetErr?.message
+  );
 }
 
 async function cleanup() {

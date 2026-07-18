@@ -41,6 +41,14 @@
 - **Đăng ký giáo viên:** trang riêng `/signup/teacher`, cần mã mời
   (env `TEACHER_INVITE_CODE`) + username + nhập lại mật khẩu.
 - **Thông tin cá nhân** (`/profile`, cả 2 vai trò): sửa họ tên; username read-only.
+- **Đổi mật khẩu** (`/profile`, cả 2 vai trò): chỉ nhập mật khẩu mới ×2, KHÔNG
+  hỏi mật khẩu cũ (phiên đăng nhập = bằng chứng sở hữu; `auth.updateUser`).
+- **GV đặt lại mật khẩu cho HV quên** (nút 🔑 trong bảng học viên của lớp):
+  auth username không có email khôi phục nên đây là đường cứu duy nhất — dialog
+  sinh mật khẩu ngẫu nhiên 8 ký tự + Copy gửi cho em. Đi qua admin API
+  (`resetStudentPassword` trong `lib/actions/password.ts`) nên action TỰ kiểm
+  quyền: caller role teacher + thấy enrollment của em qua RLS; hệ thống không
+  lưu mật khẩu để xem lại.
 - **API key Gemini riêng** (`/profile`): tùy chọn, cho CẢ giáo viên và học viên.
   Chưa đặt → dùng key hệ thống (dùng chung, dễ hết lượt). Đặt rồi → mọi tính năng
   AI của người đó dùng key riêng (1.500 lượt/ngày/key). Hiển thị dạng che

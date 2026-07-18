@@ -3,6 +3,7 @@ import { getMyApiKeyMasked } from "@/lib/actions/api-key";
 import { requireProfile } from "@/lib/get-profile";
 
 import { ApiKeyForm } from "./api-key-form";
+import { PasswordForm } from "./password-form";
 import { ProfileForm } from "./profile-form";
 
 export const metadata = { title: "Hồ sơ — Eduverse" };
@@ -22,6 +23,7 @@ export default async function ProfilePage() {
       <div className="grid items-start gap-6 lg:grid-cols-2">
         <ProfileForm profile={profile} />
         <ApiKeyForm maskedKey={maskedKey} />
+        <PasswordForm />
       </div>
     </div>
   );
