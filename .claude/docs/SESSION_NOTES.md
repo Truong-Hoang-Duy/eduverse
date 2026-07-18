@@ -8,11 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude — /handoff)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–10 + dọn dẹp đều đã production;
-`main` = `develop` = `origin`; working tree sạch; không nhánh feature nào treo.
-**E2E 92/92**, pytest 4/4. Việc tiếp tùy user.
-Phiên 2026-07-18: Đợt 7 (nghiệm thu OK) + sửa README + Đợt 8 (gallery roster) +
-Đợt 9 (gỡ status + author-only comment delete) + Đợt 10 (màn chiếu TV + keepalive).
+**Đang làm:** Đợt 11 (màn chiếu: nhập phút tùy ý + tổng kết lớp cho phụ huynh) và
+Đợt 12 (đổi mật khẩu không cần mật khẩu cũ) CODE XONG — Đợt 12 ở nhánh
+`feature/password-reset` (stack TRÊN `feature/tv-screen-improvements`, merge nhánh
+này là kéo theo cả Đợt 11) — **chờ user nghiệm thu rồi mới merge/deploy**.
+GĐ 1–5 + Đợt 1–10 đã production. **E2E 95/95**, pytest 4/4.
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
@@ -38,6 +38,15 @@ Phiên 2026-07-18: Đợt 7 (nghiệm thu OK) + sửa README + Đợt 8 (gallery
   giờ (đếm ngược), thuyết trình sản phẩm (slideshow ← →). Kèm GitHub Action
   keep-alive Supabase (cần 2 secret SUPABASE_URL/SUPABASE_ANON_KEY). E2E phase5
   XÓA (−8), tổng 92. **Đã production.**
+- Đợt 12 (`feature/password-reset`, stack trên Đợt 11): đổi mật khẩu KHÔNG cần
+  mật khẩu cũ — card 🔒 ở `/profile` (tự đổi, cả 2 vai trò) + nút 🔑 trong bảng
+  HV cho GV đặt lại khi em quên (admin API, action tự kiểm quyền teacher +
+  enrollment; sinh mật khẩu ngẫu nhiên + Copy). E2E class-admin 15→18.
+  **Chờ nghiệm thu → deploy.**
+- Đợt 11 (`feature/tv-screen-improvements`): màn nghỉ nhập phút tùy ý (1–180);
+  thuyết trình thêm chế độ **🎉 Tổng kết cả lớp** cho buổi gặp phụ huynh (lưới
+  thẻ màu mọi sản phẩm, bấm thẻ nhảy về slide). UI thuần client, 0 migration.
+  **Chờ nghiệm thu → deploy.**
 - Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; **XÓA XONG**
   schema chết `submissions`/`grades` (user dán SQL) + bucket (Storage API) + type
   chết trong `database.types.ts` (bỏ tay 2 khối). **Đã production.**
@@ -61,7 +70,7 @@ có ở `node_modules/.bin/`; muốn regen phải `pnpm dlx supabase` + login + 
 - [x] Đợt 3: font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp sang khóa khác,
       thêm HV bằng tìm kiếm, hồ sơ full width, responsive cho điện thoại
 - [x] Deploy: Vercel + Render + Supabase — 0đ/tháng
-- [x] **E2E 92/92 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu).
+- [x] **E2E 95/95 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu).
       ⚠️ Trước khi chạy phase3/4 (AI): `netstat :8000` chắc chỉ 1 listener ai-service
       — 2 instance chồng port → instance mới không bind, E2E gọi vào cái cũ → 502 giả:
 
@@ -70,7 +79,7 @@ có ở `node_modules/.bin/`; muốn regen phải `pnpm dlx supabase` + login + 
 | `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/e2e-phase1.mjs` |
 | `e2e-phase2.mjs` | 13 | như trên (gồm 3 check hồ sơ HV xuyên khóa) |
 | `e2e-api-key.mjs` | 8 | như trên |
-| `e2e-class-admin.mjs` | 15 | như trên |
+| `e2e-class-admin.mjs` | 18 | như trên (gồm 3 check đổi/đặt lại mật khẩu) |
 | `e2e-gallery-storage.mjs` | 18 | như trên — GV xem/nhận xét SP, xóa sạch Storage, chỉ chủ xóa bình luận |
 | `e2e-phase3.mjs` | 10 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
 | `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |

@@ -190,6 +190,23 @@
       user cần tạo 2 secret SUPABASE_URL/SUPABASE_ANON_KEY
 - [x] E2E còn 92/92 PASS; merge lên production
 
+### Đợt 11 (`feature/tv-screen-improvements`) — cải tiến màn chiếu TV
+- [x] Màn nghỉ giữa giờ: thêm ô nhập số phút tùy ý (1–180, Enter/nút Bắt đầu)
+      bên cạnh 3 preset 5/10/15
+- [x] Thuyết trình sản phẩm: chế độ "🎉 Tổng kết cả lớp" — màn chung đẹp mắt
+      chiếu cho phụ huynh sau khi thuyết trình xong (lời cảm ơn, lưới thẻ màu
+      mọi sản phẩm, bấm thẻ nhảy về slide từng em); "Tiếp →" ở slide cuối tự
+      dẫn sang tổng kết
+- [ ] User nghiệm thu bằng mắt → merge/deploy
+
+### Đợt 12 (`feature/password-reset`) — đổi mật khẩu không cần mật khẩu cũ
+- [x] `/profile`: card 🔒 Đổi mật khẩu (mới ×2, không hỏi cũ) — cả GV lẫn HV
+- [x] Bảng học viên: nút 🔑 GV đặt mật khẩu mới cho em quên (sinh ngẫu nhiên
+      8 ký tự + Copy; admin API, action tự kiểm role teacher + enrollment RLS)
+- [x] E2E `e2e-class-admin` 15→18 (tự đổi → đăng nhập lại, mật khẩu cũ chết,
+      GV reset → em đăng nhập được); tổng **95/95 PASS**
+- [ ] User nghiệm thu → merge/deploy (kéo theo Đợt 11 vì stack)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

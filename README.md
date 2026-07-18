@@ -101,13 +101,13 @@ cd ../ai-service
 .venv/Scripts/python -m pytest
 ```
 
-**Test end-to-end trên database thật** — 92 kiểm tra, tự tạo và tự xóa dữ liệu test:
+**Test end-to-end trên database thật** — 95 kiểm tra, tự tạo và tự xóa dữ liệu test:
 ```bash
 cd web
 node --env-file=.env.local scripts/e2e-phase1.mjs         # auth, khóa/lớp, RLS        (13)
 node --env-file=.env.local scripts/e2e-phase2.mjs         # buổi học, nhận xét, hồ sơ HV (13)
 node --env-file=.env.local scripts/e2e-api-key.mjs        # API key riêng + RLS         (8)
-node --env-file=.env.local scripts/e2e-class-admin.mjs    # sửa khóa/lớp, thêm HV      (15)
+node --env-file=.env.local scripts/e2e-class-admin.mjs    # sửa khóa/lớp, thêm HV, mật khẩu (18)
 node --env-file=.env.local scripts/e2e-gallery-storage.mjs # GV xem/nhận xét SP, xóa sạch Storage (18)
 
 # 2 bộ này gọi Gemini thật → cần ai-service đang chạy

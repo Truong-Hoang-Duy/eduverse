@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   TvOverlay,
   enterBrowserFullscreen,
@@ -22,6 +23,7 @@ export function BreakScreen({ classCode }: { classCode: string }) {
   const [open, setOpen] = useState(false);
   // null = đang ở màn chọn số phút; số = tổng giây còn lại.
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const [customMinutes, setCustomMinutes] = useState("");
   const [paused, setPaused] = useState(false);
   const interval = useRef<ReturnType<typeof setInterval>>(undefined);
 
@@ -116,6 +118,37 @@ export function BreakScreen({ classCode }: { classCode: string }) {
                   </Button>
                 ))}
               </div>
+              <form
+                className="flex items-center gap-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const m = Number(customMinutes);
+                  if (Number.isFinite(m) && m >= 1) startCountdown(Math.floor(m));
+                }}
+              >
+                <label htmlFor="custom-minutes" className="text-xl text-muted-foreground">
+                  Hoặc nhập:
+                </label>
+                <Input
+                  id="custom-minutes"
+                  type="number"
+                  min={1}
+                  max={180}
+                  placeholder="VD: 7"
+                  value={customMinutes}
+                  onChange={(e) => setCustomMinutes(e.target.value)}
+                  className="h-14 w-28 text-center !text-2xl font-bold"
+                />
+                <span className="text-xl text-muted-foreground">phút</span>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="h-14 text-xl"
+                  disabled={!Number.isFinite(Number(customMinutes)) || Number(customMinutes) < 1}
+                >
+                  ▶️ Bắt đầu
+                </Button>
+              </form>
             </div>
           ) : (
             <div className="flex min-h-[60vh] flex-col items-center justify-center gap-8">

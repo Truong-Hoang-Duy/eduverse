@@ -41,6 +41,14 @@
 - **Đăng ký giáo viên:** trang riêng `/signup/teacher`, cần mã mời
   (env `TEACHER_INVITE_CODE`) + username + nhập lại mật khẩu.
 - **Thông tin cá nhân** (`/profile`, cả 2 vai trò): sửa họ tên; username read-only.
+- **Đổi mật khẩu** (`/profile`, cả 2 vai trò): chỉ nhập mật khẩu mới ×2, KHÔNG
+  hỏi mật khẩu cũ (phiên đăng nhập = bằng chứng sở hữu; `auth.updateUser`).
+- **GV đặt lại mật khẩu cho HV quên** (nút 🔑 trong bảng học viên của lớp):
+  auth username không có email khôi phục nên đây là đường cứu duy nhất — dialog
+  sinh mật khẩu ngẫu nhiên 8 ký tự + Copy gửi cho em. Đi qua admin API
+  (`resetStudentPassword` trong `lib/actions/password.ts`) nên action TỰ kiểm
+  quyền: caller role teacher + thấy enrollment của em qua RLS; hệ thống không
+  lưu mật khẩu để xem lại.
 - **API key Gemini riêng** (`/profile`): tùy chọn, cho CẢ giáo viên và học viên.
   Chưa đặt → dùng key hệ thống (dùng chung, dễ hết lượt). Đặt rồi → mọi tính năng
   AI của người đó dùng key riêng (1.500 lượt/ngày/key). Hiển thị dạng che
@@ -128,12 +136,16 @@ GV cắm laptop vào TV của lớp; cả 3 màn chiếu dùng chung `components
   `presentation_groups` đã DROP ở `20260722000000` — mỗi buổi random mới, user
   chốt 2026-07-18). Nút "📺 Chiếu màn hình" phóng to chữ để nhìn từ cuối lớp;
   random lại được ngay trên màn chiếu.
-- **☕ Nghỉ giữa giờ** (nút ở header trang lớp): chọn 5/10/15 phút → đồng hồ đếm
-  ngược khổng lồ, còn ≤1 phút chuyển đỏ, hết giờ hiện "vào học thôi!"; có tạm
-  dừng / +1 phút / chọn lại.
-- **🎤 Thuyết trình sản phẩm** (nút ở thẻ Sản phẩm cuối khóa): slideshow mỗi em
-  một slide (tên, dự án, mô tả, chức năng, link to bấm được), chuyển bằng nút
-  hoặc phím ← →, thứ tự theo tên; đếm slide "3/12".
+- **☕ Nghỉ giữa giờ** (nút ở header trang lớp): chọn 5/10/15 phút HOẶC nhập số
+  phút tùy ý (1–180) → đồng hồ đếm ngược khổng lồ, còn ≤1 phút chuyển đỏ, hết
+  giờ hiện "vào học thôi!"; có tạm dừng / +1 phút / chọn lại.
+- **🎤 Thuyết trình sản phẩm** (nút ở thẻ Sản phẩm cuối khóa) — 2 chế độ:
+  - **Từng em**: slideshow mỗi em một slide (tên, dự án, mô tả, chức năng, link
+    to bấm được), chuyển bằng nút hoặc phím ← →, thứ tự theo tên, đếm "3/12".
+  - **🎉 Tổng kết cả lớp** (chiếu khi nói chuyện với PHỤ HUYNH sau khi các em
+    thuyết trình xong): lời cảm ơn + lưới thẻ màu toàn bộ sản phẩm (avatar, tên
+    em, tên dự án, 3 chức năng đầu); bấm thẻ nhảy về slide của em đó. Vào bằng
+    nút "🖼️ Cả lớp" hoặc "Tiếp →" ở slide cuối.
 
 ## Học viên
 
