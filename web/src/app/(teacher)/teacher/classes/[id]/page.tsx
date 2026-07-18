@@ -281,6 +281,7 @@ export default async function ClassDetailPage({
         <CardContent>
           <GroupRandomizer
             classId={cls.id}
+            classCode={cls.class_code}
             students={students.map((s) => ({ id: s.studentId, name: s.fullName }))}
             savedGroups={savedGroups}
           />

@@ -21,6 +21,19 @@ import {
 
 type Mode = "byGroups" | "bySize";
 
+/** Linh vật + bộ màu cố định theo THỨ TỰ nhóm — đủ tương phản khi chiếu TV.
+ *  Class Tailwind phải là chuỗi literal đầy đủ (JIT không hiểu tên ghép động). */
+const GROUP_THEMES = [
+  { emoji: "🦁", card: "border-amber-500/50 bg-amber-500/10", title: "text-amber-700 dark:text-amber-300" },
+  { emoji: "🚀", card: "border-indigo-500/50 bg-indigo-500/10", title: "text-indigo-700 dark:text-indigo-300" },
+  { emoji: "🐬", card: "border-sky-500/50 bg-sky-500/10", title: "text-sky-700 dark:text-sky-300" },
+  { emoji: "🌵", card: "border-emerald-500/50 bg-emerald-500/10", title: "text-emerald-700 dark:text-emerald-300" },
+  { emoji: "🔥", card: "border-rose-500/50 bg-rose-500/10", title: "text-rose-700 dark:text-rose-300" },
+  { emoji: "🦄", card: "border-violet-500/50 bg-violet-500/10", title: "text-violet-700 dark:text-violet-300" },
+  { emoji: "🍊", card: "border-orange-500/50 bg-orange-500/10", title: "text-orange-700 dark:text-orange-300" },
+  { emoji: "🐢", card: "border-teal-500/50 bg-teal-500/10", title: "text-teal-700 dark:text-teal-300" },
+] as const;
+
 /** Fisher-Yates: xáo trộn bản sao, không đụng mảng gốc. */
 function shuffle<T>(list: T[]): T[] {
   const arr = [...list];
@@ -44,12 +57,61 @@ function buildGroups(members: GroupMember[], count: number): PresentationGroup[]
   return groups;
 }
 
+function GroupCard({
+  group,
+  index,
+  shuffling,
+  tv,
+}: {
+  group: PresentationGroup;
+  index: number;
+  shuffling: boolean;
+  tv: boolean;
+}) {
+  const theme = GROUP_THEMES[index % GROUP_THEMES.length];
+  return (
+    <div
+      className={`rounded-2xl border-2 transition-all ${theme.card} ${
+        tv ? "p-6" : "p-4"
+      } ${shuffling ? "scale-[0.98] opacity-70" : "animate-in fade-in slide-in-from-bottom-2"}`}
+      style={shuffling ? undefined : { animationDelay: `${index * 60}ms` }}
+    >
+      <div className="mb-3 flex items-center gap-3">
+        <span className={tv ? "text-4xl" : "text-2xl"} aria-hidden>
+          {theme.emoji}
+        </span>
+        <p className={`font-bold ${theme.title} ${tv ? "text-3xl" : "text-lg"}`}>
+          {group.name}
+        </p>
+        <Badge variant="secondary" className={`ml-auto ${tv ? "px-3 py-1 text-base" : "text-xs"}`}>
+          {group.members.length} bạn
+        </Badge>
+      </div>
+      <ul className={tv ? "space-y-2" : "space-y-1"}>
+        {group.members.map((m) => (
+          <li
+            key={m.id}
+            className={`flex items-center gap-2 font-medium ${
+              tv ? "text-2xl" : "text-sm"
+            }`}
+          >
+            <span className={`inline-block size-2 shrink-0 rounded-full ${theme.card} border`} aria-hidden />
+            {m.name}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function GroupRandomizer({
   classId,
+  classCode,
   students,
   savedGroups,
 }: {
   classId: string;
+  classCode: string;
   students: GroupMember[];
   savedGroups: PresentationGroup[];
 }) {
@@ -59,6 +121,7 @@ export function GroupRandomizer({
   const [shuffling, setShuffling] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState("");
+  const [tvMode, setTvMode] = useState(false);
   const [saving, startSave] = useTransition();
   const timers = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
 
@@ -70,6 +133,29 @@ export function GroupRandomizer({
       if (t.timeout) clearTimeout(t.timeout);
     };
   }, []);
+
+  // Esc thoát chế độ chiếu (Esc cũng thoát fullscreen trình duyệt — đồng bộ luôn).
+  useEffect(() => {
+    if (!tvMode) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTvMode(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tvMode]);
+
+  function enterTv() {
+    setTvMode(true);
+    // Best-effort: TV thường xem qua trình duyệt fullscreen; từ chối cũng không sao.
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  }
+
+  function exitTv() {
+    setTvMode(false);
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  }
 
   const num = Number(value);
   const groupCount =
@@ -149,6 +235,11 @@ export function GroupRandomizer({
               ? "🎲 Random lại"
               : "🎲 Random nhóm"}
         </Button>
+        {groups.length > 0 && (
+          <Button variant="outline" onClick={enterTv}>
+            📺 Chiếu màn hình
+          </Button>
+        )}
         {dirty && !shuffling && (
           <Button variant="outline" onClick={handleSave} disabled={saving}>
             {saving ? "Đang lưu..." : "💾 Lưu kết quả"}
@@ -173,27 +264,13 @@ export function GroupRandomizer({
       {groups.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {groups.map((group, i) => (
-            <div
+            <GroupCard
               key={group.name}
-              className={`rounded-lg border p-3 transition-all ${
-                shuffling ? "opacity-70" : "animate-in fade-in slide-in-from-bottom-1"
-              }`}
-              style={shuffling ? undefined : { animationDelay: `${i * 60}ms` }}
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-semibold">{group.name}</p>
-                <Badge variant="secondary" className="text-xs">
-                  {group.members.length} bạn
-                </Badge>
-              </div>
-              <ul className="space-y-1">
-                {group.members.map((m) => (
-                  <li key={m.id} className="text-sm text-muted-foreground">
-                    • {m.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
+              group={group}
+              index={i}
+              shuffling={shuffling}
+              tv={false}
+            />
           ))}
         </div>
       )}
@@ -202,6 +279,50 @@ export function GroupRandomizer({
         <p className="text-xs text-muted-foreground">
           Kết quả chưa được lưu — bấm &quot;Lưu kết quả&quot; để giữ lại.
         </p>
+      )}
+
+      {/* ===== Chế độ chiếu TV: overlay toàn màn hình, chữ to nhìn từ xa ===== */}
+      {tvMode && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
+          <div className="mx-auto max-w-screen-2xl space-y-6 p-8">
+            <div className="flex flex-wrap items-center gap-4">
+              <h2 className="text-3xl font-bold">
+                🎤 Nhóm thuyết trình · Lớp {classCode}
+              </h2>
+              <span className="text-xl text-muted-foreground">
+                {students.length} học viên → {groups.length} nhóm
+              </span>
+              <div className="ml-auto flex items-center gap-3">
+                <Button size="lg" onClick={handleRandom} disabled={shuffling || invalid}>
+                  {shuffling ? "🎲 Đang xáo..." : "🎲 Random lại"}
+                </Button>
+                {dirty && !shuffling && (
+                  <Button size="lg" variant="outline" onClick={handleSave} disabled={saving}>
+                    {saving ? "Đang lưu..." : "💾 Lưu"}
+                  </Button>
+                )}
+                <Button size="lg" variant="ghost" onClick={exitTv} aria-label="Thoát chế độ chiếu">
+                  ✕ Thoát
+                </Button>
+              </div>
+            </div>
+
+            <div
+              className="grid gap-6"
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}
+            >
+              {groups.map((group, i) => (
+                <GroupCard
+                  key={group.name}
+                  group={group}
+                  index={i}
+                  shuffling={shuffling}
+                  tv
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
