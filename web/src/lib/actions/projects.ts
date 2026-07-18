@@ -36,8 +36,6 @@ function isValidUrl(value: string): boolean {
   }
 }
 
-export type ProjectStatus = "draft" | "submitted";
-
 /** Sản phẩm đã lưu, trả về để form phản ánh ngay (chuyển tạo→sửa không reload). */
 export interface SavedProject {
   id: string;
@@ -48,7 +46,6 @@ export interface SavedProject {
   drive_url: string | null;
   demo_url: string | null;
   extra_notes: string | null;
-  status: ProjectStatus;
 }
 
 export type SaveProjectResult = ActionResult & { project?: SavedProject };
@@ -66,8 +63,6 @@ export async function saveProject(
   const driveUrl = String(formData.get("drive_url") ?? "").trim();
   const demoUrl = String(formData.get("demo_url") ?? "").trim();
   const extraNotes = String(formData.get("extra_notes") ?? "").trim();
-  const status: ProjectStatus =
-    String(formData.get("status") ?? "") === "submitted" ? "submitted" : "draft";
 
   if (!classId || !name) {
     return { error: "Vui lòng nhập tên dự án." };
@@ -100,7 +95,6 @@ export async function saveProject(
     drive_url: driveUrl || null,
     demo_url: demoUrl || null,
     extra_notes: extraNotes || null,
-    status,
     updated_at: new Date().toISOString(),
   };
 
@@ -116,7 +110,7 @@ export async function saveProject(
 
   revalidateGallery();
   return {
-    success: status === "submitted" ? "Đã nộp sản phẩm." : "Đã lưu nháp.",
+    success: "Đã lưu sản phẩm.",
     project: {
       id: saved.id,
       name: saved.name,
@@ -126,7 +120,6 @@ export async function saveProject(
       drive_url: saved.drive_url,
       demo_url: saved.demo_url,
       extra_notes: saved.extra_notes,
-      status: saved.status as ProjectStatus,
     },
   };
 }
