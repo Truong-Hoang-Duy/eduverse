@@ -176,6 +176,21 @@
       được bình luận HV + chủ xóa được); toàn bộ **100/100 PASS**
 - [x] Merge lên production
 
+### Đợt 10 (`feature/tv-group-display-keepalive`) — màn chiếu TV + keep-alive
+- [x] `components/tv-overlay.tsx` dùng chung: overlay toàn màn hình + fullscreen
+      trình duyệt + Esc thoát
+- [x] Random nhóm thiết kế lại: thẻ màu riêng + linh vật emoji, chế độ chiếu TV
+      chữ to; **BỎ lưu kết quả** — xóa `saveGroups`, DROP `presentation_groups`
+      (migration `20260722000000`, dán SAU deploy), xóa `e2e-phase5` (−8 test)
+- [x] ☕ Màn nghỉ giữa giờ: đếm ngược 5/10/15 phút khổng lồ, ≤1ph chuyển đỏ,
+      tạm dừng / +1 phút / chọn lại, hết giờ báo to
+- [x] 🎤 Màn thuyết trình sản phẩm: slideshow mỗi em một slide, ← → chuyển,
+      thứ tự theo tên, link bấm được
+- [x] GitHub Action keep-alive Supabase 2 ngày/lần (RPC anon, test HTTP 200);
+      user cần tạo 2 secret SUPABASE_URL/SUPABASE_ANON_KEY
+- [x] E2E còn 92/92 PASS; merge lên production
+
 ## Ý tưởng còn để ngỏ (chưa làm)
-- Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
+- ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
+  lớp xem, kết quả không lưu nữa

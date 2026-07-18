@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,35 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  saveGroups,
-  type GroupMember,
-  type PresentationGroup,
-} from "@/lib/actions/groups";
+  TvOverlay,
+  enterBrowserFullscreen,
+  exitBrowserFullscreen,
+} from "@/components/tv-overlay";
+
+export interface GroupMember {
+  id: string;
+  name: string;
+}
+
+export interface PresentationGroup {
+  name: string;
+  members: GroupMember[];
+}
 
 type Mode = "byGroups" | "bySize";
+
+/** Linh vật + bộ màu cố định theo THỨ TỰ nhóm — đủ tương phản khi chiếu TV.
+ *  Class Tailwind phải là chuỗi literal đầy đủ (JIT không hiểu tên ghép động). */
+const GROUP_THEMES = [
+  { emoji: "🦁", card: "border-amber-500/50 bg-amber-500/10", title: "text-amber-700 dark:text-amber-300" },
+  { emoji: "🚀", card: "border-indigo-500/50 bg-indigo-500/10", title: "text-indigo-700 dark:text-indigo-300" },
+  { emoji: "🐬", card: "border-sky-500/50 bg-sky-500/10", title: "text-sky-700 dark:text-sky-300" },
+  { emoji: "🌵", card: "border-emerald-500/50 bg-emerald-500/10", title: "text-emerald-700 dark:text-emerald-300" },
+  { emoji: "🔥", card: "border-rose-500/50 bg-rose-500/10", title: "text-rose-700 dark:text-rose-300" },
+  { emoji: "🦄", card: "border-violet-500/50 bg-violet-500/10", title: "text-violet-700 dark:text-violet-300" },
+  { emoji: "🍊", card: "border-orange-500/50 bg-orange-500/10", title: "text-orange-700 dark:text-orange-300" },
+  { emoji: "🐢", card: "border-teal-500/50 bg-teal-500/10", title: "text-teal-700 dark:text-teal-300" },
+] as const;
 
 /** Fisher-Yates: xáo trộn bản sao, không đụng mảng gốc. */
 function shuffle<T>(list: T[]): T[] {
@@ -44,22 +67,66 @@ function buildGroups(members: GroupMember[], count: number): PresentationGroup[]
   return groups;
 }
 
-export function GroupRandomizer({
-  classId,
-  students,
-  savedGroups,
+function GroupCard({
+  group,
+  index,
+  shuffling,
+  tv,
 }: {
-  classId: string;
+  group: PresentationGroup;
+  index: number;
+  shuffling: boolean;
+  tv: boolean;
+}) {
+  const theme = GROUP_THEMES[index % GROUP_THEMES.length];
+  return (
+    <div
+      className={`rounded-2xl border-2 transition-all ${theme.card} ${
+        tv ? "p-6" : "p-4"
+      } ${shuffling ? "scale-[0.98] opacity-70" : "animate-in fade-in slide-in-from-bottom-2"}`}
+      style={shuffling ? undefined : { animationDelay: `${index * 60}ms` }}
+    >
+      <div className="mb-3 flex items-center gap-3">
+        <span className={tv ? "text-4xl" : "text-2xl"} aria-hidden>
+          {theme.emoji}
+        </span>
+        <p className={`font-bold ${theme.title} ${tv ? "text-3xl" : "text-lg"}`}>
+          {group.name}
+        </p>
+        <Badge variant="secondary" className={`ml-auto ${tv ? "px-3 py-1 text-base" : "text-xs"}`}>
+          {group.members.length} bạn
+        </Badge>
+      </div>
+      <ul className={tv ? "space-y-2" : "space-y-1"}>
+        {group.members.map((m) => (
+          <li
+            key={m.id}
+            className={`flex items-center gap-2 font-medium ${
+              tv ? "text-2xl" : "text-sm"
+            }`}
+          >
+            <span className={`inline-block size-2 shrink-0 rounded-full ${theme.card} border`} aria-hidden />
+            {m.name}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Chia nhóm hoàn toàn tại chỗ — KHÔNG lưu DB (mỗi buổi random lại từ đầu). */
+export function GroupRandomizer({
+  classCode,
+  students,
+}: {
+  classCode: string;
   students: GroupMember[];
-  savedGroups: PresentationGroup[];
 }) {
   const [mode, setMode] = useState<Mode>("byGroups");
   const [value, setValue] = useState("3");
-  const [groups, setGroups] = useState<PresentationGroup[]>(savedGroups);
+  const [groups, setGroups] = useState<PresentationGroup[]>([]);
   const [shuffling, setShuffling] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [message, setMessage] = useState("");
-  const [saving, startSave] = useTransition();
+  const [tvMode, setTvMode] = useState(false);
   const timers = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
 
   // Dọn timer khi unmount để không setState trên component đã gỡ.
@@ -71,6 +138,16 @@ export function GroupRandomizer({
     };
   }, []);
 
+  function enterTv() {
+    setTvMode(true);
+    enterBrowserFullscreen();
+  }
+
+  function exitTv() {
+    setTvMode(false);
+    exitBrowserFullscreen();
+  }
+
   const num = Number(value);
   const groupCount =
     mode === "byGroups" ? num : num > 0 ? Math.ceil(students.length / num) : 0;
@@ -79,7 +156,6 @@ export function GroupRandomizer({
 
   function handleRandom() {
     if (invalid || students.length === 0) return;
-    setMessage("");
     setShuffling(true);
 
     // Hiệu ứng: xáo liên tục ~800ms rồi chốt kết quả cuối.
@@ -90,20 +166,7 @@ export function GroupRandomizer({
       if (timers.current.interval) clearInterval(timers.current.interval);
       setGroups(buildGroups(students, groupCount));
       setShuffling(false);
-      setDirty(true);
     }, 800);
-  }
-
-  function handleSave() {
-    setMessage("");
-    startSave(async () => {
-      const res = await saveGroups({ classId, groups });
-      if (res.error) setMessage(res.error);
-      else {
-        setDirty(false);
-        setMessage("✓ Đã lưu kết quả chia nhóm.");
-      }
-    });
   }
 
   if (students.length === 0) {
@@ -149,9 +212,9 @@ export function GroupRandomizer({
               ? "🎲 Random lại"
               : "🎲 Random nhóm"}
         </Button>
-        {dirty && !shuffling && (
-          <Button variant="outline" onClick={handleSave} disabled={saving}>
-            {saving ? "Đang lưu..." : "💾 Lưu kết quả"}
+        {groups.length > 0 && (
+          <Button variant="outline" onClick={enterTv}>
+            📺 Chiếu màn hình
           </Button>
         )}
       </div>
@@ -162,46 +225,54 @@ export function GroupRandomizer({
         {invalid && " · số không hợp lệ"}
       </p>
 
-      {message && (
-        <p
-          className={`text-sm ${message.startsWith("✓") ? "text-green-600 dark:text-green-400" : "text-destructive"}`}
-        >
-          {message}
-        </p>
-      )}
-
       {groups.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {groups.map((group, i) => (
-            <div
+            <GroupCard
               key={group.name}
-              className={`rounded-lg border p-3 transition-all ${
-                shuffling ? "opacity-70" : "animate-in fade-in slide-in-from-bottom-1"
-              }`}
-              style={shuffling ? undefined : { animationDelay: `${i * 60}ms` }}
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-semibold">{group.name}</p>
-                <Badge variant="secondary" className="text-xs">
-                  {group.members.length} bạn
-                </Badge>
-              </div>
-              <ul className="space-y-1">
-                {group.members.map((m) => (
-                  <li key={m.id} className="text-sm text-muted-foreground">
-                    • {m.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
+              group={group}
+              index={i}
+              shuffling={shuffling}
+              tv={false}
+            />
           ))}
         </div>
       )}
 
-      {dirty && !shuffling && (
-        <p className="text-xs text-muted-foreground">
-          Kết quả chưa được lưu — bấm &quot;Lưu kết quả&quot; để giữ lại.
-        </p>
+      {tvMode && (
+        <TvOverlay onClose={exitTv}>
+          <div className="flex flex-wrap items-center gap-4">
+            <h2 className="text-3xl font-bold">
+              🎤 Nhóm thuyết trình · Lớp {classCode}
+            </h2>
+            <span className="text-xl text-muted-foreground">
+              {students.length} học viên → {groups.length} nhóm
+            </span>
+            <div className="ml-auto flex items-center gap-3">
+              <Button size="lg" onClick={handleRandom} disabled={shuffling || invalid}>
+                {shuffling ? "🎲 Đang xáo..." : "🎲 Random lại"}
+              </Button>
+              <Button size="lg" variant="ghost" onClick={exitTv} aria-label="Thoát chế độ chiếu">
+                ✕ Thoát
+              </Button>
+            </div>
+          </div>
+
+          <div
+            className="grid gap-6"
+            style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}
+          >
+            {groups.map((group, i) => (
+              <GroupCard
+                key={group.name}
+                group={group}
+                index={i}
+                shuffling={shuffling}
+                tv
+              />
+            ))}
+          </div>
+        </TvOverlay>
       )}
     </div>
   );
