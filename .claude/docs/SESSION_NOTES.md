@@ -131,11 +131,6 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
-- 🔴 **Dán migration `20260722000000` (drop `presentation_groups`) SAU khi Vercel
-  deploy xong Đợt 10** — dán trước khi deploy xong là trang lớp production lỗi.
-- 🟡 **Tạo 2 GitHub secret cho workflow keep-alive**: `SUPABASE_URL` +
-  `SUPABASE_ANON_KEY` (copy từ `web/.env.local`), rồi Actions → "Supabase
-  keep-alive" → Run workflow chạy thử. GitHub tự tắt cron nếu repo im 60 ngày.
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*` mà
   THIẾU dòng `!.env.example` (root .gitignore có nên `ai-service` thì được). Máy
   clone mới không dùng được `cp .env.example .env.local`. Muốn sửa: thêm
@@ -187,6 +182,9 @@ nhóm (thẻ màu/emoji), nghỉ giữa giờ (đếm ngược 5/10/15ph, tạm 
 trình sản phẩm (slideshow theo tên, phím ← →). Keep-alive: cron 2 ngày/lần gọi RPC
 anon `list_available_classes` — cú gọi đã test HTTP 200 trên DB thật.
 `e2e-gallery-storage` flake 1 lần (17/18 → rerun 18/18, nghi race Storage).
+Hoàn tất trọn vẹn: migration drop ĐÃ dán (probe PGRST205), 2 GitHub secret ĐÃ tạo
+(user suýt đặt tên `NEXT_PUBLIC_...` — tên secret phải đúng `SUPABASE_URL` /
+`SUPABASE_ANON_KEY`), workflow keep-alive đã chạy thử OK.
 
 ### 2026-07-18 (Đợt 9) — Claude / Gỡ trạng thái nộp + chỉ chủ bình luận được xóa
 User đổi ý về 2 tính năng: bỏ hẳn draft/submitted (Đợt 7) và bỏ moderation của GV
