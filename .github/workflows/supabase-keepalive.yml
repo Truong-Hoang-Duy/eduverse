@@ -1,0 +1,42 @@
+# Supabase free tự PAUSE project sau 7 ngày không có hoạt động → phải vào
+# dashboard Restore thủ công. Workflow này gọi 1 RPC anon thật sự chạm DB
+# (list_available_classes — SECURITY DEFINER, anon gọi được) mỗi 2 ngày để
+# project luôn được tính là "đang hoạt động".
+#
+# Cần 2 GitHub secret (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL      = NEXT_PUBLIC_SUPABASE_URL trong web/.env.local
+#   SUPABASE_ANON_KEY = NEXT_PUBLIC_SUPABASE_ANON_KEY trong web/.env.local
+#
+# ⚠️ GitHub tự tắt scheduled workflow nếu repo KHÔNG có commit nào trong 60 ngày
+# — khi nhận mail "workflow disabled" thì vào tab Actions bấm Enable lại.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: "0 3 */2 * *" # 10:00 giờ VN, 2 ngày một lần
+  workflow_dispatch: {} # cho phép bấm chạy tay để thử
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase qua RPC anon
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Thiếu secret SUPABASE_URL / SUPABASE_ANON_KEY" >&2
+            exit 1
+          fi
+          code=$(curl -s -o /tmp/body -w "%{http_code}" \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/list_available_classes" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            cat /tmp/body >&2
+            exit 1
+          fi
