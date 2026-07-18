@@ -12,6 +12,7 @@
 `main` = `develop` = `origin` = **`dfd3ead`**; working tree sạch; không nhánh
 feature nào treo. **E2E 98/98**, pytest 4/4. Việc tiếp tùy user.
 Phiên 2026-07-18: làm Đợt 7 (HV nhập sản phẩm) + sửa README (5 lỗi thật).
+**Đợt 7 user đã nghiệm thu bằng mắt OK (2026-07-18).**
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
@@ -108,11 +109,6 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
-- 🟡 **Nghiệm thu Đợt 7 bằng mắt** (máy không có playwright): `/student/projects` →
-  thêm chức năng bằng chip (gõ + Enter), đổi trạng thái sang "Đã nộp", AI gợi ý
-  (chọn độ khó + "Thêm tất cả" — xem mô tả có vào ô Ghi chú không), dán link rác
-  vào ô GitHub → phải báo lỗi tiếng Việt, thử nút Xóa; rồi mở gallery xem badge
-  "✅ Đã nộp". (Đợt 4/5/6 đã chạy production nhiều ngày, coi như ổn.)
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*` mà
   THIẾU dòng `!.env.example` (root .gitignore có nên `ai-service` thì được). Máy
   clone mới không dùng được `cp .env.example .env.local`. Muốn sửa: thêm
