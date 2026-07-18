@@ -32,7 +32,6 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 | `projects` | id, student_id, class_id, name, description, features text[], repo_url, drive_url, demo_url, extra_notes, created_at, updated_at, UNIQUE(class_id, student_id) | sản phẩm cuối khóa; cột `status` (thêm `20260719000000`) đã GỠ ở `20260721010000` |
 | `project_comments` | id, project_id, author_id, content, created_at | thành viên lớp nhận xét nhau; CHỈ chủ nhận xét xóa được (`project_comments_delete_own`, `20260721000000` — GV hết quyền moderation) |
 | `zalo_templates` | id, teacher_id, name, template_text | mẫu tin nhắn Zalo |
-| `presentation_groups` | id, class_id UNIQUE, groups JSONB, created_at, updated_at | kết quả random nhóm gần nhất (1/lớp, lưu đè) |
 | `user_secrets` | user_id PK, gemini_api_key, updated_at | API key Gemini riêng của từng người (GV + HV) |
 
 🔐 **Vì sao API key nằm ở bảng riêng, KHÔNG phải `profiles`**: RLS của Postgres là

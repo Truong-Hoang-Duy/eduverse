@@ -101,19 +101,18 @@ cd ../ai-service
 .venv/Scripts/python -m pytest
 ```
 
-**Test end-to-end trên database thật** — 98 kiểm tra, tự tạo và tự xóa dữ liệu test:
+**Test end-to-end trên database thật** — 92 kiểm tra, tự tạo và tự xóa dữ liệu test:
 ```bash
 cd web
 node --env-file=.env.local scripts/e2e-phase1.mjs         # auth, khóa/lớp, RLS        (13)
 node --env-file=.env.local scripts/e2e-phase2.mjs         # buổi học, nhận xét, hồ sơ HV (13)
-node --env-file=.env.local scripts/e2e-phase5.mjs         # random nhóm                 (8)
 node --env-file=.env.local scripts/e2e-api-key.mjs        # API key riêng + RLS         (8)
 node --env-file=.env.local scripts/e2e-class-admin.mjs    # sửa khóa/lớp, thêm HV      (15)
-node --env-file=.env.local scripts/e2e-gallery-storage.mjs # GV xem/nhận xét SP, xóa sạch Storage (17)
+node --env-file=.env.local scripts/e2e-gallery-storage.mjs # GV xem/nhận xét SP, xóa sạch Storage (18)
 
 # 2 bộ này gọi Gemini thật → cần ai-service đang chạy
 node --env-file=.env.local --env-file=../ai-service/.env scripts/e2e-phase3.mjs  # chấm bài  (10)
-node --env-file=.env.local --env-file=../ai-service/.env scripts/e2e-phase4.mjs  # sản phẩm  (14)
+node --env-file=.env.local --env-file=../ai-service/.env scripts/e2e-phase4.mjs  # sản phẩm  (15)
 ```
 
 > ⚠️ Trước khi chạy phase3/phase4: đảm bảo **chỉ có MỘT** ai-service ở cổng 8000

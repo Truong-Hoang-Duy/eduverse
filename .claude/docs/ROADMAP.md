@@ -177,5 +177,6 @@
 - [x] Merge lên production
 
 ## Ý tưởng còn để ngỏ (chưa làm)
-- Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
+- ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
+  lớp xem, kết quả không lưu nữa

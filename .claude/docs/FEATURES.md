@@ -120,9 +120,20 @@ học viên (`components/gallery/`), khác ở 2 chỗ: nhóm theo lớp và xư
   `project_comments_delete_own`, migration `20260721000000`; quyền moderation
   cũ của GV đã bỏ theo yêu cầu 2026-07-18).
 
-### Random nhóm thuyết trình
-- Chọn lớp → nhập số nhóm HOẶC số người/nhóm → shuffle, hiển thị kết quả có
-  animation, nút random lại, lưu kết quả lần cuối.
+### Random nhóm thuyết trình + màn hình chiếu TV (trang chi tiết lớp)
+GV cắm laptop vào TV của lớp; cả 3 màn chiếu dùng chung `components/tv-overlay.tsx`
+(overlay toàn màn hình + xin fullscreen trình duyệt + Esc thoát):
+- **Random nhóm**: nhập số nhóm HOẶC số người/nhóm → shuffle có animation, thẻ
+  nhóm màu riêng + linh vật emoji. **KHÔNG lưu kết quả** (bảng
+  `presentation_groups` đã DROP ở `20260722000000` — mỗi buổi random mới, user
+  chốt 2026-07-18). Nút "📺 Chiếu màn hình" phóng to chữ để nhìn từ cuối lớp;
+  random lại được ngay trên màn chiếu.
+- **☕ Nghỉ giữa giờ** (nút ở header trang lớp): chọn 5/10/15 phút → đồng hồ đếm
+  ngược khổng lồ, còn ≤1 phút chuyển đỏ, hết giờ hiện "vào học thôi!"; có tạm
+  dừng / +1 phút / chọn lại.
+- **🎤 Thuyết trình sản phẩm** (nút ở thẻ Sản phẩm cuối khóa): slideshow mỗi em
+  một slide (tên, dự án, mô tả, chức năng, link to bấm được), chuyển bằng nút
+  hoặc phím ← →, thứ tự theo tên; đếm slide "3/12".
 
 ## Học viên
 
