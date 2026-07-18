@@ -8,11 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude — /handoff)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–9 + dọn dẹp đều đã production;
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–10 + dọn dẹp đều đã production;
 `main` = `develop` = `origin`; working tree sạch; không nhánh feature nào treo.
-**E2E 100/100**, pytest 4/4. Việc tiếp tùy user.
-Phiên 2026-07-18: Đợt 7 (đã nghiệm thu OK) + sửa README + Đợt 8 (gallery hiện cả
-bạn CHƯA có sản phẩm) + Đợt 9 (GỠ trạng thái nộp + chỉ chủ bình luận được xóa).
+**E2E 92/92**, pytest 4/4. Việc tiếp tùy user.
+Phiên 2026-07-18: Đợt 7 (nghiệm thu OK) + sửa README + Đợt 8 (gallery roster) +
+Đợt 9 (gỡ status + author-only comment delete) + Đợt 10 (màn chiếu TV + keepalive).
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
@@ -32,6 +32,12 @@ bạn CHƯA có sản phẩm) + Đợt 9 (GỠ trạng thái nộp + chỉ chủ
   + xóa bình luận CHỈ chủ nhận xét (policy `project_comments_delete_own`, migration
   `20260721000000` — GV hết quyền moderation của Đợt 4). Cả 2 migration user ĐÃ áp.
   **Đã production.**
+- Đợt 10 (`feature/tv-group-display-keepalive`): 3 màn chiếu TV cho lớp học
+  (`tv-overlay.tsx` dùng chung) — random nhóm (thẻ màu + emoji, KHÔNG lưu nữa,
+  bảng `presentation_groups` DROP ở `20260722000000` — dán SAU deploy), nghỉ giữa
+  giờ (đếm ngược), thuyết trình sản phẩm (slideshow ← →). Kèm GitHub Action
+  keep-alive Supabase (cần 2 secret SUPABASE_URL/SUPABASE_ANON_KEY). E2E phase5
+  XÓA (−8), tổng 92. **Đã production.**
 - Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; **XÓA XONG**
   schema chết `submissions`/`grades` (user dán SQL) + bucket (Storage API) + type
   chết trong `database.types.ts` (bỏ tay 2 khối). **Đã production.**
@@ -55,7 +61,7 @@ có ở `node_modules/.bin/`; muốn regen phải `pnpm dlx supabase` + login + 
 - [x] Đợt 3: font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp sang khóa khác,
       thêm HV bằng tìm kiếm, hồ sơ full width, responsive cho điện thoại
 - [x] Deploy: Vercel + Render + Supabase — 0đ/tháng
-- [x] **E2E 100/100 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu).
+- [x] **E2E 92/92 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu).
       ⚠️ Trước khi chạy phase3/4 (AI): `netstat :8000` chắc chỉ 1 listener ai-service
       — 2 instance chồng port → instance mới không bind, E2E gọi vào cái cũ → 502 giả:
 
@@ -63,7 +69,6 @@ có ở `node_modules/.bin/`; muốn regen phải `pnpm dlx supabase` + login + 
 |---|---|---|
 | `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/e2e-phase1.mjs` |
 | `e2e-phase2.mjs` | 13 | như trên (gồm 3 check hồ sơ HV xuyên khóa) |
-| `e2e-phase5.mjs` | 8 | như trên |
 | `e2e-api-key.mjs` | 8 | như trên |
 | `e2e-class-admin.mjs` | 15 | như trên |
 | `e2e-gallery-storage.mjs` | 18 | như trên — GV xem/nhận xét SP, xóa sạch Storage, chỉ chủ xóa bình luận |
@@ -117,10 +122,20 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - **KHÔNG có trạng thái nộp** (user chốt 2026-07-18, Đợt 9): cột `status` của Đợt 7
   đã DROP (`20260721010000`) — đừng hồi sinh. **Xóa bình luận: CHỈ chủ nhận xét**
   (`project_comments_delete_own`) — GV cũng không xóa được của học viên.
+- **Random nhóm KHÔNG lưu** (user chốt 2026-07-18, Đợt 10): GV chiếu TV cho lớp,
+  mỗi buổi random mới — bảng `presentation_groups` đã DROP (`20260722000000`),
+  đừng hồi sinh. HV không cần trang xem nhóm.
+- **DROP cột/bảng: deploy code TRƯỚC, dán migration SAU** (ngược với ADD cột) —
+  code cũ SELECT đích danh là production 500. Đã dính 1 lần ở Đợt 9.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
+- 🔴 **Dán migration `20260722000000` (drop `presentation_groups`) SAU khi Vercel
+  deploy xong Đợt 10** — dán trước khi deploy xong là trang lớp production lỗi.
+- 🟡 **Tạo 2 GitHub secret cho workflow keep-alive**: `SUPABASE_URL` +
+  `SUPABASE_ANON_KEY` (copy từ `web/.env.local`), rồi Actions → "Supabase
+  keep-alive" → Run workflow chạy thử. GitHub tự tắt cron nếu repo im 60 ngày.
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*` mà
   THIẾU dòng `!.env.example` (root .gitignore có nên `ai-service` thì được). Máy
   clone mới không dùng được `cp .env.example .env.local`. Muốn sửa: thêm
@@ -163,6 +178,15 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   link trong biến `VIDEOS` ở đầu file.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-18 (Đợt 10) — Claude / Màn chiếu TV cho lớp học + keep-alive Supabase
+Bối cảnh user: chia nhóm chỉ GV thấy, cắm TV cho lớp xem, mỗi buổi random mới →
+bỏ lưu, DROP `presentation_groups` + xóa `saveGroups` + `e2e-phase5` (−8 test, còn
+92). 3 màn chiếu dùng chung `components/tv-overlay.tsx` (fullscreen + Esc): random
+nhóm (thẻ màu/emoji), nghỉ giữa giờ (đếm ngược 5/10/15ph, tạm dừng/+1ph), thuyết
+trình sản phẩm (slideshow theo tên, phím ← →). Keep-alive: cron 2 ngày/lần gọi RPC
+anon `list_available_classes` — cú gọi đã test HTTP 200 trên DB thật.
+`e2e-gallery-storage` flake 1 lần (17/18 → rerun 18/18, nghi race Storage).
 
 ### 2026-07-18 (Đợt 9) — Claude / Gỡ trạng thái nộp + chỉ chủ bình luận được xóa
 User đổi ý về 2 tính năng: bỏ hẳn draft/submitted (Đợt 7) và bỏ moderation của GV
