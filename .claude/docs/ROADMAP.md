@@ -24,7 +24,7 @@
 - [x] Mẫu tin Zalo + AI tổng hợp + Copy clipboard (/generate-zalo-summary)
 - [x] HV xem nội dung buổi học + nhận xét của mình trong dashboard
 - [x] E2E phase 2: 10/10 PASS trên DB thật (scripts/e2e-phase2.mjs)
-- [ ] User click-through UI phase 2 rồi merge develop
+- [x] User click-through UI phase 2 rồi merge develop (đã dùng production ổn định)
 
 ## Giai đoạn 3 — Chấm bài tập bằng AI
 - [x] Quản lý đề bài theo khóa + buổi (/teacher/assignments, upload đề lên Storage, unique mỗi buổi 1 đề)
@@ -32,7 +32,7 @@
 - [x] /grade-submission + nút "Chấm tất cả" chạy lần lượt có progress bar (dừng khi lỗi để không phí quota)
 - [x] Bảng kết quả: badge màu theo điểm (<50 đỏ, 50-79 vàng, ≥80 xanh), tiêu chí chi tiết, sửa tay điểm/nhận xét, xuất CSV (BOM cho Excel)
 - [x] E2E phase 3: 12/12 PASS kèm chấm Gemini thật (scripts/e2e-phase3.mjs)
-- [ ] User click-through UI phase 3 rồi merge develop + main
+- [x] User click-through UI phase 3 rồi merge develop + main (đã dùng production ổn định)
 
 ## Giai đoạn 4 — Sản phẩm cuối khóa
 - [x] HV CRUD sản phẩm (/student/projects, 1 sản phẩm/lớp, unique)
@@ -41,7 +41,7 @@
 - [x] Trang hướng dẫn nộp bài (/student/guide, YouTube embed — ID để trống chờ user điền)
 - [x] GV xem sản phẩm lớp trong trang chi tiết lớp
 - [x] E2E phase 4: 10/10 PASS kèm AI thật (scripts/e2e-phase4.mjs)
-- [ ] User click-through UI phase 4 rồi merge develop + main
+- [x] User click-through UI phase 4 rồi merge develop + main (đã dùng production ổn định)
 
 ## Giai đoạn 5 — Tiện ích + Deploy
 - [x] Random nhóm thuyết trình (mục trong trang chi tiết lớp: chia theo số nhóm
@@ -197,7 +197,7 @@
       chiếu cho phụ huynh sau khi thuyết trình xong (lời cảm ơn, lưới thẻ màu
       mọi sản phẩm, bấm thẻ nhảy về slide từng em); "Tiếp →" ở slide cuối tự
       dẫn sang tổng kết
-- [ ] User nghiệm thu bằng mắt → merge/deploy
+- [x] Merge lên production (deploy 2026-07-18 cùng Đợt 12)
 
 ### Đợt 12 (`feature/password-reset`) — đổi mật khẩu không cần mật khẩu cũ
 - [x] `/profile`: card 🔒 Đổi mật khẩu (mới ×2, không hỏi cũ) — cả GV lẫn HV
@@ -205,7 +205,7 @@
       8 ký tự + Copy; admin API, action tự kiểm role teacher + enrollment RLS)
 - [x] E2E `e2e-class-admin` 15→18 (tự đổi → đăng nhập lại, mật khẩu cũ chết,
       GV reset → em đăng nhập được); tổng **95/95 PASS**
-- [ ] User nghiệm thu → merge/deploy (kéo theo Đợt 11 vì stack)
+- [x] Merge lên production (deploy 2026-07-18, kéo theo Đợt 11)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
