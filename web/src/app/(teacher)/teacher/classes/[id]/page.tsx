@@ -14,12 +14,12 @@ import { StatCard } from "@/components/stat-card";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
-import type { PresentationGroup } from "@/lib/actions/groups";
-
 import { AddStudentDialog } from "./add-student-dialog";
+import { BreakScreen } from "./break-screen";
 import { DeleteClassButton } from "./delete-class-button";
 import { EditClassDialog } from "./edit-class-dialog";
 import { GroupRandomizer } from "./group-randomizer";
+import { ProjectShowcase } from "./project-showcase";
 import { StudentSummaryPanel } from "./student-summary-panel";
 import {
   StudentsTable,
@@ -41,7 +41,6 @@ export default async function ClassDetailPage({
     { data: allClasses },
     { data: sessionsData },
     { data: projectsData },
-    { data: groupsData },
     { data: coursesData },
   ] = await Promise.all([
     supabase
@@ -67,11 +66,6 @@ export default async function ClassDetailPage({
       )
       .eq("class_id", id)
       .order("updated_at", { ascending: false }),
-    supabase
-      .from("presentation_groups")
-      .select("groups")
-      .eq("class_id", id)
-      .maybeSingle(),
     supabase.from("courses").select("id, code, name").order("code"),
   ]);
 
@@ -96,8 +90,6 @@ export default async function ClassDetailPage({
   )
     .filter((c) => c.id !== id)
     .map((c) => ({ id: c.id, classCode: c.class_code }));
-
-  const savedGroups = ((groupsData?.groups ?? []) as unknown as PresentationGroup[]) ?? [];
 
   const sessions = sessionsData ?? [];
   const filledSessions = sessions.filter((s) => Boolean(s.content)).length;
@@ -157,6 +149,7 @@ export default async function ClassDetailPage({
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <BreakScreen classCode={cls.class_code} />
             <EditClassDialog
               classId={cls.id}
               classCode={cls.class_code}
@@ -275,27 +268,30 @@ export default async function ClassDetailPage({
           <CardTitle className="text-base">🎲 Random nhóm thuyết trình</CardTitle>
           <CardDescription>
             Chia nhóm ngẫu nhiên theo số nhóm hoặc số người mỗi nhóm — random lại
-            thoải mái, bấm Lưu để giữ kết quả cuối.
+            thoải mái, bấm &quot;Chiếu màn hình&quot; để đưa lên TV. Không lưu lại,
+            mỗi buổi random mới.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <GroupRandomizer
-            classId={cls.id}
             classCode={cls.class_code}
             students={students.map((s) => ({ id: s.studentId, name: s.fullName }))}
-            savedGroups={savedGroups}
           />
         </CardContent>
       </Card>
 
       <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">
-            🚀 Sản phẩm cuối khóa ({projects.length})
-          </CardTitle>
-          <CardDescription>
-            Sản phẩm học viên trong lớp đã khai báo
-          </CardDescription>
+        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+          <div className="space-y-1.5">
+            <CardTitle className="text-base">
+              🚀 Sản phẩm cuối khóa ({projects.length})
+            </CardTitle>
+            <CardDescription>
+              Sản phẩm học viên trong lớp đã khai báo — chiếu lên TV khi các em
+              thuyết trình cuối khóa
+            </CardDescription>
+          </div>
+          <ProjectShowcase classCode={cls.class_code} projects={projects} />
         </CardHeader>
         <CardContent className="space-y-4">
           {projects.length === 0 ? (
