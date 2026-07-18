@@ -154,6 +154,38 @@ async function main() {
   const { data: gone } = await admin.from("projects").select("id").eq("id", proj.id);
   check("HV xóa được sản phẩm của mình", (gone ?? []).length === 0);
 
+  // 9d. Roster lớp (policy enrollments_classmates_select, migration 20260720000000):
+  // Bob thấy cả ghi danh của Alice → gallery hiện được bạn CHƯA có sản phẩm.
+  const { data: bobRoster } = await bob.client
+    .from("enrollments")
+    .select("student_id")
+    .eq("class_id", clsA.id);
+  check(
+    "HV thấy ghi danh của bạn cùng lớp (roster gallery)",
+    (bobRoster ?? []).length === 2,
+    `thấy ${(bobRoster ?? []).length}/2 dòng`
+  );
+
+  // 9e. Join profiles của roster trả được tên bạn cùng lớp (nhánh classmate
+  // trong profiles_select chỉ hoạt động khi enrollments đã mở cho bạn cùng lớp).
+  const { data: bobRosterNames } = await bob.client
+    .from("enrollments")
+    .select("student_id, profiles(full_name)")
+    .eq("class_id", clsA.id);
+  const aliceRow = (bobRosterNames ?? []).find((r) => r.student_id === alice.id);
+  check(
+    "Roster join được tên bạn cùng lớp",
+    aliceRow?.profiles?.full_name === "Alice",
+    `full_name=${aliceRow?.profiles?.full_name}`
+  );
+
+  // 9f. Carol (khác lớp) KHÔNG thấy ghi danh lớp A.
+  const { data: carolRoster } = await carol.client
+    .from("enrollments")
+    .select("student_id")
+    .eq("class_id", clsA.id);
+  check("RLS: khác lớp không thấy roster", (carolRoster ?? []).length === 0);
+
   // 10. AI gợi ý tính năng (thật)
   const res = await fetch(`${AI_URL}/suggest-features`, {
     method: "POST",
