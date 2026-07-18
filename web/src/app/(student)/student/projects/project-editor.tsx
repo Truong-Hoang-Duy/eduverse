@@ -21,7 +21,6 @@ import {
   saveProject,
   suggestFeatures,
   type FeatureSuggestion,
-  type ProjectStatus,
   type SaveProjectResult,
 } from "@/lib/actions/projects";
 
@@ -36,7 +35,6 @@ export interface ProjectData {
   drive_url: string | null;
   demo_url: string | null;
   extra_notes: string | null;
-  status: ProjectStatus;
 }
 
 const DIFFICULTY: Record<FeatureSuggestion["difficulty"], string> = {
@@ -72,7 +70,6 @@ export function ProjectEditor({
   const [driveUrl, setDriveUrl] = useState(project?.drive_url ?? "");
   const [demoUrl, setDemoUrl] = useState(project?.demo_url ?? "");
   const [notes, setNotes] = useState(project?.extra_notes ?? "");
-  const [status, setStatus] = useState<ProjectStatus>(project?.status ?? "draft");
 
   const [difficulty, setDifficulty] = useState<DesiredDifficulty>("auto");
   const [suggestions, setSuggestions] = useState<FeatureSuggestion[]>([]);
@@ -91,7 +88,6 @@ export function ProjectEditor({
     setDriveUrl(saved.drive_url ?? "");
     setDemoUrl(saved.demo_url ?? "");
     setNotes(saved.extra_notes ?? "");
-    setStatus(saved.status);
   }, [state]);
 
   function appendToNotes(s: FeatureSuggestion): string {
@@ -144,7 +140,6 @@ export function ProjectEditor({
       {isEditing && <input type="hidden" name="id" value={projectId} />}
       <input type="hidden" name="class_id" value={classId} />
       <input type="hidden" name="features" value={features.join("\n")} />
-      <input type="hidden" name="status" value={status} />
 
       <div className="space-y-1.5">
         <Label htmlFor={`name-${classId}`}>Tên dự án *</Label>
@@ -292,23 +287,6 @@ export function ProjectEditor({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor={`status-${classId}`} className="sr-only">
-            Trạng thái
-          </Label>
-          <Select
-            value={status}
-            onValueChange={(v) => setStatus(v as ProjectStatus)}
-          >
-            <SelectTrigger id={`status-${classId}`} className="w-[150px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">📝 Đang làm</SelectItem>
-              <SelectItem value="submitted">✅ Đã nộp</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
         <Button type="submit" disabled={pending}>
           {pending
             ? "Đang lưu..."

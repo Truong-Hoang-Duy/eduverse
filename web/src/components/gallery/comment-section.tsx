@@ -21,14 +21,11 @@ export function CommentSection({
   projectId,
   comments,
   currentUserId,
-  canModerate = false,
   placeholder = "Viết nhận xét cho bạn...",
 }: {
   projectId: string;
   comments: CommentItem[];
   currentUserId: string;
-  /** GV của lớp xóa được nhận xét bất kỳ (RLS đã cho phép); HV chỉ xóa của mình. */
-  canModerate?: boolean;
   placeholder?: string;
 }) {
   const [state, formAction] = useActionState<ActionResult, FormData>(
@@ -58,7 +55,8 @@ export function CommentSection({
                   </span>
                   <p className="break-words text-muted-foreground">{c.content}</p>
                 </div>
-                {(mine || canModerate) && (
+                {/* Chỉ chủ nhận xét xóa được (RLS project_comments_delete_own). */}
+                {mine && (
                   <ConfirmDialog
                     trigger={
                       <button
@@ -69,12 +67,8 @@ export function CommentSection({
                         ✕
                       </button>
                     }
-                    title={mine ? "Xóa nhận xét của bạn?" : "Xóa nhận xét này?"}
-                    description={
-                      mine
-                        ? "Nhận xét này sẽ bị xóa vĩnh viễn khỏi sản phẩm."
-                        : `Nhận xét của ${c.authorName} sẽ bị xóa vĩnh viễn khỏi sản phẩm.`
-                    }
+                    title="Xóa nhận xét của bạn?"
+                    description="Nhận xét này sẽ bị xóa vĩnh viễn khỏi sản phẩm."
                     action={deleteComment}
                     fields={{ id: c.id }}
                   />

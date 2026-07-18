@@ -22,7 +22,6 @@ interface ProjectRow {
   drive_url: string | null;
   demo_url: string | null;
   extra_notes: string | null;
-  status: "draft" | "submitted";
   updated_at: string;
   profiles: { full_name: string } | null;
 }
@@ -62,7 +61,7 @@ export default async function GalleryPage() {
     supabase
       .from("projects")
       .select(
-        "id, class_id, student_id, name, description, features, repo_url, drive_url, demo_url, extra_notes, status, updated_at, profiles!projects_student_id_fkey(full_name)"
+        "id, class_id, student_id, name, description, features, repo_url, drive_url, demo_url, extra_notes, updated_at, profiles!projects_student_id_fkey(full_name)"
       )
       .order("updated_at", { ascending: false }),
     supabase
@@ -89,7 +88,6 @@ export default async function GalleryPage() {
       drive_url: p.drive_url,
       demo_url: p.demo_url,
       extra_notes: p.extra_notes,
-      status: p.status,
       updatedAt: p.updated_at,
       authorName: p.profiles?.full_name ?? "Học viên",
       classId: p.class_id,

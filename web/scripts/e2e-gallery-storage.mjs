@@ -145,18 +145,26 @@ async function main() {
     hvSees?.some((c) => c.id === gvComment.id)
   );
 
-  // ---------- 3. GV xóa nhận xét bất kỳ trong lớp (moderation) ----------
+  // ---------- 3. Chỉ CHỦ nhận xét mới xóa được (policy
+  // project_comments_delete_own, migration 20260721000000 — hết moderation) ----------
   const { data: hvComment } = await hv.client
     .from("project_comments")
     .insert({ project_id: project.id, author_id: hv.id, content: "Tự khen mình" })
     .select()
     .single();
   await teacher.from("project_comments").delete().eq("id", hvComment.id);
-  const { data: afterMod } = await admin
+  const { data: afterGvDelete } = await admin
     .from("project_comments")
     .select("id")
     .eq("id", hvComment.id);
-  check("GV xóa được nhận xét của học viên", (afterMod ?? []).length === 0);
+  check("GV KHÔNG xóa được nhận xét của học viên", (afterGvDelete ?? []).length === 1);
+
+  await hv.client.from("project_comments").delete().eq("id", hvComment.id);
+  const { data: afterOwnDelete } = await admin
+    .from("project_comments")
+    .select("id")
+    .eq("id", hvComment.id);
+  check("HV xóa được nhận xét của chính mình", (afterOwnDelete ?? []).length === 0);
 
   // ---------- 4. Xóa đề → file trong Storage cũng phải mất ----------
   const { assignment: a1, path: p1 } = await makeAssignment(

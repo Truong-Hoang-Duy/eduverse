@@ -76,16 +76,6 @@ async function main() {
     .single();
   check("Học viên tạo sản phẩm", !pErr, pErr?.message);
 
-  // 1b. Trạng thái nộp (migration 20260719000000): mặc định draft, đổi được sang submitted
-  check("Sản phẩm mới mặc định trạng thái 'draft'", proj?.status === "draft", `status=${proj?.status}`);
-  const { data: submitted, error: stErr } = await alice.client
-    .from("projects")
-    .update({ status: "submitted" })
-    .eq("id", proj.id)
-    .select("status")
-    .single();
-  check("HV đổi trạng thái sang 'submitted'", !stErr && submitted?.status === "submitted", stErr?.message);
-
   // 2. UNIQUE(class_id, student_id): tạo sản phẩm thứ 2 cùng lớp bị chặn
   const { error: dupErr } = await alice.client.from("projects").insert({
     student_id: alice.id,

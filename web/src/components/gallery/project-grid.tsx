@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 
-import {
-  ProjectCard,
-  StatusBadge,
-  type ProjectView,
-} from "@/components/project-card";
+import { ProjectCard, type ProjectView } from "@/components/project-card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -37,15 +33,12 @@ export function ProjectGrid({
   projects,
   membersWithoutProject = [],
   currentUserId,
-  canModerate = false,
   commentPlaceholder,
 }: {
   projects: GalleryProject[];
   /** Bạn cùng lớp CHƯA có sản phẩm — hiện thẻ mờ cuối lưới. */
   membersWithoutProject?: RosterMember[];
   currentUserId: string;
-  /** GV: xóa được nhận xét bất kỳ trong lớp mình. */
-  canModerate?: boolean;
   commentPlaceholder?: string;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -78,12 +71,7 @@ export function ProjectGrid({
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-2">
-              <p className="min-w-0 flex-1 truncate text-sm font-medium">
-                {project.name}
-              </p>
-              <StatusBadge status={project.status} />
-            </div>
+            <p className="mt-3 truncate text-sm font-medium">{project.name}</p>
             {project.description && (
               <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
                 {project.description}
@@ -153,7 +141,6 @@ export function ProjectGrid({
                   projectId={selected.id}
                   comments={selected.comments}
                   currentUserId={currentUserId}
-                  canModerate={canModerate}
                   placeholder={commentPlaceholder}
                 />
               </div>
