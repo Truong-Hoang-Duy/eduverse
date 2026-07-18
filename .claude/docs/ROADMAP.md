@@ -130,11 +130,12 @@
 ### Dọn dẹp (`chore/cleanup-dead-code`)
 - [x] Xóa 5 file `ui/` không dùng (avatar, checkbox, radio-group, sonner, tabs)
       + gỡ 2 dep mồ côi theo đó (`sonner`, `next-themes` — dark mode dùng cách riêng)
-- [x] Migration `20260718000000` XÓA schema chết `submissions`/`grades` + bucket
-      `submissions` (⚠️ user phải dán tay + regen types — xem đầu file migration)
+- [x] Migration `20260718000000` XÓA schema chết `submissions`/`grades` (user dán) +
+      bucket `submissions` (Storage API — SQL không xóa được) + type chết
+      (`database.types.ts` bỏ tay 2 khối). **Đã xong hết.**
 - [x] Rà lại toàn bộ tài liệu (DATABASE/ARCHITECTURE/CLAUDE/AI-SERVICE): bỏ schema
       chết, sửa auth email→username, model → `gemini-flash-latest`, thêm hồ sơ HV.
-- [ ] Merge Đợt 6 + dọn dẹp lên production
+- [x] Merge Đợt 6 + dọn dẹp lên production
 
 ### Đợt 7 (`feature/project-entry-improvements`) — cải tiến HV nhập sản phẩm
 - [x] **Nút Xóa sản phẩm** (`deleteProject` có sẵn nhưng chưa từng nối UI)

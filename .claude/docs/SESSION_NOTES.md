@@ -6,10 +6,12 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-16, bởi: Claude — /handoff)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude — /handoff)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–7 + dọn dẹp đều đã production.
-Không nhánh feature nào treo. **E2E 98/98**, pytest 4/4. Việc tiếp tùy user.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–7 + dọn dẹp đều đã production;
+`main` = `develop` = `origin` = **`dfd3ead`**; working tree sạch; không nhánh
+feature nào treo. **E2E 98/98**, pytest 4/4. Việc tiếp tùy user.
+Phiên 2026-07-18: làm Đợt 7 (HV nhập sản phẩm) + sửa README (5 lỗi thật).
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
@@ -43,7 +45,7 @@ có ở `node_modules/.bin/`; muốn regen phải `pnpm dlx supabase` + login + 
 - [x] Đợt 3: font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp sang khóa khác,
       thêm HV bằng tìm kiếm, hồ sơ full width, responsive cho điện thoại
 - [x] Deploy: Vercel + Render + Supabase — 0đ/tháng
-- [x] **E2E 94/94 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu).
+- [x] **E2E 98/98 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu).
       ⚠️ Trước khi chạy phase3/4 (AI): `netstat :8000` chắc chỉ 1 listener ai-service
       — 2 instance chồng port → instance mới không bind, E2E gọi vào cái cũ → 502 giả:
 
@@ -56,7 +58,7 @@ có ở `node_modules/.bin/`; muốn regen phải `pnpm dlx supabase` + login + 
 | `e2e-class-admin.mjs` | 15 | như trên |
 | `e2e-gallery-storage.mjs` | 17 | như trên — GV xem/nhận xét SP + xóa sạch Storage |
 | `e2e-phase3.mjs` | 10 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
-| `e2e-phase4.mjs` | 10 | như phase3 |
+| `e2e-phase4.mjs` | 14 | như phase3 (gồm status draft/submitted + xóa SP + RLS) |
 
 Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu),
 `scripts/check-user.mjs <username>` (tra 1 tài khoản),
@@ -95,33 +97,47 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - **File chỉ lên Storage khi dòng DB chắc chắn được tạo** — upload sớm từ client
   là nguồn rác không ai dọn. Xóa dòng có file thì phải xóa file (Storage không
   cascade như FK).
+- **Thêm cột mới cho bảng đang dùng: áp migration TRƯỚC khi deploy code** đọc/ghi
+  cột đó — không thì mọi lần ghi vỡ ("column does not exist"). Cột có DEFAULT thì
+  an toàn với code CŨ đang chạy. Luồng: viết code → user dán migration → probe cột
+  (script `select <col> limit 1`) → E2E → deploy (đã dùng cho `projects.status` Đợt 7).
+- **`projects.features` giữ nguyên `text[]` (chỉ tên chức năng)** — mô tả cách làm
+  của AI (`/suggest-features`) nối vào ô Ghi chú (`extra_notes`), KHÔNG đổi sang
+  bảng con/JSONB. Trạng thái nộp: cột `projects.status` `draft|submitted` (Đợt 7).
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
-- 🔴 **Merge Đợt 6** (`feature/student-profile-timeline`) → develop → main → push.
-  Chỉ đụng docs + web (không ai-service). Conflict docs với origin có thể xảy ra nếu
-  Đợt 4+5 đã đổi cùng vùng — resolve tay như lần trước.
-- 🟡 **Nghiệm thu bằng mắt trên production** (máy không có playwright):
-  - Đợt 6: vào 1 lớp → bấm tên HV trong bảng → trang hồ sơ hiện timeline nhận xét
-    + thẻ số liệu + nút AI tổng hợp chạy. HV chưa nhận xét → empty state.
-  - Đợt 4: mở `/teacher/gallery` + nút 👁 "Xem đề" ở trang chấm bài.
-  - Đợt 5: **DevTools → Network → Throttling "Slow 4G"** → bấm nav: chữ mờ + spinner
-    NGAY, rồi khung xương, rồi nội dung. Thử `/teacher/classes/[id]` + 3 tab HV.
+- 🟡 **Nghiệm thu Đợt 7 bằng mắt** (máy không có playwright): `/student/projects` →
+  thêm chức năng bằng chip (gõ + Enter), đổi trạng thái sang "Đã nộp", AI gợi ý
+  (chọn độ khó + "Thêm tất cả" — xem mô tả có vào ô Ghi chú không), dán link rác
+  vào ô GitHub → phải báo lỗi tiếng Việt, thử nút Xóa; rồi mở gallery xem badge
+  "✅ Đã nộp". (Đợt 4/5/6 đã chạy production nhiều ngày, coi như ổn.)
+- 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*` mà
+  THIẾU dòng `!.env.example` (root .gitignore có nên `ai-service` thì được). Máy
+  clone mới không dùng được `cp .env.example .env.local`. Muốn sửa: thêm
+  `!.env.example` vào `web/.gitignore` rồi commit file. Claude KHÔNG tự làm — không
+  đọc được file env (chặn quyền), không commit thứ chưa xem (lỡ lộ key).
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
-- 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng vào nó.** Script
-  `e2e-gallery-storage.mjs` tự upload/xóa file y hệt `deleteAssignment` để kiểm
-  RLS + cascade + Storage trên DB thật, nhưng thân hàm action thì test không chạm
-  tới (Server Action không gọi được từ Node). Đổi logic trong action mà quên đổi
-  script là test vẫn xanh — cẩn thận.
-- ✅ Schema chết `submissions`/`grades` + bucket: đã có migration xóa (Đợt dọn dẹp).
-  Chờ user dán tay + regen types (xem mục ⚠️ ở "Trạng thái hiện tại").
+- 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng vào nó.** Nhiều script
+  (VD `e2e-gallery-storage.mjs`, phần status/xóa trong `e2e-phase4.mjs`) tự thao tác
+  DB y hệt action để kiểm RLS/cascade/Storage trên DB thật, nhưng thân hàm action thì
+  test không chạm (Server Action không gọi được từ Node). Đổi action mà quên đổi
+  script → test vẫn xanh. Validate link, form-sync sau lưu... phải nghiệm thu bằng mắt.
+- 🟡 **SESSION_NOTES > 150 dòng** (~220) — luật là giữ ~150, xóa entry >2 tuần. Hiện
+  mọi entry đều trong tuần (14–18/07) nên chưa xóa; qua đầu tháng 8 thì dọn Đợt 1–3.
 
 ### Ràng buộc môi trường (không sửa được, phải sống chung)
 - **Migration phải dán tay vào Supabase SQL Editor** — mạng của user CHẶN cổng
-  5432/6543, `supabase db push` không dùng được (chỉ cổng 443 mở). Gen types thì
-  chạy được: `./node_modules/.bin/supabase gen types typescript --linked`.
+  5432/6543, `supabase db push` không dùng được (chỉ cổng 443 mở). SQL Editor chạy
+  trong 1 transaction: lỗi giữa chừng rollback HẾT. **SQL KHÔNG xóa được Storage**
+  (bucket/objects) — lỗi `42501 protect_delete`, phải qua Storage API.
+- **CLI supabase KHÔNG cài trong `node_modules`** → lệnh regen types phải là
+  `corepack pnpm dlx supabase gen types typescript --linked > web/src/lib/database.types.ts`
+  (cần `supabase login` + `link` 1 lần). ⚠️ Dấu `>` CẮT TRẮNG file trước khi lệnh
+  chạy — CLI thiếu là file thành 0 byte, vỡ build. Lỡ thì `git checkout -- <file>`.
+  Cách an toàn hơn khi chỉ thêm/bớt 1 cột: sửa tay `database.types.ts` (đã làm 2 lần).
 - **DLP công ty mã hóa file** trên máy user → trình duyệt đọc ra bytes rác khi
   upload. Đã chặn ở `web/src/lib/file-check.ts` + `ai-service/app/storage.py`.
   Nếu sau này DLP mã hóa cả file code → cần thêm ô dán code dạng text.
@@ -140,7 +156,7 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
 
-### 2026-07-17 (Đợt 7) — Claude / Cải tiến HV nhập sản phẩm + sửa README
+### 2026-07-17→18 (Đợt 7) — Claude / Cải tiến HV nhập sản phẩm + sửa README
 Khảo sát tìm ra: **không có nút Xóa** (`deleteProject` viết rồi mà chưa nối UI),
 textarea "mỗi dòng một chức năng" dễ lỗi, 4 trường `defaultValue` nên form không
 phản ánh sau khi lưu, không validate link, AI bỏ mất mô tả cách làm. Làm cả 3 hướng
@@ -165,59 +181,23 @@ ai-service chồng cổng 8000.
 vào `web/.gitignore` rồi commit file. Claude KHÔNG tự làm: không đọc được file env
 (chặn quyền) mà không commit thứ chưa xem (lỡ có key thật).
 
-### 2026-07-16 (Dọn dẹp) — Claude / Xóa code + schema thừa + rà docs
-User: "chỉnh sửa tài liệu đầy đủ, deploy, dọn dẹp phần dư thừa". Khảo sát trước khi
-xóa: đếm lượt dùng từng `ui/*` → 5 file 0 lượt (avatar, checkbox, radio-group,
-sonner, tabs); truy dep → `sonner` + `next-themes` chỉ được `ui/sonner.tsx` dùng
-(dark mode dùng `documentElement.classList`, không cần next-themes). Xóa 5 file +
-`pnpm remove sonner next-themes` → typecheck/build vẫn sạch. Schema chết
-`submissions`/`grades` (user trước chốt giữ, giờ chốt xóa): migration
-`20260718000000` DROP + thu policy storage về 1 bucket — **user dán tay + regen
-types**. Rà docs: DATABASE bỏ schema chết; ARCHITECTURE sửa auth email→username,
-Storage bỏ "bài nộp", model → `gemini-flash-latest`, thêm hồ sơ HV; AI-SERVICE sửa
-model; CLAUDE cập nhật luật schema chết.
+### 2026-07-16 — Đợt 4/5/6 + dọn dẹp (đều ĐÃ PRODUCTION, chi tiết ở ROADMAP)
+- **Đợt 4** (`/teacher/gallery`): GV xem/nhận xét sản phẩm + xem đề bài
+  (`getAssignmentSpec`, link ký 10ph) + xóa dọn cả file Storage. Lỗi âm thầm: cleanup
+  E2E xóa tài khoản TRƯỚC khóa → `deleteUser` fail bị nuốt → rò tài khoản (đã sửa).
+- **Đợt 5** (phản hồi chuyển trang): `loading.tsx` + `PageSkeleton` + spinner
+  `useLinkStatus` + `cache()` profile. Prefetch route dynamic chỉ tới ranh giới
+  `loading` → trước đó rỗng (đo 215B→10KB); tra profile 2→1 lần/request.
+- **Đợt 6** (hồ sơ HV xuyên khóa cho GV): `/teacher/classes/[id]/students/[studentId]`
+  — timeline nhận xét + AI tổng hợp, tái dùng query của `generateStudentSummary` nên
+  0 migration; `StudentSummaryPanel` thêm prop `lockedStudent`.
+- **Dọn dẹp**: xóa 5 file `ui/` + 2 dep mồ côi (`sonner`/`next-themes`); DROP schema
+  chết + bucket + type; rà lại toàn bộ docs.
+- **Mẹo còn giá trị:** script admin (service key) phải đặt TRONG `web/scripts/` — Node
+  phân giải package theo vị trí script, để ngoài là `ERR_MODULE_NOT_FOUND`.
 
-### 2026-07-16 (Đợt 6) — Hồ sơ HV xuyên khóa (GV) — ĐÃ PRODUCTION
-Trang `/teacher/classes/[id]/students/[studentId]` (bấm tên HV trong bảng lớp):
-timeline nhận xét gốc từng buổi + 3 thẻ số liệu + AI tổng hợp. Query GIỐNG
-`generateStudentSummary` (đã chạy prod) nên RLS chắc chắn OK → **0 migration**.
-`StudentSummaryPanel` thêm prop `lockedStudent` (tương thích ngược). HV KHÔNG xem
-nhận xét (giữ ranh giới cũ). **Bẫy:** phase3/4 fail 502 hóa ra do **2 ai-service
-chồng port 8000** (cái mới không bind, gọi vào cái cũ) — không phải lỗi code.
-
-### 2026-07-16 (Đợt 4+5) — Deploy 2 đợt lên production (`7dc5b8d..22121c6`)
-Merge Đợt 4 rồi Đợt 5 → develop → main. Conflict docs resolve tay. Dọn 11 tài khoản
-test rác (`purge-test-users --yes`) → auth prod còn 2 user thật. phase3/4 lúc đó
-flake do **Gemini 503 (Google quá tải)** — độc lập với deploy.
-
-### 2026-07-16 (Đợt 5) — Phản hồi khi chuyển trang — ĐÃ PRODUCTION
-`loading.tsx` (teacher/student/profile) + `PageSkeleton` + `NavLinkLabel`
-(`useLinkStatus`, spinner client-side) + `cache()` profile. **Cần cả khung xương
-lẫn spinner** vì `loading.tsx` nằm TRONG layout, không che được `requireRole()` khi
-vào từ ngoài/F5. Đo: prefetch `/teacher/settings` 215B→10.328B (route dynamic chỉ
-prefetch tới ranh giới loading → trước đó prefetch rỗng); tra profile 2→1 lần/request.
-**Bẫy:** `pnpm build` khi `pnpm dev` đang chạy → `.next` giẫm nhau → 500 `ENOENT
-_buildManifest`. Tắt dev trước khi build.
-
-### 2026-07-16 (Đợt 4) — GV xem sản phẩm + xem đề + xóa sạch — ĐÃ PRODUCTION
-`/teacher/gallery` (RLS đã cho sẵn, chỉ thiếu UI; tách `components/gallery/` dùng
-chung + prop `canModerate`); xem nội dung đề bài (`getAssignmentSpec`, link ký 10ph
-cho ảnh/PDF); `deleteAssignment`/`deleteCourse` dọn file Storage, upload đề chuyển
-vào `createAssignment`. **Lỗi âm thầm:** cleanup 7 script E2E xóa tài khoản TRƯỚC
-khóa (`student_reviews.created_by` không cascade → `deleteUser` fail bị nuốt lỗi →
-rò tài khoản rác). Đã đảo thứ tự + log lỗi.
-
-### 2026-07-16 (sau) — Dọn đề hỏng trong production — KHÔNG đổi code
-File đề **mồ côi trong bucket** (bị DLP mã hóa: `SECURE FILE : This file is
-encrypted`) — dòng DB user đã xóa nhưng file ở lại vì `deleteAssignment` khi đó chưa
-xóa file (Đợt 4 sửa). Đã sao lưu rồi xóa. **Mẹo:** script admin dùng
-`SUPABASE_SERVICE_ROLE_KEY` phải đặt TRONG `web/scripts/` — Node phân giải package
-theo vị trí script, để ngoài là `ERR_MODULE_NOT_FOUND`.
-
-### 2026-07-15→16 — Đợt 1-3 + API key + GĐ 4-5 (đều đã production, chi tiết ở ROADMAP)
-Đợt 3 (`c73a998`): font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp, thêm HV bằng
-tìm kiếm (`search_students`), responsive. Đợt 2 (`7399f06`): chấm bài độc lập không
-lưu, dark mode, ConfirmDialog, khu HV chia tab. API key riêng từng người
-(`user_secrets`). **2 lỗi âm thầm đáng nhớ:** (1) `--font-sans` trỏ vào biến layout
-chưa từng đặt → app chạy font mặc định trình duyệt từ đầu dự án, không báo lỗi;
-(2) lỗi "Lỗi khi gọi AI" hóa ra do file đề bị DLP mã hóa, không phải do nhiều file.
+### 2026-07-15 — GĐ 1-5 + Đợt 1-3 + API key (nền tảng, đã production, chi tiết ở ROADMAP)
+Auth username, khóa/lớp, buổi + nhận xét AI, Zalo, chấm bài, sản phẩm + gallery, random
+nhóm. Font Be Vietnam Pro, API key riêng (`user_secrets`). **Lỗi âm thầm đáng nhớ:**
+`--font-sans` trỏ vào biến layout chưa đặt → app chạy font mặc định trình duyệt từ đầu
+dự án mà không báo lỗi; lỗi "Lỗi khi gọi AI" hóa ra do file đề bị DLP mã hóa.
