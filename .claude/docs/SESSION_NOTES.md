@@ -8,11 +8,10 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude — /handoff)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–10 + dọn dẹp đều đã production;
-`main` = `develop` = `origin`; working tree sạch; không nhánh feature nào treo.
-**E2E 92/92**, pytest 4/4. Việc tiếp tùy user.
-Phiên 2026-07-18: Đợt 7 (nghiệm thu OK) + sửa README + Đợt 8 (gallery roster) +
-Đợt 9 (gỡ status + author-only comment delete) + Đợt 10 (màn chiếu TV + keepalive).
+**Đang làm:** Đợt 11 (cải tiến màn chiếu: nhập phút tùy ý + tổng kết lớp cho phụ
+huynh) CODE XONG trên nhánh `feature/tv-screen-improvements` — **chờ user nghiệm
+thu bằng mắt rồi mới merge/deploy**. GĐ 1–5 + Đợt 1–10 đã production.
+**E2E 92/92**, pytest 4/4. Phiên 2026-07-18: Đợt 7→11.
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
@@ -38,6 +37,10 @@ Phiên 2026-07-18: Đợt 7 (nghiệm thu OK) + sửa README + Đợt 8 (gallery
   giờ (đếm ngược), thuyết trình sản phẩm (slideshow ← →). Kèm GitHub Action
   keep-alive Supabase (cần 2 secret SUPABASE_URL/SUPABASE_ANON_KEY). E2E phase5
   XÓA (−8), tổng 92. **Đã production.**
+- Đợt 11 (`feature/tv-screen-improvements`): màn nghỉ nhập phút tùy ý (1–180);
+  thuyết trình thêm chế độ **🎉 Tổng kết cả lớp** cho buổi gặp phụ huynh (lưới
+  thẻ màu mọi sản phẩm, bấm thẻ nhảy về slide). UI thuần client, 0 migration.
+  **Chờ nghiệm thu → deploy.**
 - Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; **XÓA XONG**
   schema chết `submissions`/`grades` (user dán SQL) + bucket (Storage API) + type
   chết trong `database.types.ts` (bỏ tay 2 khối). **Đã production.**

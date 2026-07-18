@@ -190,6 +190,15 @@
       user cần tạo 2 secret SUPABASE_URL/SUPABASE_ANON_KEY
 - [x] E2E còn 92/92 PASS; merge lên production
 
+### Đợt 11 (`feature/tv-screen-improvements`) — cải tiến màn chiếu TV
+- [x] Màn nghỉ giữa giờ: thêm ô nhập số phút tùy ý (1–180, Enter/nút Bắt đầu)
+      bên cạnh 3 preset 5/10/15
+- [x] Thuyết trình sản phẩm: chế độ "🎉 Tổng kết cả lớp" — màn chung đẹp mắt
+      chiếu cho phụ huynh sau khi thuyết trình xong (lời cảm ơn, lưới thẻ màu
+      mọi sản phẩm, bấm thẻ nhảy về slide từng em); "Tiếp →" ở slide cuối tự
+      dẫn sang tổng kết
+- [ ] User nghiệm thu bằng mắt → merge/deploy
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
