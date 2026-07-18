@@ -26,6 +26,7 @@ cd ai-service
 ```bash
 cd web
 pnpm dev
+# Nếu báo "pnpm: command not found" → dùng: corepack pnpm dev
 ```
 
 Mở trình duyệt: **http://localhost:3000**
@@ -33,6 +34,8 @@ Mở trình duyệt: **http://localhost:3000**
 Dừng: bấm `Ctrl + C` ở mỗi cửa sổ.
 
 > Chỉ chạy `web` cũng vào được app, nhưng các nút AI (✨) sẽ báo lỗi kết nối.
+> Lần đầu chạy `ai-service` sau khi vừa `git pull` có thêm thư viện: cài lại bằng
+> `.venv/Scripts/python -m pip install -r requirements-dev.txt`.
 
 ---
 
