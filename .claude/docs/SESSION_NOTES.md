@@ -8,11 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude — /handoff)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–8 + dọn dẹp đều đã production;
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–9 + dọn dẹp đều đã production;
 `main` = `develop` = `origin`; working tree sạch; không nhánh feature nào treo.
-**E2E 101/101**, pytest 4/4. Việc tiếp tùy user.
-Phiên 2026-07-18: Đợt 7 (user đã nghiệm thu bằng mắt OK) + sửa README + Đợt 8
-(gallery hiện cả bạn CHƯA có sản phẩm — migration `20260720000000` user ĐÃ áp).
+**E2E 100/100**, pytest 4/4. Việc tiếp tùy user.
+Phiên 2026-07-18: Đợt 7 (đã nghiệm thu OK) + sửa README + Đợt 8 (gallery hiện cả
+bạn CHƯA có sản phẩm) + Đợt 9 (GỠ trạng thái nộp + chỉ chủ bình luận được xóa).
 
 - Đợt 4 (`feature/teacher-gallery-spec-viewer`): GV xem/nhận xét sản phẩm, xem nội
   dung đề bài, xóa là xóa sạch (Storage). **Đã production.**
@@ -27,6 +27,11 @@ Phiên 2026-07-18: Đợt 7 (user đã nghiệm thu bằng mắt OK) + sửa REA
   phẩm (thẻ mờ) — policy `enrollments_classmates_select` thay policy self-only
   (migration `20260720000000`, ĐÃ áp); nhánh classmate trong `profiles_select` giờ
   mới thực sự chạy (trước bị RLS enrollments chặn ngầm subquery). **Đã production.**
+- Đợt 9 (`feature/drop-status-restrict-comment-delete`): GỠ hẳn trạng thái nộp
+  draft/submitted của Đợt 7 (drop cột `projects.status`, migration `20260721010000`)
+  + xóa bình luận CHỈ chủ nhận xét (policy `project_comments_delete_own`, migration
+  `20260721000000` — GV hết quyền moderation của Đợt 4). Cả 2 migration user ĐÃ áp.
+  **Đã production.**
 - Dọn dẹp: xóa 5 file `ui/` không dùng + gỡ dep `sonner`/`next-themes`; **XÓA XONG**
   schema chết `submissions`/`grades` (user dán SQL) + bucket (Storage API) + type
   chết trong `database.types.ts` (bỏ tay 2 khối). **Đã production.**
@@ -50,7 +55,7 @@ có ở `node_modules/.bin/`; muốn regen phải `pnpm dlx supabase` + login + 
 - [x] Đợt 3: font Be Vietnam Pro, sửa khóa/mã lớp + chuyển lớp sang khóa khác,
       thêm HV bằng tìm kiếm, hồ sơ full width, responsive cho điện thoại
 - [x] Deploy: Vercel + Render + Supabase — 0đ/tháng
-- [x] **E2E 101/101 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu).
+- [x] **E2E 100/100 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu).
       ⚠️ Trước khi chạy phase3/4 (AI): `netstat :8000` chắc chỉ 1 listener ai-service
       — 2 instance chồng port → instance mới không bind, E2E gọi vào cái cũ → 502 giả:
 
@@ -61,9 +66,9 @@ có ở `node_modules/.bin/`; muốn regen phải `pnpm dlx supabase` + login + 
 | `e2e-phase5.mjs` | 8 | như trên |
 | `e2e-api-key.mjs` | 8 | như trên |
 | `e2e-class-admin.mjs` | 15 | như trên |
-| `e2e-gallery-storage.mjs` | 17 | như trên — GV xem/nhận xét SP + xóa sạch Storage |
+| `e2e-gallery-storage.mjs` | 18 | như trên — GV xem/nhận xét SP, xóa sạch Storage, chỉ chủ xóa bình luận |
 | `e2e-phase3.mjs` | 10 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
-| `e2e-phase4.mjs` | 17 | như phase3 (status, xóa SP, RLS, roster bạn cùng lớp) |
+| `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
 
 Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu),
 `scripts/check-user.mjs <username>` (tra 1 tài khoản),
@@ -108,7 +113,10 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   (script `select <col> limit 1`) → E2E → deploy (đã dùng cho `projects.status` Đợt 7).
 - **`projects.features` giữ nguyên `text[]` (chỉ tên chức năng)** — mô tả cách làm
   của AI (`/suggest-features`) nối vào ô Ghi chú (`extra_notes`), KHÔNG đổi sang
-  bảng con/JSONB. Trạng thái nộp: cột `projects.status` `draft|submitted` (Đợt 7).
+  bảng con/JSONB.
+- **KHÔNG có trạng thái nộp** (user chốt 2026-07-18, Đợt 9): cột `status` của Đợt 7
+  đã DROP (`20260721010000`) — đừng hồi sinh. **Xóa bình luận: CHỈ chủ nhận xét**
+  (`project_comments_delete_own`) — GV cũng không xóa được của học viên.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
@@ -155,6 +163,18 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   link trong biến `VIDEOS` ở đầu file.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-18 (Đợt 9) — Claude / Gỡ trạng thái nộp + chỉ chủ bình luận được xóa
+User đổi ý về 2 tính năng: bỏ hẳn draft/submitted (Đợt 7) và bỏ moderation của GV
+(Đợt 4). **Thứ tự DROP cột ngược với ADD**: sửa code bỏ tham chiếu → deploy →
+mới drop cột (code cũ SELECT `status` đích danh; user lỡ drop trước deploy →
+gallery production lỗi vài phút cho tới khi push). Policy siết (author-only
+delete) thì áp trước deploy được — UI cũ chỉ bị "xóa hụt", không vỡ.
+**Bẫy mới — socket ma port 8000:** kill python xong netstat vẫn báo PID cũ
+LISTENING và curl vẫn trả lời (handle bị kế thừa) → uvicorn mới bind fail dù
+tasklist không thấy tiến trình. Lối thoát: chạy port khác + env `AI_SERVICE_URL`
+(mọi script E2E đều đọc biến này). E2E phase4 17→15, gallery-storage 17→18,
+tổng **100/100**.
 
 ### 2026-07-18 (Đợt 8) — Claude / Gallery hiện cả bạn chưa có sản phẩm
 Ý tưởng để ngỏ cuối cùng cần migration. Policy `enrollments_classmates_select`

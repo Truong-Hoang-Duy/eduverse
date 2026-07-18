@@ -111,15 +111,14 @@ Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.
 
 ### Sản phẩm cuối khóa (góc nhìn GV)
 Trang `/teacher/gallery` (nav "Sản phẩm") — dùng CHUNG component với gallery của
-học viên (`components/gallery/`), khác ở 3 chỗ: nhóm theo lớp, xưng "em", và GV
-xóa được nhận xét bất kỳ.
+học viên (`components/gallery/`), khác ở 2 chỗ: nhóm theo lớp và xưng "em".
 
 - Sản phẩm nhóm theo từng lớp GV dạy; bấm vào từng em → popup chi tiết (tên, mô
   tả, chức năng, link code/demo/drive, ghi chú) + khu nhận xét.
-- **GV nhận xét như học viên** (cùng bảng `project_comments`), và xóa được nhận
-  xét của bất kỳ ai trong lớp mình (`project_comments_delete` đã cho phép sẵn).
-- Không cần migration: `projects_class_select` + `project_comments_*` vốn đã mở
-  cho `is_teacher_of_class`; trước đây chỉ thiếu giao diện.
+- **GV nhận xét như học viên** (cùng bảng `project_comments`); nhưng **chỉ CHỦ
+  nhận xét mới xóa được nhận xét của mình** — không ai xóa của ai (policy
+  `project_comments_delete_own`, migration `20260721000000`; quyền moderation
+  cũ của GV đã bỏ theo yêu cầu 2026-07-18).
 
 ### Random nhóm thuyết trình
 - Chọn lớp → nhập số nhóm HOẶC số người/nhóm → shuffle, hiển thị kết quả có
@@ -140,10 +139,10 @@ layout nên hiện ở mọi trang — ở `/student` không tab nào sáng).
   ghi chú. Có **nút Xóa** (ConfirmDialog).
   - **Chức năng nhập dạng chip**: gõ + Enter (hoặc nút Thêm) để thêm từng cái, bấm
     ✕ để bỏ; tự bỏ trùng. (Trước là textarea "mỗi dòng một" dễ lỗi.)
-  - **Trạng thái nộp**: "📝 Đang làm" (mặc định) / "✅ Đã nộp" — cột `status`
-    (migration `20260719000000`). Badge + "Cập nhật lúc" hiện ở CẢ gallery HV lẫn
-    gallery GV để GV biết ai đã hoàn thành.
   - **Link** GitHub/Drive/demo validate ở server (chỉ nhận http/https).
+  - KHÔNG có trạng thái nộp: cột `status` draft/submitted (thêm Đợt 7) đã GỠ ở
+    migration `20260721010000` theo yêu cầu 2026-07-18 — sản phẩm chỉ có
+    "Cập nhật lúc", không badge Đang làm/Đã nộp.
   - Form controlled hoàn toàn: lưu xong phản ánh đúng ngay, tự chuyển TẠO→SỬA
     (hiện nút Xóa) mà không cần tải lại trang.
   - Nút **AI gợi ý tính năng** → 3–5 gợi ý kèm độ khó; **chọn được độ khó mong

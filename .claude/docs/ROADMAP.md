@@ -165,6 +165,17 @@
       toàn bộ suite **101/101 PASS**
 - [x] Merge lên production
 
+### Đợt 9 (`feature/drop-status-restrict-comment-delete`) — user đổi ý 2 tính năng
+- [x] GỠ hẳn trạng thái nộp draft/submitted của Đợt 7: bỏ select + badge + logic
+      action; DROP cột `projects.status` (migration `20260721010000` — áp SAU
+      deploy vì code cũ SELECT cột đích danh)
+- [x] Xóa bình luận: CHỈ chủ nhận xét — bỏ moderation GV của Đợt 4 (bỏ prop
+      `canModerate`; policy `project_comments_delete_own`, migration
+      `20260721000000` — áp trước deploy an toàn)
+- [x] E2E: phase4 17→15 (bỏ 2 check status), gallery-storage 17→18 (GV KHÔNG xóa
+      được bình luận HV + chủ xóa được); toàn bộ **100/100 PASS**
+- [x] Merge lên production
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Hiện kết quả random nhóm cho HV xem (RLS đã cho phép SELECT, chỉ thiếu UI)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
