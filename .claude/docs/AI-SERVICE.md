@@ -86,28 +86,37 @@ sớm bằng marker + magic bytes (PNG/JPEG/GIF/PDF) → 400 kèm hướng dẫn
   thường"); dùng thang vừa phải ("tốt", "khá", "ổn", "chưa tốt", "cần cố gắng
   thêm"). Khen phải kèm căn cứ cụ thể. KHÔNG áp cho `/grade-submission` và
   `/suggest-features` — không phải prompt nhận xét hành vi/thái độ học viên.
-- **`/generate-zalo-summary` — `{tom_tat}` có cấu trúc 2 phần cố định** (chốt
-  2026-07-18, sau khi thử "toàn văn xuôi" ở lần trước thì user muốn phần kiến
-  thức quay lại dạng liệt kê; sửa lại lần 2 cùng ngày vì tự thêm tiêu đề bị
-  lặp với template):
-  1. Liệt kê kiến thức, **MỖI Ý XUỐNG DÒNG RIÊNG**, KHÔNG ký tự đầu dòng nào
-     ('-', '•', số thứ tự), và **KHÔNG tự thêm tiêu đề** ("Kiến thức đã học"
-     hay tương tự) — GV tự đặt tiêu đề đó trong `template_text` mẫu tin của
-     họ; AI chỉ điền phần LIỆT KÊ vào chỗ `{tom_tat}`.
-  2. Đoạn **văn xuôi liền mạch** (không xuống dòng, không bullet) nhận xét
-     chung tình hình học tập/thái độ.
-  ⚠️ **Sự cố lạ 2026-07-18**: bản trên production THỰC SỰ thiếu "Phần 2" (chỉ
-  còn phần liệt kê, mất hẳn đoạn nhận xét thái độ) dù `git log` không ghi nhận
-  commit nào xóa nó — so với commit gốc thêm Phần 2 (`1c08778`), không có diff
-  nào khác trong lịch sử. Nghi do một lần merge phức tạp giữa nhiều nhánh
-  feature chạy gần nhau chọn nhầm phiên bản, nhưng không xác định được chính
-  xác. Bài học: nếu nội dung file KHÔNG khớp những gì SESSION_NOTES/git log mô
-  tả, tin vào ĐANG ĐỌC THẤY TRÊN ĐĨA (đối chiếu `git show <commit> -- <file>`
-  để chắc chắn), đừng cho là mình đọc nhầm rồi bỏ qua.
+- **`/generate-zalo-summary` — `{tom_tat}` CHỈ chứa danh sách kiến thức**
+  (chốt lại LẦN 3 cùng ngày 2026-07-18 — xem lịch sử ở dưới, đừng lặp lại 2
+  lần sai trước):
+  1. `{tom_tat}`: liệt kê kiến thức, **MỖI Ý XUỐNG DÒNG RIÊNG**, KHÔNG ký tự
+     đầu dòng nào ('-', '•', số thứ tự), KHÔNG tự thêm tiêu đề ("Kiến thức đã
+     học" hay tương tự — GV tự đặt trong `template_text`), và **KHÔNG kèm bất
+     kỳ câu nhận xét/đánh giá nào** — chỉ thuần danh sách.
+  2. Đoạn nhận xét chung (văn xuôi liền mạch, không xuống dòng, không bullet)
+     về tình hình học tập/thái độ **KHÔNG ép vào `{tom_tat}`** — prompt chỉ
+     dặn Gemini tự đọc `template_text`, tìm placeholder có câu dẫn kiểu "đánh
+     giá/nhận xét/tình hình học tập" đứng trước, rồi điền đúng chỗ đó. KHÔNG
+     hardcode tên biến cụ thể (VD `{loi_nhan}`) trong prompt — mẫu tin của mỗi
+     GV có thể đặt tên khác nhau, chỉ ngữ cảnh câu chữ mới đáng tin.
+  ⚠️ **Lịch sử 3 lần sửa cùng ngày — đừng lặp lại 2 lần đầu**:
+  (1) Đợt 14 thử "toàn văn xuôi, không liệt kê gì" → user không thích, muốn
+  phần kiến thức tách bạch dạng liệt kê.
+  (2) Đợt 15 sửa thành 2-phần-trong-`{tom_tat}` (liệt kê + văn xuôi cùng chỗ)
+  → user báo tiêu đề lặp với mẫu tin họ tự soạn; lúc sửa phát hiện thêm bản
+  production còn THIẾU HẲN phần văn xuôi so với commit gốc dù `git log` không
+  ghi nhận commit nào xóa nó (nghi 1 lần merge phức tạp, không xác định được
+  chính xác — bài học: khi file KHÔNG khớp SESSION_NOTES mô tả, tin vào ĐANG
+  ĐỌC THẤY TRÊN ĐĨA, đối chiếu `git show <commit> -- <file>`, đừng cho là đọc
+  nhầm rồi bỏ qua) → khôi phục lại 2-phần-trong-`{tom_tat}`.
+  (3) NGAY SAU ĐÓ user chỉ ra: mẫu tin thật của họ có mục "Đánh giá chung quá
+  trình học tập" RIÊNG, gắn với placeholder KHÁC (`{loi_nhan}`) — 2-phần-trong-
+  `{tom_tat}` khiến văn xuôi bị lặp lần nữa với mục đó. → tách hẳn: `{tom_tat}`
+  chỉ liệt kê, văn xuôi đi vào placeholder khác theo ngữ cảnh (bản hiện hành).
   ⚠️ Khác với `/grade-submission` (nơi UI CHỦ ĐỘNG muốn bullet, chỉ cấm Gemini
-  tự thêm ký tự đầu dòng vì UI đã tự thêm) — 3 chỗ "cấm ký tự đầu dòng" trong
-  file này có mục đích khác nhau (bullet UI tự vẽ / liệt kê không dấu / văn
-  xuôi không liệt kê), đọc kỹ context trước khi sửa.
+  tự thêm ký tự đầu dòng vì UI đã tự thêm) — các chỗ "cấm ký tự đầu dòng" trong
+  file này có mục đích khác nhau (bullet UI tự vẽ / liệt kê không dấu), đọc kỹ
+  context trước khi sửa.
 - Tin Zalo gửi phụ huynh: nhận xét CHUNG cả lớp, không nêu tên/định danh học
   viên nào (nhận xét cá nhân dùng /generate-student-summary gửi riêng).
 - Chấm điểm: yêu cầu Gemini đọc đề trước, liệt kê yêu cầu, rồi đối chiếu code;

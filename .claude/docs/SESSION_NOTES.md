@@ -8,41 +8,35 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 + 2 fix (API key validation,
-prompt Zalo lặp tiêu đề/thiếu Phần 2) đều đã production;
-`main` = `develop` = `origin` = `9376c92`; working tree sạch; không nhánh
-feature nào treo. **E2E 99/99**, pytest 4/4.
-⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
-Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
-tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
-⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
-Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
-tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
+**Đang làm:** Fix prompt Zalo lần 3 cùng ngày (tách `{tom_tat}` khỏi đoạn đánh
+giá chung — mẫu tin thật của GV có mục riêng cho việc đó, gắn placeholder
+khác) code xong trên nhánh `fix/zalo-tomtat-loinhan-overlap`, verify qua
+Gemini thật bằng ĐÚNG mẫu tin thật của GV, khớp hoàn toàn. pytest sạch, 0
+migration — sẵn sàng merge/deploy.
+GĐ 1–5 + Đợt 1–17 + fix API key validation đã production. **E2E 99/99**, pytest 4/4.
+⚠️ Nút Copy + bộ lọc trạng thái (Đợt 14) CHƯA nghiệm thu bằng mắt — máy Claude
+không có `chromium-cli`/Playwright. User tự bấm thử ở `/teacher/sessions/[id]`.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
-- Auth USERNAME (không email), khóa → lớp → buổi, nhận xét AI theo buổi + tổng
-  hợp từng HV, tin Zalo chung lớp, chấm bài AI độc lập (không lưu bài/điểm),
-  sản phẩm cuối khóa + gallery (HV + GV, hiện cả bạn chưa có SP), hồ sơ HV
-  xuyên khóa, API key Gemini riêng từng người.
-- 3 màn chiếu TV trong trang lớp (`components/tv-overlay.tsx`): random nhóm
-  (không lưu), nghỉ giữa giờ (đếm ngược, nhập phút tùy ý), thuyết trình sản
-  phẩm (slide từng em + màn 🎉 tổng kết lớp cho phụ huynh).
-- Đổi mật khẩu không cần mật khẩu cũ (`/profile`) + GV reset mật khẩu HV quên
-  (nút 🔑 bảng học viên — đường cứu duy nhất vì auth username không có email).
-- GitHub Action keep-alive Supabase 2 ngày/lần (secrets đã tạo, đã chạy thử).
+Auth USERNAME, khóa→lớp→buổi, nhận xét AI theo buổi + tổng hợp từng HV (12
+nhóm kỹ năng, mỗi nhóm ≥10 lựa chọn, accordion ở trang Cài đặt), tin Zalo tổng
+hợp cả lớp, chấm bài AI độc lập (không lưu), sản phẩm cuối khóa + gallery, hồ
+sơ HV xuyên khóa, API key Gemini riêng, đổi mật khẩu không cần mật khẩu cũ, 3
+màn chiếu TV (random nhóm, nghỉ giữa giờ, thuyết trình + tổng kết lớp),
+GitHub Action keep-alive Supabase.
 
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
 
-**E2E 95/95 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+**E2E 99/99 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
 | `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/e2e-phase1.mjs` |
-| `e2e-phase2.mjs` | 17 | như trên (gồm 3 check hồ sơ HV xuyên khóa + 4 check nhóm kỹ năng) |
+| `e2e-phase2.mjs` | 17 | như trên (hồ sơ HV xuyên khóa + nhóm kỹ năng) |
 | `e2e-api-key.mjs` | 8 | như trên |
-| `e2e-class-admin.mjs` | 18 | như trên (gồm 3 check đổi/đặt lại mật khẩu) |
-| `e2e-gallery-storage.mjs` | 18 | như trên — gallery GV, xóa sạch Storage, chỉ chủ xóa bình luận |
+| `e2e-class-admin.mjs` | 18 | như trên (đổi/đặt lại mật khẩu) |
+| `e2e-gallery-storage.mjs` | 18 | như trên — gallery GV, xóa sạch Storage |
 | `e2e-phase3.mjs` | 10 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
 | `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
 
@@ -58,72 +52,54 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 - Stack: Next.js 15 + TS + Tailwind + shadcn/ui (Vercel) / Supabase (DB + Auth +
   Storage + RLS) / Python FastAPI + Gemini (Render free). Mục tiêu 0đ/tháng.
+- **Auth bằng USERNAME**, email ảo `<username>@eduverse.local` qua admin API.
+  Model Gemini: `gemini-flash-latest`. Xưng hô AI: "em", cấm "con".
 - **KHÔNG validate định dạng API key Gemini theo prefix cứng** (sự cố
-  2026-07-18: regex chặn key hợp lệ bắt đầu bằng "AQ." vì cứng nhắc yêu cầu
-  "AIza"). `web/src/lib/actions/api-key.ts` chỉ chặn thứ CHẮC CHẮN sai (rỗng,
-  <20 ký tự, có khoảng trắng) — key sai thật để Gemini tự từ chối lúc gọi thật,
-  `ai-service/app/gemini.py` đã dịch lỗi 400/403 "API key" thành
-  `BAD_KEY_MESSAGE` tiếng Việt. Bài học chung: đừng đoán format của bên thứ 3
-  (Google/OAuth/API key...) — validate ở nơi có thẩm quyền thật (chính API đó),
-  không đoán ở client.
-- **Auth bằng USERNAME**, email ảo `<username>@eduverse.local` qua admin API;
-  đăng nhập qua RPC `get_email_by_username`. KHÔNG thu thập email/tuổi/trường.
-- Model Gemini: **`gemini-flash-latest`** (alias — `gemini-2.5-flash` bị Google
-  khóa với key mới từ 2026). Client cache bằng `lru_cache`.
-- Zalo: KHÔNG dùng API — AI soạn tin, GV bấm Copy. Tin nhận xét CHUNG cả lớp,
-  không nêu tên. Xưng hô với học viên trong mọi output AI: **"em"**, cấm "con".
-- Đề bài thuộc KHÓA + số buổi (mỗi buổi một đề), dùng chung mọi lớp cùng khóa.
-- **Chấm bài là công cụ độc lập, KHÔNG lưu gì** ngoài đề bài — bảng
-  `submissions`/`grades` + bucket đã XÓA, đừng hồi sinh.
-- **API key Gemini ở bảng `user_secrets`** (RLS chỉ chính chủ), KHÔNG phải cột
-  trong `profiles` — RLS theo DÒNG, để trong profiles là lộ key.
-- **Font Be Vietnam Pro**, biến CSS phải tên `--font-sans` khớp `@theme` —
-  đặt tên khác là font không áp mà KHÔNG báo lỗi.
-- Lớp chuyển được sang khóa khác nhưng `total_sessions` KHÔNG cho sửa
-  (sessions sinh 1 lần bằng trigger lúc tạo lớp).
-- **`projects.features` là `text[]` chỉ tên chức năng** — mô tả cách làm của AI
-  nối vào ô Ghi chú (`extra_notes`), không đổi sang bảng con/JSONB.
-- **KHÔNG có trạng thái nộp sản phẩm** (Đợt 9): cột `status` đã DROP — đừng hồi
-  sinh. **Xóa bình luận: CHỈ chủ nhận xét** (`project_comments_delete_own`) —
-  GV cũng không xóa được của học viên.
-- **Random nhóm KHÔNG lưu** (Đợt 10): GV chiếu TV, mỗi buổi random mới — bảng
-  `presentation_groups` đã DROP, HV không cần trang xem nhóm.
-- **Đổi mật khẩu không cần mật khẩu cũ** (Đợt 12): phiên đăng nhập = bằng chứng
-  sở hữu; GV reset cho HV qua admin API — action TỰ kiểm quyền (role teacher +
-  thấy enrollment qua RLS) vì admin API bỏ qua RLS.
-- **Nhóm kỹ năng cho combo box nhận xét** (Đợt 13, +presentation Đợt 15, +6
-  nhóm nữa Đợt 16 = **12 giá trị**): cột `review_options.skill_group`
-  (`web/src/lib/skill-groups.ts` — SKILL_GROUPS — là nguồn danh sách DUY NHẤT,
-  sửa/thêm nhóm phải sửa CẢ CHECK constraint, Postgres không cho ALTER CHECK
-  trực tiếp nên phải drop+add lại — xem migration mới nhất trong
-  `supabase/migrations/` để biết constraint hiện hành). Bộ lọc combo box
-  **mặc định "Tất cả nhóm"**, chỉ thu hẹp hiển thị, KHÔNG đổi lựa chọn đã tick.
-- **Mỗi nhóm nhận xét ≥10 lựa chọn** (Đợt 17, yêu cầu user 2026-07-18): cả bộ
-  mặc định seed (112+112 câu) VÀ dữ liệu thật GV — đây là ngưỡng TỐI THIỂU,
-  đừng để nhóm nào tụt xuống dưới 10 khi sửa/xóa sau này.
-- **Trang Cài đặt: accordion theo nhóm** (Đợt 16) — mỗi nhóm 1 khối thu gọn
-  (`<details>`), form thêm nằm TRONG từng accordion (không cần chọn lại nhóm
-  qua Select nữa, khác Đợt 13). Đông nhóm (12) nên KHÔNG liệt kê phẳng nữa.
-- **Tin Zalo `{tom_tat}` = 2 phần cố định** (chốt lại 2026-07-18, Đợt 15, sửa
-  lại lần 2 cùng ngày — đảo ngược 1 phần quyết định Đợt 14): phần 1 CHỈ liệt kê
-  kiến thức XUỐNG DÒNG, KHÔNG ký tự đầu dòng, và **KHÔNG tự thêm tiêu đề**
-  ("Kiến thức đã học" hay tương tự) — GV tự đặt tiêu đề đó trong
-  `template_text` của mình, AI thêm vào là lặp 2 lần; phần 2 văn xuôi liền
-  mạch nhận xét thái độ. ĐỪNG quay lại "toàn văn xuôi" của Đợt 14 (user đã thử,
-  muốn phần kiến thức tách bạch liệt kê) và ĐỪNG thêm lại tiêu đề vào phần 1.
-- **Giọng điệu AI đúng mực, không đại ngôn** (Đợt 13): `TONE_RULE` trong
-  `prompts.py` cấm "tuyệt vời/xuất sắc/hoàn hảo...", dùng thang "tốt/khá/chưa
-  tốt...". Áp cho 3 prompt VIẾT NHẬN XÉT (review, zalo summary, student summary)
-  — KHÔNG áp cho chấm bài (`build_grading_prompt`) và gợi ý tính năng
-  (`build_suggest_features_prompt`) vì không phải nhận xét hành vi/thái độ.
-- **Thứ tự migration với code** (đã dính lỗi cả 2 chiều):
-  - THÊM cột/bảng: dán migration TRƯỚC khi deploy code đọc/ghi nó.
-  - DROP cột/bảng: deploy code bỏ tham chiếu TRƯỚC, dán migration SAU.
-  - Luồng chuẩn: code → migration đúng thời điểm → probe → E2E → deploy.
+  2026-07-18: chặn nhầm key hợp lệ không bắt đầu "AIza"). Chỉ chặn thứ CHẮC
+  CHẮN sai (rỗng, <20 ký tự, khoảng trắng) — key sai thật để Gemini tự từ chối,
+  `ai-service/app/gemini.py` dịch lỗi 400/403 thành `BAD_KEY_MESSAGE`. Bài học:
+  đừng đoán format bên thứ 3, validate ở nơi có thẩm quyền thật.
+- **Chấm bài là công cụ độc lập, KHÔNG lưu gì** ngoài đề bài — đừng hồi sinh
+  `submissions`/`grades`. **API key ở bảng `user_secrets` riêng** (RLS theo
+  dòng, để trong `profiles` là lộ key).
+- **Font Be Vietnam Pro**, biến CSS phải tên `--font-sans` — sai tên là font
+  không áp mà KHÔNG báo lỗi.
+- **KHÔNG có trạng thái nộp sản phẩm** (đã DROP cột `status`); **xóa bình
+  luận: CHỈ chủ nhận xét**; **random nhóm KHÔNG lưu** (GV chiếu TV, mỗi buổi
+  random mới) — cả 3 đừng hồi sinh.
+- **Đổi mật khẩu không cần mật khẩu cũ**: phiên đăng nhập = bằng chứng sở hữu;
+  GV reset cho HV qua admin API (action tự kiểm role + enrollment RLS).
+- **Nhóm kỹ năng nhận xét = 12 giá trị cố định**, nguồn DUY NHẤT là
+  `web/src/lib/skill-groups.ts` (SKILL_GROUPS) — sửa/thêm nhóm phải sửa CẢ
+  CHECK constraint (Postgres không cho ALTER CHECK trực tiếp, phải drop+add;
+  xem migration mới nhất để biết constraint hiện hành). Bộ lọc combo box mặc
+  định "Tất cả nhóm" (không đổi lựa chọn đã tick). **Mỗi nhóm ≥10 lựa chọn**
+  là ngưỡng tối thiểu đã đạt (seed 112+112, dữ liệu thật GV 233 câu) — đừng để
+  tụt xuống dưới 10 khi sửa/xóa. Trang Cài đặt hiển thị accordion theo nhóm
+  (form thêm nằm TRONG từng accordion, không cần chọn lại qua Select).
+- **Tin Zalo `{tom_tat}` CHỈ chứa danh sách kiến thức, KHÔNG kèm câu đánh giá
+  nào** (chốt sau 3 lần sửa cùng ngày 2026-07-18 — chi tiết + lý do từng lần ở
+  AI-SERVICE.md, đọc kỹ trước khi đổi lại kẻo lặp sai lầm cũ): liệt kê xuống
+  dòng, không ký tự đầu dòng, không tự thêm tiêu đề (GV tự đặt trong
+  `template_text`). Đoạn nhận xét chung (văn xuôi, không bullet) về tình hình
+  học tập KHÔNG ép vào `{tom_tat}` — Gemini tự tìm placeholder khác trong mẫu
+  có câu dẫn kiểu "đánh giá/nhận xét" đứng trước để điền đúng chỗ (KHÔNG
+  hardcode tên biến, vì mỗi GV đặt tên khác nhau).
+- **Giọng điệu AI đúng mực, không đại ngôn**: `TONE_RULE` trong `prompts.py`
+  cấm "tuyệt vời/xuất sắc/hoàn hảo...", dùng thang "tốt/khá/chưa tốt". Áp cho
+  3 prompt VIẾT NHẬN XÉT (review, zalo, student summary) — KHÔNG áp chấm bài
+  hay gợi ý tính năng.
+- **Thứ tự migration với code**: THÊM cột/bảng → dán TRƯỚC deploy; DROP →
+  deploy code bỏ tham chiếu TRƯỚC, dán SAU. Luồng: code → migration đúng thời
+  điểm → probe → E2E → deploy.
 - **File chỉ lên Storage khi dòng DB chắc chắn tạo xong**; xóa dòng có file
   phải đọc path trước rồi `removeSpecFiles` — Storage KHÔNG cascade như FK.
-- **Subquery trong policy CHỊU RLS của bảng được tham chiếu** (phát hiện Đợt 8):
-  policy A dựa vào bảng B thì B phải cho đọc hoặc dùng helper SECURITY DEFINER.
+- **Subquery trong policy CHỊU RLS của bảng được tham chiếu**: policy A dựa
+  bảng B thì B phải cho đọc hoặc dùng helper SECURITY DEFINER.
+- **Trước khi "xóa hết theo yêu cầu": luôn đọc dữ liệu THẬT trước** — lời user
+  mô tả có thể không khớp thực tế (từng suýt xóa 50 câu GV tự soạn công phu vì
+  tưởng chỉ là 12 câu mặc định); dừng lại hỏi khi phát hiện lệch, đừng làm
+  theo nghĩa đen.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
@@ -133,153 +109,46 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
-- 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** (Server
-  Action không gọi được từ Node) — đổi action mà quên đổi script thì test vẫn
-  xanh; validate link, form-sync... phải nghiệm thu bằng mắt.
+- 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
+  action mà quên đổi script thì test vẫn xanh; UI phải nghiệm thu bằng mắt.
 - 🟡 `e2e-gallery-storage` đã flake **2 lần riêng biệt** (17/18 → rerun 18/18,
-  nghi race Storage) — gặp lần thứ 3 thì điều tra nghiêm túc, đừng coi là
-  bình thường mãi.
+  nghi race Storage) — gặp lần thứ 3 thì điều tra nghiêm túc.
 
 ### Ràng buộc môi trường (không sửa được, phải sống chung)
-- **Migration dán tay vào Supabase SQL Editor** — mạng chặn cổng 5432/6543,
-  `supabase db push` không chạy. SQL Editor = 1 transaction, lỗi là rollback
-  hết. SQL KHÔNG xóa được Storage (lỗi 42501) — phải qua Storage API.
-- **CLI supabase KHÔNG có trong node_modules** — regen types:
-  `corepack pnpm dlx supabase gen types typescript --linked > web/src/lib/database.types.ts`
-  (cần login + link). ⚠️ Dấu `>` CẮT TRẮNG file trước khi lệnh chạy — CLI thiếu
-  là file 0 byte. Thêm/bớt ít cột thì sửa tay `database.types.ts` an toàn hơn.
-- **DLP công ty mã hóa file** trên máy user → đã chặn ở `web/src/lib/file-check.ts`
-  + `ai-service/app/storage.py`. Nếu DLP mã hóa cả file code → thêm ô dán text.
-- **`git push --force` bị `.claude/settings.json` chặn** — cần thì đưa lệnh cho
-  user tự chạy.
-- **Git identity**: repo đặt local `user.email = truonghoangduy2612@gmail.com`
-  — Vercel chặn deploy nếu author khác chủ team, KHÔNG đổi.
-- Render free: cold start 30–60s cho request AI đầu tiên trong ngày.
-- Supabase free hết lo pause: workflow keep-alive chạy 2 ngày/lần; nhưng GitHub
-  tự TẮT cron nếu repo im 60 ngày → nhận mail thì vào Actions bấm Enable.
+- **Migration dán tay vào Supabase SQL Editor** — mạng chặn cổng 5432/6543.
+  SQL KHÔNG xóa được Storage (lỗi 42501) — phải qua Storage API.
+- **CLI supabase KHÔNG có trong node_modules** — regen types cần
+  `pnpm dlx supabase` + login/link; dấu `>` CẮT TRẮNG file nếu CLI lỗi giữa
+  chừng. Thêm/bớt ít cột thì sửa tay `database.types.ts` an toàn hơn.
+- **DLP công ty mã hóa file** trên máy user → đã chặn ở `file-check.ts` +
+  `storage.py`. Nếu DLP mã hóa cả file code → thêm ô dán text.
+- **`git push --force` bị chặn** — cần thì đưa lệnh cho user tự chạy.
+- **Git identity local** = `truonghoangduy2612@gmail.com` — Vercel chặn deploy
+  nếu author khác, KHÔNG đổi.
+- Render free: cold start 30–60s. Supabase free: keep-alive 2 ngày/lần chống
+  pause, nhưng GitHub tự TẮT cron nếu repo im 60 ngày → vào Actions bấm Enable.
 - Dev server hay để tiến trình mồ côi → lỗi lạ thì kill port 3000/3001, xóa
-  `web/.next`, chạy lại.
+  `web/.next`, chạy lại. Script dùng service key phải đặt TRONG `web/scripts/`
+  (Node resolve package theo vị trí script).
 
-## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-07-18 — Claude / fix prompt Zalo (2 lỗi cùng lúc)
-User báo tiêu đề "Kiến thức đã học" bị LẶP 2 LẦN trong tin Zalo (kèm ảnh chụp
-màn hình) — vì họ đã tự đặt tiêu đề đó trong `template_text` của mình, còn AI
-(từ Đợt 15) lại TỰ THÊM tiêu đề vào phần liệt kê. Sửa: bỏ hẳn việc AI tự thêm
-tiêu đề, chỉ liệt kê nội dung.
+### 2026-07-18 — Đợt 13→17 + 3 fix (tất cả trong 1 ngày, đều production)
+- **Đợt 13**: nhóm kỹ năng cho review_options + `TONE_RULE` (không đại ngôn).
+- **Đợt 14**: nút Copy nhận xét riêng phụ huynh, bộ lọc Đã/Chưa hoàn thành,
+  Zalo thử "toàn văn xuôi" (sau bị đảo ngược 1 phần ở Đợt 15).
+- **Đợt 15**: Zalo quay lại liệt kê kiến thức + nhóm `presentation`; suýt xóa
+  nhầm 50 câu GV tự soạn khi tưởng "xóa hết" — dừng hỏi lại, chọn phân loại
+  thay vì xóa (bài học quan trọng, xem "Quyết định đã chốt").
+- **Đợt 16**: accordion Cài đặt theo nhóm + 6 nhóm kỹ năng mới (12 tổng).
+- **Đợt 17**: mỗi nhóm ≥10 lựa chọn (seed 112+112, dữ liệu thật GV 78→233).
+- **Fix 1**: API key validation chặn nhầm key không bắt đầu "AIza".
+- **Fix 2+3**: prompt Zalo lặp tiêu đề + thiếu đoạn đánh giá + đè lẫn với mục
+  "Đánh giá chung quá trình học tập" của GV — 3 lần sửa cùng ngày, chốt cuối ở
+  "Quyết định đã chốt" phía trên.
 
-Khi đọc lại prompt để sửa, phát hiện thêm: bản trên production đang THIẾU HẲN
-"Phần 2" (đoạn văn xuôi nhận xét thái độ) so với commit gốc Đợt 15 — dù
-`git log` không ghi nhận commit nào xóa nó (đối chiếu `git show 1c08778` xác
-nhận diff duy nhất trong lịch sử là lúc THÊM Phần 2, không có lần xóa). Nghi do
-1 lần merge phức tạp giữa các nhánh feature, không xác định được chính xác.
-Đã khôi phục lại Phần 2 cùng lúc sửa lỗi tiêu đề. Verify qua Gemini thật với
-đúng template có sẵn tiêu đề (mô phỏng tình huống user) — tiêu đề chỉ còn xuất
-hiện 1 lần, Phần 2 xuất hiện đầy đủ, không bullet.
-
-### 2026-07-18 — Claude / Đợt 17 — mỗi nhóm nhận xét ≥10 lựa chọn
-Yêu cầu rõ ràng + hành động chỉ INSERT (an toàn, dễ đảo ngược) nên KHÔNG hỏi
-lại, triển khai luôn. Viết 1 "master list" duy nhất (112 strength + 112
-improvement, mỗi nhóm ≥10, presentation 12) dùng cho CẢ HAI nơi: (1) thay hẳn
-`DEFAULT_STRENGTHS`/`DEFAULT_IMPROVEMENTS` trong code (bộ seed cho GV mới —
-33+26 → 112+112); (2) script so khớp label với 78 câu đã có của GV thật
-(`duyth1`), chỉ insert phần CHƯA CÓ (155/224 câu mới) — không đụng câu đã tồn
-tại. Kết quả: dữ liệu thật 78→233 câu, verify bằng code tự đếm từng ô
-(category×skill_group) đảm bảo không ô nào dưới 10. **0 migration** (không đổi
-schema). E2E `e2e-phase2` regression 17/17.
-
-### 2026-07-18 — Claude / Đợt 16 — accordion Cài đặt + 6 nhóm kỹ năng mới
-Hỏi rõ 3 điểm mơ hồ qua `AskUserQuestion` trước khi code (đúng hướng — user
-từng phàn nàn về việc đoán sai ý): (1) "hiện dropdown" = accordion thu gọn/mở
-theo nhóm (không phải dropdown lọc); (2) "xem thêm nhóm" = muốn THÊM nhóm mới,
-không phải hỏi UI đang ẩn gì; (3) tên 6 nhóm mới cụ thể (multiSelect, user chọn
-cả gợi ý lẫn tự nhập): Kỷ luật/Nề nếp, Tự học, Sáng tạo, Kỹ năng máy tính, Vận
-dụng AI, Đặt câu hỏi — tổng 6+6=12 nhóm.
-
-UI: `option-manager.tsx` viết lại — mỗi nhóm 1 `<details>` (cùng pattern
-`ReviewEditor`), form thêm nằm trong từng accordion nên bỏ được Select chọn
-nhóm khi thêm. Bộ mặc định seed mở rộng 15+13→33+26 câu, dàn đều 11 nhóm (bỏ
-"Khác"). Migration `20260725000000` mở rộng CHECK constraint (drop+add).
-
-Dữ liệu thật GV (`duyth1`, 52→78 câu): ngoài 2 câu "hỏi" đã báo trước (move
-sang `questioning`), khi rà lại thấy thêm 3 câu nên đổi nhóm cho khớp 6 nhóm
-mới (không nằm trong kế hoạch ban đầu, tự quyết định vì nhỏ/dễ đảo ngược, đã
-nêu rõ khi báo cáo): "Sáng tạo, chủ động thử cách làm mới" thinking→creativity,
-"Cần luyện gõ phím / thao tác máy" coding→computer_skills, "Cần giữ trật tự,
-không làm việc riêng" attitude→discipline. Cộng 26 câu mới cho 6 nhóm trống.
-E2E `e2e-phase2` regression 17/17 sau khi merge.
-
-### 2026-07-18 — Claude / Đợt 15 — Zalo liệt kê kiến thức + nhóm Thuyết trình
-User đổi ý 1 phần quyết định Đợt 14: muốn "Kiến thức đã học" trong tin Zalo
-quay lại dạng liệt kê (xuống dòng) nhưng KHÔNG gạch đầu dòng — hỏi rõ qua
-`AskUserQuestion` với preview 3 phương án trước khi code (xuống dòng không ký
-tự / nối 1 dòng bằng phẩy / dùng emoji ✓) để tránh đoán sai; user chọn "xuống
-dòng không ký tự". Prompt mới yêu cầu {tom_tat} = 2 phần cố định (kiến thức
-liệt kê + nhận xét văn xuôi), có ví dụ few-shot trong prompt để Gemini bắt
-chước cấu trúc chính xác — verify qua Gemini thật, kết quả khớp 100% preview.
-
-Việc 2: thêm nhóm skill_group mới `presentation` (🎤 Thuyết trình) — migration
-`20260724000000` drop+add lại CHECK constraint (Postgres không cho ALTER CHECK
-trực tiếp). Viết lại HOÀN TOÀN bộ mặc định seed (12→28 lựa chọn, dàn đều 5 nhóm)
-— nhưng bộ này chỉ áp cho GV MỚI (nút "Thêm nhanh" chỉ hiện khi rỗng).
-
-⚠️ **Suýt xóa nhầm dữ liệu thật của user**: user yêu cầu "xóa hết... thêm lại
-mới hoàn toàn" tưởng là ý muốn thay bộ mặc định — nhưng khi query DB thật, tài
-khoản GV duy nhất (`duyth1`) đã có **50 lựa chọn tự soạn công phu** (không phải
-12 câu mặc định), toàn bộ đang `skill_group='other'` vì cột mới thêm ở Đợt 13
-không hồi cứu phân loại cho dòng cũ. Đã DỪNG LẠI hỏi lại user trước khi xóa
-(`AskUserQuestion`) thay vì làm theo nghĩa đen — user chọn **giữ nội dung, chỉ
-phân loại lại**. Kết quả: UPDATE `skill_group` cho cả 50 dòng theo mapping đọc
-tay từng câu (không đoán bằng regex), + bổ sung 2 câu cho 2 nhóm hơi mỏng
-(collaboration cần cải thiện: 1→2, thinking cần cải thiện: 2→3). Nhóm
-`presentation` hóa ra đã có sẵn 19/50 câu (gần 40%) — không cần bổ sung gì.
-**Bài học: luôn đọc dữ liệu THẬT trước khi "xóa hết" theo yêu cầu — lời user
-mô tả có thể không khớp thực tế, và việc dừng lại hỏi đúng lúc cứu được công
-sức đã bỏ ra của user.**
-
-### 2026-07-18 — Claude / Đợt 14 — copy nhận xét, lọc trạng thái, Zalo hết bullet
-3 cải tiến độc lập, 0 migration (không đụng schema): (1) nút **📋 Copy** cạnh ô
-"Nhận xét gửi phụ huynh" trong `ReviewEditor` — copy nhanh để gửi riêng phụ
-huynh 1 em (khác tin Zalo tổng hợp cả lớp); (2) bộ lọc **Tất cả/Đã hoàn thành/
-Chưa hoàn thành** cho danh sách nhận xét theo buổi — tách `review-list.tsx`
-(client) khỏi `page.tsx` (vẫn Server Component) vì cần state lọc; export hàm
-`isReviewed()` từ `review-editor.tsx` dùng chung cho cả badge lẫn bộ lọc, tránh
-lặp logic "đã nhận xét = có strengths/improvements/comment"; (3) prompt
-`build_zalo_summary_prompt` cấm gạch đầu dòng/số thứ tự trong `{tom_tat}`, yêu
-cầu văn xuôi liền mạch — **khác mục đích** với "cấm bullet" của
-`build_grading_prompt` (chỗ đó UI CHỦ ĐỘNG muốn bullet, chỉ cấm AI tự thêm ký
-tự đầu dòng vì UI tự thêm) — đừng nhầm lẫn 2 chỗ khi sửa sau này.
-
-### 2026-07-18 — Claude / Đợt 13 — nhóm kỹ năng + giọng điệu AI
-Nhánh `feature/review-skill-groups`. 2 việc độc lập: (1) `review_options` thêm
-`skill_group` — combo box điểm mạnh/cần cải thiện có bộ lọc theo nhóm (mặc định
-"Tất cả", không đổi lựa chọn đã tick), trang Cài đặt chọn nhóm khi thêm lựa chọn
-mới + hiện badge nhóm; (2) `TONE_RULE` mới trong `prompts.py` cấm từ đại ngôn,
-áp cho 3 prompt viết nhận xét (không áp chấm bài/gợi ý tính năng — không phải
-nhận xét thái độ). E2E `e2e-phase2` 13→17 (mặc định 'other', set nhóm cụ thể,
-lọc đúng theo nhóm, CHECK constraint chặn giá trị sai) — trước khi dán migration
-chạy thử đúng như dự đoán 4/17 FAIL (thiếu cột), 13 test cũ không ảnh hưởng; sau
-khi user dán xong chạy lại **17/17 xanh**, toàn bộ 8 suite **99/99 PASS**, đã
-merge lên production. `e2e-gallery-storage` lại flake 1 lần (17/18 → rerun
-18/18) — flake thật, không liên quan thay đổi đợt này (2 lần rồi, coi là đặc
-tính suite, không phải bug mới).
-
-### 2026-07-17→18 — Claude / Đợt 7–12 (tất cả trong 2 ngày, đều đã production)
-- **Đợt 7**: form HV nhập sản phẩm (chip chức năng, nút Xóa, validate link, AI
-  chọn độ khó) + sửa 5 lỗi README.
-- **Đợt 8**: gallery hiện cả bạn CHƯA có SP — mở RLS enrollments cho bạn cùng
-  lớp (`20260720000000`); phát hiện policy subquery chịu RLS.
-- **Đợt 9**: user đổi ý — GỠ trạng thái nộp (drop `projects.status`) + xóa bình
-  luận chỉ chủ; học bài DROP-sau-deploy (lỡ drop trước → production lỗi vài phút).
-- **Đợt 10**: 3 màn chiếu TV + bỏ lưu random nhóm (drop `presentation_groups`,
-  xóa `e2e-phase5`) + GitHub Action keep-alive; gặp "socket ma" port 8000.
-- **Đợt 11**: màn nghỉ nhập phút tùy ý; màn 🎉 tổng kết lớp cho phụ huynh.
-- **Đợt 12**: đổi mật khẩu không cần cũ + GV reset cho HV; E2E class-admin 15→18.
-
-### 2026-07-16 — Đợt 4–6 + dọn dẹp
-Gallery GV + xem đề bài + xóa sạch Storage; khung xương/spinner chuyển trang +
-prefetch sống lại; hồ sơ HV xuyên khóa; xóa schema chết submissions/grades.
-
-### 2026-07-15 — GĐ 1–5 + Đợt 1–3 (nền tảng)
-Auth username, khóa/lớp/buổi + nhận xét AI, Zalo, chấm bài viết lại, sản phẩm +
-gallery, font Be Vietnam Pro, API key riêng, responsive. Deploy 0đ/tháng.
+### 2026-07-15→16 — GĐ 1–5 + Đợt 1–12 (nền tảng, đều production)
+Auth username, khóa/lớp/buổi + nhận xét AI, Zalo, chấm bài viết lại, sản phẩm
++ gallery (HV/GV, roster bạn chưa nộp), hồ sơ HV xuyên khóa, font Be Vietnam
+Pro, API key riêng, responsive, xóa schema chết, 3 màn chiếu TV, đổi mật khẩu
+không cần cũ. Deploy 0đ/tháng (Vercel + Render + Supabase).
