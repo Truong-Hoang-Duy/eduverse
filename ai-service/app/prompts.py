@@ -65,11 +65,23 @@ def build_zalo_summary_prompt(
             "không nêu tên, không định danh, không ám chỉ bất kỳ học viên cụ thể nào. "
             "Danh sách nhận xét từng em dưới đây chỉ là dữ liệu để bạn rút ra xu "
             "hướng chung (đa số các em..., một số em cần...).",
-            "ĐỊNH DẠNG phần tóm tắt (thay vào {tom_tat}): viết THÀNH ĐOẠN VĂN XUÔI "
-            "liền mạch, nối các ý bằng dấu phẩy/liên từ (và, nhưng, bên cạnh đó...). "
-            "TUYỆT ĐỐI KHÔNG dùng gạch đầu dòng ('-'), dấu chấm tròn ('•'), số thứ "
-            "tự (1. 2. 3.), hay xuống dòng để liệt kê từng ý riêng — tin nhắn Zalo "
-            "đọc như lời nói chuyện bình thường, không phải danh sách.",
+            "ĐỊNH DẠNG phần tóm tắt (thay vào {tom_tat}) — gồm ĐÚNG 2 phần, cách nhau "
+            "1 dòng trống:\n"
+            "Phần 1 — \"📚 Kiến thức đã học:\" rồi liệt kê các kiến thức/khái niệm "
+            "chính của buổi (dựa vào Nội dung buổi học bên dưới), MỖI KIẾN THỨC "
+            "XUỐNG DÒNG RIÊNG. TUYỆT ĐỐI KHÔNG thêm gạch đầu dòng ('-'), dấu chấm "
+            "tròn ('•'), hay số thứ tự (1. 2. 3.) ở đầu mỗi dòng — chỉ xuống dòng "
+            "đơn thuần, không ký tự nào khác.\n"
+            "Phần 2 — một đoạn VĂN XUÔI liền mạch (KHÔNG xuống dòng, KHÔNG bullet), "
+            "nối ý bằng dấu phẩy/liên từ (và, nhưng, bên cạnh đó...), nhận xét CHUNG "
+            "tình hình học tập/thái độ của lớp.\n"
+            "Ví dụ đúng cấu trúc (nội dung minh họa, không phải nội dung thật):\n"
+            "📚 Kiến thức đã học:\n"
+            "Vòng lặp for\n"
+            "Vòng lặp while\n"
+            "Câu lệnh break và continue\n\n"
+            "Nhìn chung cả lớp học tập khá tốt, đa số các em tiếp thu nhanh và tích "
+            "cực phát biểu, bên cạnh đó một số em cần luyện gõ phím thêm.",
             f"Lớp: {class_code}",
             f"Buổi học: {session_title}",
             f"Nội dung buổi học: {session_content}",

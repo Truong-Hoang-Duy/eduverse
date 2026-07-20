@@ -27,7 +27,7 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 | `enrollments` | id, class_id, student_id, joined_at, UNIQUE(class_id, student_id) | chuyển lớp = update class_id |
 | `sessions` | id, class_id, session_number, title, content, session_date, UNIQUE(class_id, session_number) | tự sinh N buổi khi tạo lớp |
 | `student_reviews` | id, session_id, student_id, strengths text[], improvements text[], advice, ai_generated_comment, created_by | nhận xét theo buổi |
-| `review_options` | id, teacher_id, category `strength\|improvement\|advice`, label, **skill_group** `thinking\|coding\|attitude\|collaboration\|other` DEFAULT `other` | lựa chọn radio/checkbox; `skill_group` thêm ở migration `20260723000000` để lọc combo box theo nhóm kỹ năng |
+| `review_options` | id, teacher_id, category `strength\|improvement\|advice`, label, **skill_group** `thinking\|coding\|attitude\|collaboration\|presentation\|other` DEFAULT `other` | lựa chọn radio/checkbox; `skill_group` thêm ở `20260723000000`, nhóm `presentation` thêm ở `20260724000000` |
 | `assignments` | id, course_id, session_number, title, spec_file_path, instructions, max_score DEFAULT 100, UNIQUE(course_id, session_number) | đề theo KHÓA + BUỔI |
 | `projects` | id, student_id, class_id, name, description, features text[], repo_url, drive_url, demo_url, extra_notes, created_at, updated_at, UNIQUE(class_id, student_id) | sản phẩm cuối khóa; cột `status` (thêm `20260719000000`) đã GỠ ở `20260721010000` |
 | `project_comments` | id, project_id, author_id, content, created_at | thành viên lớp nhận xét nhau; CHỈ chủ nhận xét xóa được (`project_comments_delete_own`, `20260721000000` — GV hết quyền moderation) |

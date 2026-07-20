@@ -8,13 +8,17 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–14 đều đã production;
-`main` = `develop` = `origin` = `d904b62`; working tree sạch; không nhánh
-feature nào treo. **E2E 99/99**, pytest 4/4. Việc tiếp tùy user.
+**Đang làm:** Đợt 15 (Zalo: kiến thức đã học quay lại dạng liệt kê + nhóm
+Thuyết trình + viết lại bộ mặc định) CODE XONG trên nhánh
+`feature/zalo-list-format-review-categories`, lint/typecheck/pytest sạch, đã
+verify prompt Zalo qua Gemini thật (đúng format) — **chờ user dán migration
+`20260724000000` (mở rộng CHECK skill_group) rồi Claude mới xóa+seed lại bộ
+mặc định mới cho tài khoản GV thật (`duyth1`, id `4e06dfed-306b-4e46-a413-ddd17aa90d5e`
+— DUY NHẤT 1 teacher trong DB) trước khi merge/deploy**.
+GĐ 1–5 + Đợt 1–14 đã production. **E2E 99/99** (trước Đợt 15), pytest 4/4.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
-Copy + bộ lọc trạng thái mới CHƯA được nghiệm thu bằng mắt, chỉ verify được
-logic (lint/typecheck/E2E DB + gọi Gemini thật cho phần Zalo). User tự bấm thử
-2 tính năng UI này trên `/teacher/sessions/[id]` khi rảnh.
+Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
+tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
 - Auth USERNAME (không email), khóa → lớp → buổi, nhận xét AI theo buổi + tổng
@@ -80,10 +84,17 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - **Đổi mật khẩu không cần mật khẩu cũ** (Đợt 12): phiên đăng nhập = bằng chứng
   sở hữu; GV reset cho HV qua admin API — action TỰ kiểm quyền (role teacher +
   thấy enrollment qua RLS) vì admin API bỏ qua RLS.
-- **Nhóm kỹ năng cho combo box nhận xét** (Đợt 13): cột `review_options.skill_group`
-  (`web/src/lib/skill-groups.ts` là nguồn danh sách — sửa nhóm phải sửa CẢ CHECK
-  constraint trong migration `20260723000000`). Bộ lọc combo box **mặc định "Tất
-  cả nhóm"**, chỉ thu hẹp hiển thị, KHÔNG đổi lựa chọn đã tick.
+- **Nhóm kỹ năng cho combo box nhận xét** (Đợt 13, +`presentation` ở Đợt 15):
+  cột `review_options.skill_group` — 6 giá trị: thinking/coding/attitude/
+  collaboration/presentation/other (`web/src/lib/skill-groups.ts` là nguồn danh
+  sách — sửa/thêm nhóm phải sửa CẢ CHECK constraint, Postgres không cho ALTER
+  CHECK trực tiếp nên phải drop+add lại). Bộ lọc combo box **mặc định "Tất cả
+  nhóm"**, chỉ thu hẹp hiển thị, KHÔNG đổi lựa chọn đã tick.
+- **Tin Zalo `{tom_tat}` = 2 phần cố định** (chốt lại 2026-07-18, Đợt 15 — đảo
+  ngược 1 phần quyết định Đợt 14): phần 1 "📚 Kiến thức đã học:" liệt kê XUỐNG
+  DÒNG nhưng KHÔNG ký tự đầu dòng; phần 2 văn xuôi liền mạch nhận xét thái độ.
+  ĐỪNG quay lại "toàn văn xuôi" của Đợt 14 — user đã thử và muốn phần kiến thức
+  tách bạch dạng liệt kê trở lại.
 - **Giọng điệu AI đúng mực, không đại ngôn** (Đợt 13): `TONE_RULE` trong
   `prompts.py` cấm "tuyệt vời/xuất sắc/hoàn hảo...", dùng thang "tốt/khá/chưa
   tốt...". Áp cho 3 prompt VIẾT NHẬN XÉT (review, zalo summary, student summary)
@@ -101,6 +112,17 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
+- 🔴 **Dán migration `20260724000000` (mở rộng CHECK skill_group thêm
+  'presentation')** — an toàn dán bất cứ lúc nào (mở rộng tập giá trị hợp lệ,
+  giống ADD). Dán xong báo Claude để xóa+seed lại bộ mặc định mới cho tài
+  khoản GV thật rồi mới merge/deploy.
+  ```sql
+  alter table public.review_options
+    drop constraint if exists review_options_skill_group_check;
+  alter table public.review_options
+    add constraint review_options_skill_group_check
+    check (skill_group in ('thinking', 'coding', 'attitude', 'collaboration', 'presentation', 'other'));
+  ```
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*`
   thiếu `!.env.example`. Muốn sửa: thêm dòng đó rồi tự commit file. Claude KHÔNG
   tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
@@ -134,6 +156,23 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   `web/.next`, chạy lại.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-18 — Claude / Đợt 15 — Zalo liệt kê kiến thức + nhóm Thuyết trình
+User đổi ý 1 phần quyết định Đợt 14: muốn "Kiến thức đã học" trong tin Zalo
+quay lại dạng liệt kê (xuống dòng) nhưng KHÔNG gạch đầu dòng — hỏi rõ qua
+`AskUserQuestion` với preview 3 phương án trước khi code (xuống dòng không ký
+tự / nối 1 dòng bằng phẩy / dùng emoji ✓) để tránh đoán sai; user chọn "xuống
+dòng không ký tự". Prompt mới yêu cầu {tom_tat} = 2 phần cố định (kiến thức
+liệt kê + nhận xét văn xuôi), có ví dụ few-shot trong prompt để Gemini bắt
+chước cấu trúc chính xác — verify qua Gemini thật, kết quả khớp 100% preview.
+
+Việc 2: thêm nhóm skill_group mới `presentation` (🎤 Thuyết trình) — migration
+`20260724000000` drop+add lại CHECK constraint (Postgres không cho ALTER CHECK
+trực tiếp). Viết lại HOÀN TOÀN bộ mặc định (12→28 lựa chọn, dàn đều 5 nhóm).
+User xác nhận **xóa dữ liệu thật** trong tài khoản GV (không chỉ đổi code) — đã
+tìm được DUY NHẤT 1 teacher trong DB (`duyth1`) nên không rủi ro xóa nhầm.
+**Chờ migration dán xong mới xóa+seed** (insert cần cột đã cho phép giá trị
+mới).
 
 ### 2026-07-18 — Claude / Đợt 14 — copy nhận xét, lọc trạng thái, Zalo hết bullet
 3 cải tiến độc lập, 0 migration (không đụng schema): (1) nút **📋 Copy** cạnh ô

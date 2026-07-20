@@ -239,6 +239,19 @@
 - [ ] User nghiệm thu nút Copy + bộ lọc trạng thái bằng mắt (máy Claude không
       có chromium-cli/Playwright để tự lái trình duyệt)
 
+### Đợt 15 (`feature/zalo-list-format-review-categories`) — Zalo liệt kê + nhóm mới
+- [x] Prompt Zalo: `{tom_tat}` = 2 phần cố định — "📚 Kiến thức đã học:" liệt kê
+      xuống dòng KHÔNG ký tự đầu dòng, rồi đoạn văn xuôi nhận xét thái độ; verify
+      qua Gemini thật khớp 100% preview user đã chọn
+- [x] Migration `20260724000000`: thêm nhóm `presentation` (🎤 Thuyết trình) vào
+      CHECK constraint `skill_group` (drop+add lại — Postgres không cho ALTER
+      CHECK trực tiếp)
+- [x] Viết lại HOÀN TOÀN bộ mặc định `DEFAULT_STRENGTHS`/`DEFAULT_IMPROVEMENTS`:
+      12→28 lựa chọn, dàn đều cả 5 nhóm kể cả Thuyết trình
+- [x] lint + typecheck + pytest sạch
+- [ ] User dán migration → Claude xóa+seed lại dữ liệu thật tài khoản GV
+      (`duyth1`, duy nhất 1 teacher trong DB) → merge/deploy
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

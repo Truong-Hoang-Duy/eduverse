@@ -59,22 +59,40 @@ export async function deleteReviewOption(formData: FormData): Promise<void> {
   revalidatePath("/teacher/settings");
 }
 
+// Bộ mặc định viết lại hoàn toàn 2026-07-18 (thay bộ cũ 6+6), chia đủ theo
+// 5 nhóm skill_group + nhóm 'presentation' mới (migration 20260724000000).
 const DEFAULT_STRENGTHS: [string, SkillGroup][] = [
-  ["Tiếp thu nhanh", "thinking"],
-  ["Tích cực phát biểu", "attitude"],
-  ["Hoàn thành tốt bài tập trên lớp", "coding"],
-  ["Biết giúp đỡ bạn bè", "collaboration"],
+  ["Tư duy logic tốt", "thinking"],
+  ["Biết phân tích đề bài trước khi code", "thinking"],
   ["Sáng tạo, chủ động thử cách làm mới", "thinking"],
+  ["Code sạch, dễ đọc", "coding"],
+  ["Nắm vững cú pháp đã học", "coding"],
+  ["Tự tìm ra và sửa được lỗi (debug tốt)", "coding"],
   ["Tập trung nghe giảng", "attitude"],
+  ["Chăm chỉ luyện tập thêm ở nhà", "attitude"],
+  ["Tích cực phát biểu xây dựng bài", "attitude"],
+  ["Biết giúp đỡ bạn bè", "collaboration"],
+  ["Trình bày ý tưởng rõ ràng cho người khác hiểu", "collaboration"],
+  ["Lắng nghe góp ý tốt", "collaboration"],
+  ["Trình bày tự tin, rõ ràng", "presentation"],
+  ["Demo sản phẩm mạch lạc, đúng trọng tâm", "presentation"],
+  ["Trả lời câu hỏi tốt", "presentation"],
 ];
 
 const DEFAULT_IMPROVEMENTS: [string, SkillGroup][] = [
-  ["Cần tập trung hơn trong giờ học", "attitude"],
-  ["Cần luyện gõ phím / thao tác máy", "coding"],
+  ["Cần suy nghĩ kỹ đề bài trước khi bắt tay code", "thinking"],
+  ["Nên thử nhiều cách giải khác nhau", "thinking"],
   ["Đặt tên biến rõ nghĩa hơn", "coding"],
+  ["Cần luyện gõ phím / thao tác máy", "coding"],
+  ["Chú ý căn lề, định dạng code", "coding"],
+  ["Cần tập trung hơn trong giờ học", "attitude"],
   ["Cần hoàn thành bài tập về nhà", "attitude"],
+  ["Cẩn thận hơn để tránh lỗi chính tả trong code", "attitude"],
   ["Mạnh dạn hỏi khi chưa hiểu", "collaboration"],
-  ["Cẩn thận hơn để tránh lỗi chính tả trong code", "coding"],
+  ["Nên chủ động trao đổi với bạn học hơn", "collaboration"],
+  ["Cần luyện nói to, rõ ràng hơn", "presentation"],
+  ["Nên chuẩn bị kỹ nội dung trước khi trình bày", "presentation"],
+  ["Cần bình tĩnh, tự tin hơn khi thuyết trình", "presentation"],
 ];
 
 /** Thêm nhanh bộ lựa chọn mặc định cho giáo viên mới. */
