@@ -11,7 +11,8 @@ import {
 import { requireProfile } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
-import { ReviewEditor, type ExistingReview } from "./review-editor";
+import type { ExistingReview } from "./review-editor";
+import { ReviewList } from "./review-list";
 import { SessionForm } from "./session-form";
 import { ZaloPanel } from "./zalo-panel";
 
@@ -84,6 +85,7 @@ export default async function SessionDetailPage({
     .map((e) => e.profiles)
     .filter((p): p is NonNullable<EnrollmentRow["profiles"]> => p !== null);
   const reviews = (reviewsData ?? []) as ReviewRow[];
+  const reviewByStudentId = new Map(reviews.map((r) => [r.student_id, r]));
   const options = optionsData ?? [];
   const sessionTitle = session.title ?? `Buổi ${session.session_number}`;
 
@@ -135,18 +137,16 @@ export default async function SessionDetailPage({
               (có nút thêm nhanh bộ mặc định).
             </p>
           )}
-          {students.map((student) => (
-            <ReviewEditor
-              key={student.id}
+          {students.length > 0 && (
+            <ReviewList
               sessionId={session.id}
               sessionTitle={sessionTitle}
               sessionContent={session.content ?? ""}
-              studentId={student.id}
-              studentName={student.full_name}
+              students={students}
               options={options}
-              existing={reviews.find((r) => r.student_id === student.id) ?? null}
+              reviewByStudentId={reviewByStudentId}
             />
-          ))}
+          )}
         </CardContent>
       </Card>
 

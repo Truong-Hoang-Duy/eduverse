@@ -62,6 +62,17 @@ export interface ExistingReview {
   ai_generated_comment: string | null;
 }
 
+/** Đã nhận xét khi có ít nhất 1 trong 3: điểm mạnh, cần cải thiện, hoặc nhận
+ *  xét AI — dùng chung cho badge "Đã nhận xét" và bộ lọc Hoàn thành/Chưa. */
+export function isReviewed(existing: ExistingReview | null): boolean {
+  return Boolean(
+    existing &&
+      (existing.strengths.length > 0 ||
+        existing.improvements.length > 0 ||
+        existing.ai_generated_comment)
+  );
+}
+
 export function ReviewEditor({
   sessionId,
   sessionTitle,
@@ -91,6 +102,7 @@ export function ReviewEditor({
   const [comment, setComment] = useState(existing?.ai_generated_comment ?? "");
   const [aiError, setAiError] = useState("");
   const [aiPending, startAi] = useTransition();
+  const [copied, setCopied] = useState(false);
 
   // Bộ lọc nhóm kỹ năng của từng combo box — mặc định "all" (không lọc).
   const [strengthGroup, setStrengthGroup] = useState("all");
@@ -109,6 +121,7 @@ export function ReviewEditor({
 
   function handleGenerate() {
     setAiError("");
+    setCopied(false);
     startAi(async () => {
       const res = await generateAiReview({
         studentName,
@@ -127,12 +140,13 @@ export function ReviewEditor({
     });
   }
 
-  const reviewed = Boolean(
-    existing &&
-      (existing.strengths.length > 0 ||
-        existing.improvements.length > 0 ||
-        existing.ai_generated_comment)
-  );
+  async function handleCopyComment() {
+    await navigator.clipboard.writeText(comment);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
+
+  const reviewed = isReviewed(existing);
 
   return (
     <details className="group rounded-lg border bg-card">
@@ -213,24 +227,38 @@ export function ReviewEditor({
         </div>
 
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <Label htmlFor={`comment-${studentId}`}>Nhận xét gửi phụ huynh</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleGenerate}
-              disabled={aiPending}
-            >
-              {aiPending ? "AI đang viết..." : "✨ AI tạo nhận xét"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCopyComment}
+                disabled={!comment}
+              >
+                {copied ? "✓ Đã copy" : "📋 Copy"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGenerate}
+                disabled={aiPending}
+              >
+                {aiPending ? "AI đang viết..." : "✨ AI tạo nhận xét"}
+              </Button>
+            </div>
           </div>
           <Textarea
             id={`comment-${studentId}`}
             name="ai_comment"
             rows={4}
             value={comment}
-            onChange={(e) => setComment(e.target.value)}
+            onChange={(e) => {
+              setComment(e.target.value);
+              setCopied(false);
+            }}
             placeholder="Bấm 'AI tạo nhận xét' rồi chỉnh sửa lại theo ý bạn..."
           />
           {aiError && <p className="text-sm text-destructive">{aiError}</p>}

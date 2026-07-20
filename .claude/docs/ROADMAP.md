@@ -224,6 +224,18 @@
       giá trị sai); toàn bộ suite **99/99 PASS**
 - [x] User dán migration → Claude chạy E2E xác nhận → merge lên production
 
+### Đợt 14 (`feature/review-copy-filter-zalo-format`) — copy/lọc/Zalo hết bullet
+- [x] Nút 📋 Copy cạnh ô "Nhận xét gửi phụ huynh" trong `ReviewEditor` — copy
+      nhanh gửi riêng phụ huynh 1 em
+- [x] Bộ lọc Tất cả/Đã hoàn thành/Chưa hoàn thành cho danh sách nhận xét theo
+      buổi — `review-list.tsx` (client) tách khỏi `page.tsx`; export `isReviewed()`
+      dùng chung cho badge lẫn bộ lọc
+- [x] `build_zalo_summary_prompt`: cấm gạch đầu dòng/số thứ tự trong `{tom_tat}`,
+      yêu cầu văn xuôi liền mạch (khác mục đích với "cấm bullet" của grading —
+      xem AI-SERVICE.md để không nhầm 2 chỗ)
+- [x] lint + typecheck + pytest sạch, 0 migration
+- [ ] Chạy E2E regression (phase2) → user nghiệm thu tin Zalo bằng mắt → merge/deploy
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
