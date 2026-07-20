@@ -8,9 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 đều đã production;
-`main` = `develop` = `origin` = `14cf763`; working tree sạch; không nhánh
-feature nào treo. **E2E 99/99** (+17 phase2 regression), pytest 4/4.
+**Đang làm:** Fix nhỏ (validate API key Gemini quá cứng) code xong trên nhánh
+`fix/gemini-api-key-format-validation`, lint/typecheck sạch, 0 migration —
+sẵn sàng merge/deploy. GĐ 1–5 + Đợt 1–17 đã production. **E2E 99/99**, pytest 4/4.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
 Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
 tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
@@ -57,6 +57,14 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 - Stack: Next.js 15 + TS + Tailwind + shadcn/ui (Vercel) / Supabase (DB + Auth +
   Storage + RLS) / Python FastAPI + Gemini (Render free). Mục tiêu 0đ/tháng.
+- **KHÔNG validate định dạng API key Gemini theo prefix cứng** (sự cố
+  2026-07-18: regex chặn key hợp lệ bắt đầu bằng "AQ." vì cứng nhắc yêu cầu
+  "AIza"). `web/src/lib/actions/api-key.ts` chỉ chặn thứ CHẮC CHẮN sai (rỗng,
+  <20 ký tự, có khoảng trắng) — key sai thật để Gemini tự từ chối lúc gọi thật,
+  `ai-service/app/gemini.py` đã dịch lỗi 400/403 "API key" thành
+  `BAD_KEY_MESSAGE` tiếng Việt. Bài học chung: đừng đoán format của bên thứ 3
+  (Google/OAuth/API key...) — validate ở nơi có thẩm quyền thật (chính API đó),
+  không đoán ở client.
 - **Auth bằng USERNAME**, email ảo `<username>@eduverse.local` qua admin API;
   đăng nhập qua RPC `get_email_by_username`. KHÔNG thu thập email/tuổi/trường.
 - Model Gemini: **`gemini-flash-latest`** (alias — `gemini-2.5-flash` bị Google

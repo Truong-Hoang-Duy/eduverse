@@ -5,8 +5,13 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
-// Key Gemini bắt đầu bằng "AIza" và dài ~39 ký tự.
-const KEY_PATTERN = /^AIza[\w-]{30,}$/;
+// KHÔNG chốt cứng theo prefix "AIza" — key Gemini có thể đến từ nhiều nguồn
+// khác nhau (project Cloud, tổ chức khác...) và định dạng thật do Google quyết
+// định, có thể đổi bất cứ lúc nào. Chỉ chặn những thứ CHẮC CHẮN không phải key
+// (rỗng, quá ngắn, dán nhầm cả câu có khoảng trắng/xuống dòng). Key sai thật
+// sự sẽ bị Gemini từ chối khi gọi thật — ai-service dịch lỗi đó thành
+// BAD_KEY_MESSAGE tiếng Việt rõ ràng (xem ai-service/app/gemini.py).
+const KEY_PATTERN = /^\S{20,}$/;
 
 /**
  * Lấy API key riêng của người đang đăng nhập. Trả null nếu chưa đặt →
@@ -49,7 +54,7 @@ export async function saveApiKey(
   if (!KEY_PATTERN.test(key)) {
     return {
       error:
-        'API key không đúng định dạng — key của Google AI Studio bắt đầu bằng "AIza". Copy lại toàn bộ key nhé.',
+        "API key có vẻ chưa đúng — key thường dài trên 20 ký tự và không có khoảng trắng. Copy lại toàn bộ key nhé.",
     };
   }
 

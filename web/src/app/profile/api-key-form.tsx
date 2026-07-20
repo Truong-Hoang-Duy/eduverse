@@ -20,7 +20,7 @@ import type { ActionResult } from "@/lib/types";
 const STEPS = [
   "Mở aistudio.google.com/apikey và đăng nhập bằng tài khoản Google.",
   'Bấm "Create API key" → chọn project bất kỳ (hoặc tạo mới).',
-  "Copy key vừa hiện ra (bắt đầu bằng AIza...).",
+  "Copy TOÀN BỘ key vừa hiện ra.",
   "Dán vào ô bên dưới rồi bấm Lưu.",
 ];
 
@@ -76,7 +76,7 @@ export function ApiKeyForm({ maskedKey }: { maskedKey: string | null }) {
                 id="api_key"
                 name="api_key"
                 type="password"
-                placeholder="AIza..."
+                placeholder="Dán API key vào đây"
                 autoComplete="off"
                 required
               />
