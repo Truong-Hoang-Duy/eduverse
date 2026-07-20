@@ -77,16 +77,23 @@
 - Mỗi lớp có N buổi sinh sẵn; GV điền tiêu đề + nội dung + ngày cho từng buổi.
 - Trang nhận xét theo buổi cho từng học viên: tick **điểm mạnh** / **điểm cần cải
   thiện** từ danh mục `review_options` (GV tự quản lý danh mục này) + ô lời khuyên.
-- **Bộ lọc nhóm kỹ năng** trên mỗi combo box (điểm mạnh / cần cải thiện): 🧠 Tư
-  duy, 💻 Kỹ năng code, 🌱 Thái độ học tập, 🤝 Giao tiếp & hợp tác, 🎤 Thuyết
-  trình, 📌 Khác — **mặc định "Tất cả nhóm"** (không lọc). Chỉ thu hẹp danh sách
-  hiển thị, KHÔNG đổi giá trị đã chọn trước đó. Nhóm lưu ở cột
-  `review_options.skill_group` (`web/src/lib/skill-groups.ts` là nguồn danh
-  sách nhóm dùng chung).
+- **Bộ lọc nhóm kỹ năng** trên mỗi combo box (điểm mạnh / cần cải thiện): 12
+  nhóm — 🧠 Tư duy, ✨ Sáng tạo, 💻 Kỹ năng code, 🖥️ Kỹ năng sử dụng máy tính,
+  🤖 Vận dụng AI, ❓ Đặt câu hỏi, 🌱 Thái độ học tập, ⏰ Kỷ luật/Nề nếp, 📚 Tự
+  học/Nghiên cứu thêm, 🤝 Giao tiếp & hợp tác, 🎤 Thuyết trình, 📌 Khác —
+  **mặc định "Tất cả nhóm"** (không lọc). Chỉ thu hẹp danh sách hiển thị, KHÔNG
+  đổi giá trị đã chọn trước đó. Nhóm lưu ở cột `review_options.skill_group`
+  (`web/src/lib/skill-groups.ts` là nguồn danh sách nhóm dùng chung — SKILL_GROUPS
+  export từ đây, mọi UI khác import lại, không tự khai danh sách nhóm riêng).
 - **Bộ mặc định** (nút "⚡ Thêm nhanh bộ lựa chọn mặc định" ở trang Cài đặt khi
-  GV chưa có lựa chọn nào) viết lại hoàn toàn 2026-07-18: 15 điểm mạnh + 13 cần
-  cải thiện, dàn đều cả 5 nhóm (kể cả nhóm Thuyết trình mới) thay vì 6+6 không
-  phân nhóm rõ ràng như bản đầu.
+  GV chưa có lựa chọn nào): 33 điểm mạnh + 26 cần cải thiện, dàn đều 11/12 nhóm
+  (bỏ "Khác" vì là catch-all).
+- **Trang Cài đặt hiển thị dạng accordion theo nhóm** (2026-07-18): mỗi nhóm kỹ
+  năng là 1 khối thu gọn/mở rộng (`<details>`, cùng pattern với `ReviewEditor`),
+  mặc định đóng, hiện số lượng lựa chọn trong nhóm ngay trên tiêu đề. Form
+  "Thêm lựa chọn mới" nằm TRONG từng accordion — không cần chọn lại nhóm vì
+  ngữ cảnh đã rõ (khác Đợt 13: trước đó 1 form chung ở đầu cột, phải chọn nhóm
+  qua dropdown mỗi lần thêm).
 - Nút **"AI tạo nhận xét"** → điền sẵn đoạn nhận xét → GV sửa → lưu. Cạnh đó có
   nút **📋 Copy** để copy nhanh đoạn nhận xét đang hiện (gửi riêng phụ huynh em
   đó qua Zalo/tin nhắn cá nhân — khác với tin Zalo TỔNG HỢP cả lớp bên dưới).

@@ -256,6 +256,18 @@
       cả 50 dòng (đọc tay từng câu) + bổ sung 2 câu cho 2 nhóm mỏng
 - [x] Merge lên production (2026-07-18)
 
+### Đợt 16 (`feature/settings-accordion-more-groups`) — accordion + 6 nhóm mới
+- [x] Hỏi rõ 3 điểm mơ hồ qua `AskUserQuestion` trước khi code (kiểu dropdown,
+      ý nghĩa "xem thêm nhóm", tên nhóm cụ thể) — tránh đoán sai như đợt trước
+- [x] `option-manager.tsx`: accordion theo nhóm (`<details>`, thu gọn mặc định,
+      hiện số lượng), form thêm nằm trong từng accordion (bỏ Select chọn nhóm)
+- [x] 6 nhóm skill_group mới: creativity/computer_skills/ai_usage/questioning/
+      discipline/self_study — migration `20260725000000` (drop+add CHECK)
+- [x] Bộ mặc định seed mở rộng 15+13→33+26 câu, dàn đều 11/12 nhóm
+- [x] lint + typecheck + pytest sạch
+- [ ] User dán migration → Claude bổ sung câu mới + move 2 câu "hỏi" sang
+      `questioning` cho dữ liệu thật GV → merge/deploy
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
