@@ -246,11 +246,15 @@
 - [x] Migration `20260724000000`: thêm nhóm `presentation` (🎤 Thuyết trình) vào
       CHECK constraint `skill_group` (drop+add lại — Postgres không cho ALTER
       CHECK trực tiếp)
-- [x] Viết lại HOÀN TOÀN bộ mặc định `DEFAULT_STRENGTHS`/`DEFAULT_IMPROVEMENTS`:
-      12→28 lựa chọn, dàn đều cả 5 nhóm kể cả Thuyết trình
-- [x] lint + typecheck + pytest sạch
-- [ ] User dán migration → Claude xóa+seed lại dữ liệu thật tài khoản GV
-      (`duyth1`, duy nhất 1 teacher trong DB) → merge/deploy
+- [x] Viết lại HOÀN TOÀN bộ mặc định seed (12→28 lựa chọn, dàn đều 5 nhóm) —
+      chỉ áp cho GV mới, không đụng GV đã có dữ liệu
+- [x] lint + typecheck + pytest sạch; E2E `e2e-phase2` regression 17/17
+- [x] User dán migration `20260724000000`
+- [x] **Phát hiện dữ liệu thật khác kỳ vọng** (GV `duyth1` đã có 50 lựa chọn tự
+      soạn, không phải 12 mặc định) → dừng lại hỏi lại thay vì xóa theo nghĩa
+      đen → user chọn giữ nội dung, chỉ phân loại lại: UPDATE `skill_group` cho
+      cả 50 dòng (đọc tay từng câu) + bổ sung 2 câu cho 2 nhóm mỏng
+- [x] Merge lên production (2026-07-18)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

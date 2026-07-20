@@ -8,14 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** Đợt 15 (Zalo: kiến thức đã học quay lại dạng liệt kê + nhóm
-Thuyết trình + viết lại bộ mặc định) CODE XONG trên nhánh
-`feature/zalo-list-format-review-categories`, lint/typecheck/pytest sạch, đã
-verify prompt Zalo qua Gemini thật (đúng format) — **chờ user dán migration
-`20260724000000` (mở rộng CHECK skill_group) rồi Claude mới xóa+seed lại bộ
-mặc định mới cho tài khoản GV thật (`duyth1`, id `4e06dfed-306b-4e46-a413-ddd17aa90d5e`
-— DUY NHẤT 1 teacher trong DB) trước khi merge/deploy**.
-GĐ 1–5 + Đợt 1–14 đã production. **E2E 99/99** (trước Đợt 15), pytest 4/4.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–15 đều đã production;
+`main` = `develop` = `origin`; working tree sạch; không nhánh feature nào treo.
+**E2E 99/99** (+17 phase2 regression sau Đợt 15), pytest 4/4. Việc tiếp tùy user.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
 Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
 tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
@@ -112,17 +107,6 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
-- 🔴 **Dán migration `20260724000000` (mở rộng CHECK skill_group thêm
-  'presentation')** — an toàn dán bất cứ lúc nào (mở rộng tập giá trị hợp lệ,
-  giống ADD). Dán xong báo Claude để xóa+seed lại bộ mặc định mới cho tài
-  khoản GV thật rồi mới merge/deploy.
-  ```sql
-  alter table public.review_options
-    drop constraint if exists review_options_skill_group_check;
-  alter table public.review_options
-    add constraint review_options_skill_group_check
-    check (skill_group in ('thinking', 'coding', 'attitude', 'collaboration', 'presentation', 'other'));
-  ```
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*`
   thiếu `!.env.example`. Muốn sửa: thêm dòng đó rồi tự commit file. Claude KHÔNG
   tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
@@ -168,11 +152,22 @@ chước cấu trúc chính xác — verify qua Gemini thật, kết quả khớ
 
 Việc 2: thêm nhóm skill_group mới `presentation` (🎤 Thuyết trình) — migration
 `20260724000000` drop+add lại CHECK constraint (Postgres không cho ALTER CHECK
-trực tiếp). Viết lại HOÀN TOÀN bộ mặc định (12→28 lựa chọn, dàn đều 5 nhóm).
-User xác nhận **xóa dữ liệu thật** trong tài khoản GV (không chỉ đổi code) — đã
-tìm được DUY NHẤT 1 teacher trong DB (`duyth1`) nên không rủi ro xóa nhầm.
-**Chờ migration dán xong mới xóa+seed** (insert cần cột đã cho phép giá trị
-mới).
+trực tiếp). Viết lại HOÀN TOÀN bộ mặc định seed (12→28 lựa chọn, dàn đều 5 nhóm)
+— nhưng bộ này chỉ áp cho GV MỚI (nút "Thêm nhanh" chỉ hiện khi rỗng).
+
+⚠️ **Suýt xóa nhầm dữ liệu thật của user**: user yêu cầu "xóa hết... thêm lại
+mới hoàn toàn" tưởng là ý muốn thay bộ mặc định — nhưng khi query DB thật, tài
+khoản GV duy nhất (`duyth1`) đã có **50 lựa chọn tự soạn công phu** (không phải
+12 câu mặc định), toàn bộ đang `skill_group='other'` vì cột mới thêm ở Đợt 13
+không hồi cứu phân loại cho dòng cũ. Đã DỪNG LẠI hỏi lại user trước khi xóa
+(`AskUserQuestion`) thay vì làm theo nghĩa đen — user chọn **giữ nội dung, chỉ
+phân loại lại**. Kết quả: UPDATE `skill_group` cho cả 50 dòng theo mapping đọc
+tay từng câu (không đoán bằng regex), + bổ sung 2 câu cho 2 nhóm hơi mỏng
+(collaboration cần cải thiện: 1→2, thinking cần cải thiện: 2→3). Nhóm
+`presentation` hóa ra đã có sẵn 19/50 câu (gần 40%) — không cần bổ sung gì.
+**Bài học: luôn đọc dữ liệu THẬT trước khi "xóa hết" theo yêu cầu — lời user
+mô tả có thể không khớp thực tế, và việc dừng lại hỏi đúng lúc cứu được công
+sức đã bỏ ra của user.**
 
 ### 2026-07-18 — Claude / Đợt 14 — copy nhận xét, lọc trạng thái, Zalo hết bullet
 3 cải tiến độc lập, 0 migration (không đụng schema): (1) nút **📋 Copy** cạnh ô
