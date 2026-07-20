@@ -8,11 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** Đợt 17 (mỗi nhóm nhận xét ≥10 lựa chọn) CODE XONG + ĐÃ ÁP DỤNG cho
-dữ liệu thật GV trên nhánh `feature/expand-review-options-to-10-each` —
-lint/typecheck/pytest sạch, E2E `e2e-phase2` regression 17/17. **0 migration**
-(không đổi schema, chỉ thêm dữ liệu) nên sẵn sàng merge/deploy ngay.
-GĐ 1–5 + Đợt 1–16 đã production. **E2E 99/99**, pytest 4/4.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 đều đã production;
+`main` = `develop` = `origin` = `14cf763`; working tree sạch; không nhánh
+feature nào treo. **E2E 99/99** (+17 phase2 regression), pytest 4/4.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
 Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
 tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
