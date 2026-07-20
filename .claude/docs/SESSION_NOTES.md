@@ -8,9 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 + fix API key validation đều
-đã production; `main` = `develop` = `origin` = `e5c8afc`; working tree sạch;
-không nhánh feature nào treo. **E2E 99/99**, pytest 4/4.
+**Đang làm:** Fix prompt Zalo (tiêu đề "Kiến thức đã học" lặp với template +
+khôi phục "Phần 2" bị mất khỏi production) code xong trên nhánh
+`fix/zalo-prompt-duplicate-heading`, verify qua Gemini thật khớp mong đợi,
+pytest sạch, 0 migration — sẵn sàng merge/deploy.
+GĐ 1–5 + Đợt 1–17 + fix API key validation đã production. **E2E 99/99**, pytest 4/4.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
 Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
 tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
@@ -103,11 +105,13 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - **Trang Cài đặt: accordion theo nhóm** (Đợt 16) — mỗi nhóm 1 khối thu gọn
   (`<details>`), form thêm nằm TRONG từng accordion (không cần chọn lại nhóm
   qua Select nữa, khác Đợt 13). Đông nhóm (12) nên KHÔNG liệt kê phẳng nữa.
-- **Tin Zalo `{tom_tat}` = 2 phần cố định** (chốt lại 2026-07-18, Đợt 15 — đảo
-  ngược 1 phần quyết định Đợt 14): phần 1 "📚 Kiến thức đã học:" liệt kê XUỐNG
-  DÒNG nhưng KHÔNG ký tự đầu dòng; phần 2 văn xuôi liền mạch nhận xét thái độ.
-  ĐỪNG quay lại "toàn văn xuôi" của Đợt 14 — user đã thử và muốn phần kiến thức
-  tách bạch dạng liệt kê trở lại.
+- **Tin Zalo `{tom_tat}` = 2 phần cố định** (chốt lại 2026-07-18, Đợt 15, sửa
+  lại lần 2 cùng ngày — đảo ngược 1 phần quyết định Đợt 14): phần 1 CHỈ liệt kê
+  kiến thức XUỐNG DÒNG, KHÔNG ký tự đầu dòng, và **KHÔNG tự thêm tiêu đề**
+  ("Kiến thức đã học" hay tương tự) — GV tự đặt tiêu đề đó trong
+  `template_text` của mình, AI thêm vào là lặp 2 lần; phần 2 văn xuôi liền
+  mạch nhận xét thái độ. ĐỪNG quay lại "toàn văn xuôi" của Đợt 14 (user đã thử,
+  muốn phần kiến thức tách bạch liệt kê) và ĐỪNG thêm lại tiêu đề vào phần 1.
 - **Giọng điệu AI đúng mực, không đại ngôn** (Đợt 13): `TONE_RULE` trong
   `prompts.py` cấm "tuyệt vời/xuất sắc/hoàn hảo...", dùng thang "tốt/khá/chưa
   tốt...". Áp cho 3 prompt VIẾT NHẬN XÉT (review, zalo summary, student summary)
@@ -158,6 +162,21 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   `web/.next`, chạy lại.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-18 — Claude / fix prompt Zalo (2 lỗi cùng lúc)
+User báo tiêu đề "Kiến thức đã học" bị LẶP 2 LẦN trong tin Zalo (kèm ảnh chụp
+màn hình) — vì họ đã tự đặt tiêu đề đó trong `template_text` của mình, còn AI
+(từ Đợt 15) lại TỰ THÊM tiêu đề vào phần liệt kê. Sửa: bỏ hẳn việc AI tự thêm
+tiêu đề, chỉ liệt kê nội dung.
+
+Khi đọc lại prompt để sửa, phát hiện thêm: bản trên production đang THIẾU HẲN
+"Phần 2" (đoạn văn xuôi nhận xét thái độ) so với commit gốc Đợt 15 — dù
+`git log` không ghi nhận commit nào xóa nó (đối chiếu `git show 1c08778` xác
+nhận diff duy nhất trong lịch sử là lúc THÊM Phần 2, không có lần xóa). Nghi do
+1 lần merge phức tạp giữa các nhánh feature, không xác định được chính xác.
+Đã khôi phục lại Phần 2 cùng lúc sửa lỗi tiêu đề. Verify qua Gemini thật với
+đúng template có sẵn tiêu đề (mô phỏng tình huống user) — tiêu đề chỉ còn xuất
+hiện 1 lần, Phần 2 xuất hiện đầy đủ, không bullet.
 
 ### 2026-07-18 — Claude / Đợt 17 — mỗi nhóm nhận xét ≥10 lựa chọn
 Yêu cầu rõ ràng + hành động chỉ INSERT (an toàn, dễ đảo ngược) nên KHÔNG hỏi
