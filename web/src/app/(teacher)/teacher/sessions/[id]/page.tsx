@@ -70,7 +70,7 @@ export default async function SessionDetailPage({
       .eq("session_id", session.id),
     supabase
       .from("review_options")
-      .select("id, category, label")
+      .select("id, category, label, skill_group")
       .eq("teacher_id", profile.id)
       .order("label"),
     supabase

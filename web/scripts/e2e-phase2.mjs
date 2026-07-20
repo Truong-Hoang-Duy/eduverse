@@ -83,12 +83,56 @@ async function main() {
     .eq("id", session1.id);
   check("GV cập nhật nội dung buổi học", !updErr, updErr?.message);
 
-  // 2. Danh mục nhận xét
+  // 2. Danh mục nhận xét (không set skill_group → mặc định 'other')
   const { error: optErr } = await teacher.from("review_options").insert([
     { teacher_id: gv.id, category: "strength", label: "Tiếp thu nhanh" },
     { teacher_id: gv.id, category: "improvement", label: "Cần tập trung hơn" },
   ]);
   check("GV thêm danh mục nhận xét", !optErr, optErr?.message);
+
+  // 2b. Nhóm kỹ năng (migration 20260723000000): mặc định 'other' khi không set
+  const { data: defaultGroupOpt } = await teacher
+    .from("review_options")
+    .select("skill_group")
+    .eq("teacher_id", gv.id)
+    .eq("label", "Tiếp thu nhanh")
+    .single();
+  check(
+    "Lựa chọn mới mặc định nhóm 'other'",
+    defaultGroupOpt?.skill_group === "other",
+    `skill_group=${defaultGroupOpt?.skill_group}`
+  );
+
+  // 2c. Đặt nhóm kỹ năng cụ thể lúc thêm + lọc theo nhóm hoạt động đúng
+  const { error: groupedErr } = await teacher.from("review_options").insert([
+    { teacher_id: gv.id, category: "strength", label: "Code sạch", skill_group: "coding" },
+    { teacher_id: gv.id, category: "strength", label: "Tư duy logic tốt", skill_group: "thinking" },
+  ]);
+  check("GV thêm lựa chọn kèm nhóm kỹ năng cụ thể", !groupedErr, groupedErr?.message);
+
+  const { data: codingOpts } = await teacher
+    .from("review_options")
+    .select("label")
+    .eq("teacher_id", gv.id)
+    .eq("skill_group", "coding");
+  check(
+    "Lọc combo box theo nhóm 'coding' chỉ trả đúng lựa chọn nhóm đó",
+    codingOpts?.length === 1 && codingOpts[0].label === "Code sạch",
+    `${codingOpts?.length} dòng`
+  );
+
+  // 2d. CHECK constraint chặn giá trị nhóm không hợp lệ
+  const { error: badGroupErr } = await teacher.from("review_options").insert({
+    teacher_id: gv.id,
+    category: "strength",
+    label: "Nhóm rác",
+    skill_group: "khong-ton-tai",
+  });
+  check(
+    "CHECK constraint chặn skill_group không hợp lệ",
+    badGroupErr?.code === "23514",
+    badGroupErr?.message
+  );
 
   // 3. Lưu nhận xét học viên (upsert 2 lần — lần 2 ghi đè)
   const { error: rev1Err } = await teacher.from("student_reviews").upsert(

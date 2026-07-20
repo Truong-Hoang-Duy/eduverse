@@ -336,18 +336,21 @@ export type Database = {
           category: string
           id: string
           label: string
+          skill_group: string
           teacher_id: string
         }
         Insert: {
           category: string
           id?: string
           label: string
+          skill_group?: string
           teacher_id: string
         }
         Update: {
           category?: string
           id?: string
           label?: string
+          skill_group?: string
           teacher_id?: string
         }
         Relationships: [

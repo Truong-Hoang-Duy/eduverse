@@ -6,6 +6,16 @@ SYSTEM_ROLE = (
     "Xưng hô: gọi học viên là 'em' hoặc gọi thẳng tên — TUYỆT ĐỐI không dùng từ 'con'."
 )
 
+# Áp cho mọi prompt viết NHẬN XÉT (review / tổng hợp HV / tin Zalo) — yêu cầu
+# user 2026-07-18: không đại ngôn làm lố nhận xét.
+TONE_RULE = (
+    "Giọng điệu nhận xét phải ĐÚNG MỰC, không phóng đại: TUYỆT ĐỐI tránh các từ "
+    "đại ngôn như 'tuyệt vời', 'xuất sắc', 'hoàn hảo', 'đỉnh', 'siêu', 'thiên tài', "
+    "'phi thường'. Thay vào đó dùng thang từ vừa phải: 'tốt', 'khá', 'ổn', "
+    "'chưa tốt', 'cần cố gắng thêm'. Khen phải kèm căn cứ cụ thể; góp ý nhẹ nhàng, "
+    "mang tính xây dựng."
+)
+
 
 def build_review_prompt(
     student_name: str,
@@ -18,6 +28,7 @@ def build_review_prompt(
 ) -> str:
     parts = [
         SYSTEM_ROLE,
+        TONE_RULE,
         "Hãy viết nhận xét 3-5 câu cho một học viên sau buổi học, theo thứ tự: "
         "điểm mạnh trước, điểm cần cải thiện sau, chốt bằng một lời khuyên cụ thể.",
         f"Học viên: {student_name}",
@@ -47,6 +58,7 @@ def build_zalo_summary_prompt(
     return "\n".join(
         [
             SYSTEM_ROLE,
+            TONE_RULE,
             "Hãy tổng hợp tình hình học tập của cả lớp sau buổi học thành tin nhắn "
             "gửi phụ huynh/nhóm lớp trên Zalo.",
             "QUAN TRỌNG: nhận xét CHUNG về toàn thể học viên của lớp — TUYỆT ĐỐI "
@@ -75,6 +87,7 @@ def build_student_summary_prompt(
     return "\n".join(
         [
             SYSTEM_ROLE,
+            TONE_RULE,
             "Hãy viết NHẬN XÉT TỔNG HỢP cho một học viên dựa trên toàn bộ nhận xét "
             "của các buổi đã học (gửi riêng cho phụ huynh của em này).",
             f"Học viên: {student_name}",

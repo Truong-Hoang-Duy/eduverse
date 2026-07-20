@@ -77,7 +77,15 @@
 - Mỗi lớp có N buổi sinh sẵn; GV điền tiêu đề + nội dung + ngày cho từng buổi.
 - Trang nhận xét theo buổi cho từng học viên: tick **điểm mạnh** / **điểm cần cải
   thiện** từ danh mục `review_options` (GV tự quản lý danh mục này) + ô lời khuyên.
+- **Bộ lọc nhóm kỹ năng** trên mỗi combo box (điểm mạnh / cần cải thiện): 🧠 Tư
+  duy, 💻 Kỹ năng code, 🌱 Thái độ học tập, 🤝 Giao tiếp & hợp tác, 📌 Khác —
+  **mặc định "Tất cả nhóm"** (không lọc). Chỉ thu hẹp danh sách hiển thị, KHÔNG
+  đổi giá trị đã chọn trước đó. Nhóm lưu ở cột `review_options.skill_group`
+  (`web/src/lib/skill-groups.ts` là nguồn danh sách nhóm dùng chung).
 - Nút **"AI tạo nhận xét"** → điền sẵn đoạn nhận xét → GV sửa → lưu.
+- ⚠️ **Giọng điệu AI**: mọi prompt viết nhận xét (buổi học, tổng hợp HV, tin
+  Zalo) áp `TONE_RULE` trong `prompts.py` — cấm từ đại ngôn ("tuyệt vời", "xuất
+  sắc", "hoàn hảo"...), dùng thang vừa phải ("tốt", "khá", "chưa tốt"...).
 
 ### Hồ sơ học viên xuyên khóa (CHỈ giáo viên)
 Trang `/teacher/classes/[id]/students/[studentId]` — vào bằng cách bấm tên học viên

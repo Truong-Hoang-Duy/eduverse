@@ -8,16 +8,25 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   addReviewOption,
   deleteReviewOption,
   seedDefaultOptions,
 } from "@/lib/actions/settings";
+import { SKILL_GROUPS, skillGroupLabel } from "@/lib/skill-groups";
 import type { ActionResult } from "@/lib/types";
 
 export interface OptionRow {
   id: string;
   category: string;
   label: string;
+  skill_group: string;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -46,7 +55,12 @@ function OptionColumn({
             key={opt.id}
             className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"
           >
-            {opt.label}
+            <span className="min-w-0">
+              {opt.label}
+              <Badge variant="outline" className="ml-2 rounded-md text-xs font-normal">
+                {skillGroupLabel(opt.skill_group)}
+              </Badge>
+            </span>
             <ConfirmDialog
               trigger={
                 <button
@@ -68,9 +82,25 @@ function OptionColumn({
           <li className="text-sm text-muted-foreground">Chưa có lựa chọn nào.</li>
         )}
       </ul>
-      <form action={formAction} className="flex gap-2">
+      <form action={formAction} className="flex flex-wrap gap-2">
         <input type="hidden" name="category" value={category} />
-        <Input name="label" placeholder="Thêm lựa chọn mới..." className="h-8" />
+        <Input
+          name="label"
+          placeholder="Thêm lựa chọn mới..."
+          className="h-8 min-w-40 flex-1"
+        />
+        <Select name="skill_group" defaultValue="other">
+          <SelectTrigger size="sm" className="w-[150px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SKILL_GROUPS.map((g) => (
+              <SelectItem key={g.value} value={g.value}>
+                {g.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button type="submit" size="sm" variant="outline" disabled={pending}>
           Thêm
         </Button>
