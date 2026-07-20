@@ -82,7 +82,15 @@
   **mặc định "Tất cả nhóm"** (không lọc). Chỉ thu hẹp danh sách hiển thị, KHÔNG
   đổi giá trị đã chọn trước đó. Nhóm lưu ở cột `review_options.skill_group`
   (`web/src/lib/skill-groups.ts` là nguồn danh sách nhóm dùng chung).
-- Nút **"AI tạo nhận xét"** → điền sẵn đoạn nhận xét → GV sửa → lưu.
+- Nút **"AI tạo nhận xét"** → điền sẵn đoạn nhận xét → GV sửa → lưu. Cạnh đó có
+  nút **📋 Copy** để copy nhanh đoạn nhận xét đang hiện (gửi riêng phụ huynh em
+  đó qua Zalo/tin nhắn cá nhân — khác với tin Zalo TỔNG HỢP cả lớp bên dưới).
+- **Bộ lọc trạng thái** trên danh sách nhận xét từng buổi: Tất cả / Đã hoàn
+  thành / Chưa hoàn thành (`review-list.tsx`, client component vì cần state lọc
+  — `page.tsx` vẫn là Server Component, chỉ truyền data xuống). "Đã hoàn thành"
+  = có ít nhất 1 trong 3: điểm mạnh, cần cải thiện, hoặc nhận xét AI đã lưu
+  (hàm `isReviewed`, export từ `review-editor.tsx`, dùng chung với badge "Đã
+  nhận xét" để không lặp logic).
 - ⚠️ **Giọng điệu AI**: mọi prompt viết nhận xét (buổi học, tổng hợp HV, tin
   Zalo) áp `TONE_RULE` trong `prompts.py` — cấm từ đại ngôn ("tuyệt vời", "xuất
   sắc", "hoàn hảo"...), dùng thang vừa phải ("tốt", "khá", "chưa tốt"...).
@@ -104,6 +112,8 @@ trong bảng danh sách lớp.
 ### Tin nhắn Zalo (copy thủ công — KHÔNG dùng Zalo API)
 - CRUD mẫu tin (`zalo_templates`) với placeholder `{ten_lop}` `{buoi}` `{tom_tat}` `{loi_nhan}`.
 - Chọn lớp + buổi → AI tổng hợp từ các nhận xét đã lưu → preview → nút **Copy**.
+- **`{tom_tat}` phải là đoạn văn xuôi liền mạch** — prompt cấm gạch đầu dòng/số
+  thứ tự/xuống dòng liệt kê (đọc như tin nhắn thật, không phải danh sách).
 
 ### Chấm bài bằng AI — công cụ ĐỘC LẬP, KHÔNG theo lớp
 Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.

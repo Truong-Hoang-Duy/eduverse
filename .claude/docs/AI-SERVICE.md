@@ -85,6 +85,11 @@ sớm bằng marker + magic bytes (PNG/JPEG/GIF/PDF) → 400 kèm hướng dẫn
   thường"); dùng thang vừa phải ("tốt", "khá", "ổn", "chưa tốt", "cần cố gắng
   thêm"). Khen phải kèm căn cứ cụ thể. KHÔNG áp cho `/grade-submission` và
   `/suggest-features` — không phải prompt nhận xét hành vi/thái độ học viên.
+- **`/generate-zalo-summary` cấm bullet trong `{tom_tat}`**: gạch đầu dòng
+  ('-'), chấm tròn ('•'), số thứ tự đều bị cấm — yêu cầu Gemini viết đoạn văn
+  xuôi liền mạch, nối ý bằng dấu phẩy/liên từ. Khác với `/grade-submission`
+  (nơi UI CHỦ ĐỘNG muốn bullet, chỉ cấm Gemini tự thêm ký tự đầu dòng vì UI đã
+  tự thêm) — 2 chỗ "cấm bullet" khác mục đích nhau, đọc kỹ trước khi sửa.
 - Tin Zalo gửi phụ huynh: nhận xét CHUNG cả lớp, không nêu tên/định danh học
   viên nào (nhận xét cá nhân dùng /generate-student-summary gửi riêng).
 - Chấm điểm: yêu cầu Gemini đọc đề trước, liệt kê yêu cầu, rồi đối chiếu code;

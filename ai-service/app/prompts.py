@@ -65,6 +65,11 @@ def build_zalo_summary_prompt(
             "không nêu tên, không định danh, không ám chỉ bất kỳ học viên cụ thể nào. "
             "Danh sách nhận xét từng em dưới đây chỉ là dữ liệu để bạn rút ra xu "
             "hướng chung (đa số các em..., một số em cần...).",
+            "ĐỊNH DẠNG phần tóm tắt (thay vào {tom_tat}): viết THÀNH ĐOẠN VĂN XUÔI "
+            "liền mạch, nối các ý bằng dấu phẩy/liên từ (và, nhưng, bên cạnh đó...). "
+            "TUYỆT ĐỐI KHÔNG dùng gạch đầu dòng ('-'), dấu chấm tròn ('•'), số thứ "
+            "tự (1. 2. 3.), hay xuống dòng để liệt kê từng ý riêng — tin nhắn Zalo "
+            "đọc như lời nói chuyện bình thường, không phải danh sách.",
             f"Lớp: {class_code}",
             f"Buổi học: {session_title}",
             f"Nội dung buổi học: {session_content}",

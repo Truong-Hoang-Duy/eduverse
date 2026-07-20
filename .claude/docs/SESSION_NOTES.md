@@ -8,9 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–13 đều đã production;
-`main` = `develop` = `origin` = `e4f8869`; working tree sạch; không nhánh
-feature nào treo. **E2E 99/99**, pytest 4/4. Việc tiếp tùy user.
+**Đang làm:** Đợt 14 (copy nhận xét + lọc trạng thái + Zalo hết bullet) CODE
+XONG trên nhánh `feature/review-copy-filter-zalo-format`, lint/typecheck/pytest
+sạch, 0 migration — **chờ chạy E2E regression + user nghiệm thu tin Zalo bằng
+mắt (nội dung AI sinh ra, không assert cứng được) rồi merge/deploy**. GĐ 1–5 +
+Đợt 1–13 đã production. **E2E 99/99** (trước Đợt 14), pytest 4/4.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
 - Auth USERNAME (không email), khóa → lớp → buổi, nhận xét AI theo buổi + tổng
@@ -32,7 +34,7 @@ feature nào treo. **E2E 99/99**, pytest 4/4. Việc tiếp tùy user.
 | Script | Số test | Lệnh |
 |---|---|---|
 | `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/e2e-phase1.mjs` |
-| `e2e-phase2.mjs` | 13→17* | như trên (gồm 3 check hồ sơ HV xuyên khóa + 4 check nhóm kỹ năng Đợt 13*) |
+| `e2e-phase2.mjs` | 17 | như trên (gồm 3 check hồ sơ HV xuyên khóa + 4 check nhóm kỹ năng) |
 | `e2e-api-key.mjs` | 8 | như trên |
 | `e2e-class-admin.mjs` | 18 | như trên (gồm 3 check đổi/đặt lại mật khẩu) |
 | `e2e-gallery-storage.mjs` | 18 | như trên — gallery GV, xóa sạch Storage, chỉ chủ xóa bình luận |
@@ -131,7 +133,20 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
 
-### 2026-07-18 — Claude / Đợt 13 — nhóm kỹ năng + giọng điệu AI (CHỜ migration)
+### 2026-07-18 — Claude / Đợt 14 — copy nhận xét, lọc trạng thái, Zalo hết bullet
+3 cải tiến độc lập, 0 migration (không đụng schema): (1) nút **📋 Copy** cạnh ô
+"Nhận xét gửi phụ huynh" trong `ReviewEditor` — copy nhanh để gửi riêng phụ
+huynh 1 em (khác tin Zalo tổng hợp cả lớp); (2) bộ lọc **Tất cả/Đã hoàn thành/
+Chưa hoàn thành** cho danh sách nhận xét theo buổi — tách `review-list.tsx`
+(client) khỏi `page.tsx` (vẫn Server Component) vì cần state lọc; export hàm
+`isReviewed()` từ `review-editor.tsx` dùng chung cho cả badge lẫn bộ lọc, tránh
+lặp logic "đã nhận xét = có strengths/improvements/comment"; (3) prompt
+`build_zalo_summary_prompt` cấm gạch đầu dòng/số thứ tự trong `{tom_tat}`, yêu
+cầu văn xuôi liền mạch — **khác mục đích** với "cấm bullet" của
+`build_grading_prompt` (chỗ đó UI CHỦ ĐỘNG muốn bullet, chỉ cấm AI tự thêm ký
+tự đầu dòng vì UI tự thêm) — đừng nhầm lẫn 2 chỗ khi sửa sau này.
+
+### 2026-07-18 — Claude / Đợt 13 — nhóm kỹ năng + giọng điệu AI
 Nhánh `feature/review-skill-groups`. 2 việc độc lập: (1) `review_options` thêm
 `skill_group` — combo box điểm mạnh/cần cải thiện có bộ lọc theo nhóm (mặc định
 "Tất cả", không đổi lựa chọn đã tick), trang Cài đặt chọn nhóm khi thêm lựa chọn
