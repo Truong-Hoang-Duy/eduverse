@@ -207,6 +207,23 @@
       GV reset → em đăng nhập được); tổng **95/95 PASS**
 - [x] Merge lên production (deploy 2026-07-18, kéo theo Đợt 11)
 
+### Đợt 13 (`feature/review-skill-groups`) — nhóm kỹ năng + giọng điệu AI
+- [x] Migration `20260723000000`: `review_options.skill_group` (DEFAULT `other`,
+      CHECK 5 giá trị: thinking/coding/attitude/collaboration/other)
+- [x] `web/src/lib/skill-groups.ts`: danh sách nhóm dùng chung (nguồn sự thật
+      cho cả UI lẫn action — sửa nhóm phải sửa cả CHECK constraint)
+- [x] Trang Cài đặt: chọn nhóm khi thêm lựa chọn mới (mặc định "Khác"), hiện
+      badge nhóm trên mỗi lựa chọn đã có
+- [x] Trang nhận xét theo buổi: bộ lọc nhóm kỹ năng trên mỗi combo box điểm
+      mạnh/cần cải thiện, **mặc định "Tất cả nhóm"** — chỉ lọc hiển thị, không
+      đổi lựa chọn đã tick
+- [x] `prompts.py`: `TONE_RULE` cấm từ đại ngôn (tuyệt vời/xuất sắc/hoàn hảo...),
+      dùng thang tốt/khá/chưa tốt — áp cho review + zalo summary + student
+      summary, KHÔNG áp chấm bài/gợi ý tính năng
+- [x] E2E `e2e-phase2` +4 check (mặc định nhóm, set nhóm, lọc đúng, CHECK chặn
+      giá trị sai)
+- [ ] User dán migration → Claude chạy E2E xác nhận → merge/deploy
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

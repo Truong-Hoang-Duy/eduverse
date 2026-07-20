@@ -8,9 +8,12 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–12 đều đã production;
-`main` = `develop` = `origin`; working tree sạch; không nhánh feature nào treo.
-**E2E 95/95**, pytest 4/4. Việc tiếp tùy user.
+**Đang làm:** Đợt 13 (bộ lọc nhóm kỹ năng cho combo box nhận xét + giọng điệu AI
+đúng mực) CODE XONG trên nhánh `feature/review-skill-groups` — đã chạy thử
+`e2e-phase2` trên DB thật, đúng như dự đoán 4/17 FAIL (thiếu cột, các test khác
+không ảnh hưởng) — **chờ user dán migration `20260723000000` rồi chạy lại để
+xác nhận 17/17 xanh, sau đó mới merge/deploy**. GĐ 1–5 + Đợt 1–12 đã production.
+**E2E 95/95** (sẽ thành 99 sau khi cộng 4 check Đợt 13), pytest 4/4.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
 - Auth USERNAME (không email), khóa → lớp → buổi, nhận xét AI theo buổi + tổng
@@ -32,7 +35,7 @@
 | Script | Số test | Lệnh |
 |---|---|---|
 | `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/e2e-phase1.mjs` |
-| `e2e-phase2.mjs` | 13 | như trên (gồm 3 check hồ sơ HV xuyên khóa) |
+| `e2e-phase2.mjs` | 13→17* | như trên (gồm 3 check hồ sơ HV xuyên khóa + 4 check nhóm kỹ năng Đợt 13*) |
 | `e2e-api-key.mjs` | 8 | như trên |
 | `e2e-class-admin.mjs` | 18 | như trên (gồm 3 check đổi/đặt lại mật khẩu) |
 | `e2e-gallery-storage.mjs` | 18 | như trên — gallery GV, xóa sạch Storage, chỉ chủ xóa bình luận |
@@ -76,6 +79,15 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - **Đổi mật khẩu không cần mật khẩu cũ** (Đợt 12): phiên đăng nhập = bằng chứng
   sở hữu; GV reset cho HV qua admin API — action TỰ kiểm quyền (role teacher +
   thấy enrollment qua RLS) vì admin API bỏ qua RLS.
+- **Nhóm kỹ năng cho combo box nhận xét** (Đợt 13): cột `review_options.skill_group`
+  (`web/src/lib/skill-groups.ts` là nguồn danh sách — sửa nhóm phải sửa CẢ CHECK
+  constraint trong migration `20260723000000`). Bộ lọc combo box **mặc định "Tất
+  cả nhóm"**, chỉ thu hẹp hiển thị, KHÔNG đổi lựa chọn đã tick.
+- **Giọng điệu AI đúng mực, không đại ngôn** (Đợt 13): `TONE_RULE` trong
+  `prompts.py` cấm "tuyệt vời/xuất sắc/hoàn hảo...", dùng thang "tốt/khá/chưa
+  tốt...". Áp cho 3 prompt VIẾT NHẬN XÉT (review, zalo summary, student summary)
+  — KHÔNG áp cho chấm bài (`build_grading_prompt`) và gợi ý tính năng
+  (`build_suggest_features_prompt`) vì không phải nhận xét hành vi/thái độ.
 - **Thứ tự migration với code** (đã dính lỗi cả 2 chiều):
   - THÊM cột/bảng: dán migration TRƯỚC khi deploy code đọc/ghi nó.
   - DROP cột/bảng: deploy code bỏ tham chiếu TRƯỚC, dán migration SAU.
@@ -88,6 +100,15 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
+- 🔴 **Dán migration `20260723000000` (thêm `review_options.skill_group`) —
+  TRƯỚC khi chạy E2E phase2 và trước khi merge/deploy Đợt 13.** Cột có DEFAULT
+  nên an toàn với code cũ đang chạy (khác chiều với DROP — cứ dán bất cứ lúc
+  nào, không cần chờ deploy như DROP).
+  ```sql
+  alter table public.review_options
+    add column if not exists skill_group text not null default 'other'
+    check (skill_group in ('thinking', 'coding', 'attitude', 'collaboration', 'other'));
+  ```
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*`
   thiếu `!.env.example`. Muốn sửa: thêm dòng đó rồi tự commit file. Claude KHÔNG
   tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
@@ -120,6 +141,17 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   `web/.next`, chạy lại.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-18 — Claude / Đợt 13 — nhóm kỹ năng + giọng điệu AI (CHỜ migration)
+Nhánh `feature/review-skill-groups`. 2 việc độc lập: (1) `review_options` thêm
+`skill_group` — combo box điểm mạnh/cần cải thiện có bộ lọc theo nhóm (mặc định
+"Tất cả", không đổi lựa chọn đã tick), trang Cài đặt chọn nhóm khi thêm lựa chọn
+mới + hiện badge nhóm; (2) `TONE_RULE` mới trong `prompts.py` cấm từ đại ngôn,
+áp cho 3 prompt viết nhận xét (không áp chấm bài/gợi ý tính năng — không phải
+nhận xét thái độ). E2E `e2e-phase2` 13→17 (mặc định 'other', set nhóm cụ thể,
+lọc đúng theo nhóm, CHECK constraint chặn giá trị sai) — chạy thử đúng như dự
+đoán 4/17 FAIL vì cột chưa tồn tại (probe + chạy thật đều xác nhận), 13 test cũ
+không bị ảnh hưởng. **Chờ user dán migration `20260723000000` rồi chạy lại.**
 
 ### 2026-07-17→18 — Claude / Đợt 7–12 (tất cả trong 2 ngày, đều đã production)
 - **Đợt 7**: form HV nhập sản phẩm (chip chức năng, nút Xóa, validate link, AI

@@ -2,10 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 
+import { SKILL_GROUPS, type SkillGroup } from "@/lib/skill-groups";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
 const VALID_CATEGORIES = ["strength", "improvement"] as const;
+
+function asSkillGroup(value: string): SkillGroup {
+  return SKILL_GROUPS.some((g) => g.value === value)
+    ? (value as SkillGroup)
+    : "other";
+}
 
 // ---------- Danh mục nhận xét (review_options) ----------
 
@@ -15,6 +22,7 @@ export async function addReviewOption(
 ): Promise<ActionResult> {
   const category = String(formData.get("category") ?? "");
   const label = String(formData.get("label") ?? "").trim();
+  const skillGroup = asSkillGroup(String(formData.get("skill_group") ?? ""));
 
   if (!VALID_CATEGORIES.includes(category as (typeof VALID_CATEGORIES)[number])) {
     return { error: "Danh mục không hợp lệ." };
@@ -33,7 +41,7 @@ export async function addReviewOption(
 
   const { error } = await supabase
     .from("review_options")
-    .insert({ teacher_id: user.id, category, label });
+    .insert({ teacher_id: user.id, category, label, skill_group: skillGroup });
   if (error) {
     return { error: `Không thêm được: ${error.message}` };
   }
@@ -51,22 +59,22 @@ export async function deleteReviewOption(formData: FormData): Promise<void> {
   revalidatePath("/teacher/settings");
 }
 
-const DEFAULT_STRENGTHS = [
-  "Tiếp thu nhanh",
-  "Tích cực phát biểu",
-  "Hoàn thành tốt bài tập trên lớp",
-  "Biết giúp đỡ bạn bè",
-  "Sáng tạo, chủ động thử cách làm mới",
-  "Tập trung nghe giảng",
+const DEFAULT_STRENGTHS: [string, SkillGroup][] = [
+  ["Tiếp thu nhanh", "thinking"],
+  ["Tích cực phát biểu", "attitude"],
+  ["Hoàn thành tốt bài tập trên lớp", "coding"],
+  ["Biết giúp đỡ bạn bè", "collaboration"],
+  ["Sáng tạo, chủ động thử cách làm mới", "thinking"],
+  ["Tập trung nghe giảng", "attitude"],
 ];
 
-const DEFAULT_IMPROVEMENTS = [
-  "Cần tập trung hơn trong giờ học",
-  "Cần luyện gõ phím / thao tác máy",
-  "Đặt tên biến rõ nghĩa hơn",
-  "Cần hoàn thành bài tập về nhà",
-  "Mạnh dạn hỏi khi chưa hiểu",
-  "Cẩn thận hơn để tránh lỗi chính tả trong code",
+const DEFAULT_IMPROVEMENTS: [string, SkillGroup][] = [
+  ["Cần tập trung hơn trong giờ học", "attitude"],
+  ["Cần luyện gõ phím / thao tác máy", "coding"],
+  ["Đặt tên biến rõ nghĩa hơn", "coding"],
+  ["Cần hoàn thành bài tập về nhà", "attitude"],
+  ["Mạnh dạn hỏi khi chưa hiểu", "collaboration"],
+  ["Cẩn thận hơn để tránh lỗi chính tả trong code", "coding"],
 ];
 
 /** Thêm nhanh bộ lựa chọn mặc định cho giáo viên mới. */
@@ -78,15 +86,17 @@ export async function seedDefaultOptions(): Promise<void> {
   if (!user) return;
 
   const rows = [
-    ...DEFAULT_STRENGTHS.map((label) => ({
+    ...DEFAULT_STRENGTHS.map(([label, skill_group]) => ({
       teacher_id: user.id,
       category: "strength",
       label,
+      skill_group,
     })),
-    ...DEFAULT_IMPROVEMENTS.map((label) => ({
+    ...DEFAULT_IMPROVEMENTS.map(([label, skill_group]) => ({
       teacher_id: user.id,
       category: "improvement",
       label,
+      skill_group,
     })),
   ];
   await supabase.from("review_options").insert(rows);

@@ -7,14 +7,52 @@ import { MultiSelect } from "@/components/multi-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { generateAiReview, saveReview } from "@/lib/actions/reviews";
+import { SKILL_GROUPS } from "@/lib/skill-groups";
 import type { ActionResult } from "@/lib/types";
 
 export interface ReviewOptionItem {
   id: string;
   category: string;
   label: string;
+  skill_group: string;
+}
+
+/** Bộ lọc nhóm kỹ năng cho combo box lựa chọn — "all" = không lọc. */
+function GroupFilter({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        size="sm"
+        className="h-7 w-[150px] text-xs"
+        aria-label="Lọc theo nhóm kỹ năng"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">Tất cả nhóm</SelectItem>
+        {SKILL_GROUPS.map((g) => (
+          <SelectItem key={g.value} value={g.value}>
+            {g.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 export interface ExistingReview {
@@ -54,8 +92,20 @@ export function ReviewEditor({
   const [aiError, setAiError] = useState("");
   const [aiPending, startAi] = useTransition();
 
-  const strengthOptions = options.filter((o) => o.category === "strength");
-  const improvementOptions = options.filter((o) => o.category === "improvement");
+  // Bộ lọc nhóm kỹ năng của từng combo box — mặc định "all" (không lọc).
+  const [strengthGroup, setStrengthGroup] = useState("all");
+  const [improvementGroup, setImprovementGroup] = useState("all");
+
+  const strengthOptions = options.filter(
+    (o) =>
+      o.category === "strength" &&
+      (strengthGroup === "all" || o.skill_group === strengthGroup)
+  );
+  const improvementOptions = options.filter(
+    (o) =>
+      o.category === "improvement" &&
+      (improvementGroup === "all" || o.skill_group === improvementGroup)
+  );
 
   function handleGenerate() {
     setAiError("");
@@ -112,23 +162,40 @@ export function ReviewEditor({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <p className="text-sm font-medium">💪 Điểm mạnh</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-medium">💪 Điểm mạnh</p>
+              <GroupFilter value={strengthGroup} onChange={setStrengthGroup} />
+            </div>
             <MultiSelect
               options={strengthOptions}
               selected={strengths}
               onChange={setStrengths}
               placeholder="Chọn điểm mạnh..."
-              emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+              emptyText={
+                strengthGroup === "all"
+                  ? "Chưa có lựa chọn — thêm trong trang Cài đặt."
+                  : "Nhóm này chưa có lựa chọn nào."
+              }
             />
           </div>
           <div className="space-y-1.5">
-            <p className="text-sm font-medium">🎯 Cần cải thiện</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-medium">🎯 Cần cải thiện</p>
+              <GroupFilter
+                value={improvementGroup}
+                onChange={setImprovementGroup}
+              />
+            </div>
             <MultiSelect
               options={improvementOptions}
               selected={improvements}
               onChange={setImprovements}
               placeholder="Chọn điểm cần cải thiện..."
-              emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+              emptyText={
+                improvementGroup === "all"
+                  ? "Chưa có lựa chọn — thêm trong trang Cài đặt."
+                  : "Nhóm này chưa có lựa chọn nào."
+              }
             />
           </div>
         </div>

@@ -21,7 +21,7 @@ export default async function SettingsPage() {
   const [{ data: options }, { data: templates }] = await Promise.all([
     supabase
       .from("review_options")
-      .select("id, category, label")
+      .select("id, category, label, skill_group")
       .eq("teacher_id", profile.id)
       .order("label"),
     supabase

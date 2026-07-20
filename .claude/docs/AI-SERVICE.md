@@ -79,6 +79,12 @@ sớm bằng marker + magic bytes (PNG/JPEG/GIF/PDF) → 400 kèm hướng dẫn
   (tiếng Việt), độ dài, và JSON schema.
 - Xưng hô với học viên: "em" hoặc gọi tên — KHÔNG BAO GIỜ dùng "con" (đã ghi
   trong SYSTEM_ROLE).
+- **Giọng điệu nhận xét đúng mực** (`TONE_RULE`, áp cho `/generate-review`,
+  `/generate-zalo-summary`, `/generate-student-summary`): cấm từ đại ngôn
+  ("tuyệt vời", "xuất sắc", "hoàn hảo", "đỉnh", "siêu", "thiên tài", "phi
+  thường"); dùng thang vừa phải ("tốt", "khá", "ổn", "chưa tốt", "cần cố gắng
+  thêm"). Khen phải kèm căn cứ cụ thể. KHÔNG áp cho `/grade-submission` và
+  `/suggest-features` — không phải prompt nhận xét hành vi/thái độ học viên.
 - Tin Zalo gửi phụ huynh: nhận xét CHUNG cả lớp, không nêu tên/định danh học
   viên nào (nhận xét cá nhân dùng /generate-student-summary gửi riêng).
 - Chấm điểm: yêu cầu Gemini đọc đề trước, liệt kê yêu cầu, rồi đối chiếu code;
