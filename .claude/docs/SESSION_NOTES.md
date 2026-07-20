@@ -8,9 +8,15 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–15 đều đã production;
-`main` = `develop` = `origin`; working tree sạch; không nhánh feature nào treo.
-**E2E 99/99** (+17 phase2 regression sau Đợt 15), pytest 4/4. Việc tiếp tùy user.
+**Đang làm:** Đợt 16 (accordion Cài đặt + 6 nhóm kỹ năng mới + mở rộng bộ mặc
+định) CODE XONG trên nhánh `feature/settings-accordion-more-groups`,
+lint/typecheck/pytest sạch — **chờ user dán migration `20260725000000` rồi
+Claude mới bổ sung câu mới + move 2 câu "hỏi" sang nhóm `questioning` cho dữ
+liệu thật GV (`duyth1`) trước khi merge/deploy**.
+GĐ 1–5 + Đợt 1–15 đã production. **E2E 99/99** (trước Đợt 16), pytest 4/4.
+⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
+Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
+tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
 Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
 tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
@@ -79,12 +85,16 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - **Đổi mật khẩu không cần mật khẩu cũ** (Đợt 12): phiên đăng nhập = bằng chứng
   sở hữu; GV reset cho HV qua admin API — action TỰ kiểm quyền (role teacher +
   thấy enrollment qua RLS) vì admin API bỏ qua RLS.
-- **Nhóm kỹ năng cho combo box nhận xét** (Đợt 13, +`presentation` ở Đợt 15):
-  cột `review_options.skill_group` — 6 giá trị: thinking/coding/attitude/
-  collaboration/presentation/other (`web/src/lib/skill-groups.ts` là nguồn danh
-  sách — sửa/thêm nhóm phải sửa CẢ CHECK constraint, Postgres không cho ALTER
-  CHECK trực tiếp nên phải drop+add lại). Bộ lọc combo box **mặc định "Tất cả
-  nhóm"**, chỉ thu hẹp hiển thị, KHÔNG đổi lựa chọn đã tick.
+- **Nhóm kỹ năng cho combo box nhận xét** (Đợt 13, +presentation Đợt 15, +6
+  nhóm nữa Đợt 16 = **12 giá trị**): cột `review_options.skill_group`
+  (`web/src/lib/skill-groups.ts` — SKILL_GROUPS — là nguồn danh sách DUY NHẤT,
+  sửa/thêm nhóm phải sửa CẢ CHECK constraint, Postgres không cho ALTER CHECK
+  trực tiếp nên phải drop+add lại — xem migration mới nhất trong
+  `supabase/migrations/` để biết constraint hiện hành). Bộ lọc combo box
+  **mặc định "Tất cả nhóm"**, chỉ thu hẹp hiển thị, KHÔNG đổi lựa chọn đã tick.
+- **Trang Cài đặt: accordion theo nhóm** (Đợt 16) — mỗi nhóm 1 khối thu gọn
+  (`<details>`), form thêm nằm TRONG từng accordion (không cần chọn lại nhóm
+  qua Select nữa, khác Đợt 13). Đông nhóm (12) nên KHÔNG liệt kê phẳng nữa.
 - **Tin Zalo `{tom_tat}` = 2 phần cố định** (chốt lại 2026-07-18, Đợt 15 — đảo
   ngược 1 phần quyết định Đợt 14): phần 1 "📚 Kiến thức đã học:" liệt kê XUỐNG
   DÒNG nhưng KHÔNG ký tự đầu dòng; phần 2 văn xuôi liền mạch nhận xét thái độ.
@@ -107,6 +117,21 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
+- 🔴 **Dán migration `20260725000000` (mở rộng CHECK skill_group thêm 6 nhóm:
+  creativity/computer_skills/ai_usage/questioning/discipline/self_study)** —
+  an toàn dán bất cứ lúc nào. Dán xong báo Claude để bổ sung câu mới cho dữ
+  liệu thật rồi mới merge/deploy.
+  ```sql
+  alter table public.review_options
+    drop constraint if exists review_options_skill_group_check;
+  alter table public.review_options
+    add constraint review_options_skill_group_check
+    check (skill_group in (
+      'thinking', 'creativity', 'coding', 'computer_skills', 'ai_usage',
+      'questioning', 'attitude', 'discipline', 'self_study', 'collaboration',
+      'presentation', 'other'
+    ));
+  ```
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*`
   thiếu `!.env.example`. Muốn sửa: thêm dòng đó rồi tự commit file. Claude KHÔNG
   tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
@@ -140,6 +165,19 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   `web/.next`, chạy lại.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-18 — Claude / Đợt 16 — accordion Cài đặt + 6 nhóm kỹ năng mới
+Hỏi rõ 3 điểm mơ hồ qua `AskUserQuestion` trước khi code (đúng hướng — user
+từng phàn nàn về việc đoán sai ý): (1) "hiện dropdown" = accordion thu gọn/mở
+theo nhóm (không phải dropdown lọc); (2) "xem thêm nhóm" = muốn THÊM nhóm mới,
+không phải hỏi UI đang ẩn gì; (3) tên 6 nhóm mới cụ thể (multiSelect, user chọn
+cả gợi ý lẫn tự nhập): Kỷ luật/Nề nếp, Tự học, Sáng tạo, Kỹ năng máy tính, Vận
+dụng AI, Đặt câu hỏi — tổng 6+6=12 nhóm.
+
+UI: `option-manager.tsx` viết lại — mỗi nhóm 1 `<details>` (cùng pattern
+`ReviewEditor`), form thêm nằm trong từng accordion nên bỏ được Select chọn
+nhóm khi thêm. Bộ mặc định seed mở rộng 15+13→33+26 câu, dàn đều 11 nhóm (bỏ
+"Khác"). Migration `20260725000000` mở rộng CHECK constraint (drop+add).
 
 ### 2026-07-18 — Claude / Đợt 15 — Zalo liệt kê kiến thức + nhóm Thuyết trình
 User đổi ý 1 phần quyết định Đợt 14: muốn "Kiến thức đã học" trong tin Zalo
