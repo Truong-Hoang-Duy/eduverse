@@ -8,8 +8,8 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 + 3 fix (API key validation,
-2× prompt Zalo) đều đã production; `main` = `develop` = `origin` = `227a7fc`;
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 + 4 fix (API key validation,
+3× prompt Zalo) đều đã production; `main` = `develop` = `origin` = `6c8bb68`;
 working tree sạch; không nhánh feature nào treo. **E2E 99/99**, pytest 4/4.
 ⚠️ Nút Copy + bộ lọc trạng thái (Đợt 14) CHƯA nghiệm thu bằng mắt — máy Claude
 không có `chromium-cli`/Playwright. User tự bấm thử ở `/teacher/sessions/[id]`.
