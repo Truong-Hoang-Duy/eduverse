@@ -8,12 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** Fix prompt Zalo lần 3 cùng ngày (tách `{tom_tat}` khỏi đoạn đánh
-giá chung — mẫu tin thật của GV có mục riêng cho việc đó, gắn placeholder
-khác) code xong trên nhánh `fix/zalo-tomtat-loinhan-overlap`, verify qua
-Gemini thật bằng ĐÚNG mẫu tin thật của GV, khớp hoàn toàn. pytest sạch, 0
-migration — sẵn sàng merge/deploy.
-GĐ 1–5 + Đợt 1–17 + fix API key validation đã production. **E2E 99/99**, pytest 4/4.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 + 3 fix (API key validation,
+2× prompt Zalo) đều đã production; `main` = `develop` = `origin` = `227a7fc`;
+working tree sạch; không nhánh feature nào treo. **E2E 99/99**, pytest 4/4.
 ⚠️ Nút Copy + bộ lọc trạng thái (Đợt 14) CHƯA nghiệm thu bằng mắt — máy Claude
 không có `chromium-cli`/Playwright. User tự bấm thử ở `/teacher/sessions/[id]`.
 
