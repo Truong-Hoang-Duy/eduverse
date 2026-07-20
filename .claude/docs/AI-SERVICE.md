@@ -29,9 +29,10 @@ nêu điểm mạnh trước, điểm cần cải thiện sau, chốt bằng l�
 
 ### POST /generate-zalo-summary — tin nhắn tóm tắt lớp theo mẫu
 Input: `{class_code, session_title, session_content, reviews: [{student_name, strengths[], improvements[]}], template_text}`
-Output: `{message: string}` — đánh giá chung tình hình lớp, ghép đúng vào
-`template_text` (mẫu có placeholder như `{ten_lop}`, `{buoi}`, `{tom_tat}`,
-`{loi_nhan}`). GV copy dán vào nhóm Zalo.
+Output: `{message: string}` — ghép đúng vào `template_text` (mẫu có placeholder
+như `{ten_lop}`, `{buoi}`, `{tom_tat}`, `{loi_nhan}`). GV copy dán vào nhóm
+Zalo. `{tom_tat}` có cấu trúc 2 phần cố định — xem AI-SERVICE.md phần "Nguyên
+tắc prompt" bên dưới.
 
 ### POST /generate-student-summary — nhận xét TỔNG HỢP 1 học viên
 Input: `{student_name, class_code, course_name, reviews: [{session_number, session_title, strengths[], improvements[], advice?, comment?}]}`
@@ -85,11 +86,17 @@ sớm bằng marker + magic bytes (PNG/JPEG/GIF/PDF) → 400 kèm hướng dẫn
   thường"); dùng thang vừa phải ("tốt", "khá", "ổn", "chưa tốt", "cần cố gắng
   thêm"). Khen phải kèm căn cứ cụ thể. KHÔNG áp cho `/grade-submission` và
   `/suggest-features` — không phải prompt nhận xét hành vi/thái độ học viên.
-- **`/generate-zalo-summary` cấm bullet trong `{tom_tat}`**: gạch đầu dòng
-  ('-'), chấm tròn ('•'), số thứ tự đều bị cấm — yêu cầu Gemini viết đoạn văn
-  xuôi liền mạch, nối ý bằng dấu phẩy/liên từ. Khác với `/grade-submission`
-  (nơi UI CHỦ ĐỘNG muốn bullet, chỉ cấm Gemini tự thêm ký tự đầu dòng vì UI đã
-  tự thêm) — 2 chỗ "cấm bullet" khác mục đích nhau, đọc kỹ trước khi sửa.
+- **`/generate-zalo-summary` — `{tom_tat}` có cấu trúc 2 phần cố định** (chốt
+  2026-07-18, sau khi thử "toàn văn xuôi" ở lần trước thì user muốn phần kiến
+  thức quay lại dạng liệt kê):
+  1. `"📚 Kiến thức đã học:"` + liệt kê kiến thức, **MỖI Ý XUỐNG DÒNG RIÊNG**
+     nhưng **KHÔNG** ký tự đầu dòng nào ('-', '•', số thứ tự) — chỉ xuống dòng.
+  2. Đoạn **văn xuôi liền mạch** (không xuống dòng, không bullet) nhận xét
+     chung tình hình học tập/thái độ.
+  ⚠️ Khác với `/grade-submission` (nơi UI CHỦ ĐỘNG muốn bullet, chỉ cấm Gemini
+  tự thêm ký tự đầu dòng vì UI đã tự thêm) — 3 chỗ "cấm ký tự đầu dòng" trong
+  file này có mục đích khác nhau (bullet UI tự vẽ / liệt kê không dấu / văn
+  xuôi không liệt kê), đọc kỹ context trước khi sửa.
 - Tin Zalo gửi phụ huynh: nhận xét CHUNG cả lớp, không nêu tên/định danh học
   viên nào (nhận xét cá nhân dùng /generate-student-summary gửi riêng).
 - Chấm điểm: yêu cầu Gemini đọc đề trước, liệt kê yêu cầu, rồi đối chiếu code;

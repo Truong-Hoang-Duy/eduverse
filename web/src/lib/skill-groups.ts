@@ -1,11 +1,13 @@
 /** Nhóm kỹ năng của lựa chọn nhận xét (review_options.skill_group).
  *  Giá trị lưu DB là slug — khớp CHECK constraint trong migration
- *  20260723000000; đổi/thêm nhóm thì phải sửa cả constraint. */
+ *  20260723000000 + 20260724000000 (thêm 'presentation'); đổi/thêm nhóm thì
+ *  phải sửa cả constraint. */
 export const SKILL_GROUPS = [
   { value: "thinking", label: "🧠 Tư duy" },
   { value: "coding", label: "💻 Kỹ năng code" },
   { value: "attitude", label: "🌱 Thái độ học tập" },
   { value: "collaboration", label: "🤝 Giao tiếp & hợp tác" },
+  { value: "presentation", label: "🎤 Thuyết trình" },
   { value: "other", label: "📌 Khác" },
 ] as const;
 
