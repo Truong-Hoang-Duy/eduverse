@@ -70,7 +70,7 @@ const SECTIONS = [
     steps: [
       "Mở aistudio.google.com/apikey, đăng nhập bằng tài khoản Google.",
       'Bấm "Create API key" → chọn project bất kỳ (hoặc tạo mới).',
-      "Copy key vừa hiện ra (bắt đầu bằng AIza...).",
+      "Copy TOÀN BỘ key vừa hiện ra.",
       "Vào Hồ sơ (menu góc phải) → dán vào ô API key → Lưu.",
       "Không chia sẻ key cho ai — người có key sẽ dùng hết lượt của bạn.",
     ],
