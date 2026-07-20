@@ -270,6 +270,15 @@
       trước + 3 câu phát hiện thêm khi rà lại) + 26 câu mới cho 6 nhóm trống
 - [x] Merge lên production (2026-07-18)
 
+### Đợt 17 (`feature/expand-review-options-to-10-each`) — mỗi nhóm ≥10 lựa chọn
+- [x] Viết 1 master list dùng chung: 112 điểm mạnh + 112 cần cải thiện, mỗi
+      nhóm skill_group ≥10 (presentation 12)
+- [x] Thay hẳn bộ mặc định seed trong code (33+26 → 112+112)
+- [x] Script so khớp label, chỉ insert phần dữ liệu thật GV chưa có (155 câu
+      mới, không đụng 78 câu cũ) — kết quả 233 câu, mọi ô ≥10
+- [x] lint + typecheck + pytest sạch; E2E `e2e-phase2` regression 17/17
+- [x] 0 migration; Merge lên production (2026-07-18)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
