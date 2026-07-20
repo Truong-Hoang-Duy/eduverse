@@ -8,9 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** Fix nhỏ (validate API key Gemini quá cứng) code xong trên nhánh
-`fix/gemini-api-key-format-validation`, lint/typecheck sạch, 0 migration —
-sẵn sàng merge/deploy. GĐ 1–5 + Đợt 1–17 đã production. **E2E 99/99**, pytest 4/4.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 + fix API key validation đều
+đã production; `main` = `develop` = `origin` = `e5c8afc`; working tree sạch;
+không nhánh feature nào treo. **E2E 99/99**, pytest 4/4.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
 Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
 tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
