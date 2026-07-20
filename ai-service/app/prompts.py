@@ -85,9 +85,7 @@ def build_zalo_summary_prompt(
             "và viết nhận xét chung vào ĐÚNG placeholder đó (KHÔNG phải {tom_tat}), "
             "dạng một đoạn VĂN XUÔI liền mạch (KHÔNG xuống dòng, KHÔNG gạch đầu "
             "dòng/số thứ tự), nối ý bằng dấu phẩy/liên từ (và, nhưng, bên cạnh "
-            "đó...). Ví dụ: 'Nhìn chung cả lớp học tập khá tốt, đa số các em tiếp "
-            "thu nhanh và tích cực phát biểu, bên cạnh đó một số em cần luyện gõ "
-            "phím thêm.'",
+            "đó...).",
             f"Lớp: {class_code}",
             f"Buổi học: {session_title}",
             f"Nội dung buổi học: {session_content}",
