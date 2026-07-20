@@ -8,11 +8,10 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** Fix prompt Zalo (tiêu đề "Kiến thức đã học" lặp với template +
-khôi phục "Phần 2" bị mất khỏi production) code xong trên nhánh
-`fix/zalo-prompt-duplicate-heading`, verify qua Gemini thật khớp mong đợi,
-pytest sạch, 0 migration — sẵn sàng merge/deploy.
-GĐ 1–5 + Đợt 1–17 + fix API key validation đã production. **E2E 99/99**, pytest 4/4.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 + 2 fix (API key validation,
+prompt Zalo lặp tiêu đề/thiếu Phần 2) đều đã production;
+`main` = `develop` = `origin` = `9376c92`; working tree sạch; không nhánh
+feature nào treo. **E2E 99/99**, pytest 4/4.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
 Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
 tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
