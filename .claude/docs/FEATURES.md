@@ -125,13 +125,16 @@ trong bảng danh sách lớp.
 ### Tin nhắn Zalo (copy thủ công — KHÔNG dùng Zalo API)
 - CRUD mẫu tin (`zalo_templates`) với placeholder `{ten_lop}` `{buoi}` `{tom_tat}` `{loi_nhan}`.
 - Chọn lớp + buổi → AI tổng hợp từ các nhận xét đã lưu → preview → nút **Copy**.
-- **`{tom_tat}` có cấu trúc 2 phần cố định**: (1) liệt kê từng kiến thức XUỐNG
-  DÒNG RIÊNG, KHÔNG gạch đầu dòng/số thứ tự, và **KHÔNG tự thêm tiêu đề** kiểu
-  "Kiến thức đã học" — GV tự viết tiêu đề đó trong `template_text` của mình,
-  AI thêm vào là lặp 2 lần (sự cố 2026-07-18); (2) đoạn VĂN XUÔI liền mạch
-  (không xuống dòng, không bullet) nhận xét chung tình hình học tập/thái độ. 2
-  phần cách nhau 1 dòng trống. Đừng nhầm "không bullet" của phần (1) — phần
-  (1) vẫn xuống dòng liệt kê, chỉ là không có ký tự đánh dấu ở đầu dòng.
+- **`{tom_tat}` CHỈ chứa danh sách kiến thức** (chốt lại lần 3 cùng ngày
+  2026-07-18): liệt kê từng kiến thức XUỐNG DÒNG RIÊNG, KHÔNG gạch đầu dòng/số
+  thứ tự, KHÔNG tự thêm tiêu đề (GV tự viết tiêu đề trong `template_text`),
+  và **KHÔNG kèm câu nhận xét/đánh giá nào** — thử để cả 2 phần (kiến thức +
+  đánh giá) chung `{tom_tat}` từng bị GV báo lặp với mục "Đánh giá chung quá
+  trình học tập" mà họ đã có sẵn, gắn với placeholder khác (`{loi_nhan}` trong
+  mẫu của họ, nhưng KHÔNG hardcode tên biến này trong prompt — Gemini tự đọc
+  ngữ cảnh câu chữ đứng trước mỗi placeholder trong `template_text` để biết đặt
+  đoạn nhận xét chung vào đúng chỗ). Đoạn nhận xét chung vẫn là văn xuôi liền
+  mạch, không xuống dòng, không bullet — chỉ đổi CHỖ ĐẶT, không đổi CÁCH VIẾT.
 
 ### Chấm bài bằng AI — công cụ ĐỘC LẬP, KHÔNG theo lớp
 Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.
