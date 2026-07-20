@@ -264,9 +264,11 @@
 - [x] 6 nhóm skill_group mới: creativity/computer_skills/ai_usage/questioning/
       discipline/self_study — migration `20260725000000` (drop+add CHECK)
 - [x] Bộ mặc định seed mở rộng 15+13→33+26 câu, dàn đều 11/12 nhóm
-- [x] lint + typecheck + pytest sạch
-- [ ] User dán migration → Claude bổ sung câu mới + move 2 câu "hỏi" sang
-      `questioning` cho dữ liệu thật GV → merge/deploy
+- [x] lint + typecheck + pytest sạch; E2E `e2e-phase2` regression 17/17
+- [x] User dán migration `20260725000000`
+- [x] Dữ liệu thật GV 52→78 câu: move 5 câu sang đúng nhóm mới (2 câu đã báo
+      trước + 3 câu phát hiện thêm khi rà lại) + 26 câu mới cho 6 nhóm trống
+- [x] Merge lên production (2026-07-18)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

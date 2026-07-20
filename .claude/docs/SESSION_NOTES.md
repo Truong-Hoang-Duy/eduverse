@@ -8,12 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** Đợt 16 (accordion Cài đặt + 6 nhóm kỹ năng mới + mở rộng bộ mặc
-định) CODE XONG trên nhánh `feature/settings-accordion-more-groups`,
-lint/typecheck/pytest sạch — **chờ user dán migration `20260725000000` rồi
-Claude mới bổ sung câu mới + move 2 câu "hỏi" sang nhóm `questioning` cho dữ
-liệu thật GV (`duyth1`) trước khi merge/deploy**.
-GĐ 1–5 + Đợt 1–15 đã production. **E2E 99/99** (trước Đợt 16), pytest 4/4.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–16 đều đã production;
+`main` = `develop` = `origin` = `77419c0`; working tree sạch; không nhánh
+feature nào treo. **E2E 99/99** (+17 phase2 regression), pytest 4/4.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
 Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
 tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
@@ -117,21 +114,6 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
-- 🔴 **Dán migration `20260725000000` (mở rộng CHECK skill_group thêm 6 nhóm:
-  creativity/computer_skills/ai_usage/questioning/discipline/self_study)** —
-  an toàn dán bất cứ lúc nào. Dán xong báo Claude để bổ sung câu mới cho dữ
-  liệu thật rồi mới merge/deploy.
-  ```sql
-  alter table public.review_options
-    drop constraint if exists review_options_skill_group_check;
-  alter table public.review_options
-    add constraint review_options_skill_group_check
-    check (skill_group in (
-      'thinking', 'creativity', 'coding', 'computer_skills', 'ai_usage',
-      'questioning', 'attitude', 'discipline', 'self_study', 'collaboration',
-      'presentation', 'other'
-    ));
-  ```
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*`
   thiếu `!.env.example`. Muốn sửa: thêm dòng đó rồi tự commit file. Claude KHÔNG
   tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
@@ -178,6 +160,14 @@ UI: `option-manager.tsx` viết lại — mỗi nhóm 1 `<details>` (cùng patte
 `ReviewEditor`), form thêm nằm trong từng accordion nên bỏ được Select chọn
 nhóm khi thêm. Bộ mặc định seed mở rộng 15+13→33+26 câu, dàn đều 11 nhóm (bỏ
 "Khác"). Migration `20260725000000` mở rộng CHECK constraint (drop+add).
+
+Dữ liệu thật GV (`duyth1`, 52→78 câu): ngoài 2 câu "hỏi" đã báo trước (move
+sang `questioning`), khi rà lại thấy thêm 3 câu nên đổi nhóm cho khớp 6 nhóm
+mới (không nằm trong kế hoạch ban đầu, tự quyết định vì nhỏ/dễ đảo ngược, đã
+nêu rõ khi báo cáo): "Sáng tạo, chủ động thử cách làm mới" thinking→creativity,
+"Cần luyện gõ phím / thao tác máy" coding→computer_skills, "Cần giữ trật tự,
+không làm việc riêng" attitude→discipline. Cộng 26 câu mới cho 6 nhóm trống.
+E2E `e2e-phase2` regression 17/17 sau khi merge.
 
 ### 2026-07-18 — Claude / Đợt 15 — Zalo liệt kê kiến thức + nhóm Thuyết trình
 User đổi ý 1 phần quyết định Đợt 14: muốn "Kiến thức đã học" trong tin Zalo
