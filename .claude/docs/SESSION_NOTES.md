@@ -8,9 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–16 đều đã production;
-`main` = `develop` = `origin` = `77419c0`; working tree sạch; không nhánh
-feature nào treo. **E2E 99/99** (+17 phase2 regression), pytest 4/4.
+**Đang làm:** Đợt 17 (mỗi nhóm nhận xét ≥10 lựa chọn) CODE XONG + ĐÃ ÁP DỤNG cho
+dữ liệu thật GV trên nhánh `feature/expand-review-options-to-10-each` —
+lint/typecheck/pytest sạch, E2E `e2e-phase2` regression 17/17. **0 migration**
+(không đổi schema, chỉ thêm dữ liệu) nên sẵn sàng merge/deploy ngay.
+GĐ 1–5 + Đợt 1–16 đã production. **E2E 99/99**, pytest 4/4.
 ⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
 Copy + bộ lọc trạng thái CHƯA được nghiệm thu bằng mắt, chỉ verify logic. User
 tự bấm thử trên `/teacher/sessions/[id]` khi rảnh.
@@ -89,6 +91,9 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   trực tiếp nên phải drop+add lại — xem migration mới nhất trong
   `supabase/migrations/` để biết constraint hiện hành). Bộ lọc combo box
   **mặc định "Tất cả nhóm"**, chỉ thu hẹp hiển thị, KHÔNG đổi lựa chọn đã tick.
+- **Mỗi nhóm nhận xét ≥10 lựa chọn** (Đợt 17, yêu cầu user 2026-07-18): cả bộ
+  mặc định seed (112+112 câu) VÀ dữ liệu thật GV — đây là ngưỡng TỐI THIỂU,
+  đừng để nhóm nào tụt xuống dưới 10 khi sửa/xóa sau này.
 - **Trang Cài đặt: accordion theo nhóm** (Đợt 16) — mỗi nhóm 1 khối thu gọn
   (`<details>`), form thêm nằm TRONG từng accordion (không cần chọn lại nhóm
   qua Select nữa, khác Đợt 13). Đông nhóm (12) nên KHÔNG liệt kê phẳng nữa.
@@ -147,6 +152,17 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   `web/.next`, chạy lại.
 
 ## 🗂 Lịch sử phiên gần đây (mới nhất trên cùng)
+
+### 2026-07-18 — Claude / Đợt 17 — mỗi nhóm nhận xét ≥10 lựa chọn
+Yêu cầu rõ ràng + hành động chỉ INSERT (an toàn, dễ đảo ngược) nên KHÔNG hỏi
+lại, triển khai luôn. Viết 1 "master list" duy nhất (112 strength + 112
+improvement, mỗi nhóm ≥10, presentation 12) dùng cho CẢ HAI nơi: (1) thay hẳn
+`DEFAULT_STRENGTHS`/`DEFAULT_IMPROVEMENTS` trong code (bộ seed cho GV mới —
+33+26 → 112+112); (2) script so khớp label với 78 câu đã có của GV thật
+(`duyth1`), chỉ insert phần CHƯA CÓ (155/224 câu mới) — không đụng câu đã tồn
+tại. Kết quả: dữ liệu thật 78→233 câu, verify bằng code tự đếm từng ô
+(category×skill_group) đảm bảo không ô nào dưới 10. **0 migration** (không đổi
+schema). E2E `e2e-phase2` regression 17/17.
 
 ### 2026-07-18 — Claude / Đợt 16 — accordion Cài đặt + 6 nhóm kỹ năng mới
 Hỏi rõ 3 điểm mơ hồ qua `AskUserQuestion` trước khi code (đúng hướng — user

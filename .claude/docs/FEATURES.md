@@ -86,8 +86,9 @@
   (`web/src/lib/skill-groups.ts` là nguồn danh sách nhóm dùng chung — SKILL_GROUPS
   export từ đây, mọi UI khác import lại, không tự khai danh sách nhóm riêng).
 - **Bộ mặc định** (nút "⚡ Thêm nhanh bộ lựa chọn mặc định" ở trang Cài đặt khi
-  GV chưa có lựa chọn nào): 33 điểm mạnh + 26 cần cải thiện, dàn đều 11/12 nhóm
-  (bỏ "Khác" vì là catch-all).
+  GV chưa có lựa chọn nào): 112 điểm mạnh + 112 cần cải thiện — **mỗi nhóm ít
+  nhất 10 lựa chọn** (yêu cầu user 2026-07-18, presentation có 12), bỏ "Khác"
+  vì là catch-all.
 - **Trang Cài đặt hiển thị dạng accordion theo nhóm** (2026-07-18): mỗi nhóm kỹ
   năng là 1 khối thu gọn/mở rộng (`<details>`, cùng pattern với `ReviewEditor`),
   mặc định đóng, hiện số lượng lựa chọn trong nhóm ngay trên tiêu đề. Form
