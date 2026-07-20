@@ -8,12 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** Đợt 13 (bộ lọc nhóm kỹ năng cho combo box nhận xét + giọng điệu AI
-đúng mực) CODE XONG trên nhánh `feature/review-skill-groups` — đã chạy thử
-`e2e-phase2` trên DB thật, đúng như dự đoán 4/17 FAIL (thiếu cột, các test khác
-không ảnh hưởng) — **chờ user dán migration `20260723000000` rồi chạy lại để
-xác nhận 17/17 xanh, sau đó mới merge/deploy**. GĐ 1–5 + Đợt 1–12 đã production.
-**E2E 95/95** (sẽ thành 99 sau khi cộng 4 check Đợt 13), pytest 4/4.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–13 đều đã production;
+`main` = `develop` = `origin` = `e4f8869`; working tree sạch; không nhánh
+feature nào treo. **E2E 99/99**, pytest 4/4. Việc tiếp tùy user.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
 - Auth USERNAME (không email), khóa → lớp → buổi, nhận xét AI theo buổi + tổng
@@ -100,15 +97,6 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Việc USER cần làm
-- 🔴 **Dán migration `20260723000000` (thêm `review_options.skill_group`) —
-  TRƯỚC khi chạy E2E phase2 và trước khi merge/deploy Đợt 13.** Cột có DEFAULT
-  nên an toàn với code cũ đang chạy (khác chiều với DROP — cứ dán bất cứ lúc
-  nào, không cần chờ deploy như DROP).
-  ```sql
-  alter table public.review_options
-    add column if not exists skill_group text not null default 'other'
-    check (skill_group in ('thinking', 'coding', 'attitude', 'collaboration', 'other'));
-  ```
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*`
   thiếu `!.env.example`. Muốn sửa: thêm dòng đó rồi tự commit file. Claude KHÔNG
   tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
@@ -117,8 +105,9 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** (Server
   Action không gọi được từ Node) — đổi action mà quên đổi script thì test vẫn
   xanh; validate link, form-sync... phải nghiệm thu bằng mắt.
-- 🟡 `e2e-gallery-storage` từng flake 1 lần (17/18 → rerun 18/18, nghi race
-  Storage) — gặp lại thì điều tra.
+- 🟡 `e2e-gallery-storage` đã flake **2 lần riêng biệt** (17/18 → rerun 18/18,
+  nghi race Storage) — gặp lần thứ 3 thì điều tra nghiêm túc, đừng coi là
+  bình thường mãi.
 
 ### Ràng buộc môi trường (không sửa được, phải sống chung)
 - **Migration dán tay vào Supabase SQL Editor** — mạng chặn cổng 5432/6543,
@@ -149,9 +138,12 @@ Nhánh `feature/review-skill-groups`. 2 việc độc lập: (1) `review_options
 mới + hiện badge nhóm; (2) `TONE_RULE` mới trong `prompts.py` cấm từ đại ngôn,
 áp cho 3 prompt viết nhận xét (không áp chấm bài/gợi ý tính năng — không phải
 nhận xét thái độ). E2E `e2e-phase2` 13→17 (mặc định 'other', set nhóm cụ thể,
-lọc đúng theo nhóm, CHECK constraint chặn giá trị sai) — chạy thử đúng như dự
-đoán 4/17 FAIL vì cột chưa tồn tại (probe + chạy thật đều xác nhận), 13 test cũ
-không bị ảnh hưởng. **Chờ user dán migration `20260723000000` rồi chạy lại.**
+lọc đúng theo nhóm, CHECK constraint chặn giá trị sai) — trước khi dán migration
+chạy thử đúng như dự đoán 4/17 FAIL (thiếu cột), 13 test cũ không ảnh hưởng; sau
+khi user dán xong chạy lại **17/17 xanh**, toàn bộ 8 suite **99/99 PASS**, đã
+merge lên production. `e2e-gallery-storage` lại flake 1 lần (17/18 → rerun
+18/18) — flake thật, không liên quan thay đổi đợt này (2 lần rồi, coi là đặc
+tính suite, không phải bug mới).
 
 ### 2026-07-17→18 — Claude / Đợt 7–12 (tất cả trong 2 ngày, đều đã production)
 - **Đợt 7**: form HV nhập sản phẩm (chip chức năng, nút Xóa, validate link, AI

@@ -220,9 +220,9 @@
 - [x] `prompts.py`: `TONE_RULE` cấm từ đại ngôn (tuyệt vời/xuất sắc/hoàn hảo...),
       dùng thang tốt/khá/chưa tốt — áp cho review + zalo summary + student
       summary, KHÔNG áp chấm bài/gợi ý tính năng
-- [x] E2E `e2e-phase2` +4 check (mặc định nhóm, set nhóm, lọc đúng, CHECK chặn
-      giá trị sai)
-- [ ] User dán migration → Claude chạy E2E xác nhận → merge/deploy
+- [x] E2E `e2e-phase2` 13→17 (mặc định nhóm, set nhóm, lọc đúng, CHECK chặn
+      giá trị sai); toàn bộ suite **99/99 PASS**
+- [x] User dán migration → Claude chạy E2E xác nhận → merge lên production
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
