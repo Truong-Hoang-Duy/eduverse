@@ -130,7 +130,7 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-07-18 — Đợt 13→17 + 3 fix (tất cả trong 1 ngày, đều production)
+### 2026-07-18 — Đợt 13→17 + 4 fix (tất cả trong 1 ngày, đều production)
 - **Đợt 13**: nhóm kỹ năng cho review_options + `TONE_RULE` (không đại ngôn).
 - **Đợt 14**: nút Copy nhận xét riêng phụ huynh, bộ lọc Đã/Chưa hoàn thành,
   Zalo thử "toàn văn xuôi" (sau bị đảo ngược 1 phần ở Đợt 15).
@@ -143,6 +143,11 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - **Fix 2+3**: prompt Zalo lặp tiêu đề + thiếu đoạn đánh giá + đè lẫn với mục
   "Đánh giá chung quá trình học tập" của GV — 3 lần sửa cùng ngày, chốt cuối ở
   "Quyết định đã chốt" phía trên.
+- **Fix 4**: user tự tay xóa câu ví dụ few-shot còn lại trong
+  `build_zalo_summary_prompt` (không có ghi chú "chỉ minh họa" → rủi ro Gemini
+  bắt chước) — Claude xác nhận cú pháp OK, đồng bộ + deploy hộ.
+- Ngoài code: xóa sạch 1 tài khoản học viên theo yêu cầu user (không ghi log
+  chi tiết vào file theo đúng yêu cầu lúc đó).
 
 ### 2026-07-15→16 — GĐ 1–5 + Đợt 1–12 (nền tảng, đều production)
 Auth username, khóa/lớp/buổi + nhận xét AI, Zalo, chấm bài viết lại, sản phẩm
