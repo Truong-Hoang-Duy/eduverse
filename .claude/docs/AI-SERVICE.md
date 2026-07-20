@@ -113,6 +113,13 @@ sớm bằng marker + magic bytes (PNG/JPEG/GIF/PDF) → 400 kèm hướng dẫn
   trình học tập" RIÊNG, gắn với placeholder KHÁC (`{loi_nhan}`) — 2-phần-trong-
   `{tom_tat}` khiến văn xuôi bị lặp lần nữa với mục đó. → tách hẳn: `{tom_tat}`
   chỉ liệt kê, văn xuôi đi vào placeholder khác theo ngữ cảnh (bản hiện hành).
+  (4) User tự tay xóa thêm câu ví dụ few-shot cho đoạn NHẬN XÉT CHUNG ("Ví dụ:
+  'Nhìn chung cả lớp học tập khá tốt...'") — câu đó KHÔNG có ghi chú "chỉ minh
+  họa, không phải thật" (khác ví dụ liệt kê kiến thức phía trên), nên có rủi
+  ro Gemini bắt chước gần giống câu mẫu thay vì tự tổng hợp (2 lần test trước
+  đều ra câu khá giống mẫu). Instruction mô tả định dạng vẫn đủ rõ mà không
+  cần ví dụ — nếu thêm lại ví dụ few-shot cho đoạn văn xuôi này, NHỚ kèm dòng
+  "chỉ minh họa, không phải nội dung thật" như ví dụ liệt kê.
   ⚠️ Khác với `/grade-submission` (nơi UI CHỦ ĐỘNG muốn bullet, chỉ cấm Gemini
   tự thêm ký tự đầu dòng vì UI đã tự thêm) — các chỗ "cấm ký tự đầu dòng" trong
   file này có mục đích khác nhau (bullet UI tự vẽ / liệt kê không dấu), đọc kỹ
