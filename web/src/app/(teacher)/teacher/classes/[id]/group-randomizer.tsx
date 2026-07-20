@@ -127,7 +127,20 @@ export function GroupRandomizer({
   const [groups, setGroups] = useState<PresentationGroup[]>([]);
   const [shuffling, setShuffling] = useState(false);
   const [tvMode, setTvMode] = useState(false);
+  // Đánh dấu vắng mặt hôm nay — chỉ tồn tại tại chỗ, KHÔNG lưu DB (không phải điểm danh).
+  const [absentIds, setAbsentIds] = useState<Set<string>>(new Set());
   const timers = useRef<{ interval?: ReturnType<typeof setInterval>; timeout?: ReturnType<typeof setTimeout> }>({});
+
+  function toggleAbsent(id: string) {
+    setAbsentIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const activeStudents = students.filter((s) => !absentIds.has(s.id));
 
   // Dọn timer khi unmount để không setState trên component đã gỡ.
   useEffect(() => {
@@ -150,21 +163,24 @@ export function GroupRandomizer({
 
   const num = Number(value);
   const groupCount =
-    mode === "byGroups" ? num : num > 0 ? Math.ceil(students.length / num) : 0;
+    mode === "byGroups" ? num : num > 0 ? Math.ceil(activeStudents.length / num) : 0;
   const invalid =
-    !Number.isFinite(num) || num < 1 || (mode === "byGroups" && num > students.length);
+    activeStudents.length === 0 ||
+    !Number.isFinite(num) ||
+    num < 1 ||
+    (mode === "byGroups" && num > activeStudents.length);
 
   function handleRandom() {
-    if (invalid || students.length === 0) return;
+    if (invalid || activeStudents.length === 0) return;
     setShuffling(true);
 
     // Hiệu ứng: xáo liên tục ~800ms rồi chốt kết quả cuối.
     timers.current.interval = setInterval(() => {
-      setGroups(buildGroups(students, groupCount));
+      setGroups(buildGroups(activeStudents, groupCount));
     }, 80);
     timers.current.timeout = setTimeout(() => {
       if (timers.current.interval) clearInterval(timers.current.interval);
-      setGroups(buildGroups(students, groupCount));
+      setGroups(buildGroups(activeStudents, groupCount));
       setShuffling(false);
     }, 800);
   }
@@ -179,6 +195,41 @@ export function GroupRandomizer({
 
   return (
     <div className="space-y-4">
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label>Học viên hôm nay</Label>
+          {absentIds.size > 0 && (
+            <button
+              type="button"
+              className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              onClick={() => setAbsentIds(new Set())}
+            >
+              Bỏ đánh dấu vắng ({absentIds.size})
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {students.map((s) => {
+            const absent = absentIds.has(s.id);
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => toggleAbsent(s.id)}
+                title={absent ? "Bấm để đánh dấu có mặt" : "Bấm để đánh dấu vắng hôm nay"}
+                className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                  absent
+                    ? "border-dashed border-muted-foreground/40 bg-muted text-muted-foreground line-through"
+                    : "border-input bg-transparent hover:bg-accent/50"
+                }`}
+              >
+                {s.name}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-end gap-3">
         <div className="min-w-44 space-y-1.5">
           <Label>Cách chia</Label>
@@ -200,7 +251,7 @@ export function GroupRandomizer({
             id="group-value"
             type="number"
             min={1}
-            max={students.length}
+            max={activeStudents.length}
             value={value}
             onChange={(e) => setValue(e.target.value)}
           />
@@ -220,9 +271,12 @@ export function GroupRandomizer({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        {students.length} học viên
+        {absentIds.size > 0
+          ? `${activeStudents.length}/${students.length} học viên có mặt`
+          : `${students.length} học viên`}
         {!invalid && groupCount > 0 && ` → ${groupCount} nhóm`}
-        {invalid && " · số không hợp lệ"}
+        {invalid && activeStudents.length === 0 && " · chưa có học viên nào có mặt"}
+        {invalid && activeStudents.length > 0 && " · số không hợp lệ"}
       </p>
 
       {groups.length > 0 && (
@@ -246,7 +300,8 @@ export function GroupRandomizer({
               🎤 Nhóm thuyết trình · Lớp {classCode}
             </h2>
             <span className="text-xl text-muted-foreground">
-              {students.length} học viên → {groups.length} nhóm
+              {activeStudents.length} học viên → {groups.length} nhóm
+              {absentIds.size > 0 && ` · ${absentIds.size} vắng`}
             </span>
             <div className="ml-auto flex items-center gap-3">
               <Button size="lg" onClick={handleRandom} disabled={shuffling || invalid}>
