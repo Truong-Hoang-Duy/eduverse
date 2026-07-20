@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -22,6 +24,11 @@ export function MultiSelect({
   placeholder?: string;
   emptyText?: string;
 }) {
+  const [search, setSearch] = useState("");
+  const filteredOptions = options.filter((opt) =>
+    opt.label.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
   function toggle(label: string) {
     onChange(
       selected.includes(label)
@@ -40,7 +47,7 @@ export function MultiSelect({
 
   return (
     <div className="space-y-2">
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={(open) => !open && setSearch("")}>
         <DropdownMenuTrigger className="flex w-full items-center justify-between rounded-md border bg-transparent px-3 py-2 text-sm outline-none transition-colors hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring">
           <span className={selected.length === 0 ? "text-muted-foreground" : ""}>
             {selected.length === 0 ? placeholder : `Đã chọn ${selected.length}`}
@@ -51,17 +58,34 @@ export function MultiSelect({
           align="start"
           className="max-h-64 w-(--radix-dropdown-menu-trigger-width) overflow-y-auto"
         >
-          {options.map((opt) => (
-            <DropdownMenuCheckboxItem
-              key={opt.id}
-              checked={selected.includes(opt.label)}
-              // Giữ menu mở để tick nhiều mục liên tiếp.
-              onSelect={(e) => e.preventDefault()}
-              onCheckedChange={() => toggle(opt.label)}
-            >
-              {opt.label}
-            </DropdownMenuCheckboxItem>
-          ))}
+          <div className="p-1 pb-0">
+            <Input
+              autoFocus
+              placeholder="Tìm kiếm..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              // Ngăn Radix bắt phím để gõ tìm kiếm không bị menu chặn/đóng.
+              onKeyDown={(e) => e.stopPropagation()}
+              className="mb-1"
+            />
+          </div>
+          {filteredOptions.length === 0 ? (
+            <p className="px-2 py-1.5 text-xs text-muted-foreground">
+              Không tìm thấy lựa chọn phù hợp.
+            </p>
+          ) : (
+            filteredOptions.map((opt) => (
+              <DropdownMenuCheckboxItem
+                key={opt.id}
+                checked={selected.includes(opt.label)}
+                // Giữ menu mở để tick nhiều mục liên tiếp.
+                onSelect={(e) => e.preventDefault()}
+                onCheckedChange={() => toggle(opt.label)}
+              >
+                {opt.label}
+              </DropdownMenuCheckboxItem>
+            ))
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
