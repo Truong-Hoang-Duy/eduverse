@@ -233,8 +233,11 @@
 - [x] `build_zalo_summary_prompt`: cấm gạch đầu dòng/số thứ tự trong `{tom_tat}`,
       yêu cầu văn xuôi liền mạch (khác mục đích với "cấm bullet" của grading —
       xem AI-SERVICE.md để không nhầm 2 chỗ)
-- [x] lint + typecheck + pytest sạch, 0 migration
-- [ ] Chạy E2E regression (phase2) → user nghiệm thu tin Zalo bằng mắt → merge/deploy
+- [x] lint + typecheck + pytest sạch, 0 migration; E2E `e2e-phase2` regression 17/17
+- [x] Gọi `/generate-zalo-summary` thật qua Gemini để xác nhận hết bullet — OK
+- [x] Merge lên production (2026-07-18)
+- [ ] User nghiệm thu nút Copy + bộ lọc trạng thái bằng mắt (máy Claude không
+      có chromium-cli/Playwright để tự lái trình duyệt)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

@@ -8,11 +8,13 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
 
-**Đang làm:** Đợt 14 (copy nhận xét + lọc trạng thái + Zalo hết bullet) CODE
-XONG trên nhánh `feature/review-copy-filter-zalo-format`, lint/typecheck/pytest
-sạch, 0 migration — **chờ chạy E2E regression + user nghiệm thu tin Zalo bằng
-mắt (nội dung AI sinh ra, không assert cứng được) rồi merge/deploy**. GĐ 1–5 +
-Đợt 1–13 đã production. **E2E 99/99** (trước Đợt 14), pytest 4/4.
+**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–14 đều đã production;
+`main` = `develop` = `origin` = `d904b62`; working tree sạch; không nhánh
+feature nào treo. **E2E 99/99**, pytest 4/4. Việc tiếp tùy user.
+⚠️ Đợt 14: máy KHÔNG có `chromium-cli`/Playwright để tự lái trình duyệt — nút
+Copy + bộ lọc trạng thái mới CHƯA được nghiệm thu bằng mắt, chỉ verify được
+logic (lint/typecheck/E2E DB + gọi Gemini thật cho phần Zalo). User tự bấm thử
+2 tính năng UI này trên `/teacher/sessions/[id]` khi rảnh.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
 - Auth USERNAME (không email), khóa → lớp → buổi, nhận xét AI theo buổi + tổng
