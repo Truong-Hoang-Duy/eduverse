@@ -39,6 +39,7 @@ export function ReviewList({
   students,
   options,
   reviewByStudentId,
+  priorCommentsByStudentId,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -46,6 +47,8 @@ export function ReviewList({
   students: StudentForReview[];
   options: ReviewOptionItem[];
   reviewByStudentId: Map<string, ExistingReview>;
+  /** Nhận xét các buổi trước của từng học viên — cho AI tránh lặp lời văn. */
+  priorCommentsByStudentId: Map<string, string[]>;
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
 
@@ -87,6 +90,7 @@ export function ReviewList({
             studentName={student.full_name}
             options={options}
             existing={reviewByStudentId.get(student.id) ?? null}
+            priorComments={priorCommentsByStudentId.get(student.id) ?? []}
           />
         ))
       )}

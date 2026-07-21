@@ -25,6 +25,7 @@ def build_review_prompt(
     improvements: list[str],
     advice_hint: str | None,
     previous_comment: str | None,
+    prior_comments: list[str] | None = None,
 ) -> str:
     parts = [
         SYSTEM_ROLE,
@@ -43,7 +44,22 @@ def build_review_prompt(
     if advice_hint:
         parts.append(f"Gợi ý lời khuyên từ giáo viên: {advice_hint}")
     if previous_comment:
-        parts.append(f"Nhận xét buổi trước (để nối tiếp, không lặp lại): {previous_comment}")
+        parts.append(
+            f"Bản nháp bạn đã viết trước đó cho ĐÚNG buổi này (giáo viên bấm tạo "
+            f"lại) — có thể diễn đạt khác đi, không cần giữ nguyên: {previous_comment}"
+        )
+    if prior_comments:
+        joined = "\n".join(f"- {c}" for c in prior_comments)
+        parts.append(
+            "Nhận xét các buổi TRƯỚC của CHÍNH học viên này (chỉ để bạn biết đã "
+            f"viết gì rồi, KHÔNG phải nội dung buổi này):\n{joined}"
+        )
+        parts.append(
+            "QUAN TRỌNG: nhận xét buổi này PHẢI viết khác các buổi trên — đổi câu "
+            "mở đầu, đổi cách sắp xếp câu, đổi từ ngữ diễn đạt, không lặp lại "
+            "khuôn mẫu câu/cụm từ đã dùng ở các buổi trước, dù nội dung khen/góp ý "
+            "có thể tương tự do học viên vẫn giữ điểm mạnh/yếu đó."
+        )
     parts.append('Trả về JSON: {"comment": "<đoạn nhận xét>"}')
     return "\n".join(parts)
 
