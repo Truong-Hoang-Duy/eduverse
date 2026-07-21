@@ -24,6 +24,7 @@ def generate_review(body: GenerateReviewRequest) -> GenerateReviewResponse:
         improvements=body.improvements,
         advice_hint=body.advice_hint,
         previous_comment=body.previous_comment,
+        prior_comments=body.prior_comments,
     )
     data = generate_json(
         prompt,

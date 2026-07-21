@@ -81,6 +81,7 @@ export function ReviewEditor({
   studentName,
   options,
   existing,
+  priorComments,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -89,6 +90,8 @@ export function ReviewEditor({
   studentName: string;
   options: ReviewOptionItem[];
   existing: ExistingReview | null;
+  /** Nhận xét các buổi trước của học viên này — cho AI tránh lặp lời văn. */
+  priorComments?: string[];
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     saveReview,
@@ -131,6 +134,7 @@ export function ReviewEditor({
         improvements,
         adviceHint: advice || undefined,
         previousComment: existing?.ai_generated_comment ?? undefined,
+        priorComments,
       });
       if (res.error) {
         setAiError(res.error);

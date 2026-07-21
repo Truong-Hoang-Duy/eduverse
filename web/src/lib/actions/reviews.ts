@@ -147,6 +147,9 @@ export interface GenerateReviewInput {
   improvements: string[];
   adviceHint?: string;
   previousComment?: string;
+  /** Nhận xét (đã lưu) của các buổi TRƯỚC của cùng học viên — giúp AI đổi
+   *  cách diễn đạt, tránh lặp lời văn giữa các buổi. */
+  priorComments?: string[];
 }
 
 /** Gọi ai-service sinh nhận xét — client gọi trực tiếp từ onClick. */
@@ -172,6 +175,7 @@ export async function generateAiReview(
       improvements: input.improvements,
       advice_hint: input.adviceHint || null,
       previous_comment: input.previousComment || null,
+      prior_comments: input.priorComments ?? [],
     });
     return { comment: data.comment };
   } catch (err) {

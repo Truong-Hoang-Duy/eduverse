@@ -34,6 +34,15 @@ interface ReviewRow extends ExistingReview {
   student_id: string;
 }
 
+interface PriorReviewRow {
+  student_id: string;
+  ai_generated_comment: string | null;
+  sessions: { session_number: number } | null;
+}
+
+/** Buổi trước gần nhất tối đa 3 buổi để AI tránh lặp lời văn giữa các buổi. */
+const MAX_PRIOR_COMMENTS = 3;
+
 export default async function SessionDetailPage({
   params,
 }: {
@@ -59,6 +68,7 @@ export default async function SessionDetailPage({
     { data: reviewsData },
     { data: optionsData },
     { data: templatesData },
+    { data: priorReviewsData },
   ] = await Promise.all([
     supabase
       .from("enrollments")
@@ -79,6 +89,14 @@ export default async function SessionDetailPage({
       .select("id, name")
       .eq("teacher_id", profile.id)
       .order("name"),
+    // Nhận xét các buổi TRƯỚC (cùng lớp, cùng học viên) — cho AI biết đã
+    // viết gì để đổi cách diễn đạt, tránh lặp lời văn giữa các buổi.
+    supabase
+      .from("student_reviews")
+      .select("student_id, ai_generated_comment, sessions!inner(session_number, class_id)")
+      .eq("sessions.class_id", session.class_id)
+      .lt("sessions.session_number", session.session_number)
+      .not("ai_generated_comment", "is", null),
   ]);
 
   const students = ((enrollments ?? []) as unknown as EnrollmentRow[])
@@ -88,6 +106,18 @@ export default async function SessionDetailPage({
   const reviewByStudentId = new Map(reviews.map((r) => [r.student_id, r]));
   const options = optionsData ?? [];
   const sessionTitle = session.title ?? `Buổi ${session.session_number}`;
+
+  const priorReviews = (priorReviewsData ?? []) as unknown as PriorReviewRow[];
+  const priorCommentsByStudentId = new Map<string, string[]>();
+  for (const studentId of new Set(priorReviews.map((r) => r.student_id))) {
+    const comments = priorReviews
+      .filter((r) => r.student_id === studentId)
+      .sort((a, b) => (b.sessions?.session_number ?? 0) - (a.sessions?.session_number ?? 0))
+      .slice(0, MAX_PRIOR_COMMENTS)
+      .reverse()
+      .map((r) => `Buổi ${r.sessions?.session_number}: ${r.ai_generated_comment}`);
+    priorCommentsByStudentId.set(studentId, comments);
+  }
 
   return (
     <div className="space-y-6">
@@ -145,6 +175,7 @@ export default async function SessionDetailPage({
               students={students}
               options={options}
               reviewByStudentId={reviewByStudentId}
+              priorCommentsByStudentId={priorCommentsByStudentId}
             />
           )}
         </CardContent>

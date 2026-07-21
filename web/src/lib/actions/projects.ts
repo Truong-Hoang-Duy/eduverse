@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import {
+  PROJECT_FEATURE_MAX,
+  PROJECT_FEATURES_MAX,
+  PROJECT_NAME_MAX,
+  PROJECT_TEXT_MAX,
+} from "@/lib/project-limits";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
@@ -66,6 +72,21 @@ export async function saveProject(
 
   if (!classId || !name) {
     return { error: "Vui lòng nhập tên dự án." };
+  }
+  if (name.length > PROJECT_NAME_MAX) {
+    return { error: `Tên dự án tối đa ${PROJECT_NAME_MAX} ký tự.` };
+  }
+  if (description.length > PROJECT_TEXT_MAX) {
+    return { error: `Mô tả dự án tối đa ${PROJECT_TEXT_MAX} ký tự.` };
+  }
+  if (extraNotes.length > PROJECT_TEXT_MAX) {
+    return { error: `Ghi chú nghiên cứu thêm tối đa ${PROJECT_TEXT_MAX} ký tự.` };
+  }
+  if (features.length > PROJECT_FEATURES_MAX) {
+    return { error: `Tối đa ${PROJECT_FEATURES_MAX} chức năng.` };
+  }
+  if (features.some((f) => f.length > PROJECT_FEATURE_MAX)) {
+    return { error: `Mỗi chức năng tối đa ${PROJECT_FEATURE_MAX} ký tự.` };
   }
   for (const [label, url] of [
     ["GitHub", repoUrl],
