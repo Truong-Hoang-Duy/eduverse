@@ -12,13 +12,11 @@
 nhận đó là yêu cầu nhầm lẫn, 2026-07-21, giữ nguyên `build_zalo_summary_prompt`
 như cũ, KHÔNG thêm migration/field gì cho hướng này).
 
-**`develop` (local) = `cb8248f`**, 5 commit trước `origin/develop` (4 commit
-tính năng từ `feature/gallery-review-limits` + 1 merge — xem lịch sử phiên
-dưới). **`main` = `origin` = `65c077a`** — chưa deploy đợt này (user chỉ yêu
-cầu commit, KHÔNG yêu cầu deploy/push). Lint+typecheck(web)+
-pytest(ai-service) PASS — **chưa cái nào nghiệm thu bằng mắt** (không có
-Playwright). `.vscode/tasks.json` vẫn untracked, user chưa quyết định commit
-hay để local — đừng tự thêm.
+**`main` = `develop` = `origin` = `fb26bac`** — ĐÃ DEPLOY production (giới
+hạn nhập liệu sản phẩm cuối khóa, roster+bộ lọc lớp gallery GV, chống lặp
+lời văn nhận xét theo buổi, sửa tên đề bài, `.vscode/tasks.json`). Lint+
+typecheck(web)+pytest(ai-service) PASS — **chưa cái nào nghiệm thu bằng
+mắt** (không có Playwright) — user tự bấm thử trên production.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
 Auth USERNAME, khóa→lớp→buổi, nhận xét AI theo buổi + tổng hợp từng HV (12
@@ -134,13 +132,12 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*`
   thiếu `!.env.example`. Muốn sửa: thêm dòng đó rồi tự commit file. Claude KHÔNG
   tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
-- 🟡 **Nghiệm thu bằng mắt** (máy Claude không có Playwright) 4 commit mới
-  của phiên này (đã merge vào `develop`, CHƯA deploy): bộ lọc lớp + roster
-  chưa khai báo ở `/teacher/gallery`; giới hạn nhập liệu ở
-  `/student/projects` (maxLength + cap 15 chức năng); "AI tạo nhận xét" ở
-  `/teacher/sessions/[id]` phải đổi lời văn so với buổi trước; nút "✏️ Sửa
-  tên đề" ở `/teacher/assignments`. Sau khi nghiệm thu, deploy giống lần
-  trước: merge `develop` → `main`, `git push origin develop main`.
+- 🟡 **Nghiệm thu bằng mắt trên production** (máy Claude không có
+  Playwright), ĐÃ DEPLOY: bộ lọc lớp + roster chưa khai báo ở
+  `/teacher/gallery`; giới hạn nhập liệu ở `/student/projects` (maxLength +
+  cap 15 chức năng); "AI tạo nhận xét" ở `/teacher/sessions/[id]` phải đổi
+  lời văn so với buổi trước; nút "✏️ Sửa tên đề" ở `/teacher/assignments`.
+  Nếu có lỗi, báo lại để fix rồi deploy tiếp.
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
@@ -169,7 +166,7 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-07-21 — MultiSelect search + random vắng (đã deploy) + 4 commit gallery/review/chấm bài (chỉ ở `develop`, chưa deploy)
+### 2026-07-21 — MultiSelect search + random vắng + gallery/review/chấm bài + VS Code task (tất cả đã deploy production)
 - **Đã deploy production** (`main`=`develop`=`65c077a`): ô tìm kiếm trong
   `MultiSelect` (điểm mạnh/cần cải thiện, filter `%từ%`); đánh dấu vắng mặt
   trước khi random nhóm thuyết trình (client-only, không lưu DB, đúng tinh
@@ -189,11 +186,14 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - **Zalo chống lặp lời văn: HỦY** — user nêu yêu cầu rồi xác nhận đó là nhầm
   lẫn trước khi code bắt đầu; không đổi gì ở `build_zalo_summary_prompt`.
 - 4 commit trên gộp qua `feature/gallery-review-limits`, merge `--no-ff`
-  vào `develop` (`cb8248f`) — **CHƯA push lên `origin`**, user chỉ yêu cầu
-  commit chứ không yêu cầu deploy lần này.
+  vào `develop`. Thêm `.vscode/tasks.json` (chore, task chạy song song
+  web+ai-service, KHÔNG auto-run khi mở folder). Sau đó merge `develop` →
+  `main`, `git push origin develop main` — **`main`=`develop`=`origin`=
+  `fb26bac`, ĐÃ DEPLOY production**.
 - Lint + typecheck (web) + pytest (ai-service) PASS cho mọi commit trên;
   KHÔNG chạy được E2E (máy Claude thiếu `web/.env.local`); chưa cái nào
-  nghiệm thu UI bằng mắt (không có Playwright).
+  nghiệm thu UI bằng mắt (không có Playwright) — user tự bấm thử trên
+  production sau khi deploy.
 
 ### 2026-07-18 — Đợt 13→17 + 4 fix (tất cả trong 1 ngày, đều production)
 Nhóm kỹ năng cho review_options + `TONE_RULE` (Đợt 13); Copy nhận xét riêng
