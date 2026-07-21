@@ -77,6 +77,31 @@ export async function createAssignment(
   return { success: `Đã tạo đề cho buổi ${sessionNumber}.` };
 }
 
+/** Chỉ đổi tiêu đề — không đụng file đề, số buổi, hay khóa học. */
+export async function updateAssignmentTitle(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const id = String(formData.get("id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+
+  if (!id || !title) {
+    return { error: "Vui lòng nhập tiêu đề." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("assignments")
+    .update({ title })
+    .eq("id", id);
+  if (error) {
+    return { error: `Không đổi được tên đề: ${error.message}` };
+  }
+
+  revalidatePath("/teacher/assignments");
+  return { success: "Đã đổi tên đề." };
+}
+
 export async function deleteAssignment(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
