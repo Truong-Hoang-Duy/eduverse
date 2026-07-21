@@ -6,21 +6,28 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-18, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-21, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. GĐ 1–5 + Đợt 1–17 + 4 fix (API key validation,
-3× prompt Zalo) đều đã production; `main` = `develop` = `origin` = `6c8bb68`;
-working tree sạch; không nhánh feature nào treo. **E2E 99/99**, pytest 4/4.
-⚠️ Nút Copy + bộ lọc trạng thái (Đợt 14) CHƯA nghiệm thu bằng mắt — máy Claude
-không có `chromium-cli`/Playwright. User tự bấm thử ở `/teacher/sessions/[id]`.
+**Đang làm:** KHÔNG có task dở — chống lặp lời văn tin Zalo bị HỦY (user xác
+nhận đó là yêu cầu nhầm lẫn, 2026-07-21, giữ nguyên `build_zalo_summary_prompt`
+như cũ, KHÔNG thêm migration/field gì cho hướng này).
+
+**`develop` (local) = `cb8248f`**, 5 commit trước `origin/develop` (4 commit
+tính năng từ `feature/gallery-review-limits` + 1 merge — xem lịch sử phiên
+dưới). **`main` = `origin` = `65c077a`** — chưa deploy đợt này (user chỉ yêu
+cầu commit, KHÔNG yêu cầu deploy/push). Lint+typecheck(web)+
+pytest(ai-service) PASS — **chưa cái nào nghiệm thu bằng mắt** (không có
+Playwright). `.vscode/tasks.json` vẫn untracked, user chưa quyết định commit
+hay để local — đừng tự thêm.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
 Auth USERNAME, khóa→lớp→buổi, nhận xét AI theo buổi + tổng hợp từng HV (12
 nhóm kỹ năng, mỗi nhóm ≥10 lựa chọn, accordion ở trang Cài đặt), tin Zalo tổng
-hợp cả lớp, chấm bài AI độc lập (không lưu), sản phẩm cuối khóa + gallery, hồ
-sơ HV xuyên khóa, API key Gemini riêng, đổi mật khẩu không cần mật khẩu cũ, 3
-màn chiếu TV (random nhóm, nghỉ giữa giờ, thuyết trình + tổng kết lớp),
-GitHub Action keep-alive Supabase.
+hợp cả lớp, chấm bài AI độc lập (không lưu, đề bài sửa được tên), sản phẩm
+cuối khóa + gallery (roster "chưa khai báo" cả 2 phía HV/GV, giới hạn nhập
+liệu), hồ sơ HV xuyên khóa, API key Gemini riêng, đổi mật khẩu không cần mật
+khẩu cũ, 3 màn chiếu TV (random nhóm — đánh dấu vắng loại khỏi random, nghỉ
+giữa giờ, thuyết trình + tổng kết lớp), GitHub Action keep-alive Supabase.
 
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
@@ -97,6 +104,29 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   mô tả có thể không khớp thực tế (từng suýt xóa 50 câu GV tự soạn công phu vì
   tưởng chỉ là 12 câu mặc định); dừng lại hỏi khi phát hiện lệch, đừng làm
   theo nghĩa đen.
+- **Nhận xét theo buổi chống lặp lời văn**: thêm `prior_comments` (tối đa 3
+  buổi gần nhất, lấy từ `student_reviews.ai_generated_comment` join
+  `sessions` theo `student_id` + `session_number` nhỏ hơn buổi hiện tại) vào
+  `build_review_prompt`, TÁCH BIỆT khỏi `previous_comment` cũ (đó là bản
+  nháp của CHÍNH buổi đang xem, không phải buổi trước — đã đổi nhãn prompt
+  cho rõ nghĩa, tránh AI hiểu lẫn 2 khối). Prompt yêu cầu đổi câu mở
+  đầu/cấu trúc câu, không chỉ tránh trùng Ý.
+- **Tin Zalo KHÔNG chống lặp lời văn qua các buổi — HỦY hẳn** (user xác nhận
+  2026-07-21 đó là yêu cầu nhầm lẫn). `build_zalo_summary_prompt` giữ nguyên
+  như trước, KHÔNG thêm migration lưu tin đã sinh cho mục đích này — đừng tự
+  đề xuất lại trừ khi user chủ động nêu lại.
+- **Sản phẩm cuối khóa**: roster "chưa khai báo" (trước chỉ có bên HV, giờ
+  thêm cả bên GV ở `/teacher/gallery`, tái dùng `ProjectGrid` +
+  `membersWithoutProject` có sẵn — không sửa component đó). Giới hạn nhập
+  liệu (tên ≤100, mô tả/ghi chú ≤1000, tối đa 15 chức năng/mỗi cái ≤80 ký
+  tự) nguồn DUY NHẤT ở `web/src/lib/project-limits.ts`, validate thật ở
+  server (`saveProject`), client chỉ chặn UX. KHÔNG thêm deadline/trạng thái
+  nộp gì — đã hỏi user, giữ nguyên quyết định cũ (xem trên).
+- **Bộ lọc theo lớp/nhóm kỹ năng dùng Select 1-lựa-chọn client-side (không
+  URL searchParams)** — dự án chưa từng dùng searchParams để lọc, giữ nhất
+  quán với `StatusFilter`/`GroupFilter` đã có (`review-list.tsx`,
+  `review-editor.tsx`); áp dụng lại cho bộ lọc lớp ở `/teacher/gallery`
+  (`gallery-view.tsx`).
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
@@ -104,10 +134,19 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 - 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*`
   thiếu `!.env.example`. Muốn sửa: thêm dòng đó rồi tự commit file. Claude KHÔNG
   tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
+- 🟡 **Nghiệm thu bằng mắt** (máy Claude không có Playwright) 4 commit mới
+  của phiên này (đã merge vào `develop`, CHƯA deploy): bộ lọc lớp + roster
+  chưa khai báo ở `/teacher/gallery`; giới hạn nhập liệu ở
+  `/student/projects` (maxLength + cap 15 chức năng); "AI tạo nhận xét" ở
+  `/teacher/sessions/[id]` phải đổi lời văn so với buổi trước; nút "✏️ Sửa
+  tên đề" ở `/teacher/assignments`. Sau khi nghiệm thu, deploy giống lần
+  trước: merge `develop` → `main`, `git push origin develop main`.
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
   action mà quên đổi script thì test vẫn xanh; UI phải nghiệm thu bằng mắt.
+  Chưa chạy lại E2E cho các thay đổi phiên này (máy Claude không có
+  `web/.env.local`).
 - 🟡 `e2e-gallery-storage` đã flake **2 lần riêng biệt** (17/18 → rerun 18/18,
   nghi race Storage) — gặp lần thứ 3 thì điều tra nghiêm túc.
 
@@ -130,24 +169,43 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
+### 2026-07-21 — MultiSelect search + random vắng (đã deploy) + 4 commit gallery/review/chấm bài (chỉ ở `develop`, chưa deploy)
+- **Đã deploy production** (`main`=`develop`=`65c077a`): ô tìm kiếm trong
+  `MultiSelect` (điểm mạnh/cần cải thiện, filter `%từ%`); đánh dấu vắng mặt
+  trước khi random nhóm thuyết trình (client-only, không lưu DB, đúng tinh
+  thần "random không lưu"). Kèm `.vscode/tasks.json` (task chạy song song
+  web+ai-service, KHÔNG auto-run khi mở folder — an toàn commit) — user
+  chưa quyết định có commit vào repo hay không.
+- **Sản phẩm cuối khóa** (`c806240`): roster "chưa khai báo" thêm bên GV
+  (`/teacher/gallery`, tái dùng `ProjectGrid`), giới hạn nhập liệu
+  (`web/src/lib/project-limits.ts`) — xem "Quyết định đã chốt".
+- **Bộ lọc lớp gallery GV** (`fabd585`) **+ chống lặp lời văn review**
+  (`b21da25`): Select lọc lớp ở `/teacher/gallery` (`gallery-view.tsx`);
+  `prior_comments` trong `build_review_prompt` — xem "Quyết định đã chốt".
+- **Chấm bài** (`dc8f94d`): nút "✏️ Sửa tên đề" ở `/teacher/assignments`
+  (`edit-assignment-title-button.tsx` + `updateAssignmentTitle` trong
+  `grading.ts`), theo đúng pattern `EditCourseDialog`/`EditClassDialog` có
+  sẵn — chỉ đổi `title`, không đụng file/session_number/course.
+- **Zalo chống lặp lời văn: HỦY** — user nêu yêu cầu rồi xác nhận đó là nhầm
+  lẫn trước khi code bắt đầu; không đổi gì ở `build_zalo_summary_prompt`.
+- 4 commit trên gộp qua `feature/gallery-review-limits`, merge `--no-ff`
+  vào `develop` (`cb8248f`) — **CHƯA push lên `origin`**, user chỉ yêu cầu
+  commit chứ không yêu cầu deploy lần này.
+- Lint + typecheck (web) + pytest (ai-service) PASS cho mọi commit trên;
+  KHÔNG chạy được E2E (máy Claude thiếu `web/.env.local`); chưa cái nào
+  nghiệm thu UI bằng mắt (không có Playwright).
+
 ### 2026-07-18 — Đợt 13→17 + 4 fix (tất cả trong 1 ngày, đều production)
-- **Đợt 13**: nhóm kỹ năng cho review_options + `TONE_RULE` (không đại ngôn).
-- **Đợt 14**: nút Copy nhận xét riêng phụ huynh, bộ lọc Đã/Chưa hoàn thành,
-  Zalo thử "toàn văn xuôi" (sau bị đảo ngược 1 phần ở Đợt 15).
-- **Đợt 15**: Zalo quay lại liệt kê kiến thức + nhóm `presentation`; suýt xóa
-  nhầm 50 câu GV tự soạn khi tưởng "xóa hết" — dừng hỏi lại, chọn phân loại
-  thay vì xóa (bài học quan trọng, xem "Quyết định đã chốt").
-- **Đợt 16**: accordion Cài đặt theo nhóm + 6 nhóm kỹ năng mới (12 tổng).
-- **Đợt 17**: mỗi nhóm ≥10 lựa chọn (seed 112+112, dữ liệu thật GV 78→233).
-- **Fix 1**: API key validation chặn nhầm key không bắt đầu "AIza".
-- **Fix 2+3**: prompt Zalo lặp tiêu đề + thiếu đoạn đánh giá + đè lẫn với mục
-  "Đánh giá chung quá trình học tập" của GV — 3 lần sửa cùng ngày, chốt cuối ở
-  "Quyết định đã chốt" phía trên.
-- **Fix 4**: user tự tay xóa câu ví dụ few-shot còn lại trong
-  `build_zalo_summary_prompt` (không có ghi chú "chỉ minh họa" → rủi ro Gemini
-  bắt chước) — Claude xác nhận cú pháp OK, đồng bộ + deploy hộ.
-- Ngoài code: xóa sạch 1 tài khoản học viên theo yêu cầu user (không ghi log
-  chi tiết vào file theo đúng yêu cầu lúc đó).
+Nhóm kỹ năng cho review_options + `TONE_RULE` (Đợt 13); Copy nhận xét riêng
+phụ huynh + bộ lọc Đã/Chưa hoàn thành (Đợt 14); Zalo thử "toàn văn xuôi" rồi
+quay lại liệt kê kiến thức + nhóm `presentation` (Đợt 15 — suýt xóa nhầm 50
+câu GV tự soạn khi tưởng "xóa hết", dừng hỏi lại thay vì làm theo nghĩa đen,
+bài học đã ghi ở "Quyết định đã chốt"); accordion Cài đặt theo nhóm + 6 nhóm
+mới (Đợt 16); mỗi nhóm ≥10 lựa chọn, seed 112+112 (Đợt 17). 4 fix cùng ngày:
+API key validation chặn nhầm key không "AIza"; prompt Zalo lặp tiêu đề +
+thiếu đoạn đánh giá + đè mục "Đánh giá chung" của GV (3 lần sửa, chốt cuối ở
+"Quyết định đã chốt"); user tự xóa câu ví dụ few-shot trong
+`build_zalo_summary_prompt`.
 
 ### 2026-07-15→16 — GĐ 1–5 + Đợt 1–12 (nền tảng, đều production)
 Auth username, khóa/lớp/buổi + nhận xét AI, Zalo, chấm bài viết lại, sản phẩm
