@@ -14,14 +14,22 @@ export function FeatureChips({
   features,
   onChange,
   inputId,
+  max,
+  featureMaxLength,
 }: {
   features: string[];
   onChange: (next: string[]) => void;
   inputId?: string;
+  /** Số chức năng tối đa — khi đạt, khóa ô nhập. */
+  max?: number;
+  /** Độ dài tối đa mỗi chức năng. */
+  featureMaxLength?: number;
 }) {
   const [draft, setDraft] = useState("");
+  const atMax = max !== undefined && features.length >= max;
 
   function add() {
+    if (atMax) return;
     const value = draft.trim();
     if (!value) return;
     // Bỏ trùng (không phân biệt hoa/thường).
@@ -49,12 +57,25 @@ export function FeatureChips({
               add();
             }
           }}
-          placeholder="VD: Đăng nhập — gõ rồi Enter"
+          placeholder={atMax ? `Đã đạt tối đa ${max} chức năng` : "VD: Đăng nhập — gõ rồi Enter"}
+          maxLength={featureMaxLength}
+          disabled={atMax}
         />
-        <Button type="button" variant="outline" onClick={add} disabled={!draft.trim()}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={add}
+          disabled={!draft.trim() || atMax}
+        >
           Thêm
         </Button>
       </div>
+
+      {atMax && (
+        <p className="text-xs text-muted-foreground">
+          Đã đạt tối đa {max} chức năng.
+        </p>
+      )}
 
       {features.length > 0 && (
         <div className="flex flex-wrap gap-1.5">

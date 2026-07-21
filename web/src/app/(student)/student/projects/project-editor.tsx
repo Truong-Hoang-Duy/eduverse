@@ -23,6 +23,12 @@ import {
   type FeatureSuggestion,
   type SaveProjectResult,
 } from "@/lib/actions/projects";
+import {
+  PROJECT_FEATURE_MAX,
+  PROJECT_FEATURES_MAX,
+  PROJECT_NAME_MAX,
+  PROJECT_TEXT_MAX,
+} from "@/lib/project-limits";
 
 import { FeatureChips } from "./feature-chips";
 
@@ -96,10 +102,12 @@ export function ProjectEditor({
   }
 
   function addSuggestion(s: FeatureSuggestion) {
+    if (features.length >= PROJECT_FEATURES_MAX) return;
+    const name = s.name.slice(0, PROJECT_FEATURE_MAX);
     setFeatures((prev) =>
-      prev.some((f) => f.toLowerCase() === s.name.toLowerCase())
+      prev.some((f) => f.toLowerCase() === name.toLowerCase())
         ? prev
-        : [...prev, s.name]
+        : [...prev, name]
     );
     // Giữ mô tả cách làm của AI bằng cách lưu vào Ghi chú (features chỉ lưu tên).
     setNotes(appendToNotes(s));
@@ -108,13 +116,20 @@ export function ProjectEditor({
 
   function addAllSuggestions() {
     const names = new Set(features.map((f) => f.toLowerCase()));
-    const toAdd = suggestions.filter((s) => !names.has(s.name.toLowerCase()));
-    setFeatures((prev) => [...prev, ...toAdd.map((s) => s.name)]);
+    const room = PROJECT_FEATURES_MAX - features.length;
+    const toAdd = suggestions
+      .filter((s) => !names.has(s.name.toLowerCase()))
+      .slice(0, Math.max(room, 0));
+    setFeatures((prev) => [
+      ...prev,
+      ...toAdd.map((s) => s.name.slice(0, PROJECT_FEATURE_MAX)),
+    ]);
     setNotes((prev) => {
-      const lines = suggestions.map((s) => `- ${s.name}: ${s.description}`);
+      const lines = toAdd.map((s) => `- ${s.name}: ${s.description}`);
+      if (lines.length === 0) return prev;
       return prev.trim() ? `${prev}\n${lines.join("\n")}` : lines.join("\n");
     });
-    setSuggestions([]);
+    setSuggestions((prev) => prev.filter((s) => !toAdd.includes(s)));
   }
 
   function handleSuggest() {
@@ -149,6 +164,7 @@ export function ProjectEditor({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="VD: Website quản lý thư viện"
+          maxLength={PROJECT_NAME_MAX}
           required
         />
       </div>
@@ -162,6 +178,7 @@ export function ProjectEditor({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Dự án làm gì, dành cho ai, ý tưởng từ đâu..."
+          maxLength={PROJECT_TEXT_MAX}
         />
       </div>
 
@@ -198,6 +215,8 @@ export function ProjectEditor({
           features={features}
           onChange={setFeatures}
           inputId={`features-${classId}`}
+          max={PROJECT_FEATURES_MAX}
+          featureMaxLength={PROJECT_FEATURE_MAX}
         />
         {aiError && <p className="text-sm text-destructive">{aiError}</p>}
         {suggestions.length > 0 && (
@@ -283,6 +302,7 @@ export function ProjectEditor({
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           placeholder="Công nghệ đã tìm hiểu, khó khăn, dự định phát triển tiếp..."
+          maxLength={PROJECT_TEXT_MAX}
         />
       </div>
 
