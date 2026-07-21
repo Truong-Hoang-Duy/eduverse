@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import { AssignmentForm } from "./assignment-form";
 import { DeleteAssignmentButton } from "./delete-assignment-button";
+import { EditAssignmentTitleButton } from "./edit-assignment-title-button";
 import {
   GradingTool,
   type AssignmentChoice,
@@ -122,6 +123,10 @@ export default async function AssignmentsPage() {
                             <ViewSpecDialog
                               assignmentId={a.id}
                               sessionNumber={a.session_number}
+                              title={a.title}
+                            />
+                            <EditAssignmentTitleButton
+                              assignmentId={a.id}
                               title={a.title}
                             />
                             <DeleteAssignmentButton

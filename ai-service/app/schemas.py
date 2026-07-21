@@ -21,6 +21,7 @@ class GenerateReviewRequest(AiRequest):
     improvements: list[str] = []
     advice_hint: str | None = None
     previous_comment: str | None = None
+    prior_comments: list[str] = []
 
 
 class GenerateReviewResponse(BaseModel):
