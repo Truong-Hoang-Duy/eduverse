@@ -1,9 +1,10 @@
 import type { CommentItem } from "@/components/gallery/comment-section";
-import { ProjectGrid, type GalleryProject } from "@/components/gallery/project-grid";
+import type { GalleryProject, RosterMember } from "@/components/gallery/project-grid";
 import { PageHeader } from "@/components/page-header";
-import { Badge } from "@/components/ui/badge";
 import { requireRole } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
+
+import { GalleryView } from "./gallery-view";
 
 export const metadata = { title: "Sản phẩm học viên — Eduverse" };
 
@@ -31,19 +32,34 @@ interface CommentRow {
   profiles: { full_name: string } | null;
 }
 
+interface EnrollmentRow {
+  class_id: string;
+  student_id: string;
+  profiles: { full_name: string } | null;
+}
+
 export default async function TeacherGalleryPage() {
   const profile = await requireRole("teacher");
   const supabase = await createClient();
 
   // RLS (projects_class_select → is_teacher_of_class) đã chặn lớp của GV khác;
-  // danh sách lớp ở đây chỉ để nhóm hiển thị và lấy mã lớp.
-  const [{ data: classesData }, { data: projectsData }, { data: commentsData }] =
+  // danh sách lớp ở đây dùng để nhóm hiển thị, lấy mã lớp, và giới hạn
+  // enrollments/projects lấy về đúng phạm vi lớp GV dạy.
+  const { data: classesData } = await supabase
+    .from("classes")
+    .select("id, class_code, courses(code)")
+    .eq("teacher_id", profile.id)
+    .order("class_code");
+
+  const classes = (classesData ?? []) as unknown as {
+    id: string;
+    class_code: string;
+    courses: { code: string } | null;
+  }[];
+  const classIds = classes.map((c) => c.id);
+
+  const [{ data: projectsData }, { data: commentsData }, { data: enrollmentsData }] =
     await Promise.all([
-      supabase
-        .from("classes")
-        .select("id, class_code, courses(code)")
-        .eq("teacher_id", profile.id)
-        .order("class_code"),
       supabase
         .from("projects")
         .select(
@@ -56,14 +72,16 @@ export default async function TeacherGalleryPage() {
           "id, project_id, content, author_id, created_at, profiles!project_comments_author_id_fkey(full_name)"
         )
         .order("created_at"),
+      classIds.length > 0
+        ? supabase
+            .from("enrollments")
+            .select("class_id, student_id, profiles(full_name)")
+            .in("class_id", classIds)
+        : Promise.resolve({ data: [] as EnrollmentRow[] }),
     ]);
 
-  const classes = (classesData ?? []) as unknown as {
-    id: string;
-    class_code: string;
-    courses: { code: string } | null;
-  }[];
   const comments = (commentsData ?? []) as unknown as CommentRow[];
+  const enrollments = (enrollmentsData ?? []) as unknown as EnrollmentRow[];
   const classCodeById = new Map(classes.map((c) => [c.id, c.class_code]));
 
   const projects: GalleryProject[] = (
@@ -100,13 +118,30 @@ export default async function TeacherGalleryPage() {
 
   const totalComments = projects.reduce((n, p) => n + p.comments.length, 0);
 
+  // Enrollment chưa có sản phẩm tương ứng → thẻ mờ "Chưa có sản phẩm" cuối
+  // mỗi lớp, giúp GV biết ngay ai còn thiếu mà không phải tự đếm.
+  const hasProject = new Set(
+    ((projectsData ?? []) as unknown as ProjectRow[]).map(
+      (p) => `${p.class_id}:${p.student_id}`
+    )
+  );
+  const membersWithoutProject: RosterMember[] = enrollments
+    .filter((e) => !hasProject.has(`${e.class_id}:${e.student_id}`))
+    .map((e) => ({
+      key: `${e.class_id}:${e.student_id}`,
+      name: e.profiles?.full_name ?? "Học viên",
+      classCode: classCodeById.get(e.class_id) ?? "",
+      isMine: false,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name, "vi"));
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Sản phẩm học viên"
         description={
           projects.length > 0
-            ? `${projects.length} sản phẩm · ${totalComments} nhận xét — bấm vào từng em để xem chi tiết và nhận xét`
+            ? `${projects.length} sản phẩm · ${totalComments} nhận xét · ${membersWithoutProject.length} chưa khai báo — bấm vào từng em để xem chi tiết và nhận xét`
             : "Sản phẩm cuối khóa của học viên trong các lớp bạn dạy"
         }
       />
@@ -119,32 +154,16 @@ export default async function TeacherGalleryPage() {
           </p>
         </div>
       ) : (
-        classes.map((c) => {
-          const classProjects = projects.filter((p) => p.classId === c.id);
-          return (
-            <section key={c.id} className="space-y-3">
-              <div className="flex flex-wrap items-center gap-3">
-                <Badge className="rounded-md px-2.5 py-1 font-mono text-xs">
-                  {c.class_code}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {c.courses?.code ?? ""} · {classProjects.length} sản phẩm
-                </span>
-              </div>
-              {classProjects.length === 0 ? (
-                <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  Lớp này chưa có em nào khai báo sản phẩm.
-                </p>
-              ) : (
-                <ProjectGrid
-                  projects={classProjects}
-                  currentUserId={profile.id}
-                  commentPlaceholder="Viết nhận xét cho em..."
-                />
-              )}
-            </section>
-          );
-        })
+        <GalleryView
+          classes={classes.map((c) => ({
+            id: c.id,
+            class_code: c.class_code,
+            courseCode: c.courses?.code ?? "",
+          }))}
+          projects={projects}
+          membersWithoutProject={membersWithoutProject}
+          currentUserId={profile.id}
+        />
       )}
     </div>
   );
