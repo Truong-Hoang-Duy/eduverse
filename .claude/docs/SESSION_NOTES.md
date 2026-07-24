@@ -10,11 +10,7 @@
 
 **Đang làm:** KHÔNG có task dở. Chống lặp lời văn tin Zalo (qua các buổi,
 kiểu lưu 2-3 tin trước) vẫn HỦY như đã chốt (user xác nhận là yêu cầu nhầm
-lẫn). Ý tưởng chia sẻ màn hình real-time kiểu Google Meet đã research xong
-(WebRTC/SFU không hợp stack serverless free-tier — xem "Quyết định đã
-chốt") nhưng user CHƯA chọn hướng, KHÔNG có plan implement nào đang chờ —
-nếu nhắc lại, hỏi lại hướng (nhúng link ngoài / SDK bên thứ 3 / tự xây)
-trước khi code.
+lẫn).
 
 **`main` = `origin/main` = `f41ecce`** (merge của `develop` vào `main`);
 **`develop` = `origin/develop` = `ea5a73a`** — cùng nội dung code, chỉ khác
@@ -136,13 +132,6 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   quán với `StatusFilter`/`GroupFilter` đã có (`review-list.tsx`,
   `review-editor.tsx`); áp dụng lại cho bộ lọc lớp ở `/teacher/gallery`
   (`gallery-view.tsx`).
-- **Chia sẻ màn hình real-time (kiểu Google Meet) — KHÔNG tự xây SFU/WebRTC
-  riêng.** Đã research: mesh P2P vỡ ở ~4-6 người, SFU thật cần server chạy
-  liên tục (không hợp Vercel serverless/Render free), TURN server tốn phí —
-  lệch hẳn triết lý 0đ/tháng. Nếu làm, chỉ 2 hướng hợp lý: (a) nhúng link
-  phòng họp ngoài (Meet/Zoom/Jitsi, 0 dependency), hoặc (b) SDK SFU bên thứ
-  3 có free tier (LiveKit/Daily/Whereby, cần dependency + tài khoản dịch
-  vụ). User CHƯA chọn — đừng tự code hướng nào khi chưa hỏi lại.
 - **Điểm mạnh/cần cải thiện cho gõ tự do** (`review-editor.tsx`): câu gõ tay
   vừa thêm vào review đang xem, VỪA tự insert vào `review_options` (danh
   mục dùng chung) — skill_group lấy theo bộ lọc nhóm đang chọn, hoặc
@@ -221,12 +210,7 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   nghiệm thu UI bằng mắt (không có Playwright) — user tự bấm thử trên
   production sau khi deploy.
 
-### 2026-07-21 (tiếp) — research chia sẻ màn hình + 3 cải tiến nhận xét/Zalo (đã deploy)
-- **Research (KHÔNG code)**: chia sẻ màn hình real-time kiểu Google Meet —
-  kết luận + 2 hướng thay thế ở "Quyết định đã chốt", user chưa chọn. Sau
-  đó brainstorm 8 ý tưởng cải tiến chung khi user hỏi "nên thêm gì" (dashboard
-  việc cần làm, lịch dạy, in nhận xét, thống kê skill_group, link báo cáo
-  không cần đăng nhập, PWA, xuất CSV...) — chưa ý nào được chọn.
+### 2026-07-21 (tiếp) — 3 cải tiến nhận xét/Zalo (đã deploy)
 - **Nhập tự do điểm mạnh/cần cải thiện** (`85e66ff`): xem "Quyết định đã
   chốt".
 - **Gợi ý nội dung buổi học bằng AI + Zalo cá nhân hóa lớp 1-1** (`d8c85a6`,
