@@ -4,6 +4,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { NavLinks } from "@/components/nav-links";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
+import { isAdminUsername } from "@/lib/admin-access";
 import type { Profile } from "@/lib/types";
 
 const TEACHER_LINKS = [
@@ -12,12 +13,21 @@ const TEACHER_LINKS = [
   { href: "/teacher/gallery", label: "Sản phẩm" },
 ];
 
+// Chỉ hiện cho username khai trong ADMIN_USERNAMES. Ẩn link chỉ là cho gọn nav
+// — chặn thật nằm ở `requireAdmin()` trong chính trang đó.
+const ADMIN_LINK = { href: "/teacher/admin", label: "Vận hành" };
+
 // Học viên: 3 tab (student-tabs.tsx) là con của "Lớp học" nên nav này sáng
 // suốt cả khu /student/* — không dùng exact.
 const STUDENT_LINKS = [{ href: "/student", label: "Lớp học" }];
 
 export function AppNav({ profile }: { profile: Profile }) {
-  const links = profile.role === "teacher" ? TEACHER_LINKS : STUDENT_LINKS;
+  const links =
+    profile.role === "teacher"
+      ? isAdminUsername(profile.username)
+        ? [...TEACHER_LINKS, ADMIN_LINK]
+        : TEACHER_LINKS
+      : STUDENT_LINKS;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
