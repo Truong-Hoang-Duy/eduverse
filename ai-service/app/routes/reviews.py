@@ -7,6 +7,8 @@ from app.schemas import (
     GenerateReviewResponse,
     StudentSummaryRequest,
     StudentSummaryResponse,
+    SuggestSessionContentRequest,
+    SuggestSessionContentResponse,
     ZaloSummaryRequest,
     ZaloSummaryResponse,
 )
@@ -79,6 +81,29 @@ def generate_student_summary(body: StudentSummaryRequest) -> StudentSummaryRespo
     return StudentSummaryResponse(**data)
 
 
+@router.post("/suggest-session-content", response_model=SuggestSessionContentResponse)
+def suggest_session_content(
+    body: SuggestSessionContentRequest,
+) -> SuggestSessionContentResponse:
+    prompt = prompts.build_session_content_prompt(
+        course_name=body.course_name,
+        class_code=body.class_code,
+        session_number=body.session_number,
+        draft_text=body.draft_text,
+        prior_sessions=[(p.session_number, p.content) for p in body.prior_sessions],
+    )
+    data = generate_json(
+        prompt,
+        response_schema={
+            "type": "object",
+            "properties": {"content": {"type": "string"}},
+            "required": ["content"],
+        },
+        api_key=body.api_key,
+    )
+    return SuggestSessionContentResponse(**data)
+
+
 @router.post("/generate-zalo-summary", response_model=ZaloSummaryResponse)
 def generate_zalo_summary(body: ZaloSummaryRequest) -> ZaloSummaryResponse:
     reviews_text = "\n".join(
@@ -93,6 +118,7 @@ def generate_zalo_summary(body: ZaloSummaryRequest) -> ZaloSummaryResponse:
         session_content=body.session_content,
         reviews_text=reviews_text,
         template_text=body.template_text,
+        is_one_on_one=body.is_one_on_one,
     )
     data = generate_json(
         prompt,
