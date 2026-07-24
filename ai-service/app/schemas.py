@@ -41,6 +41,8 @@ class ZaloSummaryRequest(AiRequest):
     session_content: str = ""
     reviews: list[StudentReviewItem] = []
     template_text: str
+    # Lớp chỉ có 1 học viên (dạy kèm 1-1) — đổi cách nhận xét, xem prompts.py.
+    is_one_on_one: bool = False
 
 
 class ZaloSummaryResponse(BaseModel):
@@ -70,6 +72,24 @@ class StudentSummaryResponse(BaseModel):
     diem_yeu: str
     dinh_huong: str
     kho_khan: str
+
+
+# ---------- /suggest-session-content ----------
+class PriorSessionItem(BaseModel):
+    session_number: int
+    content: str
+
+
+class SuggestSessionContentRequest(AiRequest):
+    course_name: str = ""
+    class_code: str = ""
+    session_number: int
+    draft_text: str
+    prior_sessions: list[PriorSessionItem] = []
+
+
+class SuggestSessionContentResponse(BaseModel):
+    content: str
 
 
 # ---------- /suggest-features ----------
