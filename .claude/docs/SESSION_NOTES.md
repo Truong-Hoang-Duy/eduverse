@@ -16,7 +16,7 @@ chốt") nhưng user CHƯA chọn hướng, KHÔNG có plan implement nào đang
 nếu nhắc lại, hỏi lại hướng (nhúng link ngoài / SDK bên thứ 3 / tự xây)
 trước khi code.
 
-**`main` = `develop` = `origin` = `9c7bc78`** — ĐÃ DEPLOY production (nhập
+**`main` = `develop` = `origin` = `c4629ba`** — ĐÃ DEPLOY production (nhập
 tự do điểm mạnh/cần cải thiện, gợi ý nội dung buổi học bằng AI, Zalo cá
 nhân hóa cho lớp 1-1). User đã tự kiểm tra và hài lòng với các tính năng
 này trước khi yêu cầu deploy. Lint+typecheck(web)+pytest(ai-service) PASS.
