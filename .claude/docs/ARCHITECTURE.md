@@ -26,7 +26,8 @@
 web/src/
 ├── app/(auth)/          # login, signup (student + teacher-invite)
 ├── app/(teacher)/       # GV: courses+classes (+ hồ sơ HV), sessions, assignments
-│                        #     (chấm bài), gallery (sản phẩm HV), settings
+│                        #     (chấm bài), gallery (sản phẩm HV), settings,
+│                        #     admin (vận hành — chỉ ADMIN_USERNAMES)
 ├── app/(student)/       # HV: nav "Lớp học" (/student) + 3 tab: projects, gallery, guide
 ├── components/          # dùng chung: app-shell/nav/footer, page-header, stat-card,
 │                        # confirm-dialog, theme-toggle, student-tabs, project-card,
@@ -36,6 +37,8 @@ web/src/
 ├── lib/get-profile.ts   # requireProfile/requireRole (bọc cache() — 1 lượt/request)
 ├── lib/file-check.ts    # chặn file bị DLP mã hóa trước khi upload
 ├── lib/spec-storage.ts  # dọn file đề trong Storage khi xóa (Storage KHÔNG cascade)
+├── lib/admin-access.ts  # ai vào được /teacher/admin (ADMIN_USERNAMES, fail closed)
+├── lib/admin-report.ts  # số liệu + dò dữ liệu hỏng cho trang vận hành
 └── lib/ai-client.ts     # gọi ai-service, duy nhất nơi biết AI_SERVICE_API_KEY
 ai-service/app/
 ├── main.py              # FastAPI app + auth middleware
@@ -48,6 +51,8 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
 ## Ranh giới & quy tắc phụ thuộc
 
 - Phân quyền thật nằm ở RLS (Postgres); UI check chỉ để trải nghiệm.
+- **Ngoại lệ duy nhất: khu `/teacher/admin`** chạy bằng service-role nên KHÔNG có
+  RLS đỡ — mọi action ở đó phải tự kiểm quyền ngay dòng đầu (`denyIfNotAdmin`).
 - Chỉ server-side của Next.js gọi ai-service; browser không bao giờ có X-API-Key.
 - ai-service stateless, không giữ DB connection — đọc file đề qua Supabase Storage
   bằng service key; không ghi gì (chấm bài trả kết quả inline).
