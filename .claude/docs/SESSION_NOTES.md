@@ -8,15 +8,24 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-21, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở — chống lặp lời văn tin Zalo bị HỦY (user xác
-nhận đó là yêu cầu nhầm lẫn, 2026-07-21, giữ nguyên `build_zalo_summary_prompt`
-như cũ, KHÔNG thêm migration/field gì cho hướng này).
+**Đang làm:** KHÔNG có task dở. Chống lặp lời văn tin Zalo (qua các buổi,
+kiểu lưu 2-3 tin trước) vẫn HỦY như đã chốt (user xác nhận là yêu cầu nhầm
+lẫn). Ý tưởng chia sẻ màn hình real-time kiểu Google Meet đã research xong
+(WebRTC/SFU không hợp stack serverless free-tier — xem "Quyết định đã
+chốt") nhưng user CHƯA chọn hướng, KHÔNG có plan implement nào đang chờ —
+nếu nhắc lại, hỏi lại hướng (nhúng link ngoài / SDK bên thứ 3 / tự xây)
+trước khi code.
 
-**`main` = `develop` = `origin` = `fb26bac`** — ĐÃ DEPLOY production (giới
-hạn nhập liệu sản phẩm cuối khóa, roster+bộ lọc lớp gallery GV, chống lặp
-lời văn nhận xét theo buổi, sửa tên đề bài, `.vscode/tasks.json`). Lint+
-typecheck(web)+pytest(ai-service) PASS — **chưa cái nào nghiệm thu bằng
-mắt** (không có Playwright) — user tự bấm thử trên production.
+**`main` = `develop` = `origin` = `9c7bc78`** — ĐÃ DEPLOY production (nhập
+tự do điểm mạnh/cần cải thiện, gợi ý nội dung buổi học bằng AI, Zalo cá
+nhân hóa cho lớp 1-1). User đã tự kiểm tra và hài lòng với các tính năng
+này trước khi yêu cầu deploy. Lint+typecheck(web)+pytest(ai-service) PASS.
+
+**`web/.env.example` giờ đã có trong repo** — user tự thêm `!.env.example`
+vào `web/.gitignore` + tạo file (chỉ placeholder: `your-project.supabase.co`,
+`change-me-...`, không secret thật — Claude verify qua `git diff --cached`
+rồi mới commit hộ theo yêu cầu rõ ràng của user). Mục nợ cũ ở "Vấn đề đang
+mở" coi như xong.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
 Auth USERNAME, khóa→lớp→buổi, nhận xét AI theo buổi + tổng hợp từng HV (12
@@ -125,19 +134,34 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   quán với `StatusFilter`/`GroupFilter` đã có (`review-list.tsx`,
   `review-editor.tsx`); áp dụng lại cho bộ lọc lớp ở `/teacher/gallery`
   (`gallery-view.tsx`).
+- **Chia sẻ màn hình real-time (kiểu Google Meet) — KHÔNG tự xây SFU/WebRTC
+  riêng.** Đã research: mesh P2P vỡ ở ~4-6 người, SFU thật cần server chạy
+  liên tục (không hợp Vercel serverless/Render free), TURN server tốn phí —
+  lệch hẳn triết lý 0đ/tháng. Nếu làm, chỉ 2 hướng hợp lý: (a) nhúng link
+  phòng họp ngoài (Meet/Zoom/Jitsi, 0 dependency), hoặc (b) SDK SFU bên thứ
+  3 có free tier (LiveKit/Daily/Whereby, cần dependency + tài khoản dịch
+  vụ). User CHƯA chọn — đừng tự code hướng nào khi chưa hỏi lại.
+- **Điểm mạnh/cần cải thiện cho gõ tự do** (`review-editor.tsx`): câu gõ tay
+  vừa thêm vào review đang xem, VỪA tự insert vào `review_options` (danh
+  mục dùng chung) — skill_group lấy theo bộ lọc nhóm đang chọn, hoặc
+  "other" nếu đang xem "Tất cả nhóm". Có check trùng label (không phân biệt
+  hoa/thường) trước khi insert. Quyết định này (thay vì chỉ áp dụng 1 lần
+  không lưu danh mục) do user chọn 2026-07-21 để tái sử dụng câu đã gõ.
+- **Gợi ý nội dung buổi học bằng AI** (`/suggest-session-content`): popup
+  nhận ghi chú thô của GV, lấy ngữ cảnh **5 buổi TRƯỚC gần nhất** cùng lớp
+  (`sessions.content`, không lưu gì mới) để AI viết đúng tiến trình nối
+  tiếp. KHÔNG áp `TONE_RULE` — đây là mô tả giáo án, không phải nhận xét
+  học viên (giống lý do chấm bài/gợi ý tính năng không áp TONE_RULE). Có
+  cả nút Copy và "Dùng gợi ý này" (điền vào ô chính, GV vẫn tự bấm Lưu).
+- **Tin Zalo cá nhân hóa khi lớp chỉ có 1 học viên (dạy kèm 1-1)**: tính
+  sĩ số qua bảng `enrollments` của cả lớp (KHÔNG phải số HV đã được nhận
+  xét buổi đó) để quyết định `is_one_on_one`. Lớp 1 người → được nêu tên/
+  gọi "em" cụ thể về chính em đó; lớp >1 người → giữ nguyên hành vi cũ
+  (nhận xét chung, tuyệt đối không nêu tên) — ĐỪNG đổi nhánh else khi sửa
+  sau này. Khi dùng tên, CHỈ được 1 trong 2 cách (tên HOẶC "em"), TUYỆT
+  ĐỐI không ghép ("em An" sai) — sửa sau khi user phát hiện AI ghép sai.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
-
-### Việc USER cần làm
-- 🟡 **`web/.env.example` KHÔNG có trong repo** — `web/.gitignore` có `.env*`
-  thiếu `!.env.example`. Muốn sửa: thêm dòng đó rồi tự commit file. Claude KHÔNG
-  tự làm (không đọc được file env — chặn quyền; không commit thứ chưa xem).
-- 🟡 **Nghiệm thu bằng mắt trên production** (máy Claude không có
-  Playwright), ĐÃ DEPLOY: bộ lọc lớp + roster chưa khai báo ở
-  `/teacher/gallery`; giới hạn nhập liệu ở `/student/projects` (maxLength +
-  cap 15 chức năng); "AI tạo nhận xét" ở `/teacher/sessions/[id]` phải đổi
-  lời văn so với buổi trước; nút "✏️ Sửa tên đề" ở `/teacher/assignments`.
-  Nếu có lỗi, báo lại để fix rồi deploy tiếp.
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
@@ -194,6 +218,25 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   KHÔNG chạy được E2E (máy Claude thiếu `web/.env.local`); chưa cái nào
   nghiệm thu UI bằng mắt (không có Playwright) — user tự bấm thử trên
   production sau khi deploy.
+
+### 2026-07-21 (tiếp) — research chia sẻ màn hình + 3 cải tiến nhận xét/Zalo (đã deploy)
+- **Research (KHÔNG code)**: chia sẻ màn hình real-time kiểu Google Meet —
+  kết luận + 2 hướng thay thế ở "Quyết định đã chốt", user chưa chọn. Sau
+  đó brainstorm 8 ý tưởng cải tiến chung khi user hỏi "nên thêm gì" (dashboard
+  việc cần làm, lịch dạy, in nhận xét, thống kê skill_group, link báo cáo
+  không cần đăng nhập, PWA, xuất CSV...) — chưa ý nào được chọn.
+- **Nhập tự do điểm mạnh/cần cải thiện** (`85e66ff`): xem "Quyết định đã
+  chốt".
+- **Gợi ý nội dung buổi học bằng AI + Zalo cá nhân hóa lớp 1-1** (`d8c85a6`,
+  gộp 1 commit vì cùng sửa `prompts.py`/`schemas.py`/`routes/reviews.py`):
+  xem "Quyết định đã chốt". Có 1 vòng sửa thêm ngay sau đó (cấm ghép "em"
+  + tên) — đã gộp vào cùng commit vì chưa từng push.
+- User tự kiểm tra cả 3 tính năng, hài lòng, rồi mới yêu cầu commit + deploy.
+- 2 commit trên gộp qua `feature/review-custom-input-ai-suggestions`, merge
+  `--no-ff` vào `develop`, sau đó merge `develop` → `main`,
+  `git push origin develop main`.
+- Lint + typecheck (web) + pytest (ai-service) PASS; không chạy E2E (thiếu
+  `web/.env.local`).
 
 ### 2026-07-18 — Đợt 13→17 + 4 fix (tất cả trong 1 ngày, đều production)
 Nhóm kỹ năng cho review_options + `TONE_RULE` (Đợt 13); Copy nhận xét riêng
