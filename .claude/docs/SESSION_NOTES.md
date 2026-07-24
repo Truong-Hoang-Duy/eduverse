@@ -16,6 +16,12 @@ lẫn).
 đã nghiệm thu ở local và khai `ADMIN_USERNAMES` trên Vercel trước khi
 deploy. 0 migration. Lint + typecheck + `pnpm build` PASS.
 
+**`main` = `origin/main` = `e3bb3c6`** — ĐÂY là bản đang chạy production.
+**`develop` = `origin/develop` = `e9936e5`** + đúng 1 commit docs ghi lại
+chính hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa
+ghi chú, merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã
+dính ở phiên 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
+
 ⚠️ **`ADMIN_USERNAMES` phải có trong `web/.env.local` (local) và Vercel
 (production)**, nếu không trang đá về `/teacher` — cố tình fail closed.
 Biến thêm SAU khi deploy thì bản đang chạy không thấy, phải redeploy.
