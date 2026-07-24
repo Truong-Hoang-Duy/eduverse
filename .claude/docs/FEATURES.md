@@ -186,6 +186,36 @@ GV cắm laptop vào TV của lớp; cả 3 màn chiếu dùng chung `components
     em, tên dự án, 3 chức năng đầu); bấm thẻ nhảy về slide của em đó. Vào bằng
     nút "🖼️ Cả lớp" hoặc "Tiếp →" ở slide cuối.
 
+### Vận hành hệ thống (`/teacher/admin`) — CHỈ username trong ADMIN_USERNAMES
+Nav "Vận hành" chỉ hiện với username khai trong biến môi trường `ADMIN_USERNAMES`
+(ngăn cách bằng dấu phẩy). **Chưa khai biến = không ai vào được** (fail closed —
+quên cấu hình phải mất quyền, không phải mở cho mọi GV).
+
+- **KHÔNG có vai trò `admin` trong DB** và cố tình giữ như vậy: `profiles.role`
+  có CHECK `('teacher','student')`, thêm giá trị phải drop+add constraint rồi rà
+  lại RLS của MỌI bảng (policy đều viết theo `teacher_id = auth.uid()`, không có
+  nhánh "admin thấy tất cả"). Dự án 1 người nên chặn bằng env là đủ.
+- ⚠️ Trang chạy bằng **service-role, bỏ qua RLS** → mọi Server Action trong
+  `lib/actions/admin.ts` phải gọi `denyIfNotAdmin()` ngay dòng đầu. Không có
+  policy nào đỡ nếu quên.
+- **Toàn vẹn dữ liệu**: hồ sơ mồ côi (còn `profiles`, mất auth user) và ngược
+  lại, ghi danh trỏ tới HV không tồn tại, khóa/lớp mất GV chủ (RLS lọc theo
+  `teacher_id` nên chúng vô hình trong app mà vẫn nằm trong DB), tài khoản chưa
+  xác nhận email, **file đề mồ côi trong Storage**.
+- **Công cụ dọn dẹp**: xóa tài khoản test E2E (khớp tiền tố cố định — xem
+  `TEST_USER_PREFIXES`, chép ở cả `lib/admin-report.ts` lẫn
+  `scripts/purge-test-users.mjs` vì script Node không import được .ts, sửa một
+  bên nhớ sửa bên kia); xóa file Storage không còn đề nào trỏ tới.
+  ⚠️ Danh sách file mồ côi được **tính lại trong action**, không nhận từ form —
+  tin path client gửi lên là ép xóa được cả file đang dùng.
+  ⚠️ File mới hơn **1 giờ được bỏ qua**: `createAssignment` upload TRƯỚC rồi mới
+  insert dòng (có rollback), nên luôn có khoảnh khắc file chưa được trỏ tới.
+- **Xác nhận email hộ**: email ảo `@eduverse.local` không nhận được thư xác nhận
+  nào, nên tài khoản kẹt ở trạng thái chưa confirm là đăng nhập không nổi.
+- Dùng `OpsActionButton` (popup xác nhận **có hiện kết quả**) thay `ConfirmDialog`
+  dùng chung: thao tác ở đây chạy hàng loạt và có thể xong một phần ("đã xóa 3/5,
+  2 cái vướng khóa ngoại"), đóng popup im lặng là giấu mất thông tin cần nhất.
+
 ## Học viên
 
 Điều hướng: nav trên cùng có **"Lớp học"** (`exact: true` để không sáng khi đang

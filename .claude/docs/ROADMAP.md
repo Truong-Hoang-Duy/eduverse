@@ -279,6 +279,18 @@
 - [x] lint + typecheck + pytest sạch; E2E `e2e-phase2` regression 17/17
 - [x] 0 migration; Merge lên production (2026-07-18)
 
+### Đợt 18 (`feature/admin-ops-dashboard`) — trang vận hành hệ thống
+- [x] `/teacher/admin`: báo cáo toàn vẹn dữ liệu (hồ sơ/auth lệch nhau, ghi danh
+      mồ côi, khóa/lớp mất GV chủ, email chưa xác nhận, file Storage mồ côi) +
+      số dòng 12 bảng + bảng tài khoản
+- [x] Công cụ dọn: xóa tài khoản test E2E, xóa file đề không còn ai trỏ tới,
+      xác nhận email hộ tài khoản kẹt — bản web của 3 script trong `web/scripts/`
+- [x] Chặn bằng `ADMIN_USERNAMES` (fail closed) thay vì thêm role `admin` vào DB
+      — **0 migration**, không đụng CHECK constraint lẫn RLS bảng nào
+- [x] lint + typecheck + `pnpm build` sạch; user nghiệm thu UI ở local
+- [x] Merge lên production (2026-07-24) — nhớ khai `ADMIN_USERNAMES` trên Vercel
+      TRƯỚC khi deploy, biến thêm sau không áp cho bản đã build
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

@@ -6,18 +6,22 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-21, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-24, bởi: Claude)
 
 **Đang làm:** KHÔNG có task dở. Chống lặp lời văn tin Zalo (qua các buổi,
 kiểu lưu 2-3 tin trước) vẫn HỦY như đã chốt (user xác nhận là yêu cầu nhầm
 lẫn).
 
-**`main` = `origin/main` = `f41ecce`** (merge của `develop` vào `main`);
-**`develop` = `origin/develop` = `ea5a73a`** — cùng nội dung code, chỉ khác
-commit merge. ĐÃ DEPLOY production (nhập
-tự do điểm mạnh/cần cải thiện, gợi ý nội dung buổi học bằng AI, Zalo cá
-nhân hóa cho lớp 1-1). User đã tự kiểm tra và hài lòng với các tính năng
-này trước khi yêu cầu deploy. Lint+typecheck(web)+pytest(ai-service) PASS.
+**ĐÃ DEPLOY production: trang vận hành `/teacher/admin`** (Đợt 18) — user
+đã nghiệm thu ở local và khai `ADMIN_USERNAMES` trên Vercel trước khi
+deploy. 0 migration. Lint + typecheck + `pnpm build` PASS.
+
+⚠️ **`ADMIN_USERNAMES` phải có trong `web/.env.local` (local) và Vercel
+(production)**, nếu không trang đá về `/teacher` — cố tình fail closed.
+Biến thêm SAU khi deploy thì bản đang chạy không thấy, phải redeploy.
+
+Trước đó (2026-07-21, cũng đã production): nhập tự do điểm mạnh/cần cải
+thiện, gợi ý nội dung buổi học bằng AI, Zalo cá nhân hóa cho lớp 1-1.
 
 **`web/.env.example` giờ đã có trong repo** — user tự thêm `!.env.example`
 vào `web/.gitignore` + tạo file (chỉ placeholder: `your-project.supabase.co`,
@@ -152,13 +156,35 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   sau này. Khi dùng tên, CHỈ được 1 trong 2 cách (tên HOẶC "em"), TUYỆT
   ĐỐI không ghép ("em An" sai) — sửa sau khi user phát hiện AI ghép sai.
 
+- **Trang vận hành KHÔNG dùng vai trò `admin` trong DB** — chặn bằng biến môi
+  trường `ADMIN_USERNAMES` (fail closed). Lý do: `profiles.role` có CHECK
+  `('teacher','student')`, thêm giá trị phải drop+add constraint RỒI rà lại RLS
+  của mọi bảng (policy đều viết theo `teacher_id = auth.uid()`, không có nhánh
+  "admin thấy tất cả"). Dự án 1 người nên env là đủ — **đừng tự đề xuất thêm
+  role vào DB trừ khi có nhiều admin thật**. Trang chạy service-role nên mọi
+  action phải gọi `denyIfNotAdmin()` ngay dòng đầu: bỏ qua RLS = không còn lưới
+  an toàn nào phía dưới.
+- **Không tin path do client gửi khi xóa file Storage** — action dọn file mồ côi
+  tự tính lại danh sách; nhận từ form là người dùng sửa request ép xóa được file
+  đang dùng. Bỏ qua file mới hơn 1 giờ vì `createAssignment` upload TRƯỚC rồi mới
+  insert dòng (có rollback) — luôn có khoảnh khắc file chưa được trỏ tới.
+
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
   action mà quên đổi script thì test vẫn xanh; UI phải nghiệm thu bằng mắt.
-  Chưa chạy lại E2E cho các thay đổi phiên này (máy Claude không có
-  `web/.env.local`).
+- 🟡 **Trang vận hành chưa có E2E** — chỉ lint/typecheck/build + user bấm tay.
+- 🟡 **`TEST_USER_PREFIXES` chép ở 2 nơi** (`web/src/lib/admin-report.ts` và
+  `web/scripts/purge-test-users.mjs`) vì script Node thuần không import được
+  `.ts`. Sửa một bên nhớ sửa bên kia — đã ghi chú chéo ở cả hai file.
+- 🟡 **CLAUDE.md nói "không upload Storage trước khi dòng DB tạo xong" nhưng
+  `createAssignment` upload trước rồi mới insert** (có rollback nếu insert
+  hỏng). Không phải bug, nhưng luật và code đang lệch — sửa luật hoặc sửa code
+  khi có dịp.
+- 🟡 **`coding-style.md` nói web dùng Vitest nhưng repo chưa có vitest lẫn file
+  `.test.ts` nào** — cổng kiểm tra thực tế của `web/` chỉ là lint + typecheck +
+  build.
 - 🟡 `e2e-gallery-storage` đã flake **2 lần riêng biệt** (17/18 → rerun 18/18,
   nghi race Storage) — gặp lần thứ 3 thì điều tra nghiêm túc.
 
@@ -180,6 +206,22 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   (Node resolve package theo vị trí script).
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
+
+### 2026-07-24 — Trang vận hành `/teacher/admin` (Đợt 18, đã deploy production)
+- **Dọn ngữ cảnh trước**: sửa hash `main`/`develop` trong notes cho khớp git
+  (`c74231b`); **XÓA hẳn** 2 ý treo — chia sẻ màn hình real-time và 8 ý
+  brainstorm 2026-07-21 (`b058358`, user yêu cầu "không còn dính đến nữa").
+  Lưu ý: xóa trắng nên phiên sau KHÔNG biết 2 ý này từng được cân nhắc.
+- **Trang vận hành** (`12e2602`, nhánh `feature/admin-ops-dashboard`): bản web
+  của `check-integrity.mjs` + `check-user.mjs` + `purge-test-users.mjs`, thêm 2
+  thứ script không có — khóa/lớp mất GV chủ, và file Storage mồ côi (đúng cái
+  `spec-storage.ts` ghi chú phải dọn bằng `scripts/check-storage.mjs`, một
+  script chưa từng tồn tại). Chi tiết nghiệp vụ ở FEATURES.md.
+- Trước khi code đã hỏi user 2 điều bằng `AskUserQuestion` (phạm vi trang, ai
+  được vào) vì "quản lý thông tin DB" quá mơ hồ — và nêu rõ **Supabase Studio
+  đã là trang admin DB rồi**, chỉ nên xây phần Studio KHÔNG làm được.
+- 0 migration, 0 dependency mới. lint + typecheck + build sạch; user nghiệm thu
+  ở local rồi mới khai `ADMIN_USERNAMES` trên Vercel và yêu cầu deploy.
 
 ### 2026-07-21 — MultiSelect search + random vắng + gallery/review/chấm bài + VS Code task (tất cả đã deploy production)
 - **Đã deploy production** (`main`=`develop`=`65c077a`): ô tìm kiếm trong
