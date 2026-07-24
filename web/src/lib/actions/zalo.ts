@@ -23,13 +23,17 @@ export async function generateZaloSummary(input: {
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
-  const [{ data: session }, { data: template }, { data: reviewsData }] =
+  const { data: session } = await supabase
+    .from("sessions")
+    .select("class_id, title, content, session_number, classes(class_code)")
+    .eq("id", input.sessionId)
+    .single();
+  if (!session) {
+    return { error: "Không tìm thấy buổi học." };
+  }
+
+  const [{ data: template }, { data: reviewsData }, { data: enrollmentsData }] =
     await Promise.all([
-      supabase
-        .from("sessions")
-        .select("title, content, session_number, classes(class_code)")
-        .eq("id", input.sessionId)
-        .single(),
       supabase
         .from("zalo_templates")
         .select("template_text")
@@ -39,11 +43,9 @@ export async function generateZaloSummary(input: {
         .from("student_reviews")
         .select("strengths, improvements, profiles!student_reviews_student_id_fkey(full_name)")
         .eq("session_id", input.sessionId),
+      supabase.from("enrollments").select("student_id").eq("class_id", session.class_id),
     ]);
 
-  if (!session) {
-    return { error: "Không tìm thấy buổi học." };
-  }
   if (!template) {
     return { error: "Chưa chọn mẫu tin — tạo mẫu trong trang Cài đặt." };
   }
@@ -58,6 +60,9 @@ export async function generateZaloSummary(input: {
   const classCode =
     (session as unknown as { classes: { class_code: string } | null }).classes
       ?.class_code ?? "";
+  // Lớp chỉ có 1 học viên (dạy kèm 1-1) → prompt đổi sang nhận xét riêng em
+  // đó thay vì khái quát chung cả lớp (yêu cầu user 2026-07-21).
+  const isOneOnOne = (enrollmentsData ?? []).length === 1;
 
   try {
     const data = await callAiService<{ message: string }>(
@@ -73,6 +78,7 @@ export async function generateZaloSummary(input: {
           improvements: r.improvements,
         })),
         template_text: template.template_text,
+        is_one_on_one: isOneOnOne,
       }
     );
     return { message: data.message };

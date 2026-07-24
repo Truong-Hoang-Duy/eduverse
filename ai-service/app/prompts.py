@@ -70,17 +70,51 @@ def build_zalo_summary_prompt(
     session_content: str,
     reviews_text: str,
     template_text: str,
+    is_one_on_one: bool = False,
 ) -> str:
+    """`is_one_on_one`: lớp chỉ có 1 học viên (dạy kèm 1-1) — khi đó nhận xét
+    THIÊN VỀ RIÊNG em đó thay vì khái quát chung cả lớp (yêu cầu user
+    2026-07-21). Lớp >1 người giữ nguyên hành vi cũ: nhận xét chung, không
+    nêu tên — ĐỪNG đổi lại 2 quy tắc này khi is_one_on_one=False."""
+    if is_one_on_one:
+        intro_rule = (
+            "Hãy tổng hợp tình hình học tập của buổi này thành tin nhắn gửi "
+            "phụ huynh trên Zalo."
+        )
+        focus_rule = (
+            "QUAN TRỌNG: lớp này CHỈ CÓ 1 học viên (dạy kèm 1-1) — nhận xét "
+            "THIÊN VỀ RIÊNG em đó: nói cụ thể về điểm mạnh, điểm cần cải thiện, "
+            "tiến bộ của chính em này. KHÔNG cần khái quát hóa thành xu hướng "
+            "chung vì chỉ có 1 người. Khi nhắc tới em, CHỈ dùng MỘT trong hai "
+            "cách — hoặc gọi thẳng tên, hoặc gọi 'em' — TUYỆT ĐỐI KHÔNG ghép "
+            "cả hai (SAI: 'em An', 'em Bình'; ĐÚNG: 'An' hoặc 'em')."
+        )
+        general_comment_intro = (
+            "NHẬN XÉT tình hình học tập/thái độ của em (rút ra từ dữ liệu nhận "
+            "xét bên dưới): "
+        )
+    else:
+        intro_rule = (
+            "Hãy tổng hợp tình hình học tập của cả lớp sau buổi học thành tin "
+            "nhắn gửi phụ huynh/nhóm lớp trên Zalo."
+        )
+        focus_rule = (
+            "QUAN TRỌNG: nhận xét CHUNG về toàn thể học viên của lớp — TUYỆT "
+            "ĐỐI không nêu tên, không định danh, không ám chỉ bất kỳ học viên "
+            "cụ thể nào. Danh sách nhận xét từng em dưới đây chỉ là dữ liệu để "
+            "bạn rút ra xu hướng chung (đa số các em..., một số em cần...)."
+        )
+        general_comment_intro = (
+            "NHẬN XÉT CHUNG tình hình học tập/thái độ của lớp (rút ra từ dữ "
+            "liệu nhận xét từng em bên dưới): "
+        )
+
     return "\n".join(
         [
             SYSTEM_ROLE,
             TONE_RULE,
-            "Hãy tổng hợp tình hình học tập của cả lớp sau buổi học thành tin nhắn "
-            "gửi phụ huynh/nhóm lớp trên Zalo.",
-            "QUAN TRỌNG: nhận xét CHUNG về toàn thể học viên của lớp — TUYỆT ĐỐI "
-            "không nêu tên, không định danh, không ám chỉ bất kỳ học viên cụ thể nào. "
-            "Danh sách nhận xét từng em dưới đây chỉ là dữ liệu để bạn rút ra xu "
-            "hướng chung (đa số các em..., một số em cần...).",
+            intro_rule,
+            focus_rule,
             "ĐỊNH DẠNG phần tóm tắt (thay vào {tom_tat}): CHỈ liệt kê các kiến "
             "thức/khái niệm chính của buổi (dựa vào Nội dung buổi học bên dưới), "
             "MỖI KIẾN THỨC XUỐNG DÒNG RIÊNG. TUYỆT ĐỐI KHÔNG tự thêm dòng tiêu đề "
@@ -94,14 +128,13 @@ def build_zalo_summary_prompt(
             "Vòng lặp for\n"
             "Vòng lặp while\n"
             "Câu lệnh break và continue",
-            "NHẬN XÉT CHUNG tình hình học tập/thái độ của lớp (rút ra từ dữ liệu "
-            "nhận xét từng em bên dưới): mẫu tin thường có MỘT MỤC RIÊNG cho việc "
-            "này (thường có chữ như 'đánh giá', 'nhận xét', 'tình hình học tập' "
-            "ngay TRƯỚC một placeholder) — hãy đọc kỹ mẫu tin để tìm đúng chỗ đó "
-            "và viết nhận xét chung vào ĐÚNG placeholder đó (KHÔNG phải {tom_tat}), "
-            "dạng một đoạn VĂN XUÔI liền mạch (KHÔNG xuống dòng, KHÔNG gạch đầu "
-            "dòng/số thứ tự), nối ý bằng dấu phẩy/liên từ (và, nhưng, bên cạnh "
-            "đó...).",
+            general_comment_intro
+            + "mẫu tin thường có MỘT MỤC RIÊNG cho việc này (thường có chữ như "
+            "'đánh giá', 'nhận xét', 'tình hình học tập' ngay TRƯỚC một "
+            "placeholder) — hãy đọc kỹ mẫu tin để tìm đúng chỗ đó và viết nhận "
+            "xét vào ĐÚNG placeholder đó (KHÔNG phải {tom_tat}), dạng một đoạn "
+            "VĂN XUÔI liền mạch (KHÔNG xuống dòng, KHÔNG gạch đầu dòng/số thứ "
+            "tự), nối ý bằng dấu phẩy/liên từ (và, nhưng, bên cạnh đó...).",
             f"Lớp: {class_code}",
             f"Buổi học: {session_title}",
             f"Nội dung buổi học: {session_content}",
@@ -172,6 +205,39 @@ def build_suggest_features_prompt(
             '"difficulty": "easy|medium|hard"}]}',
         ]
     )
+
+
+def build_session_content_prompt(
+    course_name: str,
+    class_code: str,
+    session_number: int,
+    draft_text: str,
+    prior_sessions: list[tuple[int, str]],
+) -> str:
+    """KHÔNG áp TONE_RULE — đây là mô tả giáo án, không phải nhận xét học viên."""
+    parts = [
+        SYSTEM_ROLE,
+        "Hãy viết lại thành đoạn 'Nội dung buổi học' ngắn gọn, rõ ràng cho một "
+        "buổi dạy lập trình, dựa trên ghi chú thô của giáo viên bên dưới.",
+        f"Khóa học: {course_name} — Lớp: {class_code}",
+        f"Buổi số: {session_number}",
+    ]
+    if prior_sessions:
+        joined = "\n".join(f"- Buổi {n}: {c}" for n, c in prior_sessions)
+        parts.append(
+            "Nội dung các buổi TRƯỚC trong lớp này (để viết đúng tiến trình nối "
+            f"tiếp, không lặp lại kiến thức đã dạy trừ khi ghi chú nói rõ là ôn "
+            f"tập):\n{joined}"
+        )
+    parts.append(f"Ghi chú thô của giáo viên cho buổi này: {draft_text}")
+    parts.append(
+        "Viết lại thành 1 đoạn ngắn gọn (2-4 câu), nêu rõ kiến thức/khái niệm "
+        "chính sẽ dạy và bài tập (nếu ghi chú có nhắc). Văn phong súc tích như "
+        "ghi chú giáo án, không chào hỏi, không diễn giải dài dòng, không bịa "
+        "thêm nội dung ghi chú không đề cập."
+    )
+    parts.append('Trả về JSON: {"content": "<nội dung buổi học>"}')
+    return "\n".join(parts)
 
 
 def build_grading_prompt(

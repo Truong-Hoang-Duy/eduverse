@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateSession } from "@/lib/actions/sessions";
 import type { ActionResult } from "@/lib/types";
+
+import { SessionContentSuggestDialog } from "./session-content-suggest-dialog";
 
 export interface SessionData {
   id: string;
@@ -23,6 +25,7 @@ export function SessionForm({ session }: { session: SessionData }) {
     updateSession,
     {}
   );
+  const [content, setContent] = useState(session.content ?? "");
 
   return (
     <form action={formAction} className="space-y-3">
@@ -48,12 +51,16 @@ export function SessionForm({ session }: { session: SessionData }) {
         </div>
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="content">Nội dung buổi học</Label>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label htmlFor="content">Nội dung buổi học</Label>
+          <SessionContentSuggestDialog sessionId={session.id} onApply={setContent} />
+        </div>
         <Textarea
           id="content"
           name="content"
           rows={5}
-          defaultValue={session.content ?? ""}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
           placeholder="VD: Học về biến let/const, kiểu số và chuỗi. Bài tập: chương trình đổi đơn vị tiền tệ..."
         />
         <p className="text-xs text-muted-foreground">
