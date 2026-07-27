@@ -354,6 +354,16 @@
 - [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [x] Merge lên production (2026-07-27)
 
+### Đợt 24 (`feature/ui-scrolltop-backbtn-collapse`) — 3 chỉnh UI
+- [x] Nút "↑ lên đầu trang" nổi góc dưới-phải (`scroll-to-top.tsx` trong
+      `AppShell`, hiện khi cuộn >300px, cuộn mượt, responsive)
+- [x] Nút "← Quay lại danh sách lớp" đổi thành Button outline (to, dễ bấm)
+- [x] Trang chi tiết lớp: các khối chuyển sang `CollapsibleCard` đóng mặc định,
+      CHỈ "Buổi học" mở sẵn; nút hành động (thêm HV / chiếu SP) chuyển vào trong
+      nội dung khối
+- [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
+- [x] Merge lên production (2026-07-27)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
