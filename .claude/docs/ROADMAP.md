@@ -332,6 +332,17 @@
 - [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [x] User dán migration `20260728000000`; Merge lên production (2026-07-27)
 
+### Đợt 22 (`feature/review-input-ux-combo-seed`) — gọn ô nhập + seed bộ combo
+- [x] Gõ câu mới NGAY TRONG ô tick (`MultiSelect` prop `onCreate`, hiện "➕ Thêm
+      ..." / Enter) — bỏ ô nhập riêng bên dưới
+- [x] Vùng badge đã chọn giới hạn chiều cao + cuộn + wrap chữ → không vỡ bố cục
+- [x] Nút "⚡ Thêm nhanh bộ mẫu" (`seedDefaultCombos`): ~22 bộ theo chân dung
+      học viên (gồm nhiều chân dung pha trộn: yếu mặt này mạnh mặt kia), rút
+      nhãn từ danh mục GV theo nhóm (bỏ presentation/other), skip trùng + rỗng
+- [x] 3 khối trang Cài đặt (`SettingsSection`) đóng mặc định, bấm mới mở — gọn
+- [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
+- [ ] User nghiệm thu UI + deploy (0 migration — thuần UI + action)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

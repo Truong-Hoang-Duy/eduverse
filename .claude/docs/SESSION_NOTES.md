@@ -8,7 +8,13 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-27, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở.
+**Đang làm:** 🔴 **CÓ TASK DỞ — nhánh `feature/review-input-ux-combo-seed`
+đã commit, CHƯA merge/deploy.** 3 cải tiến UX nhận xét (Đợt 22): (1) gõ câu
+mới ngay trong ô tick (`MultiSelect.onCreate`), bỏ ô nhập riêng bên dưới;
+(2) vùng badge đã chọn giới hạn chiều cao + cuộn để không vỡ bố cục; (3) nút
+"⚡ Thêm nhanh bộ mẫu" ở Cài đặt (`seedDefaultCombos`) dựng ~11 bộ combo từ
+danh mục GV theo nhóm kỹ năng. **0 migration** (thuần UI + action). Việc còn:
+user nghiệm thu UI → merge → deploy. Lint + typecheck + build PASS.
 
 **ĐÃ DEPLOY production: copy nhận xét từ buổi trước + bộ combo** (Đợt 21,
 `feature/review-copy-prior-combos`): (1) combo copy điểm mạnh/cải thiện có
