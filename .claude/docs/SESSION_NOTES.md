@@ -10,6 +10,14 @@
 
 **Đang làm:** KHÔNG có task dở.
 
+**ĐÃ DEPLOY production: copy nhận xét từ buổi trước + bộ combo** (Đợt 21,
+`feature/review-copy-prior-combos`): (1) combo copy điểm mạnh/cải thiện có
+2 nhóm "👥 Bạn cùng buổi" + "📅 Buổi trước của em"; (2) "bộ combo nhận xét"
+— GV tạo/quản lý bộ ở TRANG CÀI ĐẶT (chọn từ danh mục), mỗi học viên chỉ
+CHỌN ÁP một bộ (không có nút Lưu/Quản lý tại chỗ). Bảng `review_combos`
+(user đã dán migration `20260728000000`). ai-service KHÔNG đổi → chỉ Vercel
+deploy. Lint + typecheck + build PASS.
+
 **ĐÃ DEPLOY production: công tắc bật/tắt key Gemini riêng** (Đợt 20,
 `feature/api-key-toggle`): checkbox ở `/profile` cho phép TẮT key riêng để tạm
 dùng key hệ thống mà KHÔNG xóa key. Cột `user_secrets.use_own_key` (migration
@@ -36,8 +44,8 @@ cần `ADMIN_USERNAMES` ở cả local lẫn Vercel, fail closed); nhập tự d
 mạnh/cần cải thiện + gợi ý nội dung buổi học AI + Zalo cá nhân hóa lớp 1-1
 (2026-07-21).
 
-**`main` = `origin/main` = `0c82baa`** — ĐÂY là bản đang chạy production.
-**`develop` = `origin/develop` = `3c75a8c`** + 1 commit docs ghi lại chính
+**`main` = `origin/main` = `1f0154a`** — ĐÂY là bản đang chạy production.
+**`develop` = `origin/develop` = `5180b3f`** + 1 commit docs ghi lại chính
 hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi chú,
 merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở phiên
 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.

@@ -9,13 +9,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ReviewCombo } from "@/lib/actions/review-combos";
 
 import {
   type CopySource,
   ReviewEditor,
   type ReviewOptionItem,
 } from "./review-editor";
-import { type ExistingReview, isHandled } from "./review-status";
+import {
+  type ExistingReview,
+  isHandled,
+  type PriorSelection,
+} from "./review-status";
 
 type StatusFilter = "all" | "done" | "pending";
 
@@ -40,6 +45,8 @@ export function ReviewList({
   options,
   reviewByStudentId,
   priorCommentsByStudentId,
+  priorSelectionsByStudentId,
+  combos,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -49,6 +56,10 @@ export function ReviewList({
   reviewByStudentId: Map<string, ExistingReview>;
   /** Nhận xét các buổi trước của từng học viên — cho AI tránh lặp lời văn. */
   priorCommentsByStudentId: Map<string, string[]>;
+  /** Điểm mạnh/cải thiện các buổi trước của từng học viên — để copy sang. */
+  priorSelectionsByStudentId: Map<string, PriorSelection[]>;
+  /** Bộ combo lưu sẵn của GV (dùng chung mọi học viên). */
+  combos: ReviewCombo[];
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
 
@@ -59,9 +70,8 @@ export function ReviewList({
     return status === "done" ? done : !done;
   });
 
-  // Nguồn copy cho từng editor: các bạn KHÁC đã có điểm mạnh/cải thiện lưu sẵn
-  // (dữ liệu đã lưu — GV phải Lưu bạn đó trước rồi mới copy sang được).
-  const copySources: CopySource[] = students
+  // Ứng viên "bạn cùng buổi": em KHÁC đã lưu điểm mạnh/cải thiện (không vắng).
+  const classmateCandidates = students
     .map((student) => {
       const review = reviewByStudentId.get(student.id);
       return review &&
@@ -75,7 +85,30 @@ export function ReviewList({
           }
         : null;
     })
-    .filter((s): s is CopySource => s !== null);
+    .filter((c): c is NonNullable<typeof c> => c !== null);
+
+  /** Nguồn copy cho một em: bạn cùng buổi (trừ chính em) + buổi trước của em. */
+  function copySourcesFor(studentId: string): CopySource[] {
+    const mates: CopySource[] = classmateCandidates
+      .filter((c) => c.id !== studentId)
+      .map((c) => ({
+        key: `mate:${c.id}`,
+        group: "👥 Bạn cùng buổi",
+        label: c.name,
+        strengths: c.strengths,
+        improvements: c.improvements,
+      }));
+    const priors: CopySource[] = (
+      priorSelectionsByStudentId.get(studentId) ?? []
+    ).map((p) => ({
+      key: `prior:${p.sessionNumber}`,
+      group: "📅 Buổi trước của em",
+      label: `Buổi ${p.sessionNumber} (${p.strengths.length}+${p.improvements.length})`,
+      strengths: p.strengths,
+      improvements: p.improvements,
+    }));
+    return [...mates, ...priors];
+  }
 
   return (
     <div className="space-y-3">
@@ -110,7 +143,8 @@ export function ReviewList({
             options={options}
             existing={reviewByStudentId.get(student.id) ?? null}
             priorComments={priorCommentsByStudentId.get(student.id) ?? []}
-            copySources={copySources.filter((s) => s.id !== student.id)}
+            copySources={copySourcesFor(student.id)}
+            combos={combos}
           />
         ))
       )}

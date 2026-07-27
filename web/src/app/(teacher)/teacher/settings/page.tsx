@@ -6,9 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { listMyCombos } from "@/lib/actions/review-combos";
 import { requireRole } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
+import { ComboManager } from "./combo-manager";
 import { OptionManager } from "./option-manager";
 import { TemplateManager } from "./template-manager";
 
@@ -18,7 +20,7 @@ export default async function SettingsPage() {
   const profile = await requireRole("teacher");
   const supabase = await createClient();
 
-  const [{ data: options }, { data: templates }] = await Promise.all([
+  const [{ data: options }, { data: templates }, combos] = await Promise.all([
     supabase
       .from("review_options")
       .select("id, category, label, skill_group")
@@ -29,6 +31,7 @@ export default async function SettingsPage() {
       .select("id, name, template_text")
       .eq("teacher_id", profile.id)
       .order("name"),
+    listMyCombos(),
   ]);
 
   return (
@@ -47,6 +50,19 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <OptionManager options={options ?? []} />
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-base">Bộ combo nhận xét</CardTitle>
+          <CardDescription>
+            Gom sẵn nhiều điểm mạnh / cần cải thiện thành từng bộ đặt tên — khi
+            nhận xét từng em chỉ cần chọn áp một bộ, đỡ tích lại từ đầu
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ComboManager combos={combos} options={options ?? []} />
         </CardContent>
       </Card>
 

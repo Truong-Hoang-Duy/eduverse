@@ -8,11 +8,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { listMyCombos } from "@/lib/actions/review-combos";
 import { requireProfile } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
 import { ReviewList } from "./review-list";
-import { type ExistingReview, isHandled } from "./review-status";
+import {
+  type ExistingReview,
+  isHandled,
+  type PriorSelection,
+} from "./review-status";
 import { SessionForm } from "./session-form";
 import { ZaloPanel } from "./zalo-panel";
 
@@ -37,11 +42,16 @@ interface ReviewRow extends ExistingReview {
 interface PriorReviewRow {
   student_id: string;
   ai_generated_comment: string | null;
+  strengths: string[];
+  improvements: string[];
+  is_absent: boolean;
   sessions: { session_number: number } | null;
 }
 
 /** Buổi trước gần nhất tối đa 3 buổi để AI tránh lặp lời văn giữa các buổi. */
 const MAX_PRIOR_COMMENTS = 3;
+/** Giới hạn số buổi trước hiện trong combo copy — tránh dropdown quá dài. */
+const MAX_PRIOR_SELECTIONS = 5;
 
 export default async function SessionDetailPage({
   params,
@@ -69,6 +79,7 @@ export default async function SessionDetailPage({
     { data: optionsData },
     { data: templatesData },
     { data: priorReviewsData },
+    combos,
   ] = await Promise.all([
     supabase
       .from("enrollments")
@@ -91,14 +102,18 @@ export default async function SessionDetailPage({
       .select("id, name")
       .eq("teacher_id", profile.id)
       .order("name"),
-    // Nhận xét các buổi TRƯỚC (cùng lớp, cùng học viên) — cho AI biết đã
-    // viết gì để đổi cách diễn đạt, tránh lặp lời văn giữa các buổi.
+    // Nhận xét các buổi TRƯỚC (cùng lớp) — phục vụ 2 việc: (1) cho AI biết đã
+    // viết gì để tránh lặp lời văn, (2) copy điểm mạnh/cải thiện từ buổi trước.
+    // KHÔNG lọc theo ai_generated_comment nữa vì buổi trước có thể có tích chọn
+    // mà chưa lưu câu nhận xét — vẫn cần cho việc copy.
     supabase
       .from("student_reviews")
-      .select("student_id, ai_generated_comment, sessions!inner(session_number, class_id)")
+      .select(
+        "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(session_number, class_id)"
+      )
       .eq("sessions.class_id", session.class_id)
-      .lt("sessions.session_number", session.session_number)
-      .not("ai_generated_comment", "is", null),
+      .lt("sessions.session_number", session.session_number),
+    listMyCombos(),
   ]);
 
   const students = ((enrollments ?? []) as unknown as EnrollmentRow[])
@@ -116,14 +131,36 @@ export default async function SessionDetailPage({
 
   const priorReviews = (priorReviewsData ?? []) as unknown as PriorReviewRow[];
   const priorCommentsByStudentId = new Map<string, string[]>();
+  const priorSelectionsByStudentId = new Map<string, PriorSelection[]>();
   for (const studentId of new Set(priorReviews.map((r) => r.student_id))) {
-    const comments = priorReviews
+    const mine = priorReviews
       .filter((r) => r.student_id === studentId)
-      .sort((a, b) => (b.sessions?.session_number ?? 0) - (a.sessions?.session_number ?? 0))
+      .sort(
+        (a, b) =>
+          (b.sessions?.session_number ?? 0) - (a.sessions?.session_number ?? 0)
+      );
+
+    // (1) Lời văn buổi trước cho AI chống lặp — chỉ lấy buổi đã có câu nhận xét.
+    const comments = mine
+      .filter((r) => r.ai_generated_comment)
       .slice(0, MAX_PRIOR_COMMENTS)
       .reverse()
       .map((r) => `Buổi ${r.sessions?.session_number}: ${r.ai_generated_comment}`);
     priorCommentsByStudentId.set(studentId, comments);
+
+    // (2) Điểm mạnh/cải thiện buổi trước để copy — bỏ buổi vắng / trống tích.
+    const selections = mine
+      .filter(
+        (r) =>
+          !r.is_absent && (r.strengths.length > 0 || r.improvements.length > 0)
+      )
+      .slice(0, MAX_PRIOR_SELECTIONS)
+      .map((r) => ({
+        sessionNumber: r.sessions?.session_number ?? 0,
+        strengths: r.strengths,
+        improvements: r.improvements,
+      }));
+    priorSelectionsByStudentId.set(studentId, selections);
   }
 
   return (
@@ -183,6 +220,8 @@ export default async function SessionDetailPage({
               options={options}
               reviewByStudentId={reviewByStudentId}
               priorCommentsByStudentId={priorCommentsByStudentId}
+              priorSelectionsByStudentId={priorSelectionsByStudentId}
+              combos={combos}
             />
           )}
         </CardContent>
