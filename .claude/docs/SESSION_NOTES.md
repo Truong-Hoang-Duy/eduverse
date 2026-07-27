@@ -44,8 +44,8 @@ cần `ADMIN_USERNAMES` ở cả local lẫn Vercel, fail closed); nhập tự d
 mạnh/cần cải thiện + gợi ý nội dung buổi học AI + Zalo cá nhân hóa lớp 1-1
 (2026-07-21).
 
-**`main` = `origin/main` = `1f0154a`** — ĐÂY là bản đang chạy production.
-**`develop` = `origin/develop` = `5180b3f`** + 1 commit docs ghi lại chính
+**`main` = `origin/main` = `a5844ed`** — ĐÂY là bản đang chạy production.
+**`develop` = `origin/develop` = `878945e`** + 1 commit docs ghi lại chính
 hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi chú,
 merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở phiên
 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
