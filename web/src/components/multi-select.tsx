@@ -10,24 +10,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-/** Dropdown chọn nhiều mục, hiển thị các mục đã chọn dạng badge bấm để bỏ. */
+/** Dropdown chọn nhiều mục, hiển thị các mục đã chọn dạng badge bấm để bỏ.
+ *
+ *  `onCreate` (tùy chọn): cho gõ câu MỚI ngay trong ô tìm kiếm — không khớp
+ *  mục nào thì hiện dòng "➕ Thêm ..." (hoặc nhấn Enter). Gọn hơn một ô nhập
+ *  riêng nằm bên dưới (yêu cầu user 2026-07-27). */
 export function MultiSelect({
   options,
   selected,
   onChange,
+  onCreate,
   placeholder = "Chọn...",
   emptyText,
 }: {
   options: { id: string; label: string }[];
   selected: string[];
   onChange: (next: string[]) => void;
+  onCreate?: (label: string) => void;
   placeholder?: string;
   emptyText?: string;
 }) {
   const [search, setSearch] = useState("");
+  const query = search.trim();
   const filteredOptions = options.filter((opt) =>
-    opt.label.toLowerCase().includes(search.trim().toLowerCase())
+    opt.label.toLowerCase().includes(query.toLowerCase())
   );
+
+  // Cho tạo mục mới khi có onCreate + đang gõ + không trùng KHÍT mục nào sẵn có.
+  const canCreate =
+    Boolean(onCreate) &&
+    query.length > 0 &&
+    !options.some((o) => o.label.toLowerCase() === query.toLowerCase());
 
   function toggle(label: string) {
     onChange(
@@ -37,7 +50,14 @@ export function MultiSelect({
     );
   }
 
-  if (options.length === 0) {
+  function handleCreate() {
+    if (!canCreate) return;
+    onCreate!(query);
+    setSearch("");
+  }
+
+  // Không còn ô nhập riêng bên dưới, nên khi rỗng danh mục vẫn phải cho gõ mới.
+  if (options.length === 0 && !onCreate) {
     return (
       <p className="text-xs text-muted-foreground">
         {emptyText ?? "Chưa có lựa chọn."}
@@ -56,20 +76,38 @@ export function MultiSelect({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"
-          className="max-h-64 w-(--radix-dropdown-menu-trigger-width) overflow-y-auto"
+          className="max-h-72 w-(--radix-dropdown-menu-trigger-width) overflow-y-auto"
         >
           <div className="p-1 pb-0">
             <Input
               autoFocus
-              placeholder="Tìm kiếm..."
+              placeholder={onCreate ? "Tìm hoặc gõ câu mới rồi Enter..." : "Tìm kiếm..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              // Ngăn Radix bắt phím để gõ tìm kiếm không bị menu chặn/đóng.
-              onKeyDown={(e) => e.stopPropagation()}
+              // Ngăn Radix bắt phím để gõ tìm kiếm không bị menu chặn/đóng;
+              // Enter thì tạo mục mới (nếu đang gõ câu chưa có).
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === "Enter" && canCreate) {
+                  e.preventDefault();
+                  handleCreate();
+                }
+              }}
               className="mb-1"
             />
           </div>
-          {filteredOptions.length === 0 ? (
+
+          {canCreate && (
+            <button
+              type="button"
+              onClick={handleCreate}
+              className="mb-1 flex w-full items-center gap-1.5 rounded-sm px-2 py-1.5 text-left text-sm text-primary hover:bg-accent"
+            >
+              ➕ Thêm &quot;{query}&quot;
+            </button>
+          )}
+
+          {filteredOptions.length === 0 && !canCreate ? (
             <p className="px-2 py-1.5 text-xs text-muted-foreground">
               Không tìm thấy lựa chọn phù hợp.
             </p>
@@ -90,17 +128,19 @@ export function MultiSelect({
       </DropdownMenu>
 
       {selected.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        // Giới hạn chiều cao + cuộn: nhiều/ dài mấy cũng KHÔNG đẩy vỡ bố cục
+        // (trước đây badge tràn xuống làm bể layout — user phản ánh 2026-07-27).
+        <div className="flex max-h-24 flex-wrap gap-1.5 overflow-y-auto rounded-md">
           {selected.map((label) => (
             <Badge
               key={label}
               variant="secondary"
-              className="cursor-pointer gap-1 rounded-md font-normal"
+              className="h-auto max-w-full cursor-pointer gap-1 rounded-md font-normal whitespace-normal"
               onClick={() => toggle(label)}
               title="Bấm để bỏ chọn"
             >
-              {label}
-              <span className="text-muted-foreground">✕</span>
+              <span className="min-w-0 break-words">{label}</span>
+              <span className="shrink-0 text-muted-foreground">✕</span>
             </Badge>
           ))}
         </div>

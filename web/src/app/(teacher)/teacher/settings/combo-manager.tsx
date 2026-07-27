@@ -12,6 +12,7 @@ import {
   createReviewCombo,
   deleteReviewCombo,
   type ReviewCombo,
+  seedDefaultCombos,
 } from "@/lib/actions/review-combos";
 import type { ActionResult } from "@/lib/types";
 
@@ -31,6 +32,10 @@ export function ComboManager({
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     createReviewCombo,
+    {}
+  );
+  const [seedState, seedAction, seeding] = useActionState<ActionResult, FormData>(
+    seedDefaultCombos,
     {}
   );
 
@@ -60,6 +65,19 @@ export function ComboManager({
 
   return (
     <div className="space-y-5">
+      {/* Thêm nhanh loạt bộ mẫu dựng từ chính danh mục của GV. */}
+      {options.length > 0 && (
+        <form action={seedAction} className="space-y-1.5">
+          <Button type="submit" size="sm" variant="secondary" disabled={seeding}>
+            {seeding ? "Đang thêm..." : "⚡ Thêm nhanh bộ mẫu"}
+          </Button>
+          <Badge variant="outline" className="ml-2 text-xs">
+            ~11 bộ theo chân dung học viên, không trùng bộ đã có
+          </Badge>
+          <FormMessage result={seedState} />
+        </form>
+      )}
+
       {/* Danh sách bộ đã tạo */}
       {combos.length === 0 ? (
         <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">

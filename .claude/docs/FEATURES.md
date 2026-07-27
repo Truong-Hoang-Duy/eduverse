@@ -90,6 +90,12 @@
   đổi giá trị đã chọn trước đó. Nhóm lưu ở cột `review_options.skill_group`
   (`web/src/lib/skill-groups.ts` là nguồn danh sách nhóm dùng chung — SKILL_GROUPS
   export từ đây, mọi UI khác import lại, không tự khai danh sách nhóm riêng).
+- **Gõ câu mới NGAY TRONG ô tick** (user 2026-07-27 — bỏ ô nhập riêng bên dưới
+  vì khó nhìn): `MultiSelect` có prop `onCreate` — gõ vào ô tìm kiếm, không khớp
+  mục nào thì hiện dòng "➕ Thêm ..." (hoặc Enter). Câu mới vừa vào nhận xét vừa
+  lưu `review_options` (skill_group theo bộ lọc đang chọn). Vùng badge đã chọn
+  bị GIỚI HẠN chiều cao + cuộn (`max-h-24 overflow-y-auto`, chip wrap chữ) nên
+  nhiều/dài mấy cũng KHÔNG đẩy vỡ bố cục (trước đây badge tràn làm bể layout).
 - **Bộ mặc định** (nút "⚡ Thêm nhanh bộ lựa chọn mặc định" ở trang Cài đặt khi
   GV chưa có lựa chọn nào): 112 điểm mạnh + 112 cần cải thiện — **mỗi nhóm ít
   nhất 10 lựa chọn** (yêu cầu user 2026-07-18, presentation có 12), bỏ "Khác"
@@ -121,6 +127,11 @@
     xét"): đặt tên bộ (VD "Học tốt, chưa phát biểu") + chọn nhiều điểm mạnh/cần
     cải thiện từ danh mục qua `MultiSelect`, lưu; xem danh sách + xóa
     (ConfirmDialog). GV soạn sẵn vài bộ mẫu theo tiêu chuẩn hợp lý.
+  - **Nút "⚡ Thêm nhanh bộ mẫu"** (`seedDefaultCombos`): dựng ~11 bộ theo "chân
+    dung học viên" (Học tốt toàn diện, Chăm nhưng còn chậm, Giỏi code ít hợp
+    tác...), rút nhãn từ CHÍNH danh mục của GV theo nhóm kỹ năng (trải hết 10
+    nhóm, BỎ `presentation` vì tùy buổi + `other`). Bỏ qua bộ trùng tên (bấm
+    nhiều lần không nhân đôi) và bộ rỗng. Template ở `review-combos.ts`.
   - **Áp ở mỗi học viên** (`ComboBar` trong `sessions/[id]`): CHỈ 1 combo "⚡ Áp
     dụng bộ combo..." → gộp union cả bộ vào lựa chọn hiện tại. KHÔNG còn nút
     "Lưu bộ"/"Quản lý bộ" tại chỗ (đã bỏ 2026-07-27 — dồn về Cài đặt).
