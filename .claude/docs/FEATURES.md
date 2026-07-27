@@ -108,10 +108,20 @@
   CHECK constraint `academic_level`, drop+add). Mức này CHỈ làm ngữ cảnh cho AI
   viết nhận xét vừa trình độ — prompt cấm nêu thẳng xếp loại cho phụ huynh (user
   chốt 2026-07-27). Chưa chọn = null, không ảnh hưởng gì.
-- **Copy điểm mạnh / cần cải thiện từ bạn khác**: combo "Copy ... từ:" liệt kê
-  các bạn CÙNG buổi đã LƯU sẵn lựa chọn (phải Lưu bạn đó trước). Chọn → GỘP
-  (union, bỏ trùng không phân biệt hoa/thường) vào em đang xem, KHÔNG ghi đè thứ
-  đã tick. Nguồn là dữ liệu đã lưu (không phải state live) — quyết định 2026-07-27.
+- **Copy điểm mạnh / cần cải thiện** (combo "📋 Copy ... từ", 2 nhóm — user
+  chốt 2026-07-27): "👥 Bạn cùng buổi" (các bạn CÙNG buổi đã LƯU lựa chọn) +
+  "📅 Buổi trước của em" (chính em đó, tối đa 5 buổi gần nhất đã tích). Chọn →
+  GỘP (union, bỏ trùng không phân biệt hoa/thường) vào em đang xem, KHÔNG ghi
+  đè. Nguồn là dữ liệu ĐÃ LƯU (không phải state live). Buổi trước lấy từ cùng
+  query `priorReviews` ở `page.tsx` (đã bỏ lọc `ai_generated_comment is null` để
+  còn thấy buổi chỉ có tích mà chưa lưu câu nhận xét).
+- **Bộ combo lưu sẵn** ("nhận xét nhanh", user chốt 2026-07-27 — bảng
+  `review_combos`): thanh `ComboBar` mỗi ô nhận xét có: (1) "⚡ Áp dụng bộ
+  combo..." áp cả bộ điểm mạnh/cải thiện 1 chạm (gộp union); (2) "💾 Lưu bộ" lưu
+  lựa chọn đang tick thành bộ mới (đặt tên ≤60 ký tự); (3) "⚙️ Quản lý bộ" xóa
+  bộ (ConfirmDialog). Combos dùng CHUNG mọi lớp/buổi của GV, tải server-side ở
+  `page.tsx` (`listMyCombos`) truyền xuống. Mục đích: GV soạn 1 bộ hay dùng rồi
+  áp nhanh cho nhiều em, đỡ tích lại từ đầu.
 - **Đánh vắng** (checkbox 🚫 đầu form, mặc định CÓ đi học): bật lên thì ẩn toàn
   bộ phần nhận xét, bấm Lưu để đánh dấu. Em vắng bị **loại khỏi tin Zalo tổng
   hợp** (`zalo.ts` lọc `is_absent`) và **tính là đã xử lý** trong bộ đếm "X/Y" +

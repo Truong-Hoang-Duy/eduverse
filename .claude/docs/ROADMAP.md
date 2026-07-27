@@ -318,6 +318,18 @@
 - [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [x] Merge lên production (2026-07-27)
 
+### Đợt 21 (`feature/review-copy-prior-combos`) — copy buổi trước + bộ combo
+- [x] **Copy điểm mạnh/cải thiện 2 nguồn**: "👥 Bạn cùng buổi" + "📅 Buổi trước
+      của em" (grouped Select). Mở rộng query `priorReviews` ở `page.tsx` lấy
+      thêm strengths/improvements (bỏ lọc comment null)
+- [x] **Bộ combo lưu sẵn** ("nhận xét nhanh"): bảng `review_combos` (migration
+      `20260728000000`), `ComboBar` áp/lưu/quản lý bộ, `listMyCombos` +
+      `createReviewCombo` + `deleteReviewCombo`
+- [x] Tách `PriorSelection` sang `review-status.ts` (module thuần) để server +
+      client dùng chung — tránh lặp lỗi Đợt 19 (gọi hàm client từ server)
+- [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
+- [ ] User dán migration `20260728000000` + nghiệm thu UI + deploy
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

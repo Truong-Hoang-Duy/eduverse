@@ -11,7 +11,9 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -21,10 +23,12 @@ import {
   academicLevelLabel,
 } from "@/lib/academic-levels";
 import { generateAiReview, saveReview } from "@/lib/actions/reviews";
+import type { ReviewCombo } from "@/lib/actions/review-combos";
 import { addReviewOption } from "@/lib/actions/settings";
 import { SKILL_GROUPS } from "@/lib/skill-groups";
 import type { ActionResult } from "@/lib/types";
 
+import { ComboBar } from "./combo-bar";
 import { type ExistingReview, isReviewed } from "./review-status";
 
 export interface ReviewOptionItem {
@@ -63,11 +67,12 @@ function GroupFilter({
   );
 }
 
-/** Một học viên khác trong buổi có sẵn điểm mạnh/cần cải thiện đã lưu — để
- *  copy nhanh sang em đang nhận xét (nguồn là dữ liệu ĐÃ LƯU). */
+/** Một nguồn để copy nhanh điểm mạnh/cần cải thiện sang em đang nhận xét:
+ *  bạn cùng buổi (dữ liệu đã lưu) HOẶC một buổi trước của chính em. */
 export interface CopySource {
-  id: string;
-  name: string;
+  key: string; // value duy nhất cho Select
+  group: string; // nhóm hiển thị (SelectGroup)
+  label: string; // nhãn hiển thị
   strengths: string[];
   improvements: string[];
 }
@@ -82,6 +87,7 @@ export function ReviewEditor({
   existing,
   priorComments,
   copySources,
+  combos,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -92,8 +98,10 @@ export function ReviewEditor({
   existing: ExistingReview | null;
   /** Nhận xét các buổi trước của học viên này — cho AI tránh lặp lời văn. */
   priorComments?: string[];
-  /** Bạn cùng buổi đã có điểm mạnh/cải thiện lưu sẵn — để copy nhanh sang. */
+  /** Nguồn copy nhanh: bạn cùng buổi + buổi trước của chính em. */
   copySources?: CopySource[];
+  /** Bộ combo lưu sẵn của GV — áp cả bộ điểm mạnh/cải thiện 1 chạm. */
+  combos?: ReviewCombo[];
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     saveReview,
@@ -127,11 +135,25 @@ export function ReviewEditor({
     return merged;
   }
 
-  function copyFromStudent(sourceId: string) {
-    const source = copySources?.find((s) => s.id === sourceId);
+  function copyFromSource(key: string) {
+    const source = copySources?.find((s) => s.key === key);
     if (!source) return;
     setStrengths((prev) => mergeUnique(prev, source.strengths));
     setImprovements((prev) => mergeUnique(prev, source.improvements));
+  }
+
+  function applyCombo(strengthsToAdd: string[], improvementsToAdd: string[]) {
+    setStrengths((prev) => mergeUnique(prev, strengthsToAdd));
+    setImprovements((prev) => mergeUnique(prev, improvementsToAdd));
+  }
+
+  // Gom nguồn copy theo nhóm, GIỮ thứ tự xuất hiện (bạn cùng buổi trước, rồi
+  // các buổi trước của em) để SelectGroup hiển thị đúng thứ tự.
+  const copyGroups: { group: string; items: CopySource[] }[] = [];
+  for (const source of copySources ?? []) {
+    const bucket = copyGroups.find((g) => g.group === source.group);
+    if (bucket) bucket.items.push(source);
+    else copyGroups.push({ group: source.group, items: [source] });
   }
 
   // Bộ lọc nhóm kỹ năng của từng combo box — mặc định "all" (không lọc).
@@ -281,29 +303,38 @@ export function ReviewEditor({
           <input key={s} type="hidden" name="improvements" value={s} />
         ))}
 
-        {(copySources?.length ?? 0) > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              Copy điểm mạnh / cần cải thiện từ:
-            </span>
-            <Select value="" onValueChange={copyFromStudent}>
+        {/* Nhận xét nhanh: áp bộ combo lưu sẵn + copy từ bạn/buổi trước. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <ComboBar
+            combos={combos ?? []}
+            currentStrengths={strengths}
+            currentImprovements={improvements}
+            onApply={applyCombo}
+          />
+          {(copySources?.length ?? 0) > 0 && (
+            <Select value="" onValueChange={copyFromSource}>
               <SelectTrigger
                 size="sm"
-                className="h-7 w-[180px] text-xs"
-                aria-label="Copy lựa chọn từ học viên khác"
+                className="h-7 w-[190px] text-xs"
+                aria-label="Copy lựa chọn từ bạn khác hoặc buổi trước"
               >
-                <SelectValue placeholder="Chọn bạn để copy..." />
+                <SelectValue placeholder="📋 Copy điểm mạnh/cải thiện từ..." />
               </SelectTrigger>
               <SelectContent>
-                {copySources!.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
+                {copyGroups.map(({ group, items }) => (
+                  <SelectGroup key={group}>
+                    <SelectLabel>{group}</SelectLabel>
+                    {items.map((s) => (
+                      <SelectItem key={s.key} value={s.key}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">

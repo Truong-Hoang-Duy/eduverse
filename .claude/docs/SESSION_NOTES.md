@@ -8,7 +8,17 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-27, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở.
+**Đang làm:** 🔴 **CÓ TASK DỞ — nhánh `feature/review-copy-prior-combos` đã
+commit nhưng CHƯA merge, CHƯA deploy.** 2 cải tiến nhận xét (Đợt 21):
+(1) copy điểm mạnh/cải thiện thêm nguồn "buổi trước của chính em" (cạnh "bạn
+cùng buổi" đã có), (2) "bộ combo lưu sẵn" — GV gom bộ điểm mạnh/cải thiện,
+áp cả bộ 1 chạm (bảng `review_combos`). **Việc còn phải làm trước deploy:**
+1. User DÁN migration `20260728000000_review_combos.sql` (bảng MỚI — dán
+   lúc nào cũng an toàn, code cũ không tham chiếu; nhưng combos sẽ trống cho
+   tới khi bảng tồn tại).
+2. User nghiệm thu UI.
+3. Merge → develop → main → push. ai-service KHÔNG đổi → chỉ Vercel deploy.
+Lint + typecheck + build (web) đã PASS.
 
 **ĐÃ DEPLOY production: công tắc bật/tắt key Gemini riêng** (Đợt 20,
 `feature/api-key-toggle`): checkbox ở `/profile` cho phép TẮT key riêng để tạm
