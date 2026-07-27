@@ -340,8 +340,19 @@
       học viên (gồm nhiều chân dung pha trộn: yếu mặt này mạnh mặt kia), rút
       nhãn từ danh mục GV theo nhóm (bỏ presentation/other), skip trùng + rỗng
 - [x] 3 khối trang Cài đặt (`SettingsSection`) đóng mặc định, bấm mới mở — gọn
-- [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
-- [ ] User nghiệm thu UI + deploy (0 migration — thuần UI + action)
+- [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi; 0 migration
+- [x] Merge lên production (2026-07-27)
+
+### Đợt 23 (`feature/duplicate-class`) — sao chép lớp học
+- [x] `duplicateClass`: tạo lớp mới; số buổi + giáo án lấy từ LỚP KHÁC do GV chọn
+      (`curriculum_class_id`, KHÔNG lấy lớp đang mở — user chốt 2026-07-27);
+      upsert đè buổi trigger sinh; chép ghi danh thành viên được chọn (từ lớp
+      đang mở); KHÔNG chép nhận xét / sản phẩm — lớp mới trống
+- [x] Dialog "⧉ Sao chép lớp": dropdown chọn lớp nguồn giáo án (chỉ các lớp
+      khác, kèm số buổi) + khóa/mã/mô tả + tick thành viên (mặc định hết);
+      redirect sang lớp mới; chưa có lớp khác thì báo và chặn
+- [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
+- [x] Merge lên production (2026-07-27)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

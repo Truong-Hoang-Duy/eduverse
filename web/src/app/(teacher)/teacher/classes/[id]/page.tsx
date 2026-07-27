@@ -17,6 +17,7 @@ import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 import { AddStudentDialog } from "./add-student-dialog";
 import { BreakScreen } from "./break-screen";
 import { DeleteClassButton } from "./delete-class-button";
+import { DuplicateClassDialog } from "./duplicate-class-dialog";
 import { EditClassDialog } from "./edit-class-dialog";
 import { GroupRandomizer } from "./group-randomizer";
 import { ProjectShowcase } from "./project-showcase";
@@ -53,7 +54,10 @@ export default async function ClassDetailPage({
       .select("*, profiles(id, full_name, username)")
       .eq("class_id", id)
       .order("joined_at"),
-    supabase.from("classes").select("id, class_code").order("class_code"),
+    supabase
+      .from("classes")
+      .select("id, class_code, total_sessions")
+      .order("class_code"),
     supabase
       .from("sessions")
       .select("id, session_number, title, content, session_date")
@@ -85,11 +89,24 @@ export default async function ClassDetailPage({
       username: e.profiles!.username,
     }));
 
-  const otherClasses: ClassOption[] = (
-    (allClasses ?? []) as { id: string; class_code: string }[]
-  )
+  const allClassRows = (allClasses ?? []) as {
+    id: string;
+    class_code: string;
+    total_sessions: number;
+  }[];
+  const otherClasses: ClassOption[] = allClassRows
     .filter((c) => c.id !== id)
     .map((c) => ({ id: c.id, classCode: c.class_code }));
+
+  // Nguồn giáo án cho "Sao chép lớp": các lớp KHÁC lớp đang mở (user chốt
+  // 2026-07-27 — không lấy giáo án từ lớp hiện tại), kèm số buổi để hiển thị.
+  const curriculumSources = allClassRows
+    .filter((c) => c.id !== id)
+    .map((c) => ({
+      id: c.id,
+      classCode: c.class_code,
+      totalSessions: c.total_sessions,
+    }));
 
   const sessions = sessionsData ?? [];
   const filledSessions = sessions.filter((s) => Boolean(s.content)).length;
@@ -156,6 +173,17 @@ export default async function ClassDetailPage({
               courseId={cls.course_id}
               description={cls.description}
               courses={coursesData ?? []}
+            />
+            <DuplicateClassDialog
+              sourceClassCode={cls.class_code}
+              courseId={cls.course_id}
+              description={cls.description}
+              curriculumSources={curriculumSources}
+              courses={coursesData ?? []}
+              students={students.map((s) => ({
+                id: s.studentId,
+                fullName: s.fullName,
+              }))}
             />
             <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
           </div>

@@ -8,13 +8,19 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-27, bởi: Claude)
 
-**Đang làm:** 🔴 **CÓ TASK DỞ — nhánh `feature/review-input-ux-combo-seed`
-đã commit, CHƯA merge/deploy.** 3 cải tiến UX nhận xét (Đợt 22): (1) gõ câu
-mới ngay trong ô tick (`MultiSelect.onCreate`), bỏ ô nhập riêng bên dưới;
-(2) vùng badge đã chọn giới hạn chiều cao + cuộn để không vỡ bố cục; (3) nút
-"⚡ Thêm nhanh bộ mẫu" ở Cài đặt (`seedDefaultCombos`) dựng ~11 bộ combo từ
-danh mục GV theo nhóm kỹ năng. **0 migration** (thuần UI + action). Việc còn:
-user nghiệm thu UI → merge → deploy. Lint + typecheck + build PASS.
+**Đang làm:** KHÔNG có task dở.
+
+**ĐÃ DEPLOY production (2026-07-27, cùng đợt):**
+- **Đợt 22** (`feature/review-input-ux-combo-seed`): gõ câu mới ngay trong ô
+  tick (`MultiSelect.onCreate`, bỏ ô nhập riêng), vùng badge giới hạn chiều
+  cao + cuộn (không vỡ layout), nút "⚡ Thêm nhanh bộ mẫu" (~22 bộ combo theo
+  chân dung, `seedDefaultCombos`), 3 khối trang Cài đặt đóng mặc định
+  (`SettingsSection`). 0 migration.
+- **Đợt 23** (`feature/duplicate-class`): **sao chép lớp** — nút "⧉ Sao chép
+  lớp" ở trang chi tiết; số buổi + giáo án lấy từ LỚP KHÁC do GV chọn (KHÔNG
+  lấy lớp đang mở), thành viên từ lớp đang mở (tick chọn), KHÔNG chép nhận
+  xét/sản phẩm. `duplicateClass` trong `lib/actions/classes.ts`. 0 migration.
+Cả hai lint + typecheck + build PASS, ai-service KHÔNG đổi → chỉ Vercel deploy.
 
 **ĐÃ DEPLOY production: copy nhận xét từ buổi trước + bộ combo** (Đợt 21,
 `feature/review-copy-prior-combos`): (1) combo copy điểm mạnh/cải thiện có
