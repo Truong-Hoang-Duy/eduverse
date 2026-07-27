@@ -72,7 +72,7 @@ export function ComboManager({
             {seeding ? "Đang thêm..." : "⚡ Thêm nhanh bộ mẫu"}
           </Button>
           <Badge variant="outline" className="ml-2 text-xs">
-            ~11 bộ theo chân dung học viên, không trùng bộ đã có
+            ~22 bộ theo chân dung học viên, không trùng bộ đã có
           </Badge>
           <FormMessage result={seedState} />
         </form>

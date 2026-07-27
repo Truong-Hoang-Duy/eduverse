@@ -336,9 +336,9 @@
 - [x] Gõ câu mới NGAY TRONG ô tick (`MultiSelect` prop `onCreate`, hiện "➕ Thêm
       ..." / Enter) — bỏ ô nhập riêng bên dưới
 - [x] Vùng badge đã chọn giới hạn chiều cao + cuộn + wrap chữ → không vỡ bố cục
-- [x] Nút "⚡ Thêm nhanh bộ mẫu" (`seedDefaultCombos`): ~11 bộ theo chân dung
-      học viên, rút nhãn từ danh mục GV theo nhóm (bỏ presentation/other),
-      skip trùng tên + bộ rỗng
+- [x] Nút "⚡ Thêm nhanh bộ mẫu" (`seedDefaultCombos`): ~22 bộ theo chân dung
+      học viên (gồm nhiều chân dung pha trộn: yếu mặt này mạnh mặt kia), rút
+      nhãn từ danh mục GV theo nhóm (bỏ presentation/other), skip trùng + rỗng
 - [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [ ] User nghiệm thu UI + deploy (0 migration — thuần UI + action)
 

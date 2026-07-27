@@ -105,6 +105,19 @@ const COMBO_TEMPLATES: {
   { name: "Chăm nhưng còn chậm", strengthGroups: ["attitude", "discipline"], improvementGroups: ["coding", "computer_skills"] },
   { name: "Tự học tốt, cần hợp tác", strengthGroups: ["self_study", "thinking"], improvementGroups: ["collaboration", "discipline"] },
   { name: "Cần kèm thêm nền tảng", strengthGroups: ["attitude"], improvementGroups: ["coding", "thinking", "self_study"] },
+  // Nhóm "chân dung pha trộn": yếu/trung bình mặt này nhưng có điểm mạnh mặt
+  // khác (yêu cầu user 2026-07-27 — đa dạng hơn, VD kiến thức yếu mà thao tác ổn).
+  { name: "Thao tác tốt, kiến thức còn yếu", strengthGroups: ["computer_skills", "attitude"], improvementGroups: ["thinking", "coding"] },
+  { name: "Chăm chỉ nhưng tiếp thu chậm", strengthGroups: ["attitude", "discipline"], improvementGroups: ["thinking", "self_study"] },
+  { name: "Nhiệt tình nhưng thiếu tập trung", strengthGroups: ["collaboration", "attitude"], improvementGroups: ["discipline", "coding"] },
+  { name: "Nhanh nhưng ẩu", strengthGroups: ["thinking", "coding"], improvementGroups: ["discipline", "attitude"] },
+  { name: "Có năng khiếu, chưa chăm", strengthGroups: ["thinking", "creativity"], improvementGroups: ["discipline", "self_study"] },
+  { name: "Ngoan, cần mạnh dạn hơn", strengthGroups: ["discipline", "attitude"], improvementGroups: ["questioning", "collaboration"] },
+  { name: "Biết dùng AI, lệ thuộc công cụ", strengthGroups: ["ai_usage", "computer_skills"], improvementGroups: ["thinking", "self_study"] },
+  { name: "Giao tiếp tốt, kiến thức trung bình", strengthGroups: ["collaboration", "questioning"], improvementGroups: ["coding", "thinking"] },
+  { name: "Cẩn thận, cần nhanh nhẹn hơn", strengthGroups: ["discipline", "coding"], improvementGroups: ["computer_skills", "thinking"] },
+  { name: "Sáng tạo nhưng làm dở dang", strengthGroups: ["creativity", "ai_usage"], improvementGroups: ["discipline", "coding"] },
+  { name: "Tiến bộ rõ, cần ổn định", strengthGroups: ["attitude", "self_study"], improvementGroups: ["discipline", "coding"] },
 ];
 
 /** Số nhãn tối đa lấy từ mỗi nhóm cho một bộ — giữ bộ đủ ý mà không quá dài. */

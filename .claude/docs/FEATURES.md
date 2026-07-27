@@ -127,11 +127,13 @@
     xét"): đặt tên bộ (VD "Học tốt, chưa phát biểu") + chọn nhiều điểm mạnh/cần
     cải thiện từ danh mục qua `MultiSelect`, lưu; xem danh sách + xóa
     (ConfirmDialog). GV soạn sẵn vài bộ mẫu theo tiêu chuẩn hợp lý.
-  - **Nút "⚡ Thêm nhanh bộ mẫu"** (`seedDefaultCombos`): dựng ~11 bộ theo "chân
-    dung học viên" (Học tốt toàn diện, Chăm nhưng còn chậm, Giỏi code ít hợp
-    tác...), rút nhãn từ CHÍNH danh mục của GV theo nhóm kỹ năng (trải hết 10
-    nhóm, BỎ `presentation` vì tùy buổi + `other`). Bỏ qua bộ trùng tên (bấm
-    nhiều lần không nhân đôi) và bộ rỗng. Template ở `review-combos.ts`.
+  - **Nút "⚡ Thêm nhanh bộ mẫu"** (`seedDefaultCombos`): dựng ~22 bộ theo "chân
+    dung học viên", gồm cả các chân dung PHA TRỘN (yếu/trung bình mặt này nhưng
+    mạnh mặt khác — VD "Thao tác tốt, kiến thức còn yếu", "Nhanh nhưng ẩu",
+    "Biết dùng AI, lệ thuộc công cụ"...). Rút nhãn từ CHÍNH danh mục của GV theo
+    nhóm kỹ năng (trải hết 10 nhóm, BỎ `presentation` vì tùy buổi + `other`).
+    Bỏ qua bộ trùng tên (bấm nhiều lần không nhân đôi) và bộ rỗng. Template ở
+    `review-combos.ts`.
   - **Áp ở mỗi học viên** (`ComboBar` trong `sessions/[id]`): CHỈ 1 combo "⚡ Áp
     dụng bộ combo..." → gộp union cả bộ vào lựa chọn hiện tại. KHÔNG còn nút
     "Lưu bộ"/"Quản lý bộ" tại chỗ (đã bỏ 2026-07-27 — dồn về Cài đặt).
