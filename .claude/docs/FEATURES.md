@@ -39,6 +39,10 @@
   đóng mặc định trừ khi `defaultOpen`): dùng ở trang chi tiết lớp (chỉ "Buổi
   học" mở sẵn, còn lại đóng) và có thể tái dùng nơi khác. Nút hành động đặt
   TRONG nội dung, KHÔNG ở summary (bấm summary luôn toggle).
+- **Nút "← Quay lại ..."** đồng bộ dạng `Button asChild variant="outline"
+  size="sm"` + `cursor-pointer` (class lớp / buổi học / hồ sơ HV). PHẢI thêm
+  `cursor-pointer` tường minh: quy tắc pointer toàn cục ở `globals.css` chỉ áp
+  cho `button`/`[role=button]`, KHÔNG áp cho `<a>` mà `asChild` sinh ra.
 
 ## Vai trò & đăng nhập (KHÔNG dùng email)
 
@@ -186,7 +190,12 @@ trong bảng danh sách lớp.
   trang buổi để sửa. Đây là nhận xét GỐC (khác với bản AI tóm tắt).
 - **Thẻ số liệu**: đã nhận xét X/N buổi, tổng lượt điểm mạnh, tổng lượt cần cải thiện.
 - **AI tổng hợp toàn khóa**: tái dùng `StudentSummaryPanel` (khóa cứng vào 1 HV,
-  không hiện dropdown) — Copy để gửi phụ huynh.
+  không hiện dropdown) — Copy để gửi phụ huynh. **KHÔNG dùng icon**, 5 mục
+  (Trong quá trình học / Điểm mạnh / Điểm cần cải thiện / Định hướng sắp tới /
+  Khó khăn cần hỗ trợ) format tiêu đề đậm + phân cách `divide-y` cho dễ đọc
+  (user 2026-07-27). Đây là NƠI DUY NHẤT dùng tính năng tổng hợp — đã BỎ khối
+  "Nhận xét tổng hợp từng học viên" (có dropdown) khỏi trang chi tiết lớp vì
+  trùng chức năng.
 - ⚠️ **Học viên KHÔNG xem được trang này** — nhận xét vẫn chỉ để GV gửi phụ huynh
   (giữ nguyên ranh giới ở mục "Học viên"). RLS `student_reviews_teacher_all` chỉ
   cho GV của lớp đọc; 0 migration, chỉ thêm UI.

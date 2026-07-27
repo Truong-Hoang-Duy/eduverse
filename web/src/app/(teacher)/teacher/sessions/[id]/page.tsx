@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -166,13 +167,12 @@ export default async function SessionDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href={`/teacher/classes/${session.class_id}`}
-          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          ← Lớp {session.classes?.class_code}
-        </Link>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">
+        <Button asChild variant="outline" size="sm" className="mb-3 cursor-pointer">
+          <Link href={`/teacher/classes/${session.class_id}`}>
+            ← Quay lại lớp {session.classes?.class_code}
+          </Link>
+        </Button>
+        <h1 className="text-2xl font-bold tracking-tight">
           Buổi {session.session_number}: {sessionTitle}
         </h1>
       </div>
@@ -192,8 +192,7 @@ export default async function SessionDetailPage({
             Nhận xét học viên ({handledCount}/{students.length})
           </CardTitle>
           <CardDescription>
-            Tick điểm mạnh / cần cải thiện rồi bấm &quot;AI tạo nhận xét&quot; —
-            sửa lại theo ý bạn trước khi lưu.
+            Tick điểm mạnh / cần cải thiện rồi bấm &quot;AI tạo nhận xét&quot;.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -231,8 +230,7 @@ export default async function SessionDetailPage({
         <CardHeader>
           <CardTitle className="text-base">📱 Tin nhắn Zalo cho phụ huynh</CardTitle>
           <CardDescription>
-            AI tổng hợp các nhận xét đã lưu của buổi này thành tin nhắn theo mẫu —
-            copy rồi dán vào nhóm Zalo lớp.
+            AI tổng hợp các nhận xét đã lưu của buổi này thành tin nhắn theo mẫu.
           </CardDescription>
         </CardHeader>
         <CardContent>

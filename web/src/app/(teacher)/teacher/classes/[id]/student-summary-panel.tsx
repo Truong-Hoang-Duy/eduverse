@@ -17,20 +17,18 @@ import {
 } from "@/lib/actions/reviews";
 
 const SECTIONS: { key: keyof StudentSummary; label: string }[] = [
-  { key: "qua_trinh_hoc", label: "📈 Trong quá trình học" },
-  { key: "diem_manh", label: "💪 Điểm mạnh" },
-  { key: "diem_yeu", label: "🎯 Điểm yếu" },
-  { key: "dinh_huong", label: "🧭 Định hướng sắp tới" },
-  { key: "kho_khan", label: "🤝 Khó khăn cần hỗ trợ" },
+  { key: "qua_trinh_hoc", label: "Trong quá trình học" },
+  { key: "diem_manh", label: "Điểm mạnh" },
+  { key: "diem_yeu", label: "Điểm cần cải thiện" },
+  { key: "dinh_huong", label: "Định hướng sắp tới" },
+  { key: "kho_khan", label: "Khó khăn cần hỗ trợ" },
 ];
 
 function toCopyText(studentName: string, summary: StudentSummary): string {
   return [
     `NHẬN XÉT TỔNG HỢP — ${studentName}`,
     "",
-    ...SECTIONS.map(
-      (s) => `${s.label.replace(/^\S+\s/, "").toUpperCase()}:\n${summary[s.key]}`
-    ),
+    ...SECTIONS.map((s) => `${s.label.toUpperCase()}:\n${summary[s.key]}`),
   ].join("\n\n");
 }
 
@@ -105,25 +103,29 @@ export function StudentSummaryPanel({
           disabled={pending || !studentId}
           size="sm"
         >
-          {pending ? "AI đang tổng hợp..." : "✨ Tổng hợp từ các buổi đã học"}
+          {pending ? "AI đang tổng hợp..." : "Tổng hợp từ các buổi đã học"}
         </Button>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {summary && (
-        <div className="space-y-3 rounded-lg border p-4">
+        <div className="space-y-4 rounded-lg border p-4">
           <p className="font-semibold">{studentName}</p>
-          {SECTIONS.map((section) => (
-            <div key={section.key}>
-              <p className="text-sm font-medium">{section.label}</p>
-              <p className="mt-0.5 text-sm whitespace-pre-wrap text-muted-foreground">
-                {summary[section.key]}
-              </p>
-            </div>
-          ))}
+          <div className="divide-y">
+            {SECTIONS.map((section) => (
+              <div key={section.key} className="py-3 first:pt-0 last:pb-0">
+                <p className="text-sm font-semibold text-foreground">
+                  {section.label}
+                </p>
+                <p className="mt-1 text-sm leading-relaxed whitespace-pre-wrap text-muted-foreground">
+                  {summary[section.key]}
+                </p>
+              </div>
+            ))}
+          </div>
           <Button onClick={handleCopy} size="sm" variant="outline">
-            {copied ? "✓ Đã copy nội dung" : "📋 Copy nội dung"}
+            {copied ? "Đã copy nội dung" : "Copy nội dung"}
           </Button>
         </div>
       )}

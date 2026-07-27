@@ -10,6 +10,15 @@
 
 **Đang làm:** KHÔNG có task dở.
 
+**ĐÃ DEPLOY production: dọn nhận xét tổng hợp + nút quay lại + cắt mô tả**
+(Đợt 25, `feature/review-summary-format-backbtn`): (1) BỎ khối "Nhận xét tổng
+hợp từng học viên" (dropdown) khỏi trang chi tiết lớp — trùng bản trong hồ sơ
+từng HV; (2) "Nhận xét tổng hợp toàn khóa" bỏ icon + format 5 mục đậm/`divide-y`
+(sửa cả `toCopyText`); (3) nút "← Quay lại" ở buổi học + hồ sơ HV thành Button
+outline + `cursor-pointer`; (4) cắt đuôi "— <câu hướng dẫn thừa>" ở mô tả
+subtitle các tính năng (giữ ConfirmDialog xóa + comment + nhãn select). 0
+migration, ai-service KHÔNG đổi.
+
 **ĐÃ DEPLOY production: 3 chỉnh UI** (Đợt 24,
 `feature/ui-scrolltop-backbtn-collapse`): nút "↑ lên đầu trang" nổi góc
 dưới-phải (`scroll-to-top.tsx` trong `AppShell`, mọi trang, hiện khi cuộn
@@ -63,8 +72,8 @@ cần `ADMIN_USERNAMES` ở cả local lẫn Vercel, fail closed); nhập tự d
 mạnh/cần cải thiện + gợi ý nội dung buổi học AI + Zalo cá nhân hóa lớp 1-1
 (2026-07-21).
 
-**`main` = `origin/main` = `69baad7`** — ĐÂY là bản đang chạy production.
-**`develop` = `origin/develop` = `0b75e59`** + 1 commit docs ghi lại chính
+**`main` = `origin/main` = `aa0edd7`** — ĐÂY là bản đang chạy production.
+**`develop` = `origin/develop` = `d5990c2`** + 1 commit docs ghi lại chính
 hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi chú,
 merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở phiên
 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.

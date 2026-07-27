@@ -364,6 +364,20 @@
 - [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [x] Merge lên production (2026-07-27)
 
+### Đợt 25 (`feature/review-summary-format-backbtn`) — dọn nhận xét tổng hợp + nút quay lại
+- [x] BỎ khối "Nhận xét tổng hợp từng học viên" (dropdown) khỏi trang chi tiết
+      lớp — trùng với bản đã có trong hồ sơ từng HV
+- [x] "Nhận xét tổng hợp toàn khóa": bỏ icon, format 5 mục tiêu đề đậm +
+      `divide-y`; sửa `toCopyText` (không còn strip word do bỏ emoji prefix)
+- [x] Nút "← Quay lại lớp / danh sách lớp" ở trang buổi học + hồ sơ HV đổi sang
+      Button outline + `cursor-pointer` (đồng bộ trang chi tiết lớp)
+- [x] Cắt đuôi "— <câu hướng dẫn thừa>" ở mô tả subtitle các tính năng (chấm
+      bài, random nhóm, sản phẩm, cài đặt, nhận xét buổi/Zalo, tổng hợp toàn
+      khóa, gallery GV). GIỮ nguyên comment/tiêu đề tab/nhãn select và mô tả
+      ConfirmDialog xóa (câu trấn an là thông tin an toàn)
+- [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
+- [x] Merge lên production (2026-07-27)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

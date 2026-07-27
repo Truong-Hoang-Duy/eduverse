@@ -16,7 +16,6 @@ import { DuplicateClassDialog } from "./duplicate-class-dialog";
 import { EditClassDialog } from "./edit-class-dialog";
 import { GroupRandomizer } from "./group-randomizer";
 import { ProjectShowcase } from "./project-showcase";
-import { StudentSummaryPanel } from "./student-summary-panel";
 import {
   StudentsTable,
   type ClassOption,
@@ -140,7 +139,7 @@ export default async function ClassDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Button asChild variant="outline" size="sm" className="mb-3">
+        <Button asChild variant="outline" size="sm" className="mb-3 cursor-pointer">
           <Link href="/teacher">← Quay lại danh sách lớp</Link>
         </Button>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -252,21 +251,8 @@ export default async function ClassDetailPage({
       </CollapsibleCard>
 
       <CollapsibleCard
-        title="📝 Nhận xét tổng hợp từng học viên"
-        description="AI tổng hợp từ tất cả các buổi đã nhận xét: quá trình học, điểm mạnh, điểm yếu, định hướng sắp tới, khó khăn cần hỗ trợ — bấm Copy để gửi riêng cho phụ huynh."
-      >
-        <StudentSummaryPanel
-          classId={cls.id}
-          students={students.map((s) => ({
-            id: s.studentId,
-            fullName: s.fullName,
-          }))}
-        />
-      </CollapsibleCard>
-
-      <CollapsibleCard
         title="🎲 Random nhóm thuyết trình"
-        description='Chia nhóm ngẫu nhiên theo số nhóm hoặc số người mỗi nhóm — random lại thoải mái, bấm "Chiếu màn hình" để đưa lên TV. Không lưu lại, mỗi buổi random mới.'
+        description="Chia nhóm ngẫu nhiên theo số nhóm hoặc số người mỗi nhóm"
       >
         <GroupRandomizer
           classCode={cls.class_code}
@@ -276,7 +262,7 @@ export default async function ClassDetailPage({
 
       <CollapsibleCard
         title={`🚀 Sản phẩm cuối khóa (${projects.length})`}
-        description="Sản phẩm học viên trong lớp đã khai báo — chiếu lên TV khi các em thuyết trình cuối khóa"
+        description="Sản phẩm học viên trong lớp đã khai báo"
       >
         <div className="mb-3 flex justify-end">
           <ProjectShowcase classCode={cls.class_code} projects={projects} />

@@ -55,7 +55,7 @@ export default async function AssignmentsPage() {
     <div className="space-y-8">
       <PageHeader
         title="Chấm bài"
-        description="Chọn khóa và đề, tải file bài làm lên — AI chấm điểm và nhận xét để bạn copy"
+        description="Chọn khóa và đề, tải file bài làm lên"
         action={courses.length > 0 ? <AssignmentForm courses={courses} /> : null}
       />
 
@@ -84,7 +84,7 @@ export default async function AssignmentsPage() {
             <div>
               <h2 className="text-lg font-semibold tracking-tight">Đề bài đã lưu</h2>
               <p className="text-sm text-muted-foreground">
-                Đề thuộc khóa học, mỗi buổi một đề — dùng chung cho mọi lớp cùng khóa
+                Đề thuộc khóa học, mỗi buổi một đề
               </p>
             </div>
 
