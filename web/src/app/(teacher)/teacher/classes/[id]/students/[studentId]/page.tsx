@@ -145,8 +145,7 @@ export default async function StudentProfilePage({
             Nhận xét tổng hợp toàn khóa
           </CardTitle>
           <CardDescription>
-            AI tổng hợp từ tất cả các buổi đã nhận xét — bấm Copy để gửi riêng cho
-            phụ huynh.
+            AI tổng hợp từ tất cả các buổi đã nhận xét.
           </CardDescription>
         </CardHeader>
         <CardContent>

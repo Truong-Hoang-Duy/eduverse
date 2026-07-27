@@ -252,7 +252,7 @@ export default async function ClassDetailPage({
 
       <CollapsibleCard
         title="🎲 Random nhóm thuyết trình"
-        description='Chia nhóm ngẫu nhiên theo số nhóm hoặc số người mỗi nhóm — random lại thoải mái, bấm "Chiếu màn hình" để đưa lên TV. Không lưu lại, mỗi buổi random mới.'
+        description="Chia nhóm ngẫu nhiên theo số nhóm hoặc số người mỗi nhóm"
       >
         <GroupRandomizer
           classCode={cls.class_code}
@@ -262,7 +262,7 @@ export default async function ClassDetailPage({
 
       <CollapsibleCard
         title={`🚀 Sản phẩm cuối khóa (${projects.length})`}
-        description="Sản phẩm học viên trong lớp đã khai báo — chiếu lên TV khi các em thuyết trình cuối khóa"
+        description="Sản phẩm học viên trong lớp đã khai báo"
       >
         <div className="mb-3 flex justify-end">
           <ProjectShowcase classCode={cls.class_code} projects={projects} />

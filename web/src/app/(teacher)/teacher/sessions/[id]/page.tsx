@@ -192,8 +192,7 @@ export default async function SessionDetailPage({
             Nhận xét học viên ({handledCount}/{students.length})
           </CardTitle>
           <CardDescription>
-            Tick điểm mạnh / cần cải thiện rồi bấm &quot;AI tạo nhận xét&quot; —
-            sửa lại theo ý bạn trước khi lưu.
+            Tick điểm mạnh / cần cải thiện rồi bấm &quot;AI tạo nhận xét&quot;.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -231,8 +230,7 @@ export default async function SessionDetailPage({
         <CardHeader>
           <CardTitle className="text-base">📱 Tin nhắn Zalo cho phụ huynh</CardTitle>
           <CardDescription>
-            AI tổng hợp các nhận xét đã lưu của buổi này thành tin nhắn theo mẫu —
-            copy rồi dán vào nhóm Zalo lớp.
+            AI tổng hợp các nhận xét đã lưu của buổi này thành tin nhắn theo mẫu.
           </CardDescription>
         </CardHeader>
         <CardContent>

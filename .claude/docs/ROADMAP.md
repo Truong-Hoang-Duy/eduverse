@@ -371,6 +371,10 @@
       `divide-y`; sửa `toCopyText` (không còn strip word do bỏ emoji prefix)
 - [x] Nút "← Quay lại lớp / danh sách lớp" ở trang buổi học + hồ sơ HV đổi sang
       Button outline + `cursor-pointer` (đồng bộ trang chi tiết lớp)
+- [x] Cắt đuôi "— <câu hướng dẫn thừa>" ở mô tả subtitle các tính năng (chấm
+      bài, random nhóm, sản phẩm, cài đặt, nhận xét buổi/Zalo, tổng hợp toàn
+      khóa, gallery GV). GIỮ nguyên comment/tiêu đề tab/nhãn select và mô tả
+      ConfirmDialog xóa (câu trấn an là thông tin an toàn)
 - [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [ ] User nghiệm thu UI + deploy
 
