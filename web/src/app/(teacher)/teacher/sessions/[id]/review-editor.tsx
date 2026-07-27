@@ -305,12 +305,7 @@ export function ReviewEditor({
 
         {/* Nhận xét nhanh: áp bộ combo lưu sẵn + copy từ bạn/buổi trước. */}
         <div className="flex flex-wrap items-center gap-2">
-          <ComboBar
-            combos={combos ?? []}
-            currentStrengths={strengths}
-            currentImprovements={improvements}
-            onApply={applyCombo}
-          />
+          <ComboBar combos={combos ?? []} onApply={applyCombo} />
           {(copySources?.length ?? 0) > 0 && (
             <Select value="" onValueChange={copyFromSource}>
               <SelectTrigger

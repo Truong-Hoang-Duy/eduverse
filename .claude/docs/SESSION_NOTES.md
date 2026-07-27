@@ -11,8 +11,10 @@
 **Đang làm:** 🔴 **CÓ TASK DỞ — nhánh `feature/review-copy-prior-combos` đã
 commit nhưng CHƯA merge, CHƯA deploy.** 2 cải tiến nhận xét (Đợt 21):
 (1) copy điểm mạnh/cải thiện thêm nguồn "buổi trước của chính em" (cạnh "bạn
-cùng buổi" đã có), (2) "bộ combo lưu sẵn" — GV gom bộ điểm mạnh/cải thiện,
-áp cả bộ 1 chạm (bảng `review_combos`). **Việc còn phải làm trước deploy:**
+cùng buổi" đã có), (2) "bộ combo nhận xét" — GV tạo/quản lý bộ ở TRANG CÀI ĐẶT
+(khối riêng, chọn từ danh mục), ở mỗi học viên chỉ CHỌN ÁP một bộ (đã bỏ
+nút Lưu/Quản lý tại chỗ theo yêu cầu 2026-07-27). Bảng `review_combos`.
+**Việc còn phải làm trước deploy:**
 1. User DÁN migration `20260728000000_review_combos.sql` (bảng MỚI — dán
    lúc nào cũng an toàn, code cũ không tham chiếu; nhưng combos sẽ trống cho
    tới khi bảng tồn tại).

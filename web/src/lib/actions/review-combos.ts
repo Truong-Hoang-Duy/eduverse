@@ -62,8 +62,9 @@ export async function createReviewCombo(
     return { error: `Không lưu được bộ: ${error.message}` };
   }
 
-  // Combos dùng chung mọi buổi — revalidate toàn bộ route động để dropdown
-  // combo ở trang buổi học đang mở cập nhật ngay.
+  // Combos tạo/xóa ở Cài đặt, áp ở trang buổi học → revalidate cả hai. Route
+  // buổi học động nên dùng mẫu "[id]" + "page" để mọi buổi cập nhật.
+  revalidatePath("/teacher/settings");
   revalidatePath("/teacher/sessions/[id]", "page");
   return { success: `Đã lưu bộ "${name}".` };
 }
@@ -75,7 +76,8 @@ export async function deleteReviewCombo(formData: FormData): Promise<void> {
   const supabase = await createClient();
   // RLS đã chặn xóa bộ của người khác; không cần kiểm thêm.
   await supabase.from("review_combos").delete().eq("id", id);
-  // Combos dùng chung mọi buổi — revalidate toàn bộ route động để dropdown
-  // combo ở trang buổi học đang mở cập nhật ngay.
+  // Combos tạo/xóa ở Cài đặt, áp ở trang buổi học → revalidate cả hai. Route
+  // buổi học động nên dùng mẫu "[id]" + "page" để mọi buổi cập nhật.
+  revalidatePath("/teacher/settings");
   revalidatePath("/teacher/sessions/[id]", "page");
 }
