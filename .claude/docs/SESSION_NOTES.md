@@ -10,6 +10,13 @@
 
 **Đang làm:** KHÔNG có task dở.
 
+**ĐÃ DEPLOY production: 3 chỉnh UI** (Đợt 24,
+`feature/ui-scrolltop-backbtn-collapse`): nút "↑ lên đầu trang" nổi góc
+dưới-phải (`scroll-to-top.tsx` trong `AppShell`, mọi trang, hiện khi cuộn
+>300px), nút "← Quay lại danh sách lớp" to hơn (Button outline), trang chi tiết
+lớp dùng `CollapsibleCard` đóng mặc định chỉ "Buổi học" mở. 0 migration,
+ai-service KHÔNG đổi.
+
 **ĐÃ DEPLOY production (2026-07-27, cùng đợt):**
 - **Đợt 22** (`feature/review-input-ux-combo-seed`): gõ câu mới ngay trong ô
   tick (`MultiSelect.onCreate`, bỏ ô nhập riêng), vùng badge giới hạn chiều

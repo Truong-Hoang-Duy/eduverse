@@ -31,6 +31,14 @@
   màn hình nhỏ. Hàng nút/ô chọn có bề rộng tối thiểu phải nằm trong `flex-wrap`.
   Bảng dùng `ui/table.tsx` (đã tự cuộn ngang). Tránh `w-[Npx]` không có breakpoint.
   Nav ẩn chữ "Eduverse" dưới `sm` để không tràn.
+- **Nút "lên đầu trang"** (`components/scroll-to-top.tsx`) đặt trong `AppShell`
+  → có ở MỌI trang đã đăng nhập: nút nổi tròn góc dưới-phải (`fixed bottom-4
+  right-4 sm:bottom-6 sm:right-6`), chỉ hiện khi `scrollY > 300`, bấm cuộn mượt
+  về đầu (trang cuộn theo window).
+- **Khối thu gọn dùng chung** `components/collapsible-card.tsx` (`<details>`,
+  đóng mặc định trừ khi `defaultOpen`): dùng ở trang chi tiết lớp (chỉ "Buổi
+  học" mở sẵn, còn lại đóng) và có thể tái dùng nơi khác. Nút hành động đặt
+  TRONG nội dung, KHÔNG ở summary (bấm summary luôn toggle).
 
 ## Vai trò & đăng nhập (KHÔNG dùng email)
 
