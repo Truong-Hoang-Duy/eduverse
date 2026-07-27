@@ -10,6 +10,14 @@
 
 **Đang làm:** KHÔNG có task dở.
 
+**ĐÃ DEPLOY production: copy nhận xét từ buổi trước + bộ combo** (Đợt 21,
+`feature/review-copy-prior-combos`): (1) combo copy điểm mạnh/cải thiện có
+2 nhóm "👥 Bạn cùng buổi" + "📅 Buổi trước của em"; (2) "bộ combo nhận xét"
+— GV tạo/quản lý bộ ở TRANG CÀI ĐẶT (chọn từ danh mục), mỗi học viên chỉ
+CHỌN ÁP một bộ (không có nút Lưu/Quản lý tại chỗ). Bảng `review_combos`
+(user đã dán migration `20260728000000`). ai-service KHÔNG đổi → chỉ Vercel
+deploy. Lint + typecheck + build PASS.
+
 **ĐÃ DEPLOY production: công tắc bật/tắt key Gemini riêng** (Đợt 20,
 `feature/api-key-toggle`): checkbox ở `/profile` cho phép TẮT key riêng để tạm
 dùng key hệ thống mà KHÔNG xóa key. Cột `user_secrets.use_own_key` (migration

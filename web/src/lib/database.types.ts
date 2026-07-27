@@ -331,6 +331,41 @@ export type Database = {
           },
         ]
       }
+      review_combos: {
+        Row: {
+          created_at: string
+          id: string
+          improvements: string[]
+          name: string
+          strengths: string[]
+          teacher_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          improvements?: string[]
+          name: string
+          strengths?: string[]
+          teacher_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          improvements?: string[]
+          name?: string
+          strengths?: string[]
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_combos_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       review_options: {
         Row: {
           category: string

@@ -108,10 +108,25 @@
   CHECK constraint `academic_level`, drop+add). Mức này CHỈ làm ngữ cảnh cho AI
   viết nhận xét vừa trình độ — prompt cấm nêu thẳng xếp loại cho phụ huynh (user
   chốt 2026-07-27). Chưa chọn = null, không ảnh hưởng gì.
-- **Copy điểm mạnh / cần cải thiện từ bạn khác**: combo "Copy ... từ:" liệt kê
-  các bạn CÙNG buổi đã LƯU sẵn lựa chọn (phải Lưu bạn đó trước). Chọn → GỘP
-  (union, bỏ trùng không phân biệt hoa/thường) vào em đang xem, KHÔNG ghi đè thứ
-  đã tick. Nguồn là dữ liệu đã lưu (không phải state live) — quyết định 2026-07-27.
+- **Copy điểm mạnh / cần cải thiện** (combo "📋 Copy ... từ", 2 nhóm — user
+  chốt 2026-07-27): "👥 Bạn cùng buổi" (các bạn CÙNG buổi đã LƯU lựa chọn) +
+  "📅 Buổi trước của em" (chính em đó, tối đa 5 buổi gần nhất đã tích). Chọn →
+  GỘP (union, bỏ trùng không phân biệt hoa/thường) vào em đang xem, KHÔNG ghi
+  đè. Nguồn là dữ liệu ĐÃ LƯU (không phải state live). Buổi trước lấy từ cùng
+  query `priorReviews` ở `page.tsx` (đã bỏ lọc `ai_generated_comment is null` để
+  còn thấy buổi chỉ có tích mà chưa lưu câu nhận xét).
+- **Bộ combo nhận xét** ("nhận xét nhanh", user chốt 2026-07-27 — bảng
+  `review_combos`): TÁCH RÕ 2 nơi.
+  - **Tạo/quản lý ở trang Cài đặt** (`combo-manager.tsx`, khối "Bộ combo nhận
+    xét"): đặt tên bộ (VD "Học tốt, chưa phát biểu") + chọn nhiều điểm mạnh/cần
+    cải thiện từ danh mục qua `MultiSelect`, lưu; xem danh sách + xóa
+    (ConfirmDialog). GV soạn sẵn vài bộ mẫu theo tiêu chuẩn hợp lý.
+  - **Áp ở mỗi học viên** (`ComboBar` trong `sessions/[id]`): CHỈ 1 combo "⚡ Áp
+    dụng bộ combo..." → gộp union cả bộ vào lựa chọn hiện tại. KHÔNG còn nút
+    "Lưu bộ"/"Quản lý bộ" tại chỗ (đã bỏ 2026-07-27 — dồn về Cài đặt).
+  - Combos dùng CHUNG mọi lớp/buổi của GV, tải server-side (`listMyCombos`).
+    `createReviewCombo`/`deleteReviewCombo` revalidate cả `/teacher/settings`
+    lẫn route buổi học động.
 - **Đánh vắng** (checkbox 🚫 đầu form, mặc định CÓ đi học): bật lên thì ẩn toàn
   bộ phần nhận xét, bấm Lưu để đánh dấu. Em vắng bị **loại khỏi tin Zalo tổng
   hợp** (`zalo.ts` lọc `is_absent`) và **tính là đã xử lý** trong bộ đếm "X/Y" +

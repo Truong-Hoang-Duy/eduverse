@@ -12,6 +12,15 @@ export interface ExistingReview {
   is_absent: boolean;
 }
 
+/** Điểm mạnh/cải thiện của CHÍNH một em ở một buổi trước — nguồn copy "buổi
+ *  trước". Đặt ở module thuần (không "use client") để cả page.tsx (server) lẫn
+ *  review-list (client) dùng chung. */
+export interface PriorSelection {
+  sessionNumber: number;
+  strengths: string[];
+  improvements: string[];
+}
+
 /** Đã nhận xét khi có ít nhất 1 trong 3: điểm mạnh, cần cải thiện, hoặc nhận
  *  xét AI — dùng chung cho badge "Đã nhận xét" và bộ lọc Hoàn thành/Chưa. */
 export function isReviewed(existing: ExistingReview | null): boolean {
