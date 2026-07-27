@@ -30,11 +30,11 @@ cần `ADMIN_USERNAMES` ở cả local lẫn Vercel, fail closed); nhập tự d
 mạnh/cần cải thiện + gợi ý nội dung buổi học AI + Zalo cá nhân hóa lớp 1-1
 (2026-07-21).
 
-**`main` = `origin/main` = `<PUSH_MAIN>`** — ĐÂY là bản đang chạy production.
-**`develop` = `origin/develop` = `<PUSH_DEVELOP>`** + 1 commit docs ghi lại
-chính hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi
-chú, merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở
-phiên 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
+**`main` = `origin/main` = `0c82baa`** — ĐÂY là bản đang chạy production.
+**`develop` = `origin/develop` = `3c75a8c`** + 1 commit docs ghi lại chính
+hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi chú,
+merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở phiên
+2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
 
 ⚠️ **`ADMIN_USERNAMES` phải có trong `web/.env.local` (local) và Vercel
 (production)**, nếu không trang đá về `/teacher` — cố tình fail closed.
