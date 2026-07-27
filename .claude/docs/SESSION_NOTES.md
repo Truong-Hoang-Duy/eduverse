@@ -11,8 +11,8 @@
 **Đang làm:** KHÔNG có task dở. Toàn bộ đã deploy production, `main`=`develop`
 (lệch 1 commit docs — bình thường).
 
-**`main` = `origin/main` = `db3edf3`** — bản đang chạy production.
-**`develop` = `origin/develop` = `84d34d0`** = main + 1 commit docs ghi hash
+**`main` = `origin/main` = `da2e254`** — bản đang chạy production (Đợt 26).
+**`develop` = `origin/develop` = `3d9f40f`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
 
@@ -219,6 +219,11 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   (Node resolve package theo vị trí script).
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
+
+### 2026-07-27 — Đợt 26 (`summary-copy-drop-header`, 0 mig, đã deploy)
+`toCopyText` bỏ dòng tiêu đề `NHẬN XÉT TỔNG HỢP — <tên HV>` — text copy bắt đầu
+ngay ở `TRONG QUÁ TRÌNH HỌC:` để GV dán thẳng vào tin phụ huynh. Panel trên màn
+hình VẪN hiện tên HV (chỉ text copy là bỏ) — đừng "sửa lại cho đồng bộ".
 
 ### 2026-07-27 — Đợt 19→25 (7 đợt, đều đã deploy production)
 Phiên dài, mỗi đợt 1 nhánh riêng, deploy từng cụm khi user duyệt. Chi tiết
