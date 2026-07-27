@@ -307,6 +307,17 @@
       `20260726000000` + nghiệm thu UI
 - [x] Merge lên production (2026-07-27) — Render deploy lại ai-service kèm theo
 
+### Đợt 20 (`feature/api-key-toggle`) — bật/tắt key Gemini riêng
+- [x] Cột `user_secrets.use_own_key` bool DEFAULT true (migration
+      `20260727000000`, ADD → dán TRƯỚC deploy)
+- [x] `getMyApiKey()` trả null khi tắt → ai-service dùng key hệ thống; thêm
+      `getMyApiKeyInfo()` (mặt nạ + trạng thái công tắc) và action `setUseOwnKey`
+- [x] UI `/profile`: checkbox "Dùng key riêng của tôi" (khi đã đặt key), tắt
+      không xóa key; dán key mới thì tự bật; ConfirmDialog xóa key nhắc "chỉ
+      muốn tạm dừng thì tắt công tắc là đủ"
+- [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
+- [x] Merge lên production (2026-07-27)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
