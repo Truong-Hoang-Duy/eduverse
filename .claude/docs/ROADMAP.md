@@ -330,7 +330,7 @@
 - [x] Tách `PriorSelection` sang `review-status.ts` (module thuần) để server +
       client dùng chung — tránh lặp lỗi Đợt 19 (gọi hàm client từ server)
 - [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
-- [ ] User dán migration `20260728000000` + nghiệm thu UI + deploy
+- [x] User dán migration `20260728000000`; Merge lên production (2026-07-27)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
