@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 interface ReviewRow {
   strengths: string[];
   improvements: string[];
+  is_absent: boolean;
   profiles: { full_name: string } | null;
 }
 
@@ -41,7 +42,7 @@ export async function generateZaloSummary(input: {
         .single(),
       supabase
         .from("student_reviews")
-        .select("strengths, improvements, profiles!student_reviews_student_id_fkey(full_name)")
+        .select("strengths, improvements, is_absent, profiles!student_reviews_student_id_fkey(full_name)")
         .eq("session_id", input.sessionId),
       supabase.from("enrollments").select("student_id").eq("class_id", session.class_id),
     ]);
@@ -50,7 +51,11 @@ export async function generateZaloSummary(input: {
     return { error: "Chưa chọn mẫu tin — tạo mẫu trong trang Cài đặt." };
   }
 
-  const reviews = (reviewsData ?? []) as unknown as ReviewRow[];
+  // Loại học viên vắng mặt khỏi tin tổng hợp — buổi này em không học nên
+  // không có gì để báo phụ huynh (yêu cầu user 2026-07-27).
+  const reviews = ((reviewsData ?? []) as unknown as ReviewRow[]).filter(
+    (r) => !r.is_absent
+  );
   if (reviews.length === 0) {
     return {
       error: "Buổi này chưa có nhận xét học viên nào — hãy nhận xét trước khi tạo tin.",

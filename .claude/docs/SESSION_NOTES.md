@@ -6,15 +6,35 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-24, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-27, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Chống lặp lời văn tin Zalo (qua các buổi,
-kiểu lưu 2-3 tin trước) vẫn HỦY như đã chốt (user xác nhận là yêu cầu nhầm
-lẫn).
+**Đang làm:** KHÔNG có task dở.
 
-**ĐÃ DEPLOY production: trang vận hành `/teacher/admin`** (Đợt 18) — user
-đã nghiệm thu ở local và khai `ADMIN_USERNAMES` trên Vercel trước khi
-deploy. 0 migration. Lint + typecheck + `pnpm build` PASS.
+**ĐÃ DEPLOY production: 3 cải tiến nhận xét theo buổi** (Đợt 19,
+`feature/review-level-absent-copy`): xếp loại học lực làm ngữ cảnh cho AI,
+copy điểm mạnh/cải thiện từ bạn khác (dữ liệu đã lưu, gộp union), đánh vắng
+(mặc định đi học — ẩn form + loại khỏi Zalo + tính đã xử lý). User đã DÁN
+migration `20260726000000` vào Supabase và nghiệm thu UI trước khi deploy.
+⚠️ **ai-service cũng đổi** (`/generate-review` nhận `academic_level`) → Render
+deploy lại, request AI đầu tiên chờ 30–60s do cold start.
+- 🐛 **Đã dính lỗi runtime khi user chạy thử** (không phải lỗi SQL): page.tsx
+  (Server Component) gọi `isHandled()` nằm trong file `"use client"` →
+  "Attempted to call from the server". Sửa bằng cách tách hàm thuần ra
+  `review-status.ts` (KHÔNG `"use client"`). Bài học ở "Quyết định đã chốt".
+
+Chống lặp lời văn tin Zalo (qua các buổi, kiểu lưu 2-3 tin trước) vẫn HỦY
+như đã chốt (user xác nhận là yêu cầu nhầm lẫn).
+
+**Trước đó cũng đã production:** trang vận hành `/teacher/admin` (Đợt 18,
+cần `ADMIN_USERNAMES` ở cả local lẫn Vercel, fail closed); nhập tự do điểm
+mạnh/cần cải thiện + gợi ý nội dung buổi học AI + Zalo cá nhân hóa lớp 1-1
+(2026-07-21).
+
+**`main` = `origin/main` = `<PUSH_MAIN>`** — ĐÂY là bản đang chạy production.
+**`develop` = `origin/develop` = `<PUSH_DEVELOP>`** + 1 commit docs ghi lại
+chính hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi
+chú, merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở
+phiên 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
 
 ⚠️ **`ADMIN_USERNAMES` phải có trong `web/.env.local` (local) và Vercel
 (production)**, nếu không trang đá về `/teacher` — cố tình fail closed.
@@ -168,6 +188,26 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   tự tính lại danh sách; nhận từ form là người dùng sửa request ép xóa được file
   đang dùng. Bỏ qua file mới hơn 1 giờ vì `createAssignment` upload TRƯỚC rồi mới
   insert dòng (có rollback) — luôn có khoảnh khắc file chưa được trỏ tới.
+- **Hàm THUẦN dùng chung server+client KHÔNG được ở trong file `"use client"`**
+  (dính 2026-07-27): `page.tsx` (Server Component) gọi `isHandled()` đặt trong
+  `review-editor.tsx` (`"use client"`) → runtime lỗi "Attempted to call from the
+  server". `next build` KHÔNG bắt được kiểu gọi chéo này — chỉ lộ khi chạy thật.
+  Cách đúng: tách helper thuần + interface sang module không `"use client"`
+  (`review-status.ts`), cả hai phía import chung. **Import TYPE từ file client
+  thì OK** (bị erase lúc build), chỉ GỌI HÀM runtime mới lỗi.
+- **Nhận xét theo buổi (Đợt 19) — 3 tính năng, quyết định nghiệp vụ đã chốt
+  2026-07-27** (hỏi user 4 câu qua `AskUserQuestion` trước khi code):
+  - **Xếp loại học lực** = 4 mức `academic-levels.ts` (Giỏi/Khá/Trung bình/Cần
+    cố gắng — cố ý tránh "Yếu/Kém" cho hợp TONE_RULE). CHỈ làm ngữ cảnh cho AI
+    chỉnh độ sâu/giọng, **prompt cấm nêu thẳng xếp loại cho phụ huynh**. Lưu ở
+    `student_reviews.academic_level` (nullable, CHECK 4 giá trị — sửa mức phải
+    sửa CẢ CHECK, giống `skill-groups`). Web gửi NHÃN (không gửi mã) sang AI.
+  - **Copy điểm mạnh/cải thiện từ bạn khác** = từ dữ liệu **đã lưu** (không phải
+    state live — user chọn phương án đơn giản), GỘP union bỏ trùng, KHÔNG ghi đè.
+  - **Đánh vắng** = `is_absent` bool DEFAULT false (mặc định đi học). Bật →
+    ẩn form, loại khỏi tin Zalo (`zalo.ts` lọc `is_absent`), tính "đã xử lý"
+    (`isHandled` = `isReviewed` HOẶC `is_absent`). Lưu vắng xóa sạch điểm
+    mạnh/cải thiện/lời khuyên/xếp loại của em ở buổi đó.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 

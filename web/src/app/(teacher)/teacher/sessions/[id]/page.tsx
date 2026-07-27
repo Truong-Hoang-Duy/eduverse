@@ -11,8 +11,8 @@ import {
 import { requireProfile } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
-import type { ExistingReview } from "./review-editor";
 import { ReviewList } from "./review-list";
+import { type ExistingReview, isHandled } from "./review-status";
 import { SessionForm } from "./session-form";
 import { ZaloPanel } from "./zalo-panel";
 
@@ -77,7 +77,9 @@ export default async function SessionDetailPage({
       .order("joined_at"),
     supabase
       .from("student_reviews")
-      .select("student_id, strengths, improvements, advice, ai_generated_comment")
+      .select(
+        "student_id, strengths, improvements, advice, ai_generated_comment, academic_level, is_absent"
+      )
       .eq("session_id", session.id),
     supabase
       .from("review_options")
@@ -106,6 +108,11 @@ export default async function SessionDetailPage({
   const reviewByStudentId = new Map(reviews.map((r) => [r.student_id, r]));
   const options = optionsData ?? [];
   const sessionTitle = session.title ?? `Buổi ${session.session_number}`;
+
+  // "Đã xử lý" = đã nhận xét HOẶC đã đánh vắng — buổi coi như xong với em đó.
+  const handledCount = students.filter((s) =>
+    isHandled(reviewByStudentId.get(s.id) ?? null)
+  ).length;
 
   const priorReviews = (priorReviewsData ?? []) as unknown as PriorReviewRow[];
   const priorCommentsByStudentId = new Map<string, string[]>();
@@ -145,7 +152,7 @@ export default async function SessionDetailPage({
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="text-base">
-            Nhận xét học viên ({reviews.length}/{students.length})
+            Nhận xét học viên ({handledCount}/{students.length})
           </CardTitle>
           <CardDescription>
             Tick điểm mạnh / cần cải thiện rồi bấm &quot;AI tạo nhận xét&quot; —
