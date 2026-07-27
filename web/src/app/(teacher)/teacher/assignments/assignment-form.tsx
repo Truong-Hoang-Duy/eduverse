@@ -82,7 +82,7 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
         <DialogHeader>
           <DialogTitle>Tạo đề bài mới</DialogTitle>
           <DialogDescription>
-            Đề thuộc khóa học, mỗi buổi một đề — dùng chung mọi lớp cùng khóa
+            Đề thuộc khóa học, mỗi buổi một đề
           </DialogDescription>
         </DialogHeader>
         <form action={formAction}>

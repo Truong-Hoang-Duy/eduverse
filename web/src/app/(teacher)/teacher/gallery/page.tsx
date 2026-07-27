@@ -141,7 +141,7 @@ export default async function TeacherGalleryPage() {
         title="Sản phẩm học viên"
         description={
           projects.length > 0
-            ? `${projects.length} sản phẩm · ${totalComments} nhận xét · ${membersWithoutProject.length} chưa khai báo — bấm vào từng em để xem chi tiết và nhận xét`
+            ? `${projects.length} sản phẩm · ${totalComments} nhận xét · ${membersWithoutProject.length} chưa khai báo`
             : "Sản phẩm cuối khóa của học viên trong các lớp bạn dạy"
         }
       />

@@ -62,7 +62,7 @@ export default async function SettingsPage() {
     <div className="space-y-4">
       <PageHeader
         title="Cài đặt"
-        description="Danh mục nhận xét, bộ combo và mẫu tin Zalo dùng chung cho mọi lớp — bấm từng khối để mở"
+        description="Danh mục nhận xét, bộ combo và mẫu tin Zalo dùng chung cho mọi lớp"
       />
 
       <SettingsSection
@@ -74,7 +74,7 @@ export default async function SettingsPage() {
 
       <SettingsSection
         title="Bộ combo nhận xét"
-        description="Gom sẵn nhiều điểm mạnh / cần cải thiện thành từng bộ đặt tên — khi nhận xét từng em chỉ cần chọn áp một bộ, đỡ tích lại từ đầu"
+        description="Gom sẵn nhiều điểm mạnh / cần cải thiện thành từng bộ đặt tên"
       >
         <ComboManager combos={combos} options={options ?? []} />
       </SettingsSection>
