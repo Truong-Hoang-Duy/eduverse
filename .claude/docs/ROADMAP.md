@@ -291,6 +291,18 @@
 - [x] Merge lên production (2026-07-24) — nhớ khai `ADMIN_USERNAMES` trên Vercel
       TRƯỚC khi deploy, biến thêm sau không áp cho bản đã build
 
+### Đợt 19 (`feature/review-level-absent-copy`) — 3 cải tiến nhận xét theo buổi
+- [x] **Xếp loại học lực** (Giỏi/Khá/TB/Cần cố gắng, `academic-levels.ts`) — mức
+      chỉ làm ngữ cảnh cho AI, prompt cấm nêu thẳng cho phụ huynh
+- [x] **Copy điểm mạnh/cần cải thiện từ bạn khác** (từ dữ liệu đã lưu, gộp union)
+- [x] **Đánh vắng** (mặc định đi học) — ẩn form, loại khỏi Zalo, tính đã xử lý
+- [x] Migration `20260726000000`: thêm cột `academic_level` (CHECK 4 giá trị) +
+      `is_absent` bool DEFAULT false vào `student_reviews` (ADD → dán TRƯỚC deploy)
+- [x] ai-service: `/generate-review` nhận `academic_level` (nhãn), prompt điều
+      chỉnh độ sâu theo trình độ
+- [x] lint + typecheck + build (web) + pytest (ai) sạch; **CHƯA chạy E2E** (máy
+      Claude thiếu `web/.env.local`) và **CHƯA nghiệm thu UI**
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

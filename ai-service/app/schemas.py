@@ -22,6 +22,9 @@ class GenerateReviewRequest(AiRequest):
     advice_hint: str | None = None
     previous_comment: str | None = None
     prior_comments: list[str] = []
+    # Nhãn tiếng Việt của mức xếp loại học lực (Giỏi/Khá/...) — CHỈ để điều
+    # chỉnh độ sâu/giọng nhận xét, KHÔNG nêu thẳng cho phụ huynh. Xem prompts.py.
+    academic_level: str | None = None
 
 
 class GenerateReviewResponse(BaseModel):

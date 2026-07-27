@@ -16,6 +16,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  ACADEMIC_LEVELS,
+  academicLevelLabel,
+} from "@/lib/academic-levels";
 import { generateAiReview, saveReview } from "@/lib/actions/reviews";
 import { addReviewOption } from "@/lib/actions/settings";
 import { SKILL_GROUPS } from "@/lib/skill-groups";
@@ -62,6 +66,17 @@ export interface ExistingReview {
   improvements: string[];
   advice: string | null;
   ai_generated_comment: string | null;
+  academic_level: string | null;
+  is_absent: boolean;
+}
+
+/** Một học viên khác trong buổi có sẵn điểm mạnh/cần cải thiện đã lưu — để
+ *  copy nhanh sang em đang nhận xét (nguồn là dữ liệu ĐÃ LƯU). */
+export interface CopySource {
+  id: string;
+  name: string;
+  strengths: string[];
+  improvements: string[];
 }
 
 /** Đã nhận xét khi có ít nhất 1 trong 3: điểm mạnh, cần cải thiện, hoặc nhận
@@ -75,6 +90,12 @@ export function isReviewed(existing: ExistingReview | null): boolean {
   );
 }
 
+/** Buổi coi như XONG với em đó khi đã nhận xét HOẶC đã đánh vắng. Dùng cho bộ
+ *  đếm "X/Y" và bộ lọc trạng thái (đánh vắng cũng là một cách "xử lý xong"). */
+export function isHandled(existing: ExistingReview | null): boolean {
+  return Boolean(existing?.is_absent) || isReviewed(existing);
+}
+
 export function ReviewEditor({
   sessionId,
   sessionTitle,
@@ -84,6 +105,7 @@ export function ReviewEditor({
   options,
   existing,
   priorComments,
+  copySources,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -94,6 +116,8 @@ export function ReviewEditor({
   existing: ExistingReview | null;
   /** Nhận xét các buổi trước của học viên này — cho AI tránh lặp lời văn. */
   priorComments?: string[];
+  /** Bạn cùng buổi đã có điểm mạnh/cải thiện lưu sẵn — để copy nhanh sang. */
+  copySources?: CopySource[];
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     saveReview,
@@ -105,9 +129,34 @@ export function ReviewEditor({
   );
   const [advice, setAdvice] = useState(existing?.advice ?? "");
   const [comment, setComment] = useState(existing?.ai_generated_comment ?? "");
+  const [academicLevel, setAcademicLevel] = useState(
+    existing?.academic_level ?? ""
+  );
+  const [isAbsent, setIsAbsent] = useState(existing?.is_absent ?? false);
   const [aiError, setAiError] = useState("");
   const [aiPending, startAi] = useTransition();
   const [copied, setCopied] = useState(false);
+
+  // Gộp (union, bỏ trùng không phân biệt hoa/thường) lựa chọn của bạn khác vào
+  // em này — "copy vào" chứ không ghi đè, để không mất thứ GV đã tick.
+  function mergeUnique(current: string[], incoming: string[]): string[] {
+    const seen = new Set(current.map((s) => s.toLowerCase()));
+    const merged = [...current];
+    for (const item of incoming) {
+      if (!seen.has(item.toLowerCase())) {
+        seen.add(item.toLowerCase());
+        merged.push(item);
+      }
+    }
+    return merged;
+  }
+
+  function copyFromStudent(sourceId: string) {
+    const source = copySources?.find((s) => s.id === sourceId);
+    if (!source) return;
+    setStrengths((prev) => mergeUnique(prev, source.strengths));
+    setImprovements((prev) => mergeUnique(prev, source.improvements));
+  }
 
   // Bộ lọc nhóm kỹ năng của từng combo box — mặc định "all" (không lọc).
   const [strengthGroup, setStrengthGroup] = useState("all");
@@ -182,6 +231,7 @@ export function ReviewEditor({
         adviceHint: advice || undefined,
         previousComment: existing?.ai_generated_comment ?? undefined,
         priorComments,
+        academicLevel: academicLevelLabel(academicLevel) ?? undefined,
       });
       if (res.error) {
         setAiError(res.error);
@@ -204,10 +254,16 @@ export function ReviewEditor({
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-2 font-medium">
           {studentName}
-          {reviewed && (
-            <Badge variant="secondary" className="text-xs">
-              Đã nhận xét
+          {isAbsent ? (
+            <Badge variant="outline" className="text-xs">
+              Vắng
             </Badge>
+          ) : (
+            reviewed && (
+              <Badge variant="secondary" className="text-xs">
+                Đã nhận xét
+              </Badge>
+            )
           )}
         </span>
         <span className="text-sm text-muted-foreground transition-transform group-open:rotate-180">
@@ -218,12 +274,60 @@ export function ReviewEditor({
       <form action={formAction} className="space-y-4 border-t p-4">
         <input type="hidden" name="session_id" value={sessionId} />
         <input type="hidden" name="student_id" value={studentId} />
+        <input type="hidden" name="is_absent" value={String(isAbsent)} />
+        <input type="hidden" name="academic_level" value={academicLevel} />
+
+        {/* Đánh vắng — mặc định có đi học. Bật lên thì ẩn toàn bộ phần nhận xét
+            vì em không học buổi này. */}
+        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            checked={isAbsent}
+            onChange={(e) => setIsAbsent(e.target.checked)}
+            className="size-4"
+          />
+          🚫 Vắng mặt buổi này (không cần nhận xét)
+        </label>
+
+        {isAbsent && (
+          <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+            Em vắng buổi này — bấm &quot;Lưu&quot; để đánh dấu. Em sẽ được bỏ qua
+            khi tổng hợp tin Zalo cho phụ huynh.
+          </p>
+        )}
+
+        {!isAbsent && (
+        <>
         {strengths.map((s) => (
           <input key={s} type="hidden" name="strengths" value={s} />
         ))}
         {improvements.map((s) => (
           <input key={s} type="hidden" name="improvements" value={s} />
         ))}
+
+        {(copySources?.length ?? 0) > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Copy điểm mạnh / cần cải thiện từ:
+            </span>
+            <Select value="" onValueChange={copyFromStudent}>
+              <SelectTrigger
+                size="sm"
+                className="h-7 w-[180px] text-xs"
+                aria-label="Copy lựa chọn từ học viên khác"
+              >
+                <SelectValue placeholder="Chọn bạn để copy..." />
+              </SelectTrigger>
+              <SelectContent>
+                {copySources!.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
@@ -316,6 +420,38 @@ export function ReviewEditor({
         </p>
 
         <div className="space-y-1.5">
+          <Label htmlFor={`level-${studentId}`}>
+            Xếp loại học lực (tùy chọn)
+          </Label>
+          <Select
+            value={academicLevel}
+            onValueChange={(v) =>
+              setAcademicLevel(v === "none" ? "" : v)
+            }
+          >
+            <SelectTrigger
+              id={`level-${studentId}`}
+              size="sm"
+              className="w-[200px]"
+            >
+              <SelectValue placeholder="Chưa chọn" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Chưa chọn</SelectItem>
+              {ACADEMIC_LEVELS.map((l) => (
+                <SelectItem key={l.value} value={l.value}>
+                  {l.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            AI dựa vào mức này để viết nhận xét vừa trình độ của em — không nêu
+            thẳng xếp loại cho phụ huynh.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
           <Label htmlFor={`advice-${studentId}`}>Lời khuyên (tùy chọn)</Label>
           <Textarea
             id={`advice-${studentId}`}
@@ -364,10 +500,16 @@ export function ReviewEditor({
           />
           {aiError && <p className="text-sm text-destructive">{aiError}</p>}
         </div>
+        </>
+        )}
 
         <div className="flex items-center gap-3">
           <Button type="submit" size="sm" disabled={pending}>
-            {pending ? "Đang lưu..." : "Lưu nhận xét"}
+            {pending
+              ? "Đang lưu..."
+              : isAbsent
+                ? "Lưu (đánh dấu vắng)"
+                : "Lưu nhận xét"}
           </Button>
           <FormMessage result={state} />
         </div>

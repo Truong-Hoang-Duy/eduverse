@@ -8,9 +8,20 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-24, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Chống lặp lời văn tin Zalo (qua các buổi,
-kiểu lưu 2-3 tin trước) vẫn HỦY như đã chốt (user xác nhận là yêu cầu nhầm
-lẫn).
+**Đang làm:** 🔴 **CÓ TASK DỞ — nhánh `feature/review-level-absent-copy` đã
+commit nhưng CHƯA merge, CHƯA deploy.** 3 cải tiến nhận xét theo buổi (Đợt
+19): xếp loại học lực cho AI, copy điểm mạnh/cải thiện từ bạn khác, đánh
+vắng. **Việc còn phải làm trước khi deploy:**
+1. User DÁN migration `20260726000000_student_reviews_level_absent.sql` vào
+   Supabase SQL Editor (ADD 2 cột — dán TRƯỚC deploy, nếu deploy code trước
+   thì SELECT cột chưa tồn tại sẽ lỗi).
+2. User nghiệm thu UI (máy Claude không có `web/.env.local` → chưa chạy E2E,
+   chưa bấm thử bằng mắt).
+3. Merge `feature/review-level-absent-copy` → develop → main → push.
+Lint + typecheck + build (web) + pytest (ai) đã PASS.
+
+Chống lặp lời văn tin Zalo (qua các buổi, kiểu lưu 2-3 tin trước) vẫn HỦY
+như đã chốt (user xác nhận là yêu cầu nhầm lẫn).
 
 **ĐÃ DEPLOY production: trang vận hành `/teacher/admin`** (Đợt 18) — user
 đã nghiệm thu ở local và khai `ADMIN_USERNAMES` trên Vercel trước khi

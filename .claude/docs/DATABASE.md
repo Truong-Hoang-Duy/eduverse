@@ -26,7 +26,7 @@ courses (JSB, JSA, CSB...)          ← khóa học / chương trình
 | `classes` | id, course_id, class_code UNIQUE (JSB01...), teacher_id, total_sessions, description | form gợi ý mã kế tiếp |
 | `enrollments` | id, class_id, student_id, joined_at, UNIQUE(class_id, student_id) | chuyển lớp = update class_id |
 | `sessions` | id, class_id, session_number, title, content, session_date, UNIQUE(class_id, session_number) | tự sinh N buổi khi tạo lớp |
-| `student_reviews` | id, session_id, student_id, strengths text[], improvements text[], advice, ai_generated_comment, created_by | nhận xét theo buổi |
+| `student_reviews` | id, session_id, student_id, strengths text[], improvements text[], advice, ai_generated_comment, **academic_level** (nullable, CHECK 4 giá trị — xem `web/src/lib/academic-levels.ts`), **is_absent** bool DEFAULT false, created_by | nhận xét theo buổi; `academic_level`/`is_absent` thêm ở `20260726000000` |
 | `review_options` | id, teacher_id, category `strength\|improvement\|advice`, label, **skill_group** (12 giá trị — xem `web/src/lib/skill-groups.ts`) DEFAULT `other` | lựa chọn radio/checkbox; `skill_group` thêm ở `20260723000000`, mở rộng ở `20260724000000` (+presentation) và `20260725000000` (+6 nhóm khác) |
 | `assignments` | id, course_id, session_number, title, spec_file_path, instructions, max_score DEFAULT 100, UNIQUE(course_id, session_number) | đề theo KHÓA + BUỔI |
 | `projects` | id, student_id, class_id, name, description, features text[], repo_url, drive_url, demo_url, extra_notes, created_at, updated_at, UNIQUE(class_id, student_id) | sản phẩm cuối khóa; cột `status` (thêm `20260719000000`) đã GỠ ở `20260721010000` |

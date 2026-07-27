@@ -26,6 +26,7 @@ def build_review_prompt(
     advice_hint: str | None,
     previous_comment: str | None,
     prior_comments: list[str] | None = None,
+    academic_level: str | None = None,
 ) -> str:
     parts = [
         SYSTEM_ROLE,
@@ -35,6 +36,17 @@ def build_review_prompt(
         f"Học viên: {student_name}",
         f"Buổi học: {session_title}",
     ]
+    if academic_level:
+        # CHỈ là ngữ cảnh để chỉnh độ sâu/giọng — user chốt 2026-07-27 KHÔNG nêu
+        # thẳng xếp loại cho phụ huynh (tránh câu kiểu "em học lực yếu").
+        parts.append(
+            f"Trình độ hiện tại của em do giáo viên đánh giá: {academic_level}. "
+            "Dùng thông tin này để điều chỉnh nhận xét cho VỪA TRÌNH ĐỘ: em khá/"
+            "giỏi thì góp ý sâu hơn, gợi hướng nâng cao; em trung bình/cần cố "
+            "gắng thì tập trung động viên, ghi nhận tiến bộ nhỏ và nhấn vào kiến "
+            "thức cơ bản cần củng cố. TUYỆT ĐỐI KHÔNG nêu thẳng xếp loại này "
+            "trong nhận xét (không viết 'em học lực khá/yếu...')."
+        )
     if session_content:
         parts.append(f"Nội dung buổi học: {session_content}")
     if strengths:

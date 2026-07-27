@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { isAcademicLevel } from "@/lib/academic-levels";
 import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
@@ -13,10 +14,9 @@ export async function saveReview(
 ): Promise<ActionResult> {
   const sessionId = String(formData.get("session_id") ?? "");
   const studentId = String(formData.get("student_id") ?? "");
-  const strengths = formData.getAll("strengths").map(String);
-  const improvements = formData.getAll("improvements").map(String);
-  const advice = String(formData.get("advice") ?? "").trim();
-  const aiComment = String(formData.get("ai_comment") ?? "").trim();
+  const isAbsent = formData.get("is_absent") === "true";
+  const rawLevel = String(formData.get("academic_level") ?? "");
+  const academicLevel = isAcademicLevel(rawLevel) ? rawLevel : null;
 
   if (!sessionId || !studentId) {
     return { error: "Thiếu thông tin buổi học / học viên." };
@@ -30,6 +30,18 @@ export async function saveReview(
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
+  // Vắng mặt = không nhận xét: xóa sạch điểm mạnh/cải thiện/lời khuyên/mức xếp
+  // loại để dữ liệu buổi trước (nếu đổi từ có mặt sang vắng) không dính lại và
+  // không lọt vào tin Zalo tổng hợp.
+  const strengths = isAbsent ? [] : formData.getAll("strengths").map(String);
+  const improvements = isAbsent
+    ? []
+    : formData.getAll("improvements").map(String);
+  const advice = isAbsent ? "" : String(formData.get("advice") ?? "").trim();
+  const aiComment = isAbsent
+    ? ""
+    : String(formData.get("ai_comment") ?? "").trim();
+
   const { error } = await supabase.from("student_reviews").upsert(
     {
       session_id: sessionId,
@@ -38,6 +50,8 @@ export async function saveReview(
       improvements,
       advice: advice || null,
       ai_generated_comment: aiComment || null,
+      academic_level: isAbsent ? null : academicLevel,
+      is_absent: isAbsent,
       created_by: user.id,
     },
     { onConflict: "session_id,student_id" }
@@ -47,7 +61,7 @@ export async function saveReview(
   }
 
   revalidatePath(`/teacher/sessions/${sessionId}`);
-  return { success: "Đã lưu nhận xét." };
+  return { success: isAbsent ? "Đã đánh dấu vắng mặt." : "Đã lưu nhận xét." };
 }
 
 export interface StudentSummary {
@@ -150,6 +164,9 @@ export interface GenerateReviewInput {
   /** Nhận xét (đã lưu) của các buổi TRƯỚC của cùng học viên — giúp AI đổi
    *  cách diễn đạt, tránh lặp lời văn giữa các buổi. */
   priorComments?: string[];
+  /** Nhãn tiếng Việt của mức xếp loại học lực (Giỏi/Khá/...) — chỉ để AI chỉnh
+   *  độ sâu/giọng, không nêu thẳng cho phụ huynh. */
+  academicLevel?: string;
 }
 
 /** Gọi ai-service sinh nhận xét — client gọi trực tiếp từ onClick. */
@@ -176,6 +193,7 @@ export async function generateAiReview(
       advice_hint: input.adviceHint || null,
       previous_comment: input.previousComment || null,
       prior_comments: input.priorComments ?? [],
+      academic_level: input.academicLevel || null,
     });
     return { comment: data.comment };
   } catch (err) {
