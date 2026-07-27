@@ -1,16 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CollapsibleCard } from "@/components/collapsible-card";
 import { ProjectCard, type ProjectView } from "@/components/project-card";
 import { StatCard } from "@/components/stat-card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
@@ -145,13 +140,10 @@ export default async function ClassDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/teacher"
-          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          ← Quay lại danh sách lớp
-        </Link>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
+        <Button asChild variant="outline" size="sm" className="mb-3">
+          <Link href="/teacher">← Quay lại danh sách lớp</Link>
+        </Button>
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-2xl font-bold tracking-tight">
               Lớp {cls.class_code}
@@ -209,11 +201,7 @@ export default async function ClassDetailPage({
         />
       </div>
 
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">Buổi học</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <CollapsibleCard title="Buổi học" defaultOpen>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {sessions.map((session) => {
               const filled = Boolean(session.content);
@@ -246,82 +234,54 @@ export default async function ClassDetailPage({
               );
             })}
           </div>
-        </CardContent>
-      </Card>
+      </CollapsibleCard>
 
-      <Card className="shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
-          <CardTitle className="text-base">
-            Danh sách học viên ({students.length})
-          </CardTitle>
+      <CollapsibleCard title={`Danh sách học viên (${students.length})`}>
+        <div className="mb-3 flex justify-end">
           <AddStudentDialog
             classId={cls.id}
             classCode={cls.class_code}
             existingStudentIds={students.map((s) => s.studentId)}
           />
-        </CardHeader>
-        <CardContent>
-          <StudentsTable
-            classId={cls.id}
-            students={students}
-            otherClasses={otherClasses}
-          />
-        </CardContent>
-      </Card>
+        </div>
+        <StudentsTable
+          classId={cls.id}
+          students={students}
+          otherClasses={otherClasses}
+        />
+      </CollapsibleCard>
 
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">
-            📝 Nhận xét tổng hợp từng học viên
-          </CardTitle>
-          <CardDescription>
-            AI tổng hợp từ tất cả các buổi đã nhận xét: quá trình học, điểm mạnh,
-            điểm yếu, định hướng sắp tới, khó khăn cần hỗ trợ — bấm Copy để gửi
-            riêng cho phụ huynh.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <StudentSummaryPanel
-            classId={cls.id}
-            students={students.map((s) => ({
-              id: s.studentId,
-              fullName: s.fullName,
-            }))}
-          />
-        </CardContent>
-      </Card>
+      <CollapsibleCard
+        title="📝 Nhận xét tổng hợp từng học viên"
+        description="AI tổng hợp từ tất cả các buổi đã nhận xét: quá trình học, điểm mạnh, điểm yếu, định hướng sắp tới, khó khăn cần hỗ trợ — bấm Copy để gửi riêng cho phụ huynh."
+      >
+        <StudentSummaryPanel
+          classId={cls.id}
+          students={students.map((s) => ({
+            id: s.studentId,
+            fullName: s.fullName,
+          }))}
+        />
+      </CollapsibleCard>
 
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base">🎲 Random nhóm thuyết trình</CardTitle>
-          <CardDescription>
-            Chia nhóm ngẫu nhiên theo số nhóm hoặc số người mỗi nhóm — random lại
-            thoải mái, bấm &quot;Chiếu màn hình&quot; để đưa lên TV. Không lưu lại,
-            mỗi buổi random mới.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <GroupRandomizer
-            classCode={cls.class_code}
-            students={students.map((s) => ({ id: s.studentId, name: s.fullName }))}
-          />
-        </CardContent>
-      </Card>
+      <CollapsibleCard
+        title="🎲 Random nhóm thuyết trình"
+        description='Chia nhóm ngẫu nhiên theo số nhóm hoặc số người mỗi nhóm — random lại thoải mái, bấm "Chiếu màn hình" để đưa lên TV. Không lưu lại, mỗi buổi random mới.'
+      >
+        <GroupRandomizer
+          classCode={cls.class_code}
+          students={students.map((s) => ({ id: s.studentId, name: s.fullName }))}
+        />
+      </CollapsibleCard>
 
-      <Card className="shadow-sm">
-        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-          <div className="space-y-1.5">
-            <CardTitle className="text-base">
-              🚀 Sản phẩm cuối khóa ({projects.length})
-            </CardTitle>
-            <CardDescription>
-              Sản phẩm học viên trong lớp đã khai báo — chiếu lên TV khi các em
-              thuyết trình cuối khóa
-            </CardDescription>
-          </div>
+      <CollapsibleCard
+        title={`🚀 Sản phẩm cuối khóa (${projects.length})`}
+        description="Sản phẩm học viên trong lớp đã khai báo — chiếu lên TV khi các em thuyết trình cuối khóa"
+      >
+        <div className="mb-3 flex justify-end">
           <ProjectShowcase classCode={cls.class_code} projects={projects} />
-        </CardHeader>
-        <CardContent className="space-y-4">
+        </div>
+        <div className="space-y-4">
           {projects.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Chưa có học viên nào khai báo sản phẩm.
@@ -336,8 +296,8 @@ export default async function ClassDetailPage({
               </div>
             ))
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </CollapsibleCard>
     </div>
   );
 }

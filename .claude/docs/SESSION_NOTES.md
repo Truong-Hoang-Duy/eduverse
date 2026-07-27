@@ -8,7 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-27, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở.
+**Đang làm:** 🔴 **CÓ TASK DỞ — nhánh `feature/ui-scrolltop-backbtn-collapse`
+đã commit, CHƯA merge/deploy** (Đợt 24, 3 chỉnh UI): nút "↑ lên đầu trang" nổi
+góc dưới-phải (trong `AppShell`, mọi trang), nút "← Quay lại danh sách lớp" to
+hơn (Button outline), trang chi tiết lớp các khối `CollapsibleCard` đóng mặc
+định chỉ "Buổi học" mở. 0 migration. Chờ user nghiệm thu → merge → deploy.
 
 **ĐÃ DEPLOY production (2026-07-27, cùng đợt):**
 - **Đợt 22** (`feature/review-input-ux-combo-seed`): gõ câu mới ngay trong ô
