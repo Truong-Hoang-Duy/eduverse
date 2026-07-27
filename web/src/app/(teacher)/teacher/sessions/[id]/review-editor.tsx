@@ -25,6 +25,8 @@ import { addReviewOption } from "@/lib/actions/settings";
 import { SKILL_GROUPS } from "@/lib/skill-groups";
 import type { ActionResult } from "@/lib/types";
 
+import { type ExistingReview, isReviewed } from "./review-status";
+
 export interface ReviewOptionItem {
   id: string;
   category: string;
@@ -61,15 +63,6 @@ function GroupFilter({
   );
 }
 
-export interface ExistingReview {
-  strengths: string[];
-  improvements: string[];
-  advice: string | null;
-  ai_generated_comment: string | null;
-  academic_level: string | null;
-  is_absent: boolean;
-}
-
 /** Một học viên khác trong buổi có sẵn điểm mạnh/cần cải thiện đã lưu — để
  *  copy nhanh sang em đang nhận xét (nguồn là dữ liệu ĐÃ LƯU). */
 export interface CopySource {
@@ -77,23 +70,6 @@ export interface CopySource {
   name: string;
   strengths: string[];
   improvements: string[];
-}
-
-/** Đã nhận xét khi có ít nhất 1 trong 3: điểm mạnh, cần cải thiện, hoặc nhận
- *  xét AI — dùng chung cho badge "Đã nhận xét" và bộ lọc Hoàn thành/Chưa. */
-export function isReviewed(existing: ExistingReview | null): boolean {
-  return Boolean(
-    existing &&
-      (existing.strengths.length > 0 ||
-        existing.improvements.length > 0 ||
-        existing.ai_generated_comment)
-  );
-}
-
-/** Buổi coi như XONG với em đó khi đã nhận xét HOẶC đã đánh vắng. Dùng cho bộ
- *  đếm "X/Y" và bộ lọc trạng thái (đánh vắng cũng là một cách "xử lý xong"). */
-export function isHandled(existing: ExistingReview | null): boolean {
-  return Boolean(existing?.is_absent) || isReviewed(existing);
 }
 
 export function ReviewEditor({

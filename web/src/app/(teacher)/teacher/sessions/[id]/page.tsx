@@ -11,8 +11,8 @@ import {
 import { requireProfile } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
-import { type ExistingReview, isHandled } from "./review-editor";
 import { ReviewList } from "./review-list";
+import { type ExistingReview, isHandled } from "./review-status";
 import { SessionForm } from "./session-form";
 import { ZaloPanel } from "./zalo-panel";
 

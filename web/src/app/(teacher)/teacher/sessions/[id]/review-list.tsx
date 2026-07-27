@@ -12,11 +12,10 @@ import {
 
 import {
   type CopySource,
-  type ExistingReview,
-  isHandled,
   ReviewEditor,
   type ReviewOptionItem,
 } from "./review-editor";
+import { type ExistingReview, isHandled } from "./review-status";
 
 type StatusFilter = "all" | "done" | "pending";
 
