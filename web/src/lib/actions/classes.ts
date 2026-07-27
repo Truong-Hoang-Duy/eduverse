@@ -56,16 +56,17 @@ export async function createClass(
 }
 
 /**
- * Sao chép một lớp sang lớp MỚI: giữ khóa/số buổi + chép nguyên giáo án từng
- * buổi (tiêu đề + nội dung), chép ghi danh các thành viên được chọn. TUYỆT ĐỐI
- * KHÔNG chép nhận xét học viên — lớp mới bắt đầu trống (yêu cầu user 2026-07-27).
- * Sản phẩm cuối khóa cũng không chép (gắn với từng lớp cụ thể).
+ * Tạo lớp MỚI: giữ số buổi + chép nguyên giáo án từng buổi (tiêu đề + nội dung)
+ * từ MỘT LỚP NGUỒN GIÁO ÁN do GV chọn (thường là lớp KHÁC lớp đang mở — user
+ * chốt 2026-07-27), rồi chép ghi danh các thành viên được chọn (lấy từ lớp đang
+ * mở). TUYỆT ĐỐI KHÔNG chép nhận xét học viên — lớp mới bắt đầu trống. Sản phẩm
+ * cuối khóa cũng không chép (gắn với từng lớp cụ thể).
  */
 export async function duplicateClass(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
-  const sourceClassId = String(formData.get("source_class_id") ?? "");
+  const curriculumClassId = String(formData.get("curriculum_class_id") ?? "");
   const courseId = String(formData.get("course_id") ?? "");
   const classCode = String(formData.get("class_code") ?? "")
     .trim()
@@ -73,8 +74,8 @@ export async function duplicateClass(
   const description = String(formData.get("description") ?? "").trim();
   const studentIds = formData.getAll("student_ids").map(String).filter(Boolean);
 
-  if (!sourceClassId || !courseId || !classCode) {
-    return { error: "Vui lòng chọn khóa học và nhập mã lớp mới." };
+  if (!curriculumClassId || !courseId || !classCode) {
+    return { error: "Vui lòng chọn lớp lấy giáo án, khóa học và nhập mã lớp mới." };
   }
   if (!CLASS_CODE_PATTERN.test(classCode)) {
     return { error: "Mã lớp gồm mã khóa + số thứ tự, VD: JSB01, CSI03." };
@@ -88,21 +89,22 @@ export async function duplicateClass(
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
-  // Đọc lớp nguồn + giáo án từng buổi (RLS chỉ cho GV thấy lớp của mình).
+  // Đọc lớp nguồn giáo án + giáo án từng buổi (RLS chỉ trả lớp của GV — chọn
+  // lớp không phải của mình sẽ ra null và bị chặn ngay dưới).
   const [{ data: source }, { data: sourceSessions }] = await Promise.all([
     supabase
       .from("classes")
       .select("total_sessions")
-      .eq("id", sourceClassId)
+      .eq("id", curriculumClassId)
       .single(),
     supabase
       .from("sessions")
       .select("session_number, title, content")
-      .eq("class_id", sourceClassId)
+      .eq("class_id", curriculumClassId)
       .order("session_number"),
   ]);
   if (!source) {
-    return { error: "Không tìm thấy lớp nguồn để sao chép." };
+    return { error: "Không tìm thấy lớp nguồn giáo án." };
   }
 
   // Tạo lớp mới — trigger on_class_created tự sinh N buổi trống.
