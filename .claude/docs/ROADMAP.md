@@ -376,7 +376,7 @@
       khóa, gallery GV). GIỮ nguyên comment/tiêu đề tab/nhãn select và mô tả
       ConfirmDialog xóa (câu trấn an là thông tin an toàn)
 - [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
-- [ ] User nghiệm thu UI + deploy
+- [x] Merge lên production (2026-07-27)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
