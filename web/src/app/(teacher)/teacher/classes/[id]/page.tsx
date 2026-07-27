@@ -16,7 +16,6 @@ import { DuplicateClassDialog } from "./duplicate-class-dialog";
 import { EditClassDialog } from "./edit-class-dialog";
 import { GroupRandomizer } from "./group-randomizer";
 import { ProjectShowcase } from "./project-showcase";
-import { StudentSummaryPanel } from "./student-summary-panel";
 import {
   StudentsTable,
   type ClassOption,
@@ -140,7 +139,7 @@ export default async function ClassDetailPage({
   return (
     <div className="space-y-6">
       <div>
-        <Button asChild variant="outline" size="sm" className="mb-3">
+        <Button asChild variant="outline" size="sm" className="mb-3 cursor-pointer">
           <Link href="/teacher">← Quay lại danh sách lớp</Link>
         </Button>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -248,19 +247,6 @@ export default async function ClassDetailPage({
           classId={cls.id}
           students={students}
           otherClasses={otherClasses}
-        />
-      </CollapsibleCard>
-
-      <CollapsibleCard
-        title="📝 Nhận xét tổng hợp từng học viên"
-        description="AI tổng hợp từ tất cả các buổi đã nhận xét: quá trình học, điểm mạnh, điểm yếu, định hướng sắp tới, khó khăn cần hỗ trợ — bấm Copy để gửi riêng cho phụ huynh."
-      >
-        <StudentSummaryPanel
-          classId={cls.id}
-          students={students.map((s) => ({
-            id: s.studentId,
-            fullName: s.fullName,
-          }))}
         />
       </CollapsibleCard>
 

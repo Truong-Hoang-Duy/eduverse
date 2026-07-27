@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { StatCard } from "@/components/stat-card";
 import { createClient } from "@/lib/supabase/server";
 
 import { StudentSummaryPanel } from "../../student-summary-panel";
@@ -100,13 +101,12 @@ export default async function StudentProfilePage({
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href={`/teacher/classes/${id}`}
-          className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          ← Quay lại lớp {cls.class_code}
-        </Link>
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <Button asChild variant="outline" size="sm" className="mb-3 cursor-pointer">
+          <Link href={`/teacher/classes/${id}`}>
+            ← Quay lại lớp {cls.class_code}
+          </Link>
+        </Button>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <h1 className="text-2xl font-bold tracking-tight">
             {student.full_name}
           </h1>
@@ -142,7 +142,7 @@ export default async function StudentProfilePage({
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="text-base">
-            📝 Nhận xét tổng hợp toàn khóa
+            Nhận xét tổng hợp toàn khóa
           </CardTitle>
           <CardDescription>
             AI tổng hợp từ tất cả các buổi đã nhận xét — bấm Copy để gửi riêng cho

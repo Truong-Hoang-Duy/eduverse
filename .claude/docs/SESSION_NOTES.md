@@ -8,7 +8,12 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-27, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở.
+**Đang làm:** 🔴 **CÓ TASK DỞ — nhánh `feature/review-summary-format-backbtn`
+đã commit, CHƯA merge/deploy** (Đợt 25): (1) BỎ khối "Nhận xét tổng hợp từng
+học viên" (dropdown) khỏi trang chi tiết lớp — trùng bản trong hồ sơ từng HV;
+(2) "Nhận xét tổng hợp toàn khóa" bỏ icon + format 5 mục đậm/`divide-y` (sửa cả
+`toCopyText`); (3) nút "← Quay lại" ở buổi học + hồ sơ HV thành Button outline
++ `cursor-pointer`. 0 migration. Chờ user nghiệm thu → merge → deploy.
 
 **ĐÃ DEPLOY production: 3 chỉnh UI** (Đợt 24,
 `feature/ui-scrolltop-backbtn-collapse`): nút "↑ lên đầu trang" nổi góc
