@@ -378,6 +378,13 @@
 - [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [x] Merge lên production (2026-07-27)
 
+### Đợt 26 (`feature/summary-copy-drop-header`) — text copy nhận xét tổng hợp
+- [x] `toCopyText` BỎ dòng tiêu đề `NHẬN XÉT TỔNG HỢP — <tên HV>`: nội dung copy
+      bắt đầu ngay ở `TRONG QUÁ TRÌNH HỌC:` để GV dán thẳng vào tin phụ huynh
+      (panel trên màn hình VẪN hiện tên HV — chỉ text copy là bỏ)
+- [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
+- [x] Merge lên production (2026-07-27)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
