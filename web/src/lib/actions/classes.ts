@@ -55,6 +55,112 @@ export async function createClass(
   return { success: `Đã tạo lớp ${classCode} (${totalSessions} buổi).` };
 }
 
+/**
+ * Sao chép một lớp sang lớp MỚI: giữ khóa/số buổi + chép nguyên giáo án từng
+ * buổi (tiêu đề + nội dung), chép ghi danh các thành viên được chọn. TUYỆT ĐỐI
+ * KHÔNG chép nhận xét học viên — lớp mới bắt đầu trống (yêu cầu user 2026-07-27).
+ * Sản phẩm cuối khóa cũng không chép (gắn với từng lớp cụ thể).
+ */
+export async function duplicateClass(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const sourceClassId = String(formData.get("source_class_id") ?? "");
+  const courseId = String(formData.get("course_id") ?? "");
+  const classCode = String(formData.get("class_code") ?? "")
+    .trim()
+    .toUpperCase();
+  const description = String(formData.get("description") ?? "").trim();
+  const studentIds = formData.getAll("student_ids").map(String).filter(Boolean);
+
+  if (!sourceClassId || !courseId || !classCode) {
+    return { error: "Vui lòng chọn khóa học và nhập mã lớp mới." };
+  }
+  if (!CLASS_CODE_PATTERN.test(classCode)) {
+    return { error: "Mã lớp gồm mã khóa + số thứ tự, VD: JSB01, CSI03." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  // Đọc lớp nguồn + giáo án từng buổi (RLS chỉ cho GV thấy lớp của mình).
+  const [{ data: source }, { data: sourceSessions }] = await Promise.all([
+    supabase
+      .from("classes")
+      .select("total_sessions")
+      .eq("id", sourceClassId)
+      .single(),
+    supabase
+      .from("sessions")
+      .select("session_number, title, content")
+      .eq("class_id", sourceClassId)
+      .order("session_number"),
+  ]);
+  if (!source) {
+    return { error: "Không tìm thấy lớp nguồn để sao chép." };
+  }
+
+  // Tạo lớp mới — trigger on_class_created tự sinh N buổi trống.
+  const { data: created, error: createError } = await supabase
+    .from("classes")
+    .insert({
+      course_id: courseId,
+      class_code: classCode,
+      teacher_id: user.id,
+      total_sessions: source.total_sessions,
+      description: description || null,
+    })
+    .select("id")
+    .single();
+  if (createError || !created) {
+    if (createError?.code === "23505") {
+      return { error: `Mã lớp ${classCode} đã tồn tại.` };
+    }
+    return { error: `Không tạo được lớp: ${createError?.message ?? "lỗi không rõ"}` };
+  }
+  const newClassId = created.id;
+
+  // Chép giáo án: upsert đè lên các buổi trống trigger vừa tạo (khớp
+  // unique(class_id, session_number)). KHÔNG chép session_date — lớp mới có lịch
+  // riêng. KHÔNG chép nhận xét (chúng gắn với buổi CŨ, buổi mới là dòng khác).
+  if (sourceSessions && sourceSessions.length > 0) {
+    const { error: sessionError } = await supabase.from("sessions").upsert(
+      sourceSessions.map((s) => ({
+        class_id: newClassId,
+        session_number: s.session_number,
+        title: s.title,
+        content: s.content,
+      })),
+      { onConflict: "class_id,session_number" }
+    );
+    if (sessionError) {
+      return {
+        error: `Đã tạo lớp ${classCode} nhưng chưa chép được nội dung buổi: ${sessionError.message}. Vào lớp mới soạn tay hoặc xóa rồi thử lại.`,
+      };
+    }
+  }
+
+  // Chép ghi danh các thành viên được chọn.
+  if (studentIds.length > 0) {
+    const { error: enrollError } = await supabase
+      .from("enrollments")
+      .insert(studentIds.map((sid) => ({ class_id: newClassId, student_id: sid })));
+    if (enrollError) {
+      return {
+        error: `Đã tạo lớp ${classCode} và chép giáo án, nhưng thêm học viên lỗi: ${enrollError.message}. Vào lớp mới thêm tay.`,
+      };
+    }
+  }
+
+  revalidatePath("/teacher");
+  redirect(`/teacher/classes/${newClassId}`);
+}
+
 export async function updateClass(
   _prev: ActionResult,
   formData: FormData

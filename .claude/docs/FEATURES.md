@@ -72,6 +72,15 @@
   tiết). Đổi mã / chuyển khóa KHÔNG ảnh hưởng học viên đang học và buổi học;
   chuyển khóa thì lớp chấm bài theo đề của khóa mới. `total_sessions` KHÔNG sửa
   được (sessions sinh 1 lần bằng trigger lúc tạo lớp).
+- **Sao chép lớp** (nút "⧉ Sao chép lớp" ở trang chi tiết, `duplicateClass`):
+  tạo lớp MỚI giữ nguyên khóa (đổi được) + số buổi + **chép nguyên giáo án từng
+  buổi** (tiêu đề + nội dung, KHÔNG chép `session_date` vì lớp mới có lịch
+  riêng), chép ghi danh **các thành viên được chọn** (mặc định chọn hết). TUYỆT
+  ĐỐI KHÔNG chép nhận xét học viên (`student_reviews` gắn với buổi CŨ; buổi mới
+  là dòng khác) và không chép sản phẩm cuối khóa — lớp mới bắt đầu trống (user
+  chốt 2026-07-27). Kỹ thuật: insert lớp → trigger sinh N buổi trống → `upsert`
+  đè giáo án theo `unique(class_id, session_number)` → insert enrollments → redirect
+  sang lớp mới. `total_sessions` lớp mới = lớp nguồn (không cho đổi để buổi khớp 1:1).
 - Danh sách học viên trong lớp; **chuyển học viên sang lớp khác** (kể cả khác khóa).
 - **Thêm học viên vào lớp**: nút "+ Thêm học viên" → tìm theo **họ tên hoặc tên
   tài khoản** → bấm Thêm. Dùng RPC `search_students` (SECURITY DEFINER) vì

@@ -8,7 +8,17 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-27, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở.
+**Đang làm:** 🔴 **HAI nhánh chờ deploy (độc lập, tách từ develop):**
+1. `feature/review-input-ux-combo-seed` (Đợt 22): gõ câu mới trong ô tick, badge
+   gọn không vỡ layout, nút seed ~22 bộ combo mẫu, 3 khối Cài đặt đóng mặc định.
+   0 migration.
+2. `feature/duplicate-class` (Đợt 23): **sao chép lớp** — nút "⧉ Sao chép lớp" ở
+   trang chi tiết lớp, tạo lớp mới giữ giáo án + chép thành viên được chọn,
+   KHÔNG chép nhận xét/sản phẩm. 0 migration. `duplicateClass` trong
+   `lib/actions/classes.ts`.
+Cả hai đã lint+typecheck+build PASS, ai-service KHÔNG đổi. Chờ user nghiệm thu
+UI rồi merge → develop → main. ⚠️ Hai nhánh đều sửa docs (ROADMAP/FEATURES/
+SESSION_NOTES) → merge nhánh sau có thể xung đột doc, resolve tay khi đó.
 
 **ĐÃ DEPLOY production: copy nhận xét từ buổi trước + bộ combo** (Đợt 21,
 `feature/review-copy-prior-combos`): (1) combo copy điểm mạnh/cải thiện có

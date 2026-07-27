@@ -17,6 +17,7 @@ import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 import { AddStudentDialog } from "./add-student-dialog";
 import { BreakScreen } from "./break-screen";
 import { DeleteClassButton } from "./delete-class-button";
+import { DuplicateClassDialog } from "./duplicate-class-dialog";
 import { EditClassDialog } from "./edit-class-dialog";
 import { GroupRandomizer } from "./group-randomizer";
 import { ProjectShowcase } from "./project-showcase";
@@ -156,6 +157,18 @@ export default async function ClassDetailPage({
               courseId={cls.course_id}
               description={cls.description}
               courses={coursesData ?? []}
+            />
+            <DuplicateClassDialog
+              sourceClassId={cls.id}
+              sourceClassCode={cls.class_code}
+              courseId={cls.course_id}
+              description={cls.description}
+              totalSessions={cls.total_sessions}
+              courses={coursesData ?? []}
+              students={students.map((s) => ({
+                id: s.studentId,
+                fullName: s.fullName,
+              }))}
             />
             <DeleteClassButton classId={cls.id} classCode={cls.class_code} />
           </div>

@@ -332,6 +332,17 @@
 - [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [x] User dán migration `20260728000000`; Merge lên production (2026-07-27)
 
+### Đợt 23 (`feature/duplicate-class`) — sao chép lớp học
+- [x] `duplicateClass`: tạo lớp mới (khóa đổi được, số buổi = lớp nguồn) + chép
+      nguyên giáo án từng buổi (upsert đè buổi trigger sinh) + chép ghi danh các
+      thành viên được chọn; KHÔNG chép nhận xét / sản phẩm — lớp mới trống
+- [x] Dialog "⧉ Sao chép lớp" ở trang chi tiết lớp (chọn khóa/mã/mô tả + tick
+      thành viên, mặc định chọn hết); redirect sang lớp mới sau khi tạo
+- [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
+- [ ] User nghiệm thu UI + deploy
+- ⚠️ Numbering: Đợt 22 (`feature/review-input-ux-combo-seed`) đang chờ deploy ở
+      nhánh KHÁC — nhánh này tách thẳng từ develop nên chưa có Đợt 22.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
