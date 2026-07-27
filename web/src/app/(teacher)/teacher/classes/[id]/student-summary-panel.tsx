@@ -24,12 +24,11 @@ const SECTIONS: { key: keyof StudentSummary; label: string }[] = [
   { key: "kho_khan", label: "Khó khăn cần hỗ trợ" },
 ];
 
-function toCopyText(studentName: string, summary: StudentSummary): string {
-  return [
-    `NHẬN XÉT TỔNG HỢP — ${studentName}`,
-    "",
-    ...SECTIONS.map((s) => `${s.label.toUpperCase()}:\n${summary[s.key]}`),
-  ].join("\n\n");
+/** Không kèm tiêu đề/tên học viên — GV dán trực tiếp vào tin nhắn phụ huynh. */
+function toCopyText(summary: StudentSummary): string {
+  return SECTIONS.map(
+    (s) => `${s.label.toUpperCase()}:\n${summary[s.key]}`,
+  ).join("\n\n");
 }
 
 export function StudentSummaryPanel({
@@ -69,7 +68,7 @@ export function StudentSummaryPanel({
 
   async function handleCopy() {
     if (!summary) return;
-    await navigator.clipboard.writeText(toCopyText(studentName, summary));
+    await navigator.clipboard.writeText(toCopyText(summary));
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   }

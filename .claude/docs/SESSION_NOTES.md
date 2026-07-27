@@ -8,97 +8,28 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-27, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở.
+**Đang làm:** KHÔNG có task dở. Toàn bộ đã deploy production, `main`=`develop`
+(lệch 1 commit docs — bình thường).
 
-**ĐÃ DEPLOY production: dọn nhận xét tổng hợp + nút quay lại + cắt mô tả**
-(Đợt 25, `feature/review-summary-format-backbtn`): (1) BỎ khối "Nhận xét tổng
-hợp từng học viên" (dropdown) khỏi trang chi tiết lớp — trùng bản trong hồ sơ
-từng HV; (2) "Nhận xét tổng hợp toàn khóa" bỏ icon + format 5 mục đậm/`divide-y`
-(sửa cả `toCopyText`); (3) nút "← Quay lại" ở buổi học + hồ sơ HV thành Button
-outline + `cursor-pointer`; (4) cắt đuôi "— <câu hướng dẫn thừa>" ở mô tả
-subtitle các tính năng (giữ ConfirmDialog xóa + comment + nhãn select). 0
-migration, ai-service KHÔNG đổi.
+**`main` = `origin/main` = `db3edf3`** — bản đang chạy production.
+**`develop` = `origin/develop` = `84d34d0`** = main + 1 commit docs ghi hash
+(CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
+lặp đã dính 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
 
-**ĐÃ DEPLOY production: 3 chỉnh UI** (Đợt 24,
-`feature/ui-scrolltop-backbtn-collapse`): nút "↑ lên đầu trang" nổi góc
-dưới-phải (`scroll-to-top.tsx` trong `AppShell`, mọi trang, hiện khi cuộn
->300px), nút "← Quay lại danh sách lớp" to hơn (Button outline), trang chi tiết
-lớp dùng `CollapsibleCard` đóng mặc định chỉ "Buổi học" mở. 0 migration,
-ai-service KHÔNG đổi.
-
-**ĐÃ DEPLOY production (2026-07-27, cùng đợt):**
-- **Đợt 22** (`feature/review-input-ux-combo-seed`): gõ câu mới ngay trong ô
-  tick (`MultiSelect.onCreate`, bỏ ô nhập riêng), vùng badge giới hạn chiều
-  cao + cuộn (không vỡ layout), nút "⚡ Thêm nhanh bộ mẫu" (~22 bộ combo theo
-  chân dung, `seedDefaultCombos`), 3 khối trang Cài đặt đóng mặc định
-  (`SettingsSection`). 0 migration.
-- **Đợt 23** (`feature/duplicate-class`): **sao chép lớp** — nút "⧉ Sao chép
-  lớp" ở trang chi tiết; số buổi + giáo án lấy từ LỚP KHÁC do GV chọn (KHÔNG
-  lấy lớp đang mở), thành viên từ lớp đang mở (tick chọn), KHÔNG chép nhận
-  xét/sản phẩm. `duplicateClass` trong `lib/actions/classes.ts`. 0 migration.
-Cả hai lint + typecheck + build PASS, ai-service KHÔNG đổi → chỉ Vercel deploy.
-
-**ĐÃ DEPLOY production: copy nhận xét từ buổi trước + bộ combo** (Đợt 21,
-`feature/review-copy-prior-combos`): (1) combo copy điểm mạnh/cải thiện có
-2 nhóm "👥 Bạn cùng buổi" + "📅 Buổi trước của em"; (2) "bộ combo nhận xét"
-— GV tạo/quản lý bộ ở TRANG CÀI ĐẶT (chọn từ danh mục), mỗi học viên chỉ
-CHỌN ÁP một bộ (không có nút Lưu/Quản lý tại chỗ). Bảng `review_combos`
-(user đã dán migration `20260728000000`). ai-service KHÔNG đổi → chỉ Vercel
-deploy. Lint + typecheck + build PASS.
-
-**ĐÃ DEPLOY production: công tắc bật/tắt key Gemini riêng** (Đợt 20,
-`feature/api-key-toggle`): checkbox ở `/profile` cho phép TẮT key riêng để tạm
-dùng key hệ thống mà KHÔNG xóa key. Cột `user_secrets.use_own_key` (migration
-`20260727000000`, user đã dán). `getMyApiKey()` trả null khi tắt. ai-service
-KHÔNG đổi → chỉ Vercel deploy lại. Lint + typecheck + build PASS.
-
-**ĐÃ DEPLOY production: 3 cải tiến nhận xét theo buổi** (Đợt 19,
-`feature/review-level-absent-copy`): xếp loại học lực làm ngữ cảnh cho AI,
-copy điểm mạnh/cải thiện từ bạn khác (dữ liệu đã lưu, gộp union), đánh vắng
-(mặc định đi học — ẩn form + loại khỏi Zalo + tính đã xử lý). User đã DÁN
-migration `20260726000000` vào Supabase và nghiệm thu UI trước khi deploy.
-⚠️ **ai-service cũng đổi** (`/generate-review` nhận `academic_level`) → Render
-deploy lại, request AI đầu tiên chờ 30–60s do cold start.
-- 🐛 **Đã dính lỗi runtime khi user chạy thử** (không phải lỗi SQL): page.tsx
-  (Server Component) gọi `isHandled()` nằm trong file `"use client"` →
-  "Attempted to call from the server". Sửa bằng cách tách hàm thuần ra
-  `review-status.ts` (KHÔNG `"use client"`). Bài học ở "Quyết định đã chốt".
-
-Chống lặp lời văn tin Zalo (qua các buổi, kiểu lưu 2-3 tin trước) vẫn HỦY
-như đã chốt (user xác nhận là yêu cầu nhầm lẫn).
-
-**Trước đó cũng đã production:** trang vận hành `/teacher/admin` (Đợt 18,
-cần `ADMIN_USERNAMES` ở cả local lẫn Vercel, fail closed); nhập tự do điểm
-mạnh/cần cải thiện + gợi ý nội dung buổi học AI + Zalo cá nhân hóa lớp 1-1
-(2026-07-21).
-
-**`main` = `origin/main` = `aa0edd7`** — ĐÂY là bản đang chạy production.
-**`develop` = `origin/develop` = `d5990c2`** + 1 commit docs ghi lại chính
-hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi chú,
-merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở phiên
-2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
-
-⚠️ **`ADMIN_USERNAMES` phải có trong `web/.env.local` (local) và Vercel
-(production)**, nếu không trang đá về `/teacher` — cố tình fail closed.
-Biến thêm SAU khi deploy thì bản đang chạy không thấy, phải redeploy.
-
-Trước đó (2026-07-21, cũng đã production): nhập tự do điểm mạnh/cần cải
-thiện, gợi ý nội dung buổi học bằng AI, Zalo cá nhân hóa cho lớp 1-1.
-
-**`web/.env.example` giờ đã có trong repo** — user tự thêm `!.env.example`
-vào `web/.gitignore` + tạo file (chỉ placeholder: `your-project.supabase.co`,
-`change-me-...`, không secret thật — Claude verify qua `git diff --cached`
-rồi mới commit hộ theo yêu cầu rõ ràng của user). Mục nợ cũ ở "Vấn đề đang
-mở" coi như xong.
+⚠️ **`ADMIN_USERNAMES` phải có ở `web/.env.local` (local) VÀ Vercel (production)**
+— chưa khai thì `/teacher/admin` đá về `/teacher` (fail closed). Biến thêm SAU
+deploy KHÔNG áp cho bản đã build → phải redeploy.
 
 **Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
-Auth USERNAME, khóa→lớp→buổi, nhận xét AI theo buổi + tổng hợp từng HV (12
-nhóm kỹ năng, mỗi nhóm ≥10 lựa chọn, accordion ở trang Cài đặt), tin Zalo tổng
-hợp cả lớp, chấm bài AI độc lập (không lưu, đề bài sửa được tên), sản phẩm
-cuối khóa + gallery (roster "chưa khai báo" cả 2 phía HV/GV, giới hạn nhập
-liệu), hồ sơ HV xuyên khóa, API key Gemini riêng, đổi mật khẩu không cần mật
-khẩu cũ, 3 màn chiếu TV (random nhóm — đánh dấu vắng loại khỏi random, nghỉ
-giữa giờ, thuyết trình + tổng kết lớp), GitHub Action keep-alive Supabase.
+Auth USERNAME, khóa→lớp→buổi, **sao chép lớp** (giáo án lấy từ lớp khác, thành
+viên chọn, không chép nhận xét); nhận xét AI theo buổi + tổng hợp từng HV (12
+nhóm kỹ năng, **xếp loại học lực** ngữ cảnh AI, **đánh vắng**, **copy điểm
+mạnh/cải thiện** từ bạn cùng buổi/buổi trước, **bộ combo** `review_combos` tạo
+ở Cài đặt + seed ~22 mẫu); tin Zalo tổng hợp cả lớp; chấm bài AI độc lập; sản
+phẩm cuối khóa + gallery; hồ sơ HV xuyên khóa; **API key Gemini riêng có công
+tắc bật/tắt**; đổi mật khẩu không cần cũ; 3 màn chiếu TV; **trang vận hành
+`/teacher/admin`** (ADMIN_USERNAMES); nút "↑ lên đầu trang" + khối thu gọn ở
+trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
@@ -289,64 +220,50 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
+### 2026-07-27 — Đợt 19→25 (7 đợt, đều đã deploy production)
+Phiên dài, mỗi đợt 1 nhánh riêng, deploy từng cụm khi user duyệt. Chi tiết
+từng đợt ở ROADMAP.md; nghiệp vụ ở FEATURES.md.
+- **Đợt 19** (`review-level-absent-copy`, mig `20260726000000`): `student_reviews`
+  thêm `academic_level` (CHECK 4 mức) + `is_absent`. ai-service `/generate-review`
+  nhận `academic_level` (Render deploy lại). 🐛 fix lỗi gọi hàm client từ server
+  → tách `review-status.ts`.
+- **Đợt 20** (`api-key-toggle`, mig `20260727000000`): `user_secrets.use_own_key`
+  công tắc bật/tắt key riêng, `getMyApiKey()` trả null khi tắt.
+- **Đợt 21** (`review-copy-prior-combos`, mig `20260728000000`): copy nhận xét
+  2 nhóm (bạn cùng buổi + buổi trước của em); bảng `review_combos` + quản lý ở
+  Cài đặt. **Migration bảng mới an toàn dán bất kỳ lúc nào** (`listMyCombos`
+  nuốt lỗi table-chưa-tồn-tại → trang không vỡ).
+- **Đợt 22** (`review-input-ux-combo-seed`, 0 mig): gõ câu mới trong ô tick
+  (`MultiSelect.onCreate`), badge giới hạn cao/cuộn, seed ~22 bộ combo mẫu
+  (`seedDefaultCombos` rút từ danh mục GV theo nhóm, bỏ presentation), khối Cài
+  đặt đóng mặc định.
+- **Đợt 23** (`duplicate-class`, 0 mig): sao chép lớp — giáo án lấy từ LỚP KHÁC
+  do GV chọn (`duplicateClass`, upsert đè buổi trigger sinh), thành viên từ lớp
+  đang mở, KHÔNG chép nhận xét/sản phẩm.
+- **Đợt 24** (`ui-scrolltop-backbtn-collapse`, 0 mig): nút "↑ lên đầu trang"
+  (`scroll-to-top.tsx` trong `AppShell`), nút quay lại to hơn, `CollapsibleCard`
+  ở trang lớp (chỉ "Buổi học" mở).
+- **Đợt 25** (`review-summary-format-backbtn`, 0 mig): bỏ khối tổng hợp trùng ở
+  trang lớp; format "tổng hợp toàn khóa" bỏ icon; đồng bộ nút quay lại +
+  `cursor-pointer`; cắt đuôi "— <hướng dẫn thừa>" ở mô tả subtitle tính năng.
+- **Git**: Đợt 22+23 gộp merge cùng lúc (xung đột docs — resolve tay). Đợt 20
+  từng suýt deploy trước khi dán migration → đã dừng hỏi user xác nhận migration
+  trước khi push (cột thêm vào bảng đang SELECT thì BẮT BUỘC dán trước deploy).
+
 ### 2026-07-24 — Trang vận hành `/teacher/admin` (Đợt 18, đã deploy production)
-- **Dọn ngữ cảnh trước**: sửa hash `main`/`develop` trong notes cho khớp git
-  (`c74231b`); **XÓA hẳn** 2 ý treo — chia sẻ màn hình real-time và 8 ý
-  brainstorm 2026-07-21 (`b058358`, user yêu cầu "không còn dính đến nữa").
-  Lưu ý: xóa trắng nên phiên sau KHÔNG biết 2 ý này từng được cân nhắc.
-- **Trang vận hành** (`12e2602`, nhánh `feature/admin-ops-dashboard`): bản web
-  của `check-integrity.mjs` + `check-user.mjs` + `purge-test-users.mjs`, thêm 2
-  thứ script không có — khóa/lớp mất GV chủ, và file Storage mồ côi (đúng cái
-  `spec-storage.ts` ghi chú phải dọn bằng `scripts/check-storage.mjs`, một
-  script chưa từng tồn tại). Chi tiết nghiệp vụ ở FEATURES.md.
-- Trước khi code đã hỏi user 2 điều bằng `AskUserQuestion` (phạm vi trang, ai
-  được vào) vì "quản lý thông tin DB" quá mơ hồ — và nêu rõ **Supabase Studio
-  đã là trang admin DB rồi**, chỉ nên xây phần Studio KHÔNG làm được.
-- 0 migration, 0 dependency mới. lint + typecheck + build sạch; user nghiệm thu
-  ở local rồi mới khai `ADMIN_USERNAMES` trên Vercel và yêu cầu deploy.
+Bản web của 3 script chẩn đoán (`check-integrity`/`check-user`/`purge-test-users`)
++ 2 kiểm tra script không có (khóa/lớp mất GV chủ, file Storage mồ côi). Chặn
+bằng `ADMIN_USERNAMES` (không thêm role `admin` vào DB — xem Quyết định đã chốt),
+service-role nên mọi action tự `denyIfNotAdmin()`. Cũng XÓA hẳn 2 ý treo cũ
+(chia sẻ màn hình real-time + 8 ý brainstorm) theo yêu cầu user.
 
-### 2026-07-21 — MultiSelect search + random vắng + gallery/review/chấm bài + VS Code task (tất cả đã deploy production)
-- **Đã deploy production** (`main`=`develop`=`65c077a`): ô tìm kiếm trong
-  `MultiSelect` (điểm mạnh/cần cải thiện, filter `%từ%`); đánh dấu vắng mặt
-  trước khi random nhóm thuyết trình (client-only, không lưu DB, đúng tinh
-  thần "random không lưu"). Kèm `.vscode/tasks.json` (task chạy song song
-  web+ai-service, KHÔNG auto-run khi mở folder — an toàn commit) — user
-  chưa quyết định có commit vào repo hay không.
-- **Sản phẩm cuối khóa** (`c806240`): roster "chưa khai báo" thêm bên GV
-  (`/teacher/gallery`, tái dùng `ProjectGrid`), giới hạn nhập liệu
-  (`web/src/lib/project-limits.ts`) — xem "Quyết định đã chốt".
-- **Bộ lọc lớp gallery GV** (`fabd585`) **+ chống lặp lời văn review**
-  (`b21da25`): Select lọc lớp ở `/teacher/gallery` (`gallery-view.tsx`);
-  `prior_comments` trong `build_review_prompt` — xem "Quyết định đã chốt".
-- **Chấm bài** (`dc8f94d`): nút "✏️ Sửa tên đề" ở `/teacher/assignments`
-  (`edit-assignment-title-button.tsx` + `updateAssignmentTitle` trong
-  `grading.ts`), theo đúng pattern `EditCourseDialog`/`EditClassDialog` có
-  sẵn — chỉ đổi `title`, không đụng file/session_number/course.
-- **Zalo chống lặp lời văn: HỦY** — user nêu yêu cầu rồi xác nhận đó là nhầm
-  lẫn trước khi code bắt đầu; không đổi gì ở `build_zalo_summary_prompt`.
-- 4 commit trên gộp qua `feature/gallery-review-limits`, merge `--no-ff`
-  vào `develop`. Thêm `.vscode/tasks.json` (chore, task chạy song song
-  web+ai-service, KHÔNG auto-run khi mở folder). Sau đó merge `develop` →
-  `main`, `git push origin develop main` — **`main`=`develop`=`origin`=
-  `fb26bac`, ĐÃ DEPLOY production**.
-- Lint + typecheck (web) + pytest (ai-service) PASS cho mọi commit trên;
-  KHÔNG chạy được E2E (máy Claude thiếu `web/.env.local`); chưa cái nào
-  nghiệm thu UI bằng mắt (không có Playwright) — user tự bấm thử trên
-  production sau khi deploy.
-
-### 2026-07-21 (tiếp) — 3 cải tiến nhận xét/Zalo (đã deploy)
-- **Nhập tự do điểm mạnh/cần cải thiện** (`85e66ff`): xem "Quyết định đã
-  chốt".
-- **Gợi ý nội dung buổi học bằng AI + Zalo cá nhân hóa lớp 1-1** (`d8c85a6`,
-  gộp 1 commit vì cùng sửa `prompts.py`/`schemas.py`/`routes/reviews.py`):
-  xem "Quyết định đã chốt". Có 1 vòng sửa thêm ngay sau đó (cấm ghép "em"
-  + tên) — đã gộp vào cùng commit vì chưa từng push.
-- User tự kiểm tra cả 3 tính năng, hài lòng, rồi mới yêu cầu commit + deploy.
-- 2 commit trên gộp qua `feature/review-custom-input-ai-suggestions`, merge
-  `--no-ff` vào `develop`, sau đó merge `develop` → `main`,
-  `git push origin develop main`.
-- Lint + typecheck (web) + pytest (ai-service) PASS; không chạy E2E (thiếu
-  `web/.env.local`).
+### 2026-07-21 — gallery/review/chấm bài + nhập tự do + gợi ý buổi + Zalo 1-1 (đã deploy)
+MultiSelect có ô tìm; đánh vắng trước random nhóm (client-only); roster "chưa
+khai báo" bên GV + giới hạn nhập liệu (`project-limits.ts`); lọc lớp gallery GV;
+chống lặp lời văn review (`prior_comments`); sửa tên đề chấm bài; nhập tự do
+điểm mạnh/cải thiện (tự lưu vào `review_options`); gợi ý nội dung buổi bằng AI;
+Zalo cá nhân hóa lớp 1-1. Zalo chống-lặp-qua-buổi: HỦY (yêu cầu nhầm). Chi tiết
+nghiệp vụ + lý do ở "Quyết định đã chốt".
 
 ### 2026-07-18 — Đợt 13→17 + 4 fix (tất cả trong 1 ngày, đều production)
 Nhóm kỹ năng cho review_options + `TONE_RULE` (Đợt 13); Copy nhận xét riêng
