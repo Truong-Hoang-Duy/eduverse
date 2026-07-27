@@ -300,8 +300,12 @@
       `is_absent` bool DEFAULT false vào `student_reviews` (ADD → dán TRƯỚC deploy)
 - [x] ai-service: `/generate-review` nhận `academic_level` (nhãn), prompt điều
       chỉnh độ sâu theo trình độ
-- [x] lint + typecheck + build (web) + pytest (ai) sạch; **CHƯA chạy E2E** (máy
-      Claude thiếu `web/.env.local`) và **CHƯA nghiệm thu UI**
+- [x] **Fix lỗi runtime** (user chạy thử phát hiện): tách `isHandled`/`isReviewed`
+      /`ExistingReview` sang `review-status.ts` (không `"use client"`) vì
+      `page.tsx` Server Component gọi `isHandled()` đặt trong file client
+- [x] lint + typecheck + build (web) + pytest (ai) sạch; user dán migration
+      `20260726000000` + nghiệm thu UI
+- [x] Merge lên production (2026-07-27) — Render deploy lại ai-service kèm theo
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
