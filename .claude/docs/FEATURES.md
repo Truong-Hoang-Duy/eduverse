@@ -106,6 +106,10 @@
   "Thêm lựa chọn mới" nằm TRONG từng accordion — không cần chọn lại nhóm vì
   ngữ cảnh đã rõ (khác Đợt 13: trước đó 1 form chung ở đầu cột, phải chọn nhóm
   qua dropdown mỗi lần thêm).
+- **Cả 3 khối lớn của trang Cài đặt** (Danh mục nhận xét / Bộ combo / Mẫu Zalo)
+  là `<details>` **ĐÓNG mặc định** (user 2026-07-27, cho gọn) — bấm tiêu đề mới
+  mở. `SettingsSection` trong `settings/page.tsx`; nội dung vẫn trong DOM khi
+  đóng nên state/action của manager con không mất.
 - Nút **"AI tạo nhận xét"** → điền sẵn đoạn nhận xét → GV sửa → lưu. Cạnh đó có
   nút **📋 Copy** để copy nhanh đoạn nhận xét đang hiện (gửi riêng phụ huynh em
   đó qua Zalo/tin nhắn cá nhân — khác với tin Zalo TỔNG HỢP cả lớp bên dưới).

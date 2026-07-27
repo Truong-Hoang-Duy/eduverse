@@ -339,6 +339,7 @@
 - [x] Nút "⚡ Thêm nhanh bộ mẫu" (`seedDefaultCombos`): ~22 bộ theo chân dung
       học viên (gồm nhiều chân dung pha trộn: yếu mặt này mạnh mặt kia), rút
       nhãn từ danh mục GV theo nhóm (bỏ presentation/other), skip trùng + rỗng
+- [x] 3 khối trang Cài đặt (`SettingsSection`) đóng mặc định, bấm mới mở — gọn
 - [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [ ] User nghiệm thu UI + deploy (0 migration — thuần UI + action)
 
