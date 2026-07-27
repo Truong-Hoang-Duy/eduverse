@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
@@ -14,7 +14,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { deleteApiKey, saveApiKey } from "@/lib/actions/api-key";
+import {
+  type ApiKeyInfo,
+  deleteApiKey,
+  saveApiKey,
+  setUseOwnKey,
+} from "@/lib/actions/api-key";
 import type { ActionResult } from "@/lib/types";
 
 const STEPS = [
@@ -24,12 +29,23 @@ const STEPS = [
   "Dán vào ô bên dưới rồi bấm Lưu.",
 ];
 
-export function ApiKeyForm({ maskedKey }: { maskedKey: string | null }) {
+export function ApiKeyForm({ info }: { info: ApiKeyInfo }) {
+  const { maskedKey, useOwnKey } = info;
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     saveApiKey,
     {}
   );
   const [editing, setEditing] = useState(false);
+  const [toggleError, setToggleError] = useState("");
+  const [togglePending, startToggle] = useTransition();
+
+  function handleToggle(enabled: boolean) {
+    setToggleError("");
+    startToggle(async () => {
+      const res = await setUseOwnKey(enabled);
+      if (res.error) setToggleError(res.error);
+    });
+  }
 
   return (
     <Card>
@@ -50,6 +66,30 @@ export function ApiKeyForm({ maskedKey }: { maskedKey: string | null }) {
                 {maskedKey}
               </p>
             </div>
+
+            {/* Công tắc bật/tắt dùng key riêng — tắt thì tạm dùng key hệ thống
+                nhưng KHÔNG xóa key đã lưu. */}
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3">
+              <input
+                type="checkbox"
+                checked={useOwnKey}
+                disabled={togglePending}
+                onChange={(e) => handleToggle(e.target.checked)}
+                className="mt-0.5 size-4"
+              />
+              <span className="text-sm">
+                <span className="font-medium">Dùng key riêng của tôi</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  {useOwnKey
+                    ? "Đang bật — các tính năng AI dùng key riêng của bạn."
+                    : "Đang tắt — tạm dùng key hệ thống. Key riêng vẫn được lưu, bật lại bất cứ lúc nào."}
+                </span>
+              </span>
+            </label>
+            {toggleError && (
+              <p className="text-sm text-destructive">{toggleError}</p>
+            )}
+
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                 Đổi key
@@ -61,7 +101,7 @@ export function ApiKeyForm({ maskedKey }: { maskedKey: string | null }) {
                   </Button>
                 }
                 title="Xóa API key riêng?"
-                description="Các tính năng AI của bạn sẽ quay lại dùng key mặc định của hệ thống (dùng chung với mọi người)."
+                description="Các tính năng AI của bạn sẽ quay lại dùng key mặc định của hệ thống (dùng chung với mọi người). Nếu chỉ muốn tạm dùng key hệ thống thì TẮT công tắc phía trên là đủ, không cần xóa."
                 confirmLabel="Xóa key"
                 action={deleteApiKey}
                 fields={{}}

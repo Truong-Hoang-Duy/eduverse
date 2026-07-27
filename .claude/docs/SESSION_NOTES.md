@@ -10,6 +10,12 @@
 
 **Đang làm:** KHÔNG có task dở.
 
+**ĐÃ DEPLOY production: công tắc bật/tắt key Gemini riêng** (Đợt 20,
+`feature/api-key-toggle`): checkbox ở `/profile` cho phép TẮT key riêng để tạm
+dùng key hệ thống mà KHÔNG xóa key. Cột `user_secrets.use_own_key` (migration
+`20260727000000`, user đã dán). `getMyApiKey()` trả null khi tắt. ai-service
+KHÔNG đổi → chỉ Vercel deploy lại. Lint + typecheck + build PASS.
+
 **ĐÃ DEPLOY production: 3 cải tiến nhận xét theo buổi** (Đợt 19,
 `feature/review-level-absent-copy`): xếp loại học lực làm ngữ cảnh cho AI,
 copy điểm mạnh/cải thiện từ bạn khác (dữ liệu đã lưu, gộp union), đánh vắng

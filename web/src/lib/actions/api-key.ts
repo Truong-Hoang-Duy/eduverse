@@ -14,8 +14,9 @@ import type { ActionResult } from "@/lib/types";
 const KEY_PATTERN = /^\S{20,}$/;
 
 /**
- * Lấy API key riêng của người đang đăng nhập. Trả null nếu chưa đặt →
- * ai-service sẽ dùng key mặc định trong biến môi trường.
+ * Lấy API key riêng của người đang đăng nhập ĐỂ GỌI AI. Trả null (→ ai-service
+ * dùng key hệ thống) khi: chưa đặt key, HOẶC đã đặt nhưng công tắc `use_own_key`
+ * đang TẮT (user muốn tạm dùng key hệ thống mà không xóa key riêng).
  *
  * RLS `user_secrets_own` chỉ cho chính chủ đọc, kể cả giáo viên cũng không
  * đọc được key của học viên.
@@ -29,17 +30,42 @@ export async function getMyApiKey(): Promise<string | null> {
 
   const { data } = await supabase
     .from("user_secrets")
-    .select("gemini_api_key")
+    .select("gemini_api_key, use_own_key")
     .eq("user_id", user.id)
     .maybeSingle();
-  return data?.gemini_api_key || null;
+  if (!data?.use_own_key) return null;
+  return data.gemini_api_key || null;
 }
 
-/** Che key khi hiển thị: AIzaSyD...v4k2 */
-export async function getMyApiKeyMasked(): Promise<string | null> {
-  const key = await getMyApiKey();
-  if (!key) return null;
-  return `${key.slice(0, 8)}${"•".repeat(12)}${key.slice(-4)}`;
+export interface ApiKeyInfo {
+  /** Key đã che để hiển thị (AIzaSyD•••••••••••v4k2), null nếu chưa đặt. */
+  maskedKey: string | null;
+  /** Công tắc "dùng key riêng" đang bật — chỉ có ý nghĩa khi đã đặt key. */
+  useOwnKey: boolean;
+}
+
+/** Trạng thái key cho UI hồ sơ: che key + công tắc. Đọc riêng ô công tắc nên
+ *  KHÔNG dùng getMyApiKey() (hàm đó trả null khi tắt, sẽ mất mặt nạ key). */
+export async function getMyApiKeyInfo(): Promise<ApiKeyInfo> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { maskedKey: null, useOwnKey: true };
+
+  const { data } = await supabase
+    .from("user_secrets")
+    .select("gemini_api_key, use_own_key")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const key = data?.gemini_api_key || null;
+  return {
+    maskedKey: key
+      ? `${key.slice(0, 8)}${"•".repeat(12)}${key.slice(-4)}`
+      : null,
+    useOwnKey: data?.use_own_key ?? true,
+  };
 }
 
 export async function saveApiKey(
@@ -66,10 +92,13 @@ export async function saveApiKey(
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
+  // Vừa dán key mới thì bật luôn công tắc dùng key riêng — không ai lưu key
+  // xong lại muốn nó tắt.
   const { error } = await supabase.from("user_secrets").upsert(
     {
       user_id: user.id,
       gemini_api_key: key,
+      use_own_key: true,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" }
@@ -80,6 +109,44 @@ export async function saveApiKey(
 
   revalidatePath("/profile");
   return { success: "Đã lưu API key. Các tính năng AI của bạn sẽ dùng key này." };
+}
+
+/**
+ * Bật/tắt dùng key riêng mà KHÔNG xóa key. Tắt → getMyApiKey() trả null →
+ * ai-service dùng key hệ thống. Chặn bật khi chưa có key (bật cũng vô nghĩa).
+ */
+export async function setUseOwnKey(enabled: boolean): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const { data: existing } = await supabase
+    .from("user_secrets")
+    .select("gemini_api_key")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (enabled && !existing?.gemini_api_key) {
+    return { error: "Chưa có key riêng để bật — hãy nhập key trước." };
+  }
+
+  const { error } = await supabase
+    .from("user_secrets")
+    .update({ use_own_key: enabled, updated_at: new Date().toISOString() })
+    .eq("user_id", user.id);
+  if (error) {
+    return { error: `Không đổi được: ${error.message}` };
+  }
+
+  revalidatePath("/profile");
+  return {
+    success: enabled
+      ? "Đã bật — các tính năng AI dùng key riêng của bạn."
+      : "Đã tắt — tạm dùng key hệ thống, key riêng vẫn được lưu.",
+  };
 }
 
 export async function deleteApiKey(): Promise<void> {
