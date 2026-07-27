@@ -6,7 +6,6 @@ import { FormMessage } from "@/components/forms/form-message";
 import { MultiSelect } from "@/components/multi-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -160,11 +159,9 @@ export function ReviewEditor({
   const [strengthGroup, setStrengthGroup] = useState("all");
   const [improvementGroup, setImprovementGroup] = useState("all");
 
-  // Gõ tự do khi danh mục có sẵn không đủ — thêm vào review + lưu vào danh
-  // mục dùng chung (review_options) để lần sau chọn lại được.
-  const [strengthDraft, setStrengthDraft] = useState("");
-  const [improvementDraft, setImprovementDraft] = useState("");
-
+  // Gõ tự do NGAY TRONG ô tick (MultiSelect onCreate): thêm vào review + lưu vào
+  // danh mục dùng chung (review_options) để lần sau chọn lại được. Không còn ô
+  // nhập riêng bên dưới (user 2026-07-27 thấy để dưới khó nhìn).
   function persistCustomOption(
     category: "strength" | "improvement",
     label: string,
@@ -181,18 +178,17 @@ export function ReviewEditor({
     addReviewOption({}, fd).catch(() => {});
   }
 
-  function addCustomStrength() {
-    const value = strengthDraft.trim();
+  function addCustomStrength(raw: string) {
+    const value = raw.trim();
     if (!value) return;
     setStrengths((prev) =>
       prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
     );
     persistCustomOption("strength", value, strengthGroup === "all" ? "other" : strengthGroup);
-    setStrengthDraft("");
   }
 
-  function addCustomImprovement() {
-    const value = improvementDraft.trim();
+  function addCustomImprovement(raw: string) {
+    const value = raw.trim();
     if (!value) return;
     setImprovements((prev) =>
       prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
@@ -202,7 +198,6 @@ export function ReviewEditor({
       value,
       improvementGroup === "all" ? "other" : improvementGroup
     );
-    setImprovementDraft("");
   }
 
   const strengthOptions = options.filter(
@@ -341,36 +336,14 @@ export function ReviewEditor({
               options={strengthOptions}
               selected={strengths}
               onChange={setStrengths}
-              placeholder="Chọn điểm mạnh..."
+              onCreate={addCustomStrength}
+              placeholder="Chọn hoặc gõ điểm mạnh..."
               emptyText={
                 strengthGroup === "all"
                   ? "Chưa có lựa chọn — thêm trong trang Cài đặt."
                   : "Nhóm này chưa có lựa chọn nào."
               }
             />
-            <div className="flex gap-2">
-              <Input
-                value={strengthDraft}
-                onChange={(e) => setStrengthDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addCustomStrength();
-                  }
-                }}
-                placeholder="Hoặc gõ câu của riêng bạn rồi Enter..."
-                className="text-sm"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addCustomStrength}
-                disabled={!strengthDraft.trim()}
-              >
-                Thêm
-              </Button>
-            </div>
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between gap-2">
@@ -384,41 +357,19 @@ export function ReviewEditor({
               options={improvementOptions}
               selected={improvements}
               onChange={setImprovements}
-              placeholder="Chọn điểm cần cải thiện..."
+              onCreate={addCustomImprovement}
+              placeholder="Chọn hoặc gõ điểm cần cải thiện..."
               emptyText={
                 improvementGroup === "all"
                   ? "Chưa có lựa chọn — thêm trong trang Cài đặt."
                   : "Nhóm này chưa có lựa chọn nào."
               }
             />
-            <div className="flex gap-2">
-              <Input
-                value={improvementDraft}
-                onChange={(e) => setImprovementDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addCustomImprovement();
-                  }
-                }}
-                placeholder="Hoặc gõ câu của riêng bạn rồi Enter..."
-                className="text-sm"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addCustomImprovement}
-                disabled={!improvementDraft.trim()}
-              >
-                Thêm
-              </Button>
-            </div>
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          💡 Câu gõ tự do cũng được lưu vào danh mục (nhóm đang lọc, hoặc
-          &quot;Khác&quot; nếu đang xem Tất cả nhóm) để lần sau chọn lại được.
+          💡 Gõ câu mới ngay trong ô chọn rồi Enter — câu đó vừa thêm vào nhận
+          xét, vừa lưu vào danh mục (nhóm đang lọc, hoặc &quot;Khác&quot;).
         </p>
 
         <div className="space-y-1.5">

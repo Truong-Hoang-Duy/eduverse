@@ -332,6 +332,28 @@
 - [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [x] User dán migration `20260728000000`; Merge lên production (2026-07-27)
 
+### Đợt 22 (`feature/review-input-ux-combo-seed`) — gọn ô nhập + seed bộ combo
+- [x] Gõ câu mới NGAY TRONG ô tick (`MultiSelect` prop `onCreate`, hiện "➕ Thêm
+      ..." / Enter) — bỏ ô nhập riêng bên dưới
+- [x] Vùng badge đã chọn giới hạn chiều cao + cuộn + wrap chữ → không vỡ bố cục
+- [x] Nút "⚡ Thêm nhanh bộ mẫu" (`seedDefaultCombos`): ~22 bộ theo chân dung
+      học viên (gồm nhiều chân dung pha trộn: yếu mặt này mạnh mặt kia), rút
+      nhãn từ danh mục GV theo nhóm (bỏ presentation/other), skip trùng + rỗng
+- [x] 3 khối trang Cài đặt (`SettingsSection`) đóng mặc định, bấm mới mở — gọn
+- [x] lint + typecheck + build (web) sạch; ai-service KHÔNG đổi; 0 migration
+- [x] Merge lên production (2026-07-27)
+
+### Đợt 23 (`feature/duplicate-class`) — sao chép lớp học
+- [x] `duplicateClass`: tạo lớp mới; số buổi + giáo án lấy từ LỚP KHÁC do GV chọn
+      (`curriculum_class_id`, KHÔNG lấy lớp đang mở — user chốt 2026-07-27);
+      upsert đè buổi trigger sinh; chép ghi danh thành viên được chọn (từ lớp
+      đang mở); KHÔNG chép nhận xét / sản phẩm — lớp mới trống
+- [x] Dialog "⧉ Sao chép lớp": dropdown chọn lớp nguồn giáo án (chỉ các lớp
+      khác, kèm số buổi) + khóa/mã/mô tả + tick thành viên (mặc định hết);
+      redirect sang lớp mới; chưa có lớp khác thì báo và chặn
+- [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
+- [x] Merge lên production (2026-07-27)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

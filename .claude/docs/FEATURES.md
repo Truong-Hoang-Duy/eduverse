@@ -72,6 +72,16 @@
   tiết). Đổi mã / chuyển khóa KHÔNG ảnh hưởng học viên đang học và buổi học;
   chuyển khóa thì lớp chấm bài theo đề của khóa mới. `total_sessions` KHÔNG sửa
   được (sessions sinh 1 lần bằng trigger lúc tạo lớp).
+- **Sao chép lớp** (nút "⧉ Sao chép lớp" ở trang chi tiết, `duplicateClass`):
+  tạo lớp MỚI. **Số buổi + giáo án từng buổi** (tiêu đề + nội dung) lấy từ MỘT
+  LỚP KHÁC do GV chọn trong dialog — **KHÔNG lấy từ lớp đang mở** (user chốt
+  2026-07-27: dropdown chỉ liệt kê các lớp khác, kèm số buổi; `total_sessions`
+  lớp mới = lớp nguồn giáo án). **Thành viên** thì lấy từ lớp đang mở (tick chọn,
+  mặc định hết). Khóa học đổi được, mã lớp mới phải khác. KHÔNG chép `session_date`
+  (lịch riêng), TUYỆT ĐỐI KHÔNG chép nhận xét (`student_reviews` gắn buổi CŨ) và
+  sản phẩm — lớp mới trống. Kỹ thuật: insert lớp → trigger sinh N buổi trống →
+  `upsert` đè giáo án theo `unique(class_id, session_number)` → insert enrollments
+  → redirect sang lớp mới. Chưa có lớp khác thì dialog báo và chặn.
 - Danh sách học viên trong lớp; **chuyển học viên sang lớp khác** (kể cả khác khóa).
 - **Thêm học viên vào lớp**: nút "+ Thêm học viên" → tìm theo **họ tên hoặc tên
   tài khoản** → bấm Thêm. Dùng RPC `search_students` (SECURITY DEFINER) vì
@@ -90,6 +100,12 @@
   đổi giá trị đã chọn trước đó. Nhóm lưu ở cột `review_options.skill_group`
   (`web/src/lib/skill-groups.ts` là nguồn danh sách nhóm dùng chung — SKILL_GROUPS
   export từ đây, mọi UI khác import lại, không tự khai danh sách nhóm riêng).
+- **Gõ câu mới NGAY TRONG ô tick** (user 2026-07-27 — bỏ ô nhập riêng bên dưới
+  vì khó nhìn): `MultiSelect` có prop `onCreate` — gõ vào ô tìm kiếm, không khớp
+  mục nào thì hiện dòng "➕ Thêm ..." (hoặc Enter). Câu mới vừa vào nhận xét vừa
+  lưu `review_options` (skill_group theo bộ lọc đang chọn). Vùng badge đã chọn
+  bị GIỚI HẠN chiều cao + cuộn (`max-h-24 overflow-y-auto`, chip wrap chữ) nên
+  nhiều/dài mấy cũng KHÔNG đẩy vỡ bố cục (trước đây badge tràn làm bể layout).
 - **Bộ mặc định** (nút "⚡ Thêm nhanh bộ lựa chọn mặc định" ở trang Cài đặt khi
   GV chưa có lựa chọn nào): 112 điểm mạnh + 112 cần cải thiện — **mỗi nhóm ít
   nhất 10 lựa chọn** (yêu cầu user 2026-07-18, presentation có 12), bỏ "Khác"
@@ -100,6 +116,10 @@
   "Thêm lựa chọn mới" nằm TRONG từng accordion — không cần chọn lại nhóm vì
   ngữ cảnh đã rõ (khác Đợt 13: trước đó 1 form chung ở đầu cột, phải chọn nhóm
   qua dropdown mỗi lần thêm).
+- **Cả 3 khối lớn của trang Cài đặt** (Danh mục nhận xét / Bộ combo / Mẫu Zalo)
+  là `<details>` **ĐÓNG mặc định** (user 2026-07-27, cho gọn) — bấm tiêu đề mới
+  mở. `SettingsSection` trong `settings/page.tsx`; nội dung vẫn trong DOM khi
+  đóng nên state/action của manager con không mất.
 - Nút **"AI tạo nhận xét"** → điền sẵn đoạn nhận xét → GV sửa → lưu. Cạnh đó có
   nút **📋 Copy** để copy nhanh đoạn nhận xét đang hiện (gửi riêng phụ huynh em
   đó qua Zalo/tin nhắn cá nhân — khác với tin Zalo TỔNG HỢP cả lớp bên dưới).
@@ -121,6 +141,13 @@
     xét"): đặt tên bộ (VD "Học tốt, chưa phát biểu") + chọn nhiều điểm mạnh/cần
     cải thiện từ danh mục qua `MultiSelect`, lưu; xem danh sách + xóa
     (ConfirmDialog). GV soạn sẵn vài bộ mẫu theo tiêu chuẩn hợp lý.
+  - **Nút "⚡ Thêm nhanh bộ mẫu"** (`seedDefaultCombos`): dựng ~22 bộ theo "chân
+    dung học viên", gồm cả các chân dung PHA TRỘN (yếu/trung bình mặt này nhưng
+    mạnh mặt khác — VD "Thao tác tốt, kiến thức còn yếu", "Nhanh nhưng ẩu",
+    "Biết dùng AI, lệ thuộc công cụ"...). Rút nhãn từ CHÍNH danh mục của GV theo
+    nhóm kỹ năng (trải hết 10 nhóm, BỎ `presentation` vì tùy buổi + `other`).
+    Bỏ qua bộ trùng tên (bấm nhiều lần không nhân đôi) và bộ rỗng. Template ở
+    `review-combos.ts`.
   - **Áp ở mỗi học viên** (`ComboBar` trong `sessions/[id]`): CHỈ 1 combo "⚡ Áp
     dụng bộ combo..." → gộp union cả bộ vào lựa chọn hiện tại. KHÔNG còn nút
     "Lưu bộ"/"Quản lý bộ" tại chỗ (đã bỏ 2026-07-27 — dồn về Cài đặt).

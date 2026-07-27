@@ -10,6 +10,18 @@
 
 **Đang làm:** KHÔNG có task dở.
 
+**ĐÃ DEPLOY production (2026-07-27, cùng đợt):**
+- **Đợt 22** (`feature/review-input-ux-combo-seed`): gõ câu mới ngay trong ô
+  tick (`MultiSelect.onCreate`, bỏ ô nhập riêng), vùng badge giới hạn chiều
+  cao + cuộn (không vỡ layout), nút "⚡ Thêm nhanh bộ mẫu" (~22 bộ combo theo
+  chân dung, `seedDefaultCombos`), 3 khối trang Cài đặt đóng mặc định
+  (`SettingsSection`). 0 migration.
+- **Đợt 23** (`feature/duplicate-class`): **sao chép lớp** — nút "⧉ Sao chép
+  lớp" ở trang chi tiết; số buổi + giáo án lấy từ LỚP KHÁC do GV chọn (KHÔNG
+  lấy lớp đang mở), thành viên từ lớp đang mở (tick chọn), KHÔNG chép nhận
+  xét/sản phẩm. `duplicateClass` trong `lib/actions/classes.ts`. 0 migration.
+Cả hai lint + typecheck + build PASS, ai-service KHÔNG đổi → chỉ Vercel deploy.
+
 **ĐÃ DEPLOY production: copy nhận xét từ buổi trước + bộ combo** (Đợt 21,
 `feature/review-copy-prior-combos`): (1) combo copy điểm mạnh/cải thiện có
 2 nhóm "👥 Bạn cùng buổi" + "📅 Buổi trước của em"; (2) "bộ combo nhận xét"
@@ -44,8 +56,8 @@ cần `ADMIN_USERNAMES` ở cả local lẫn Vercel, fail closed); nhập tự d
 mạnh/cần cải thiện + gợi ý nội dung buổi học AI + Zalo cá nhân hóa lớp 1-1
 (2026-07-21).
 
-**`main` = `origin/main` = `1f0154a`** — ĐÂY là bản đang chạy production.
-**`develop` = `origin/develop` = `5180b3f`** + 1 commit docs ghi lại chính
+**`main` = `origin/main` = `a5844ed`** — ĐÂY là bản đang chạy production.
+**`develop` = `origin/develop` = `878945e`** + 1 commit docs ghi lại chính
 hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi chú,
 merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở phiên
 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
