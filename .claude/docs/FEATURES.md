@@ -98,6 +98,20 @@
 - Nút **"AI tạo nhận xét"** → điền sẵn đoạn nhận xét → GV sửa → lưu. Cạnh đó có
   nút **📋 Copy** để copy nhanh đoạn nhận xét đang hiện (gửi riêng phụ huynh em
   đó qua Zalo/tin nhắn cá nhân — khác với tin Zalo TỔNG HỢP cả lớp bên dưới).
+- **Xếp loại học lực** (tùy chọn, mỗi em/mỗi buổi): Giỏi / Khá / Trung bình /
+  Cần cố gắng (nguồn `web/src/lib/academic-levels.ts` — sửa/thêm mức phải sửa CẢ
+  CHECK constraint `academic_level`, drop+add). Mức này CHỈ làm ngữ cảnh cho AI
+  viết nhận xét vừa trình độ — prompt cấm nêu thẳng xếp loại cho phụ huynh (user
+  chốt 2026-07-27). Chưa chọn = null, không ảnh hưởng gì.
+- **Copy điểm mạnh / cần cải thiện từ bạn khác**: combo "Copy ... từ:" liệt kê
+  các bạn CÙNG buổi đã LƯU sẵn lựa chọn (phải Lưu bạn đó trước). Chọn → GỘP
+  (union, bỏ trùng không phân biệt hoa/thường) vào em đang xem, KHÔNG ghi đè thứ
+  đã tick. Nguồn là dữ liệu đã lưu (không phải state live) — quyết định 2026-07-27.
+- **Đánh vắng** (checkbox 🚫 đầu form, mặc định CÓ đi học): bật lên thì ẩn toàn
+  bộ phần nhận xét, bấm Lưu để đánh dấu. Em vắng bị **loại khỏi tin Zalo tổng
+  hợp** (`zalo.ts` lọc `is_absent`) và **tính là đã xử lý** trong bộ đếm "X/Y" +
+  bộ lọc "Đã hoàn thành" (`isHandled` = `isReviewed` HOẶC `is_absent`). Lưu vắng
+  sẽ xóa sạch điểm mạnh/cải thiện/lời khuyên/xếp loại của em ở buổi đó.
 - **Bộ lọc trạng thái** trên danh sách nhận xét từng buổi: Tất cả / Đã hoàn
   thành / Chưa hoàn thành (`review-list.tsx`, client component vì cần state lọc
   — `page.tsx` vẫn là Server Component, chỉ truyền data xuống). "Đã hoàn thành"

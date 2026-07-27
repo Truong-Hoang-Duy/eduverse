@@ -11,11 +11,11 @@ import {
 } from "@/components/ui/select";
 
 import {
-  isReviewed,
+  type CopySource,
   ReviewEditor,
-  type ExistingReview,
   type ReviewOptionItem,
 } from "./review-editor";
+import { type ExistingReview, isHandled } from "./review-status";
 
 type StatusFilter = "all" | "done" | "pending";
 
@@ -54,9 +54,28 @@ export function ReviewList({
 
   const filtered = students.filter((student) => {
     if (status === "all") return true;
-    const done = isReviewed(reviewByStudentId.get(student.id) ?? null);
+    // "Đã hoàn thành" tính cả đánh vắng — buổi coi như xong với em đó.
+    const done = isHandled(reviewByStudentId.get(student.id) ?? null);
     return status === "done" ? done : !done;
   });
+
+  // Nguồn copy cho từng editor: các bạn KHÁC đã có điểm mạnh/cải thiện lưu sẵn
+  // (dữ liệu đã lưu — GV phải Lưu bạn đó trước rồi mới copy sang được).
+  const copySources: CopySource[] = students
+    .map((student) => {
+      const review = reviewByStudentId.get(student.id);
+      return review &&
+        !review.is_absent &&
+        (review.strengths.length > 0 || review.improvements.length > 0)
+        ? {
+            id: student.id,
+            name: student.full_name,
+            strengths: review.strengths,
+            improvements: review.improvements,
+          }
+        : null;
+    })
+    .filter((s): s is CopySource => s !== null);
 
   return (
     <div className="space-y-3">
@@ -91,6 +110,7 @@ export function ReviewList({
             options={options}
             existing={reviewByStudentId.get(student.id) ?? null}
             priorComments={priorCommentsByStudentId.get(student.id) ?? []}
+            copySources={copySources.filter((s) => s.id !== student.id)}
           />
         ))
       )}

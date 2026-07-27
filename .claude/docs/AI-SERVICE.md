@@ -23,9 +23,13 @@
 ## Endpoints
 
 ### POST /generate-review — nhận xét học viên theo buổi
-Input: `{student_name, session_title, session_content, strengths[], improvements[], advice_hint?, previous_comment?}`
+Input: `{student_name, session_title, session_content, strengths[], improvements[], advice_hint?, previous_comment?, prior_comments[], academic_level?}`
 Output: `{comment: string}` — đoạn nhận xét tiếng Việt 3–5 câu, giọng khích lệ,
 nêu điểm mạnh trước, điểm cần cải thiện sau, chốt bằng lời khuyên cụ thể.
+`academic_level` là NHÃN tiếng Việt (Giỏi/Khá/Trung bình/Cần cố gắng) — CHỈ để
+AI chỉnh độ sâu/giọng cho vừa trình độ, prompt cấm nêu thẳng xếp loại cho phụ
+huynh (user chốt 2026-07-27). Web gửi nhãn qua `academicLevelLabel()`, không gửi
+mã.
 
 ### POST /generate-zalo-summary — tin nhắn tóm tắt lớp theo mẫu
 Input: `{class_code, session_title, session_content, reviews: [{student_name, strengths[], improvements[]}], template_text}`

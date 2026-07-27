@@ -400,34 +400,40 @@ export type Database = {
       }
       student_reviews: {
         Row: {
+          academic_level: string | null
           advice: string | null
           ai_generated_comment: string | null
           created_at: string
           created_by: string
           id: string
           improvements: string[]
+          is_absent: boolean
           session_id: string
           strengths: string[]
           student_id: string
         }
         Insert: {
+          academic_level?: string | null
           advice?: string | null
           ai_generated_comment?: string | null
           created_at?: string
           created_by: string
           id?: string
           improvements?: string[]
+          is_absent?: boolean
           session_id: string
           strengths?: string[]
           student_id: string
         }
         Update: {
+          academic_level?: string | null
           advice?: string | null
           ai_generated_comment?: string | null
           created_at?: string
           created_by?: string
           id?: string
           improvements?: string[]
+          is_absent?: boolean
           session_id?: string
           strengths?: string[]
           student_id?: string
