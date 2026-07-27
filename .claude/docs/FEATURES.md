@@ -54,6 +54,11 @@
   AI của người đó dùng key riêng (1.500 lượt/ngày/key). Hiển thị dạng che
   (`AIzaSyD•••••••••••v4k2`), có hướng dẫn lấy key ngay cạnh ô nhập. Lưu ở bảng
   `user_secrets` — xem DATABASE.md để biết vì sao KHÔNG để trong `profiles`.
+- **Công tắc bật/tắt key riêng** (checkbox khi đã đặt key, yêu cầu user
+  2026-07-27): BẬT → dùng key riêng; TẮT → tạm dùng key hệ thống nhưng KHÔNG
+  xóa key (bật lại bất cứ lúc nào). Khác với "Xóa key" (xóa hẳn dòng). Cột
+  `user_secrets.use_own_key`; `getMyApiKey()` trả null khi tắt → ai-service
+  dùng key hệ thống. Dán key mới thì tự bật. Bật khi chưa có key bị chặn.
 
 ## Giáo viên
 

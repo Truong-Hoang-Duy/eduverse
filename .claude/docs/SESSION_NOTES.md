@@ -10,6 +10,12 @@
 
 **Đang làm:** KHÔNG có task dở.
 
+**ĐÃ DEPLOY production: công tắc bật/tắt key Gemini riêng** (Đợt 20,
+`feature/api-key-toggle`): checkbox ở `/profile` cho phép TẮT key riêng để tạm
+dùng key hệ thống mà KHÔNG xóa key. Cột `user_secrets.use_own_key` (migration
+`20260727000000`, user đã dán). `getMyApiKey()` trả null khi tắt. ai-service
+KHÔNG đổi → chỉ Vercel deploy lại. Lint + typecheck + build PASS.
+
 **ĐÃ DEPLOY production: 3 cải tiến nhận xét theo buổi** (Đợt 19,
 `feature/review-level-absent-copy`): xếp loại học lực làm ngữ cảnh cho AI,
 copy điểm mạnh/cải thiện từ bạn khác (dữ liệu đã lưu, gộp union), đánh vắng
@@ -30,11 +36,11 @@ cần `ADMIN_USERNAMES` ở cả local lẫn Vercel, fail closed); nhập tự d
 mạnh/cần cải thiện + gợi ý nội dung buổi học AI + Zalo cá nhân hóa lớp 1-1
 (2026-07-21).
 
-**`main` = `origin/main` = `<PUSH_MAIN>`** — ĐÂY là bản đang chạy production.
-**`develop` = `origin/develop` = `<PUSH_DEVELOP>`** + 1 commit docs ghi lại
-chính hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi
-chú, merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở
-phiên 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
+**`main` = `origin/main` = `0c82baa`** — ĐÂY là bản đang chạy production.
+**`develop` = `origin/develop` = `3c75a8c`** + 1 commit docs ghi lại chính
+hai hash này (commit đó CỐ Ý không merge sang `main`: nó chỉ sửa ghi chú,
+merge sang sẽ đẻ ra hash mới làm ghi chú sai lại — vòng lặp đã dính ở phiên
+2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
 
 ⚠️ **`ADMIN_USERNAMES` phải có trong `web/.env.local` (local) và Vercel
 (production)**, nếu không trang đá về `/teacher` — cố tình fail closed.
