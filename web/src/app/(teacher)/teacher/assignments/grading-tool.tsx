@@ -3,7 +3,6 @@
 import { useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -229,7 +228,9 @@ export function GradingTool({
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="submission-files">File bài làm của học sinh *</Label>
+        {/* Không gắn htmlFor: nhãn nút bấm bên trong vùng thả mới là cái trỏ vào
+            input, gắn cả hai chỗ là bấm tiêu đề cũng mở hộp thoại chọn file. */}
+        <Label>File bài làm của học sinh *</Label>
         <div
           onDragEnter={(e) => {
             e.preventDefault();
@@ -244,17 +245,31 @@ export function GradingTool({
             if (dragDepth.current <= 0) setDragging(false);
           }}
           onDrop={handleDrop}
-          className={`rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
+          className={`rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
             dragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25"
           }`}
         >
-          <p className="text-sm font-medium">
-            📎 Kéo thả một hoặc nhiều file vào đây
+          <p className="text-3xl leading-none" aria-hidden="true">
+            {dragging ? "📥" : "📄"}
           </p>
-          <p className="mt-1 mb-2 text-xs text-muted-foreground">hoặc chọn tay</p>
-          <Input
+          <p className="mt-2 text-sm font-medium">
+            Kéo thả file bài làm vào đây
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Một hoặc nhiều file của cùng một em
+          </p>
+
+          {/* Chữ "Choose Files / No file chosen" của input gốc do trình duyệt sinh,
+              không đổi được sang tiếng Việt → ẩn input, cho <label> làm nút bấm. */}
+          <label
+            htmlFor="submission-files"
+            className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-md border bg-background px-3 py-2 text-sm font-medium shadow-xs transition-colors hover:bg-accent"
+          >
+            📂 Chọn file từ máy
+          </label>
+          <input
             id="submission-files"
             ref={fileInputRef}
             type="file"
@@ -265,14 +280,16 @@ export function GradingTool({
               // Dọn input để chọn LẠI đúng file vừa xóa vẫn kích hoạt onChange.
               if (fileInputRef.current) fileInputRef.current.value = "";
             }}
-            className="mx-auto max-w-sm"
+            className="sr-only"
           />
+
+          <p className="mt-3 text-xs text-muted-foreground">
+            File code (.html, .js, .py...), Word .docx, PDF, ảnh
+          </p>
         </div>
         <p className="text-xs text-muted-foreground">
-          Nhận file code (.html, .js, .py, .css...), Word .docx, PDF và ảnh — thả
-          bao nhiêu lượt cũng được, file mới cộng dồn vào danh sách. File của cùng
-          MỘT em thôi. File không được lưu lại — chấm xong copy kết quả rồi làm em
-          tiếp theo.
+          Thả nhiều lượt được — file mới cộng dồn vào danh sách. File không được
+          lưu lại: chấm xong copy kết quả rồi làm em tiếp theo.
         </p>
       </div>
 
