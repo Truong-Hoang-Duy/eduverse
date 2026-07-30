@@ -128,21 +128,31 @@ export function MultiSelect({
       </DropdownMenu>
 
       {selected.length > 0 && (
-        // Giới hạn chiều cao + cuộn: nhiều/ dài mấy cũng KHÔNG đẩy vỡ bố cục
-        // (trước đây badge tràn xuống làm bể layout — user phản ánh 2026-07-27).
-        <div className="flex max-h-24 flex-wrap gap-1.5 overflow-y-auto rounded-md">
-          {selected.map((label) => (
-            <Badge
-              key={label}
-              variant="secondary"
-              className="h-auto max-w-full cursor-pointer gap-1 rounded-md font-normal whitespace-normal"
-              onClick={() => toggle(label)}
-              title="Bấm để bỏ chọn"
-            >
-              <span className="min-w-0 break-words">{label}</span>
-              <span className="shrink-0 text-muted-foreground">✕</span>
-            </Badge>
-          ))}
+        <div className="space-y-1.5">
+          {/* Giới hạn chiều cao + cuộn: nhiều/ dài mấy cũng KHÔNG đẩy vỡ bố cục
+              (trước đây badge tràn xuống làm bể layout — user phản ánh 2026-07-27). */}
+          <div className="flex max-h-24 flex-wrap gap-1.5 overflow-y-auto rounded-md">
+            {selected.map((label) => (
+              <Badge
+                key={label}
+                variant="secondary"
+                className="h-auto max-w-full cursor-pointer gap-1 rounded-md font-normal whitespace-normal"
+                onClick={() => toggle(label)}
+                title="Bấm để bỏ chọn"
+              >
+                <span className="min-w-0 break-words">{label}</span>
+                <span className="shrink-0 text-muted-foreground">✕</span>
+              </Badge>
+            ))}
+          </div>
+          {/* type="button": ô này nằm trong <form> nhận xét, thiếu là bấm thành submit. */}
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="cursor-pointer text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
+          >
+            ✕ Bỏ chọn tất cả ({selected.length})
+          </button>
         </div>
       )}
     </div>

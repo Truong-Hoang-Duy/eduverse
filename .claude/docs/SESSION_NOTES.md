@@ -11,8 +11,8 @@
 **Đang làm:** KHÔNG có task dở. Toàn bộ đã deploy production, `main`=`develop`
 (lệch 1 commit docs — bình thường).
 
-**`main` = `origin/main` = `db3edf3`** — bản đang chạy production.
-**`develop` = `origin/develop` = `84d34d0`** = main + 1 commit docs ghi hash
+**`main` = `origin/main` = `da2e254`** — bản đang chạy production (Đợt 26).
+**`develop` = `origin/develop` = `3d9f40f`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
 
@@ -34,7 +34,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
 
-**E2E 99/99 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+**E2E 111/111 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
@@ -43,8 +43,9 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 | `e2e-api-key.mjs` | 8 | như trên |
 | `e2e-class-admin.mjs` | 18 | như trên (đổi/đặt lại mật khẩu) |
 | `e2e-gallery-storage.mjs` | 18 | như trên — gallery GV, xóa sạch Storage |
-| `e2e-phase3.mjs` | 10 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
+| `e2e-phase3.mjs` | 13 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
 | `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
+| `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
 
 ⚠️ Trước khi chạy phase3/4: chỉ được có MỘT ai-service. Nếu port 8000 kẹt
 "socket ma" (tiến trình chết mà listener vẫn trả lời) → chạy port khác + env
@@ -182,6 +183,58 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
     (`isHandled` = `isReviewed` HOẶC `is_absent`). Lưu vắng xóa sạch điểm
     mạnh/cải thiện/lời khuyên/xếp loại của em ở buổi đó.
 
+- **File Word .docx trích chữ bằng STDLIB, không thêm dependency** (Đợt 27):
+  `zipfile` + `xml.etree` trong `ai-service/app/storage.py` (`docx_to_text`) —
+  .docx chỉ là ZIP chứa `word/document.xml`. **Đừng thêm python-docx/mammoth**,
+  ~40 dòng stdlib đã đủ và Render free càng ít dep càng nhanh cold start. Nhánh
+  docx phải đứng TRƯỚC nhánh text trong `bytes_to_part` vì `mimetypes` đoán
+  .docx ra mime riêng (không phải `text/*`) → để rơi xuống dưới là gửi bytes ZIP
+  thô cho Gemini và nó từ chối. Gemini KHÔNG đọc được .docx trực tiếp.
+  Office nhị phân đời cũ (.doc/.xls/.ppt) **từ chối có hướng dẫn** ở 3 tầng
+  (client `file-check.ts`, `createAssignment`, ai-service) — stdlib không mở nổi.
+  Đề bài .docx xem thẳng trong popup được: `web/src/lib/docx-text.ts` tự đọc ZIP
+  bằng `node:zlib` (`inflateRawSync` + tự parse bảng mục lục EOCD/central
+  directory) — **đừng thêm jszip/mammoth**. Đây là bản TS song song với bản
+  Python, sửa luật trích chữ một bên nhớ xem bên kia. Trích không ra → rơi về
+  `kind: "download"`. File này chỉ dùng SERVER (`node:zlib`), đừng import vào
+  client component.
+- **Kéo thả file KHÔNG chịu thuộc tính `accept`** — phải tự kiểm bằng
+  `unsupportedSubmissionReason` (`file-check.ts`, nguồn DUY NHẤT cả cho
+  `SUBMISSION_ACCEPT`). Chủ trương: đuôi code mở THOẢI MÁI (ai-service decode ra
+  text), chỉ chặn nén/exe/media/thư mục. Thả nhiều lượt thì CỘNG DỒN (chống
+  trùng theo `name:size:lastModified`), không ghi đè.
+
+- **Chấm sản phẩm cuối khóa (Đợt 28) — KHÔNG đề bài, KHÔNG điểm số** (user chốt
+  2026-07-30). `PROJECT_REVIEW_SCHEMA` cố ý không có `score`, prompt cấm nêu
+  thang điểm, E2E có ca canh đúng việc này — **đừng "thêm điểm cho đầy đủ"**.
+  Trả 3 nhóm `diem_manh`/`can_cai_thien`/`goi_y`. KHÔNG áp `TONE_RULE` (cùng họ
+  với chấm bài, là nhận xét kỹ thuật cho GV đọc, không gửi phụ huynh).
+- **Luật lọc file bài làm: nguồn DUY NHẤT `lib/submission-files.ts`** — CẢ HAI
+  tab, cả 3 đường đầu vào (kéo thả thư mục / `<input webkitdirectory>` / giải
+  nén .zip ở server) đều đi qua `skipReasonFor(path, options)`. Phần giải nén +
+  lọc dùng chung ở `lib/zip-submission.ts`.
+  **Ảnh + PDF/Word: BỎ ở tab sản phẩm, GIỮ ở tab bài tập** (`keepImages` /
+  `keepDocuments`) — trong project ảnh là asset, còn bài tập lẻ thì ảnh có thể
+  CHÍNH LÀ bài làm (ảnh chụp code). Đây là chủ ý, đừng "sửa cho nhất quán".
+  Ngân sách cũng khác: `PROJECT_BUDGET` 2MB (toàn chữ) vs `GRADING_BUDGET` 6MB
+  (có PDF scan).
+- **Lỗi file chia 2 mức, đừng gộp lại**: báo TO cho thứ đáng giải thích (.doc
+  đời cũ, .rar không giải nén được) qua `unsupportedSubmissionReason`; bỏ IM
+  LẶNG + tổng kết 1 dòng cho rác trong thư mục qua `skipReasonFor`. Hiện lỗi đỏ
+  cho từng file `node_modules` là làm GV hoảng vô ích.
+- **KHÔNG lưu file bài làm — đã kiểm chứng, có E2E canh**: toàn bộ web chỉ có
+  ĐÚNG 1 lệnh `.upload()` (file ĐỀ BÀI trong `createAssignment`), ai-service
+  không có lệnh ghi nào. `e2e-phase3` đếm file trong bucket trước/sau khi chấm
+  và đòi KHÔNG đổi — đừng thêm bước upload nào vào đường chấm bài.
+- **2 cạm bẫy API trình duyệt khi đọc thư mục** (đã xử lý, đừng vô tình phá):
+  `dataTransfer.items` bị XÓA ngay khi handler `onDrop` trả về → phải gom
+  `webkitGetAsEntry()` ĐỒNG BỘ trước mọi `await`; và `readEntries()` trả về từng
+  LÔ (Chrome 100 mục) → phải gọi tới khi rỗng, đọc một lần là mất file của thư
+  mục lớn mà KHÔNG báo lỗi gì.
+- **Ngân sách file phải guard CẢ Ở SERVER**: vượt `bodySizeLimit: "10mb"`
+  (`next.config.ts`) thì Next.js báo lỗi rất mờ mịt, GV không hiểu vì sao —
+  `PROJECT_BUDGET` 2MB chừa sẵn chỗ cho base64 (+33%).
+
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
@@ -219,6 +272,16 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   (Node resolve package theo vị trí script).
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
+
+### 2026-07-30 — Đợt 27 (`grading-word-dropzone-filter`, 0 mig)
+4 yêu cầu user: bỏ chọn tất cả điểm mạnh/cải thiện (`MultiSelect`); chấm bài nhận
+Word .docx; lọc đề đã lưu theo khóa (`saved-assignments.tsx`); kéo thả nhiều file.
+**ai-service ĐỔI → Render phải deploy lại.** pytest 11/11, E2E phase3 12/12.
+
+### 2026-07-27 — Đợt 26 (`summary-copy-drop-header`, 0 mig, đã deploy)
+`toCopyText` bỏ dòng tiêu đề `NHẬN XÉT TỔNG HỢP — <tên HV>` — text copy bắt đầu
+ngay ở `TRONG QUÁ TRÌNH HỌC:` để GV dán thẳng vào tin phụ huynh. Panel trên màn
+hình VẪN hiện tên HV (chỉ text copy là bỏ) — đừng "sửa lại cho đồng bộ".
 
 ### 2026-07-27 — Đợt 19→25 (7 đợt, đều đã deploy production)
 Phiên dài, mỗi đợt 1 nhánh riêng, deploy từng cụm khi user duyệt. Chi tiết

@@ -281,3 +281,54 @@ def build_grading_prompt(
         'Trả về JSON: {"score": <0-100>, "bullets": ["<ý 1>", "<ý 2>", ...]}'
     )
     return "\n".join(parts)
+
+
+def build_project_review_prompt(
+    course_name: str,
+    notes: str | None,
+    file_paths: list[str],
+) -> str:
+    """Nhận xét SẢN PHẨM CUỐI KHÓA — không có đề bài, KHÔNG cho điểm.
+
+    Khác `build_grading_prompt` ở 3 điểm cốt lõi: (1) không có đề để đối chiếu nên
+    tiêu chí là bản thân sản phẩm; (2) tuyệt đối không điểm số (yêu cầu user
+    2026-07-30); (3) đây là một PROJECT nhiều file — phải nhận xét tổng thể chứ
+    không chấm rời từng file.
+
+    KHÔNG áp `TONE_RULE`: đây là nhận xét kỹ thuật cho GV đọc, cùng họ với chấm
+    bài, không phải nhận xét gửi phụ huynh.
+    """
+    parts = [
+        SYSTEM_ROLE,
+        "Nhiệm vụ: NHẬN XÉT SẢN PHẨM CUỐI KHÓA của học viên. KHÔNG có đề bài — "
+        "hãy đánh giá dựa trên chính sản phẩm em làm ra.",
+        "TUYỆT ĐỐI KHÔNG cho điểm, không xếp loại, không dùng thang điểm nào.",
+    ]
+    if course_name:
+        parts.append(
+            f"Khóa học: {course_name} — hãy nhận xét vừa trình độ của khóa này, "
+            "đừng đòi hỏi như sản phẩm của người đi làm."
+        )
+    if notes:
+        parts.append(f"Ghi chú của giáo viên (ưu tiên tuân theo): {notes}")
+
+    parts.append(
+        "Cấu trúc project (mỗi dòng một file, đọc để hiểu bố cục trước khi nhận xét):\n"
+        + "\n".join(file_paths)
+    )
+    parts.append(
+        "Nhận xét TỔNG THỂ cả sản phẩm, KHÔNG chấm rời từng file. Hãy xét: sản phẩm "
+        "làm được gì cho người dùng, bố cục file/thư mục có hợp lý không (VD tách "
+        "riêng HTML/CSS/JS hay nhồi hết vào một file), code có lặp nhiều không, đặt "
+        "tên có rõ nghĩa không, có xử lý trường hợp người dùng nhập sai không."
+    )
+    parts.append(
+        "Mỗi ý NGẮN GỌN 1-2 câu, đi thẳng vào việc và nêu rõ ở file nào khi cần. "
+        "KHÔNG viết lời chào, KHÔNG nhắc tên học viên, KHÔNG viết đoạn văn dài. "
+        "Không tự thêm ký tự '-' hay '•' ở đầu mỗi ý (hệ thống tự thêm)."
+    )
+    parts.append(
+        'Trả về JSON: {"diem_manh": ["<2-5 ý>"], "can_cai_thien": ["<2-5 ý>"], '
+        '"goi_y": ["<1-3 ý nâng cấp sản phẩm này lên mức tốt hơn>"]}'
+    )
+    return "\n".join(parts)
