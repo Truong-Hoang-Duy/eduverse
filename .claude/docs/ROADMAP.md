@@ -412,6 +412,28 @@
       .docx thật (100đ) + ca .doc bị chặn 400
 - [x] ai-service ĐỔI → Render phải deploy lại
 
+### Đợt 28 (`feature/project-review-grading`) — chấm sản phẩm cuối khóa
+- [x] Nav "Chấm bài" chia 2 tab (`grading-tabs.tsx`): "Bài tập hàng ngày"
+      (`/teacher/assignments`) và "Sản phẩm cuối khóa"
+      (`/teacher/assignments/project`) — URL riêng nên chia sẻ được
+- [x] ai-service `/review-project`: KHÔNG đề bài, **KHÔNG điểm số**, trả 3 nhóm
+      `diem_manh` / `can_cai_thien` / `goi_y`. `build_project_review_prompt` tự
+      đưa cây thư mục vào prompt + `_entry_first` xếp `index.html`/`main.py` lên
+      đầu. KHÔNG áp `TONE_RULE` (cùng họ chấm bài, không phải nhận xét phụ huynh)
+- [x] 3 đường đầu vào cùng ra một danh sách file: kéo thả thư mục
+      (`webkitGetAsEntry` đệ quy, đọc `readEntries` theo LÔ tới khi rỗng), nút
+      "Chọn thư mục" (`<input webkitdirectory>`), và file .zip giải nén ở server
+- [x] `lib/zip.ts`: tách ZIP reader khỏi `docx-text.ts` + thêm `listZipEntries`
+      (lọc theo tên TRƯỚC khi bung → `node_modules` không vào RAM)
+- [x] `lib/submission-files.ts` nguồn DUY NHẤT: luật lọc rác, `PROJECT_BUDGET`
+      (≤30 file, ≤200KB/file, tổng ≤2MB), `stripCommonRoot`, mô tả file đã bỏ
+- [x] GV bỏ tick từng file trước khi gửi; vượt ngân sách thì cảnh báo chứ không
+      chặn cứng, nhưng server guard thật (vượt `bodySizeLimit` lỗi rất mờ mịt)
+- [x] 0 migration; lint + typecheck + build sạch; **pytest 18/18** (thêm
+      `tests/test_project_review.py`); **E2E 9/9** với Gemini thật
+      (`scripts/e2e-project-review.mjs`) — bắt đúng 3 khuyết điểm cố ý gài
+- [x] ai-service ĐỔI → Render phải deploy lại
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

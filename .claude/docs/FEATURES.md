@@ -215,7 +215,16 @@ trong bảng danh sách lớp.
   mạch, không xuống dòng, không bullet — chỉ đổi CHỖ ĐẶT, không đổi CÁCH VIẾT.
 
 ### Chấm bài bằng AI — công cụ ĐỘC LẬP, KHÔNG theo lớp
-Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.
+Nav "Chấm bài" chia **2 tab** (`grading-tabs.tsx`, URL riêng nên chia sẻ được):
+
+| Tab | URL | Có đề bài? | Có điểm? |
+|---|---|---|---|
+| Bài tập hàng ngày | `/teacher/assignments` | Có (bắt buộc) | Có (/100) |
+| Sản phẩm cuối khóa | `/teacher/assignments/project` | **Không** | **Không** |
+
+Cả hai đều không dính lớp/học viên/danh sách HV và **không lưu gì** ngoài đề bài.
+
+#### Tab "Bài tập hàng ngày"
 
 - **Đề bài (thứ DUY NHẤT được lưu)**: thuộc khóa + số buổi, mỗi buổi 1 đề
   (unique), file đề PDF/ảnh/text/md lưu ở bucket `assignment-specs`, kèm hướng
@@ -233,6 +242,36 @@ Trang `/teacher/assignments`, không dính lớp/học viên/danh sách HV.
 - **KHÔNG lưu gì**: file bài làm gửi inline (base64) sang ai-service, không qua
   Storage; kết quả không ghi DB → tải lại trang là mất. Chấm xong copy rồi làm
   em tiếp theo.
+
+#### Tab "Sản phẩm cuối khóa" (`/review-project`)
+Sản phẩm cuối khóa là cả một project nhiều file, không có đề để đối chiếu.
+
+- **KHÔNG có đề bài, KHÔNG có điểm số** (chốt 2026-07-30) — chỉ 3 nhóm nhận xét:
+  **Điểm mạnh / Cần cải thiện / Gợi ý nâng cấp**, mỗi nhóm vài gạch đầu dòng.
+  `PROJECT_REVIEW_SCHEMA` cố ý không có `score`; prompt cấm nêu thang điểm.
+- **Đầu vào 3 đường**, đều ra cùng một danh sách file dạng chữ:
+  1. **Kéo thả cả thư mục** — `webkitGetAsEntry()` đọc đệ quy (`read-dropped-files.ts`).
+  2. **Nút "Chọn thư mục"** — `<input webkitdirectory>`, giữ `webkitRelativePath`.
+  3. **File .zip** — giải nén ở SERVER (`extractZipFiles` dùng `lib/zip.ts`), GV
+     không cần tự giải nén.
+- **Tự lọc rác** (`submission-files.ts` — nguồn DUY NHẤT cho cả 3 đường):
+  `node_modules`/`.git`/`dist`/`__pycache__`/`.venv`..., lock file, `*.min.js`,
+  file ẩn (trừ `.htaccess`), **ảnh** và nhị phân. Lọc theo TÊN trước khi đọc/giải
+  nén nên `node_modules` không bao giờ vào RAM.
+- **Ảnh bị bỏ ở tab này nhưng GIỮ ở tab bài tập** — trong project ảnh là asset
+  (logo, background), còn bài tập lẻ thì ảnh có thể CHÍNH LÀ bài làm (ảnh chụp
+  code). Khác nhau là chủ ý.
+- **Ngân sách** `PROJECT_BUDGET`: ≤30 file, ≤200KB/file, tổng ≤2MB (dưới xa trần
+  `bodySizeLimit: "10mb"`). Vượt thì **cảnh báo + cho bỏ tick**, không chặn cứng;
+  server vẫn guard thật vì vượt trần Next.js báo lỗi rất mờ mịt.
+- **GV xem và bỏ tick từng file** trước khi gửi (danh sách kèm dung lượng + dòng
+  "đã bỏ qua N file..." để biết hệ thống bỏ đúng thứ đáng bỏ).
+- **Khóa học + ghi chú đều TÙY CHỌN**: khóa cho AI biết trình độ để nhận xét vừa
+  sức; ghi chú thay chỗ của đề bài.
+- ai-service tự **xếp file vào (`index.html`, `main.py`...) lên đầu** và đưa cây
+  thư mục vào prompt để AI hiểu bố cục, nhận xét TỔNG THỂ chứ không chấm rời
+  từng file.
+- **KHÔNG lưu gì** — giống tab bài tập.
 
 ### Sản phẩm cuối khóa (góc nhìn GV)
 Trang `/teacher/gallery` (nav "Sản phẩm") — dùng CHUNG component với gallery của

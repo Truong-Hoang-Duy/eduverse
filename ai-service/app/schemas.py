@@ -134,3 +134,30 @@ class GradeSubmissionRequest(AiRequest):
 class GradeSubmissionResponse(BaseModel):
     score: int = Field(ge=0, le=100)
     bullets: list[str] = Field(min_length=1)
+
+
+# ---------- /review-project ----------
+class ProjectFile(BaseModel):
+    """Một file trong sản phẩm cuối khóa — gửi thẳng CHỮ, không base64.
+
+    Sản phẩm cuối khóa chỉ nhận file văn bản/code (ảnh và nhị phân đã bị lọc từ
+    phía web) nên không cần đường nhị phân như `InlineFile` của chấm bài tập.
+    """
+
+    path: str  # đường dẫn tương đối trong project: "js/app.js"
+    content: str
+
+
+class ReviewProjectRequest(AiRequest):
+    files: list[ProjectFile] = Field(min_length=1)
+    course_name: str = ""
+    # Ghi chú của GV thay chỗ "đề bài" — sản phẩm cuối khóa KHÔNG có đề.
+    notes: str | None = None
+
+
+class ReviewProjectResponse(BaseModel):
+    """CỐ Ý không có điểm số — sản phẩm cuối khóa chỉ nhận xét (chốt 2026-07-30)."""
+
+    diem_manh: list[str] = Field(min_length=1)
+    can_cai_thien: list[str] = Field(min_length=1)
+    goi_y: list[str] = Field(default_factory=list)

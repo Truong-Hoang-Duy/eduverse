@@ -34,7 +34,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
 
-**E2E 101/101 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+**E2E 110/110 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
@@ -45,6 +45,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 | `e2e-gallery-storage.mjs` | 18 | như trên — gallery GV, xóa sạch Storage |
 | `e2e-phase3.mjs` | 12 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
 | `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
+| `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
 
 ⚠️ Trước khi chạy phase3/4: chỉ được có MỘT ai-service. Nếu port 8000 kẹt
 "socket ma" (tiến trình chết mà listener vẫn trả lời) → chạy port khác + env
@@ -202,6 +203,25 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   `SUBMISSION_ACCEPT`). Chủ trương: đuôi code mở THOẢI MÁI (ai-service decode ra
   text), chỉ chặn nén/exe/media/thư mục. Thả nhiều lượt thì CỘNG DỒN (chống
   trùng theo `name:size:lastModified`), không ghi đè.
+
+- **Chấm sản phẩm cuối khóa (Đợt 28) — KHÔNG đề bài, KHÔNG điểm số** (user chốt
+  2026-07-30). `PROJECT_REVIEW_SCHEMA` cố ý không có `score`, prompt cấm nêu
+  thang điểm, E2E có ca canh đúng việc này — **đừng "thêm điểm cho đầy đủ"**.
+  Trả 3 nhóm `diem_manh`/`can_cai_thien`/`goi_y`. KHÔNG áp `TONE_RULE` (cùng họ
+  với chấm bài, là nhận xét kỹ thuật cho GV đọc, không gửi phụ huynh).
+- **Luật lọc file bài làm project: nguồn DUY NHẤT `lib/submission-files.ts`** —
+  cả 3 đường đầu vào (kéo thả thư mục / `<input webkitdirectory>` / giải nén
+  .zip ở server) đều đi qua đó. **Ảnh bị BỎ ở tab sản phẩm nhưng GIỮ ở tab bài
+  tập** — trong project ảnh là asset, còn bài tập lẻ thì ảnh có thể CHÍNH LÀ bài
+  làm (ảnh chụp code). Đây là chủ ý, đừng "sửa cho nhất quán".
+- **2 cạm bẫy API trình duyệt khi đọc thư mục** (đã xử lý, đừng vô tình phá):
+  `dataTransfer.items` bị XÓA ngay khi handler `onDrop` trả về → phải gom
+  `webkitGetAsEntry()` ĐỒNG BỘ trước mọi `await`; và `readEntries()` trả về từng
+  LÔ (Chrome 100 mục) → phải gọi tới khi rỗng, đọc một lần là mất file của thư
+  mục lớn mà KHÔNG báo lỗi gì.
+- **Ngân sách file phải guard CẢ Ở SERVER**: vượt `bodySizeLimit: "10mb"`
+  (`next.config.ts`) thì Next.js báo lỗi rất mờ mịt, GV không hiểu vì sao —
+  `PROJECT_BUDGET` 2MB chừa sẵn chỗ cho base64 (+33%).
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 

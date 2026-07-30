@@ -9,6 +9,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 import { AssignmentForm } from "./assignment-form";
+import { GradingTabs } from "./grading-tabs";
 import {
   GradingTool,
   type AssignmentChoice,
@@ -56,11 +57,14 @@ export default async function AssignmentsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        title="Chấm bài"
-        description="Chọn khóa và đề, tải file bài làm lên"
-        action={courses.length > 0 ? <AssignmentForm courses={courses} /> : null}
-      />
+      <div className="space-y-4">
+        <PageHeader
+          title="Chấm bài"
+          description="Chấm bài tập hàng ngày — chọn khóa và đề, tải file bài làm lên"
+          action={courses.length > 0 ? <AssignmentForm courses={courses} /> : null}
+        />
+        <GradingTabs />
+      </div>
 
       {courses.length === 0 ? (
         <div className="rounded-xl border border-dashed p-10 text-center">
