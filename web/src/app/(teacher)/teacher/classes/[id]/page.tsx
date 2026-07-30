@@ -6,6 +6,7 @@ import { ProjectCard, type ProjectView } from "@/components/project-card";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { driveLinksOfClass } from "@/lib/actions/drive-link";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
@@ -74,6 +75,9 @@ export default async function ClassDetailPage({
   const cls = classData as ClassWithCourse;
   const enrollments = (enrollmentsData ?? []) as EnrollmentWithStudent[];
 
+  // Link Drive nộp bài của từng em (RLS: chỉ GV của lớp này đọc được).
+  const driveLinks = await driveLinksOfClass(id);
+
   const students: StudentRow[] = enrollments
     .filter((e) => e.profiles !== null)
     .map((e) => ({
@@ -81,6 +85,7 @@ export default async function ClassDetailPage({
       studentId: e.profiles!.id,
       fullName: e.profiles!.full_name,
       username: e.profiles!.username,
+      driveUrl: driveLinks[e.profiles!.id] ?? null,
     }));
 
   const allClassRows = (allClasses ?? []) as {
