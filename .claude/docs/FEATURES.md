@@ -235,8 +235,13 @@ Cả hai đều không dính lớp/học viên/danh sách HV và **không lưu g
   .txt/.md thay vì hiện bytes rác.
 - **Upload file đề xảy ra lúc bấm "Tạo đề bài"**, không phải lúc chọn file —
   chọn xong rồi đổi file/đóng popup/tạo hụt đều KHÔNG để lại file rác trong bucket.
-- **Chấm**: chọn khóa → chọn đề → upload file bài làm của **một học sinh mỗi
-  lượt** (nhiều file được) → bấm Chấm. KHÔNG nhập tên học sinh.
+- **Chấm**: chọn khóa → chọn đề → nạp file bài làm của **một học sinh mỗi lượt**
+  → bấm Chấm. KHÔNG nhập tên học sinh. Nạp file 4 cách, cộng dồn qua nhiều lượt:
+  bấm vào ô, kéo thả file, **kéo thả cả thư mục**, hoặc **file .zip** (giải nén ở
+  server). Đường dẫn tương đối được gửi làm tên file để AI thấy bố cục.
+- **Tab này GIỮ ảnh và PDF/Word** khi đọc thư mục/zip (ảnh chụp code có thể CHÍNH
+  LÀ bài làm) — khác tab sản phẩm cuối khóa. Ngân sách `GRADING_BUDGET`: ≤30 file,
+  ≤5MB/file, tổng ≤6MB.
 - **Kết quả**: **ô điểm riêng** (/100, tô màu: đỏ <50, vàng 50–79, xanh ≥80) +
   nhận xét **ngắn gọn dạng gạch đầu dòng** (3-6 ý) + nút **Copy**.
 - **KHÔNG lưu gì**: file bài làm gửi inline (base64) sang ai-service, không qua

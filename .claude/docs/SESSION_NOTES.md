@@ -34,7 +34,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
 
-**E2E 110/110 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+**E2E 111/111 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
@@ -43,7 +43,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 | `e2e-api-key.mjs` | 8 | như trên |
 | `e2e-class-admin.mjs` | 18 | như trên (đổi/đặt lại mật khẩu) |
 | `e2e-gallery-storage.mjs` | 18 | như trên — gallery GV, xóa sạch Storage |
-| `e2e-phase3.mjs` | 12 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
+| `e2e-phase3.mjs` | 13 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
 | `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
 | `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
 
@@ -209,11 +209,23 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   thang điểm, E2E có ca canh đúng việc này — **đừng "thêm điểm cho đầy đủ"**.
   Trả 3 nhóm `diem_manh`/`can_cai_thien`/`goi_y`. KHÔNG áp `TONE_RULE` (cùng họ
   với chấm bài, là nhận xét kỹ thuật cho GV đọc, không gửi phụ huynh).
-- **Luật lọc file bài làm project: nguồn DUY NHẤT `lib/submission-files.ts`** —
-  cả 3 đường đầu vào (kéo thả thư mục / `<input webkitdirectory>` / giải nén
-  .zip ở server) đều đi qua đó. **Ảnh bị BỎ ở tab sản phẩm nhưng GIỮ ở tab bài
-  tập** — trong project ảnh là asset, còn bài tập lẻ thì ảnh có thể CHÍNH LÀ bài
-  làm (ảnh chụp code). Đây là chủ ý, đừng "sửa cho nhất quán".
+- **Luật lọc file bài làm: nguồn DUY NHẤT `lib/submission-files.ts`** — CẢ HAI
+  tab, cả 3 đường đầu vào (kéo thả thư mục / `<input webkitdirectory>` / giải
+  nén .zip ở server) đều đi qua `skipReasonFor(path, options)`. Phần giải nén +
+  lọc dùng chung ở `lib/zip-submission.ts`.
+  **Ảnh + PDF/Word: BỎ ở tab sản phẩm, GIỮ ở tab bài tập** (`keepImages` /
+  `keepDocuments`) — trong project ảnh là asset, còn bài tập lẻ thì ảnh có thể
+  CHÍNH LÀ bài làm (ảnh chụp code). Đây là chủ ý, đừng "sửa cho nhất quán".
+  Ngân sách cũng khác: `PROJECT_BUDGET` 2MB (toàn chữ) vs `GRADING_BUDGET` 6MB
+  (có PDF scan).
+- **Lỗi file chia 2 mức, đừng gộp lại**: báo TO cho thứ đáng giải thích (.doc
+  đời cũ, .rar không giải nén được) qua `unsupportedSubmissionReason`; bỏ IM
+  LẶNG + tổng kết 1 dòng cho rác trong thư mục qua `skipReasonFor`. Hiện lỗi đỏ
+  cho từng file `node_modules` là làm GV hoảng vô ích.
+- **KHÔNG lưu file bài làm — đã kiểm chứng, có E2E canh**: toàn bộ web chỉ có
+  ĐÚNG 1 lệnh `.upload()` (file ĐỀ BÀI trong `createAssignment`), ai-service
+  không có lệnh ghi nào. `e2e-phase3` đếm file trong bucket trước/sau khi chấm
+  và đòi KHÔNG đổi — đừng thêm bước upload nào vào đường chấm bài.
 - **2 cạm bẫy API trình duyệt khi đọc thư mục** (đã xử lý, đừng vô tình phá):
   `dataTransfer.items` bị XÓA ngay khi handler `onDrop` trả về → phải gom
   `webkitGetAsEntry()` ĐỒNG BỘ trước mọi `await`; và `readEntries()` trả về từng

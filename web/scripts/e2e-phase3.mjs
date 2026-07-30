@@ -125,9 +125,26 @@ async function main() {
     const { count } = await admin.from(table).select("id", { count: "exact", head: true });
     return count ?? 0;
   };
+  // Đếm ĐỆ QUY mọi file trong bucket đề bài (file nằm trong thư mục theo course_id).
+  const countSpecFiles = async (prefix = "") => {
+    const { data } = await admin.storage
+      .from("assignment-specs")
+      .list(prefix, { limit: 1000 });
+    let total = 0;
+    for (const item of data ?? []) {
+      // Thư mục thì `id` là null trong API Storage của Supabase.
+      if (item.id === null) {
+        total += await countSpecFiles(prefix ? `${prefix}/${item.name}` : item.name);
+      } else {
+        total += 1;
+      }
+    }
+    return total;
+  };
   const before = {
     submissions: await countRows("submissions"),
     grades: await countRows("grades"),
+    specFiles: await countSpecFiles(),
   };
 
   // 3. Chấm bài TỐT — file gửi inline, không qua Storage
@@ -205,11 +222,19 @@ async function main() {
   const after = {
     submissions: await countRows("submissions"),
     grades: await countRows("grades"),
+    specFiles: await countSpecFiles(),
   };
   check(
     "Chấm bài không ghi DB (submissions/grades không tăng)",
     after.submissions === before.submissions && after.grades === before.grades,
     `submissions ${before.submissions}→${after.submissions}, grades ${before.grades}→${after.grades}`
+  );
+  // Storage cũng KHÔNG được phình: file bài làm chỉ đi inline, tuyệt đối không
+  // lọt vào bucket nào. Chốt riêng vì bucket duy nhất chỉ để chứa ĐỀ BÀI.
+  check(
+    "Chấm bài không ghi file nào vào Storage",
+    after.specFiles === before.specFiles,
+    `file trong bucket ${before.specFiles}→${after.specFiles}`
   );
 
   // 7. Đề sai đường dẫn → báo lỗi rõ ràng, không crash

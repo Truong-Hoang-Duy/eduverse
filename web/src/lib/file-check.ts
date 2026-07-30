@@ -30,10 +30,8 @@ const BLOCKED_EXTENSIONS: Record<string, string> = {
   ppt: 'File "{name}" là PowerPoint đời cũ (.ppt) — hãy lưu lại thành .pdf rồi thử lại.',
 };
 
-const ARCHIVE_OR_BINARY = [
-  "zip", "rar", "7z", "tar", "gz", "exe", "msi", "dll", "iso",
-  "mp3", "mp4", "avi", "mov", "mkv", "wav",
-];
+/** Định dạng nén KHÔNG đọc được — chỉ .zip là giải nén được (`lib/zip.ts`). */
+const OTHER_ARCHIVES = ["rar", "7z", "tar", "gz", "bz2", "xz"];
 
 /** Đuôi gợi ý cho thuộc tính `accept` — chỉ là lọc UX, kéo thả vẫn kiểm lại. */
 export const SUBMISSION_ACCEPT = [
@@ -41,26 +39,30 @@ export const SUBMISSION_ACCEPT = [
   ".scss", ".json", ".xml", ".yml", ".yaml", ".java", ".c", ".h", ".cpp", ".hpp",
   ".cs", ".php", ".rb", ".go", ".rs", ".kt", ".swift", ".dart", ".lua", ".r",
   ".sql", ".sh", ".bat", ".ipynb", ".vue", ".svelte", ".md", ".txt", ".csv",
-  ".docx", ".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp",
+  ".docx", ".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".zip",
 ].join(",");
 
 /**
- * Lý do KHÔNG nhận file bài làm này, null nếu nhận được. Cần cho kéo thả vì
- * `accept` của input chỉ lọc hộp thoại chọn file, không lọc thứ được thả vào.
+ * Lý do phải BÁO LỖI TO cho file này, null nếu không cần.
+ *
+ * Chỉ dành cho lỗi người dùng ĐÁNG GIẢI THÍCH: chọn nhầm Word đời cũ, hay nén
+ * bằng WinRAR. Rác trong thư mục (`node_modules`, ảnh asset...) thì bỏ IM LẶNG
+ * qua `skipReasonFor` của `submission-files.ts` — hiện lỗi đỏ cho từng file rác
+ * là làm GV hoảng vô ích.
+ *
+ * Thư mục và .zip KHÔNG còn bị chặn: cả hai giờ là đầu vào hợp lệ.
  */
 export function unsupportedSubmissionReason(name: string): string | null {
   const parts = name.split(".");
-  if (parts.length < 2 || !parts[parts.length - 1]) {
-    return `"${name}" không rõ định dạng — hãy thả từng file có đuôi cụ thể (VD .py, .html), không thả cả thư mục.`;
-  }
+  if (parts.length < 2 || !parts[parts.length - 1]) return null;
 
   const ext = parts[parts.length - 1].toLowerCase();
   const blocked = BLOCKED_EXTENSIONS[ext];
   if (blocked) {
     return blocked.replace("{name}", name);
   }
-  if (ARCHIVE_OR_BINARY.includes(ext)) {
-    return `File "${name}" (.${ext}) không phải bài làm đọc được — hãy giải nén và thả từng file code vào.`;
+  if (OTHER_ARCHIVES.includes(ext)) {
+    return `File "${name}" (.${ext}) không giải nén được — hệ thống chỉ đọc .zip. Hãy giải nén rồi thả cả thư mục vào, hoặc nén lại thành .zip.`;
   }
   return null;
 }

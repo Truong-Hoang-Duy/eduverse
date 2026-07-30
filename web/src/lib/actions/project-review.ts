@@ -2,18 +2,16 @@
 
 import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
-import { looksEncrypted } from "@/lib/file-check";
 import {
   emptyTally,
   PROJECT_BUDGET,
-  skipReasonFor,
   stripCommonRoot,
   totalBytes,
   type SkipTally,
   type SubmissionFile,
 } from "@/lib/submission-files";
 import { createClient } from "@/lib/supabase/server";
-import { listZipEntries } from "@/lib/zip";
+import { unzipSubmission } from "@/lib/zip-submission";
 
 /**
  * Nhận xét sản phẩm cuối khóa — công cụ ĐỘC LẬP giống chấm bài tập: file bài làm
@@ -25,9 +23,6 @@ export interface ProjectReview {
   can_cai_thien: string[];
   goi_y: string[];
 }
-
-/** Trần cho chính file .zip gửi lên (trước khi giải nén). */
-const ZIP_MAX_BYTES = 6 * 1024 * 1024;
 
 /**
  * Giải nén .zip ngay trên server rồi trả về danh sách file dạng chữ.
@@ -49,64 +44,18 @@ export async function extractZipFiles(input: { zipB64: string }): Promise<{
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
-  let bytes: Uint8Array;
-  try {
-    bytes = Uint8Array.from(Buffer.from(input.zipB64, "base64"));
-  } catch {
-    return { error: "File .zip gửi lên bị lỗi, hãy thử lại." };
-  }
+  // Sản phẩm cuối khóa chỉ đọc file chữ: ảnh là asset, PDF/Word không phải code.
+  const res = unzipSubmission(input.zipB64, {}, PROJECT_BUDGET);
+  if (res.error) return { error: res.error };
 
-  if (bytes.length === 0) {
-    return { error: "File .zip rỗng." };
-  }
-  if (bytes.length > ZIP_MAX_BYTES) {
-    return {
-      error: `File .zip nặng ${Math.round(bytes.length / 1024 / 1024)}MB, quá 6MB. Hãy giải nén rồi chọn thư mục thay vì gửi cả file nén.`,
-    };
-  }
-
-  const skipped = emptyTally();
   const decoder = new TextDecoder("utf-8", { fatal: false });
+  const files: SubmissionFile[] = (res.entries ?? []).map((entry) => ({
+    path: entry.name,
+    content: decoder.decode(entry.data),
+    size: entry.data.length,
+  }));
 
-  // `keep` chặn theo TÊN trước khi bung dữ liệu → node_modules không vào RAM.
-  const entries = listZipEntries(bytes, (name) => {
-    const reason = skipReasonFor(name);
-    if (reason) {
-      skipped[reason] += 1;
-      return false;
-    }
-    return true;
-  });
-
-  if (entries.length === 0) {
-    return {
-      error:
-        "Trong file .zip không có file code nào đọc được (chỉ có ảnh, file nén, hoặc thư mục sinh tự động).",
-    };
-  }
-
-  const files: SubmissionFile[] = [];
-  for (const entry of entries) {
-    if (entry.data.length > PROJECT_BUDGET.maxFileBytes) {
-      skipped["too-big"] += 1;
-      continue;
-    }
-    if (looksEncrypted(entry.data)) {
-      skipped.junk += 1;
-      continue;
-    }
-    files.push({
-      path: entry.name,
-      content: decoder.decode(entry.data),
-      size: entry.data.length,
-    });
-  }
-
-  if (files.length === 0) {
-    return { error: "Mọi file trong .zip đều quá lớn hoặc không đọc được." };
-  }
-
-  return { files: stripCommonRoot(files), skipped };
+  return { files: stripCommonRoot(files), skipped: res.skipped ?? emptyTally() };
 }
 
 /** Gửi sản phẩm cho AI nhận xét. KHÔNG có điểm số — chỉ 3 nhóm nhận xét. */

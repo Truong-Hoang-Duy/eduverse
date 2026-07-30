@@ -29,7 +29,14 @@ export interface SkipTally {
   "too-big": number;
 }
 
-export const PROJECT_BUDGET = {
+export interface Budget {
+  maxFiles: number;
+  maxFileBytes: number;
+  maxTotalBytes: number;
+}
+
+/** Sản phẩm cuối khóa: toàn file chữ, nên siết chặt. */
+export const PROJECT_BUDGET: Budget = {
   maxFiles: 30,
   /** Code người viết hiếm khi quá 200KB; to hơn gần như luôn là file sinh tự động. */
   maxFileBytes: 200 * 1024,
@@ -38,7 +45,17 @@ export const PROJECT_BUDGET = {
    * (`web/next.config.ts`), đã chừa cho base64 (+33%) và các field khác.
    */
   maxTotalBytes: 2 * 1024 * 1024,
-} as const;
+};
+
+/**
+ * Bài tập hàng ngày: nới hơn vì bài làm có thể là ảnh chụp code hoặc PDF scan.
+ * Tổng 6MB → base64 thành ~8MB, vẫn dưới trần 10MB.
+ */
+export const GRADING_BUDGET: Budget = {
+  maxFiles: 30,
+  maxFileBytes: 5 * 1024 * 1024,
+  maxTotalBytes: 6 * 1024 * 1024,
+};
 
 /**
  * Thư mục sinh tự động / của công cụ. Bỏ theo TÊN THƯ MỤC nên `node_modules` vài
@@ -84,11 +101,27 @@ function extensionOf(path: string): string {
   return dot > 0 ? base.slice(dot + 1).toLowerCase() : "";
 }
 
+export interface FilterOptions {
+  /**
+   * Tab bài tập hàng ngày GIỮ ảnh (ảnh chụp code có thể CHÍNH LÀ bài làm); tab
+   * sản phẩm cuối khóa BỎ ảnh (trong project ảnh chỉ là asset, ngốn token).
+   * Khác nhau là chủ ý — đừng "sửa cho nhất quán".
+   */
+  keepImages?: boolean;
+  /** Giữ PDF/Word — bài tập hàng ngày đọc được, sản phẩm cuối khóa thì không. */
+  keepDocuments?: boolean;
+}
+
+const DOCUMENT_EXTENSIONS = new Set(["pdf", "docx"]);
+
 /**
  * Lý do bỏ file này, null nếu giữ. Xét theo TÊN nên gọi được trước khi đọc/giải
  * nén nội dung.
  */
-export function skipReasonFor(path: string): SkipReason | null {
+export function skipReasonFor(
+  path: string,
+  options: FilterOptions = {}
+): SkipReason | null {
   const segments = path.split("/").filter(Boolean);
   const base = (segments.pop() ?? "").toLowerCase();
 
@@ -100,7 +133,12 @@ export function skipReasonFor(path: string): SkipReason | null {
   if (SKIP_SUFFIXES.some((suffix) => base.endsWith(suffix))) return "junk";
 
   const ext = extensionOf(base);
-  if (IMAGE_EXTENSIONS.has(ext)) return "image";
+  if (IMAGE_EXTENSIONS.has(ext)) {
+    return options.keepImages ? null : "image";
+  }
+  if (DOCUMENT_EXTENSIONS.has(ext)) {
+    return options.keepDocuments ? null : "binary";
+  }
   if (BINARY_EXTENSIONS.has(ext)) return "binary";
 
   return null;
@@ -110,8 +148,12 @@ export function emptyTally(): SkipTally {
   return { folder: 0, junk: 0, binary: 0, image: 0, "too-big": 0 };
 }
 
-/** Bỏ đoạn thư mục gốc chung để đường dẫn hiển thị gọn và AI đọc dễ. */
-export function stripCommonRoot(files: SubmissionFile[]): SubmissionFile[] {
+/**
+ * Bỏ đoạn thư mục gốc chung để đường dẫn hiển thị gọn và AI đọc dễ. Generic vì
+ * dùng cho cả `SubmissionFile` (sản phẩm, có `content`) lẫn file nhị phân chờ
+ * chấm (bài tập, chỉ có base64).
+ */
+export function stripCommonRoot<T extends { path: string }>(files: T[]): T[] {
   if (files.length < 2) return files;
 
   const firstRoot = files[0].path.split("/")[0];
@@ -129,13 +171,16 @@ export function totalBytes(files: SubmissionFile[]): number {
 }
 
 /** Lời cảnh báo tiếng Việt nếu vượt ngân sách, null nếu ổn. */
-export function budgetWarning(files: SubmissionFile[]): string | null {
-  if (files.length > PROJECT_BUDGET.maxFiles) {
-    return `Có ${files.length} file, quá ${PROJECT_BUDGET.maxFiles} file — hãy bỏ tick những file không cần nhận xét.`;
+export function budgetWarning(
+  files: { size: number }[],
+  budget: Budget
+): string | null {
+  if (files.length > budget.maxFiles) {
+    return `Có ${files.length} file, quá ${budget.maxFiles} file — hãy bỏ bớt file không cần.`;
   }
-  const total = totalBytes(files);
-  if (total > PROJECT_BUDGET.maxTotalBytes) {
-    return `Tổng ${formatBytes(total)}, quá ${formatBytes(PROJECT_BUDGET.maxTotalBytes)} — hãy bỏ tick những file lớn.`;
+  const total = files.reduce((sum, f) => sum + f.size, 0);
+  if (total > budget.maxTotalBytes) {
+    return `Tổng ${formatBytes(total)}, quá ${formatBytes(budget.maxTotalBytes)} — hãy bỏ bớt file lớn.`;
   }
   return null;
 }

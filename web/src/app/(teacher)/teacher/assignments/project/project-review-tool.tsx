@@ -28,6 +28,7 @@ import {
   describeSkipped,
   emptyTally,
   formatBytes,
+  PROJECT_BUDGET,
   totalBytes,
   type SkipTally,
   type SubmissionFile,
@@ -83,7 +84,7 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const chosen = files.filter((f) => !excluded.has(f.path));
-  const warning = budgetWarning(chosen);
+  const warning = budgetWarning(chosen, PROJECT_BUDGET);
   const canReview = chosen.length > 0 && !pending && !reading;
 
   function reset() {

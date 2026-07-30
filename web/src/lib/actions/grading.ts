@@ -12,8 +12,14 @@ import {
   SPEC_BUCKET,
   SPEC_MAX_BYTES,
 } from "@/lib/spec-storage";
+import {
+  emptyTally,
+  GRADING_BUDGET,
+  type SkipTally,
+} from "@/lib/submission-files";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
+import { unzipSubmission } from "@/lib/zip-submission";
 
 // ---------- Đề bài (assignments) — thứ DUY NHẤT được lưu ----------
 
@@ -216,14 +222,56 @@ export async function getAssignmentSpec(
 // ---------- Chấm bài — KHÔNG lưu gì, chỉ trả kết quả để copy ----------
 
 export interface GradeInputFile {
+  /** Đường dẫn tương đối nếu lấy từ thư mục/zip ("js/app.js"), để AI thấy bố cục. */
   name: string;
   mimeType: string;
   contentB64: string;
+  /** Số byte gốc (không phải độ dài base64) — dùng để guard ngân sách. */
+  size: number;
 }
 
 export interface GradeResult {
   score: number;
   bullets: string[];
+}
+
+/**
+ * Giải nén .zip bài làm cho tab bài tập hàng ngày.
+ *
+ * Khác đường sản phẩm cuối khóa ở chỗ GIỮ nhị phân (ảnh chụp code, PDF scan,
+ * Word) nên trả base64 chứ không trả chữ. File KHÔNG được lưu ở đâu — bytes chỉ
+ * nằm trong RAM của request này.
+ */
+export async function extractZipForGrading(input: { zipB64: string }): Promise<{
+  files?: GradeInputFile[];
+  skipped?: SkipTally;
+  error?: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const res = unzipSubmission(
+    input.zipB64,
+    { keepImages: true, keepDocuments: true },
+    GRADING_BUDGET
+  );
+  if (res.error) return { error: res.error };
+
+  const files: GradeInputFile[] = (res.entries ?? []).map((entry) => ({
+    name: entry.name,
+    // Đuôi file là đủ để ai-service phân loại (`bytes_to_part`); trong .zip
+    // không có thông tin mime nào để lấy.
+    mimeType: "",
+    contentB64: Buffer.from(entry.data).toString("base64"),
+    size: entry.data.length,
+  }));
+
+  return { files, skipped: res.skipped ?? emptyTally() };
 }
 
 /**
@@ -243,6 +291,18 @@ export async function gradeFiles(input: {
   }
   if (input.files.length === 0) {
     return { error: "Chưa chọn file bài làm." };
+  }
+  if (input.files.length > GRADING_BUDGET.maxFiles) {
+    return {
+      error: `Tối đa ${GRADING_BUDGET.maxFiles} file mỗi lượt — hãy bỏ bớt file không cần chấm.`,
+    };
+  }
+  // Guard THẬT ở server: vượt `bodySizeLimit` thì Next.js báo lỗi rất mờ mịt.
+  const total = input.files.reduce((sum, f) => sum + f.size, 0);
+  if (total > GRADING_BUDGET.maxTotalBytes) {
+    return {
+      error: "Tổng dung lượng file quá lớn — hãy bỏ bớt file lớn rồi thử lại.",
+    };
   }
 
   // RLS chỉ cho giáo viên của khóa đọc được đề này.

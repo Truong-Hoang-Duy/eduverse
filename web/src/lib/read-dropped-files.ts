@@ -10,6 +10,7 @@ import {
   PROJECT_BUDGET,
   skipReasonFor,
   stripCommonRoot,
+  type FilterOptions,
   type SkipTally,
   type SubmissionFile,
 } from "@/lib/submission-files";
@@ -41,13 +42,14 @@ async function walkEntry(
   entry: FileSystemEntry,
   prefix: string,
   depth: number,
+  options: FilterOptions,
   out: PickedFile[]
 ): Promise<void> {
   const path = prefix ? `${prefix}/${entry.name}` : entry.name;
 
   if (entry.isFile) {
     // Lọc theo tên TRƯỚC khi đọc file — thư mục node_modules không bị mở ra.
-    if (skipReasonFor(path)) return;
+    if (skipReasonFor(path, options)) return;
     try {
       out.push({ file: await readFileOf(entry as FileSystemFileEntry), path });
     } catch {
@@ -67,7 +69,7 @@ async function walkEntry(
     const batch = await readEntriesBatch(reader);
     if (batch.length === 0) break;
     for (const child of batch) {
-      await walkEntry(child, path, depth + 1, out);
+      await walkEntry(child, path, depth + 1, options, out);
     }
   }
 }
@@ -79,7 +81,8 @@ async function walkEntry(
  */
 export async function pickedFromDrop(
   entries: (FileSystemEntry | null)[],
-  plainFiles: File[]
+  plainFiles: File[],
+  options: FilterOptions = {}
 ): Promise<PickedFile[]> {
   const usable = entries.filter((e): e is FileSystemEntry => e !== null);
 
@@ -91,16 +94,19 @@ export async function pickedFromDrop(
 
   const out: PickedFile[] = [];
   for (const entry of usable) {
-    await walkEntry(entry, "", 0, out);
+    await walkEntry(entry, "", 0, options, out);
   }
   return out;
 }
 
 /** Lấy file từ `<input type="file">` — có `webkitdirectory` thì giữ đường dẫn. */
-export function pickedFromInput(files: File[]): PickedFile[] {
+export function pickedFromInput(
+  files: File[],
+  options: FilterOptions = {}
+): PickedFile[] {
   return files
     .map((file) => ({ file, path: file.webkitRelativePath || file.name }))
-    .filter((picked) => !skipReasonFor(picked.path));
+    .filter((picked) => !skipReasonFor(picked.path, options));
 }
 
 /** Đọc nội dung thành chữ + đếm những file bị bỏ để báo cho GV. */

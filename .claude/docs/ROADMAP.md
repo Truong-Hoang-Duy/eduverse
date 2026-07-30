@@ -434,6 +434,28 @@
       (`scripts/e2e-project-review.mjs`) — bắt đúng 3 khuyết điểm cố ý gài
 - [x] ai-service ĐỔI → Render phải deploy lại
 
+### Đợt 29 (cùng nhánh `feature/project-review-grading`) — folder/zip cho tab bài tập
+- [x] **Kiểm chứng "không lưu file bài làm"**: rà cả repo, toàn bộ web chỉ có ĐÚNG
+      1 lệnh `.upload()` (file ĐỀ BÀI trong `createAssignment`); ai-service không
+      có lệnh ghi nào. Thêm E2E canh Storage không phình khi chấm
+      (`countSpecFiles` đệ quy, phase3 12→13 test) để về sau không ai phá
+- [x] Tab bài tập hàng ngày nhận **cả thư mục và .zip** như tab sản phẩm: nút
+      "📁 Chọn cả thư mục" + thả thư mục/zip vào ô; đường dẫn tương đối được gửi
+      làm tên file để AI thấy bố cục
+- [x] `skipReasonFor(path, { keepImages, keepDocuments })` — tab bài tập GIỮ ảnh
+      + PDF/Word (ảnh chụp code có thể LÀ bài làm), tab sản phẩm BỎ; `GRADING_BUDGET`
+      riêng (≤30 file, ≤5MB/file, tổng ≤6MB) vì bài tập có PDF scan
+- [x] `lib/zip-submission.ts`: phần giải nén + lọc dùng chung cho cả 2 tab;
+      `extractZipForGrading` trả base64 (giữ nhị phân), `extractZipFiles` trả chữ
+- [x] Lỗi chia 2 mức: **báo to** cho thứ đáng giải thích (.doc đời cũ, .rar không
+      giải nén được) và **bỏ im lặng + tổng kết 1 dòng** cho rác trong thư mục —
+      hiện lỗi đỏ từng file rác làm GV hoảng vô ích
+- [x] Ô thả đổi từ `<label>` sang `div role="button"` (có `cursor-pointer` +
+      Enter/Space) vì bên trong có nút riêng — nằm trong `<label>` thì bấm nút đó
+      kích hoạt cả label
+- [x] 0 migration; ai-service KHÔNG đổi (không cần deploy Render riêng cho đợt này);
+      lint + typecheck + build sạch; **E2E phase3 13/13** với Gemini thật
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
