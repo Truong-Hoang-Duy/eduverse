@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import { docxToText } from "@/lib/docx-text";
 import { looksEncrypted } from "@/lib/file-check";
 import {
   removeSpecFiles,
@@ -11,8 +12,14 @@ import {
   SPEC_BUCKET,
   SPEC_MAX_BYTES,
 } from "@/lib/spec-storage";
+import {
+  emptyTally,
+  GRADING_BUDGET,
+  type SkipTally,
+} from "@/lib/submission-files";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
+import { unzipSubmission } from "@/lib/zip-submission";
 
 // ---------- Đề bài (assignments) — thứ DUY NHẤT được lưu ----------
 
@@ -40,6 +47,12 @@ export async function createAssignment(
   }
   if (file.size > SPEC_MAX_BYTES) {
     return { error: "File đề nặng quá 8MB — hãy dùng file .txt/.md hoặc nén ảnh lại." };
+  }
+  // Word đời cũ trích chữ không ra — báo ngay lúc tạo đề, đừng để AI chấm mới lỗi.
+  if (/\.(doc|xls|ppt)$/i.test(file.name)) {
+    return {
+      error: `File "${file.name}" là định dạng Office đời cũ, hệ thống không đọc được chữ. Hãy mở bằng Word rồi "Lưu thành" .docx (hoặc .pdf) và thử lại.`,
+    };
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -129,7 +142,7 @@ const TEXT_EXTENSIONS = [
 
 export type AssignmentSpec =
   | { kind: "text"; fileName: string; content: string }
-  | { kind: "image" | "pdf"; fileName: string; url: string };
+  | { kind: "image" | "pdf" | "download"; fileName: string; url: string };
 
 /**
  * Đọc file đề đã lưu để GV xem lại trên giao diện. Bucket là private nên ảnh/PDF
@@ -182,6 +195,15 @@ export async function getAssignmentSpec(
     return { spec: { kind: "text", fileName, content: new TextDecoder().decode(bytes) } };
   }
 
+  // Word: trích chữ ra xem thẳng trong popup. Đọc không ra (file hỏng, đề chỉ là
+  // ảnh chụp dán vào Word) thì rơi xuống dưới cho tải về mở bằng Word.
+  if (ext === "docx") {
+    const text = docxToText(bytes);
+    if (text) {
+      return { spec: { kind: "text", fileName, content: text } };
+    }
+  }
+
   const { data: signed, error: signErr } = await supabase.storage
     .from("assignment-specs")
     .createSignedUrl(path, 600);
@@ -189,26 +211,67 @@ export async function getAssignmentSpec(
     return { error: `Không mở được file đề: ${signErr?.message ?? "không rõ lỗi"}` };
   }
 
-  return {
-    spec: {
-      kind: ext === "pdf" ? "pdf" : "image",
-      fileName,
-      url: signed.signedUrl,
-    },
-  };
+  // Tới đây .docx nghĩa là trích chữ THẤT BẠI (xem nhánh trên) → cho tải về mở
+  // bằng Word, còn hơn hiện bytes rác.
+  const kind: AssignmentSpec["kind"] =
+    ext === "pdf" ? "pdf" : ext === "docx" ? "download" : "image";
+
+  return { spec: { kind, fileName, url: signed.signedUrl } };
 }
 
 // ---------- Chấm bài — KHÔNG lưu gì, chỉ trả kết quả để copy ----------
 
 export interface GradeInputFile {
+  /** Đường dẫn tương đối nếu lấy từ thư mục/zip ("js/app.js"), để AI thấy bố cục. */
   name: string;
   mimeType: string;
   contentB64: string;
+  /** Số byte gốc (không phải độ dài base64) — dùng để guard ngân sách. */
+  size: number;
 }
 
 export interface GradeResult {
   score: number;
   bullets: string[];
+}
+
+/**
+ * Giải nén .zip bài làm cho tab bài tập hàng ngày.
+ *
+ * Khác đường sản phẩm cuối khóa ở chỗ GIỮ nhị phân (ảnh chụp code, PDF scan,
+ * Word) nên trả base64 chứ không trả chữ. File KHÔNG được lưu ở đâu — bytes chỉ
+ * nằm trong RAM của request này.
+ */
+export async function extractZipForGrading(input: { zipB64: string }): Promise<{
+  files?: GradeInputFile[];
+  skipped?: SkipTally;
+  error?: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const res = unzipSubmission(
+    input.zipB64,
+    { keepImages: true, keepDocuments: true },
+    GRADING_BUDGET
+  );
+  if (res.error) return { error: res.error };
+
+  const files: GradeInputFile[] = (res.entries ?? []).map((entry) => ({
+    name: entry.name,
+    // Đuôi file là đủ để ai-service phân loại (`bytes_to_part`); trong .zip
+    // không có thông tin mime nào để lấy.
+    mimeType: "",
+    contentB64: Buffer.from(entry.data).toString("base64"),
+    size: entry.data.length,
+  }));
+
+  return { files, skipped: res.skipped ?? emptyTally() };
 }
 
 /**
@@ -228,6 +291,18 @@ export async function gradeFiles(input: {
   }
   if (input.files.length === 0) {
     return { error: "Chưa chọn file bài làm." };
+  }
+  if (input.files.length > GRADING_BUDGET.maxFiles) {
+    return {
+      error: `Tối đa ${GRADING_BUDGET.maxFiles} file mỗi lượt — hãy bỏ bớt file không cần chấm.`,
+    };
+  }
+  // Guard THẬT ở server: vượt `bodySizeLimit` thì Next.js báo lỗi rất mờ mịt.
+  const total = input.files.reduce((sum, f) => sum + f.size, 0);
+  if (total > GRADING_BUDGET.maxTotalBytes) {
+    return {
+      error: "Tổng dung lượng file quá lớn — hãy bỏ bớt file lớn rồi thử lại.",
+    };
   }
 
   // RLS chỉ cho giáo viên của khóa đọc được đề này.

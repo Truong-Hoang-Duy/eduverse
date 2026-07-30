@@ -102,6 +102,22 @@ export function ViewSpecDialog({
             />
           )}
 
+          {spec?.kind === "download" && (
+            <div className="space-y-3 rounded-lg border border-dashed p-6 text-center">
+              <p className="text-sm text-muted-foreground">
+                Không đọc được chữ trong file này (có thể đề chỉ là ảnh chụp dán
+                vào Word) — tải về mở bằng Word để xem.
+              </p>
+              <a
+                href={spec.url}
+                download={spec.fileName}
+                className="inline-block text-sm font-medium text-primary hover:underline"
+              >
+                ⬇ Tải {spec.fileName}
+              </a>
+            </div>
+          )}
+
           {spec?.kind === "pdf" && (
             <iframe
               src={spec.url}

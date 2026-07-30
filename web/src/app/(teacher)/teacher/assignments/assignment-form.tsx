@@ -126,13 +126,15 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="spec-file">File đề (PDF / ảnh / text / md) *</Label>
+            <Label htmlFor="spec-file">
+              File đề (PDF / Word / ảnh / text / md) *
+            </Label>
             <Input
               id="spec-file"
               ref={fileRef}
               name="spec_file"
               type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.txt,.md"
+              accept=".pdf,.docx,.png,.jpg,.jpeg,.txt,.md"
               onChange={(e) => handleFileChange(e.target.files?.[0])}
             />
             <p className="text-xs text-muted-foreground">

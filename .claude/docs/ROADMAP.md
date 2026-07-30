@@ -385,6 +385,77 @@
 - [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [x] Merge lên production (2026-07-27)
 
+### Đợt 27 (`feature/grading-word-dropzone-filter`) — 4 cải thiện nhận xét + chấm bài
+- [x] `MultiSelect`: nút "✕ Bỏ chọn tất cả (n)" dưới dãy badge — xóa sạch điểm
+      mạnh/cần cải thiện đã tick trong 1 nhịp (áp cho cả `combo-manager`)
+- [x] **Chấm bài nhận file Word .docx**: `ai-service/app/storage.py` tự trích chữ
+      bằng `zipfile` + `ElementTree` của stdlib (KHÔNG thêm dependency
+      python-docx/mammoth) — Gemini không đọc được .docx nhị phân. Nhánh docx đặt
+      TRƯỚC nhánh text vì `mimetypes` đoán .docx ra mime riêng
+- [x] Office đời cũ (.doc/.xls/.ppt) bị từ chối kèm hướng dẫn lưu .docx — chặn ở
+      client (`file-check.ts`), server action `createAssignment`, và ai-service
+- [x] Đề bài cũng nhận .docx và **xem thẳng trong popup "Xem đề"**: `docx-text.ts`
+      tự đọc ZIP bằng `node:zlib` (`inflateRawSync` + đọc bảng mục lục) — Node
+      không có thư viện ZIP nhưng cũng KHÔNG cần thêm jszip/mammoth. Trích chữ
+      thất bại thì rơi về `kind: "download"` cho tải file về
+- [x] **Kéo thả 1 hoặc nhiều file** vào vùng dashed trong `GradingTool` (cả vùng
+      là `<label htmlFor>` nên bấm ĐÂU cũng mở hộp thoại chọn file, có
+      `cursor-pointer`; input gốc `sr-only` vì chữ "Choose Files" do trình duyệt
+      sinh, không dịch được): cộng dồn
+      qua nhiều lượt thả, chống trùng theo `name:size:lastModified`, danh sách file
+      xóa lẻ/xóa hết; `unsupportedSubmissionReason` chặn file nén/exe/media/thư mục
+      (kéo thả KHÔNG chịu thuộc tính `accept`). Đuôi code mở thoải mái
+- [x] **Lọc đề bài đã lưu theo khóa**: tách `saved-assignments.tsx` (client) khỏi
+      `page.tsx`, Select 1-lựa-chọn client-side kèm số đề mỗi khóa
+- [x] 0 migration; lint + typecheck + build (web) sạch; pytest 11/11 (thêm
+      `tests/test_storage.py`); **E2E phase3 12/12** với Gemini thật — có ca chấm
+      .docx thật (100đ) + ca .doc bị chặn 400
+- [x] ai-service ĐỔI → Render phải deploy lại
+
+### Đợt 28 (`feature/project-review-grading`) — chấm sản phẩm cuối khóa
+- [x] Nav "Chấm bài" chia 2 tab (`grading-tabs.tsx`): "Bài tập hàng ngày"
+      (`/teacher/assignments`) và "Sản phẩm cuối khóa"
+      (`/teacher/assignments/project`) — URL riêng nên chia sẻ được
+- [x] ai-service `/review-project`: KHÔNG đề bài, **KHÔNG điểm số**, trả 3 nhóm
+      `diem_manh` / `can_cai_thien` / `goi_y`. `build_project_review_prompt` tự
+      đưa cây thư mục vào prompt + `_entry_first` xếp `index.html`/`main.py` lên
+      đầu. KHÔNG áp `TONE_RULE` (cùng họ chấm bài, không phải nhận xét phụ huynh)
+- [x] 3 đường đầu vào cùng ra một danh sách file: kéo thả thư mục
+      (`webkitGetAsEntry` đệ quy, đọc `readEntries` theo LÔ tới khi rỗng), nút
+      "Chọn thư mục" (`<input webkitdirectory>`), và file .zip giải nén ở server
+- [x] `lib/zip.ts`: tách ZIP reader khỏi `docx-text.ts` + thêm `listZipEntries`
+      (lọc theo tên TRƯỚC khi bung → `node_modules` không vào RAM)
+- [x] `lib/submission-files.ts` nguồn DUY NHẤT: luật lọc rác, `PROJECT_BUDGET`
+      (≤30 file, ≤200KB/file, tổng ≤2MB), `stripCommonRoot`, mô tả file đã bỏ
+- [x] GV bỏ tick từng file trước khi gửi; vượt ngân sách thì cảnh báo chứ không
+      chặn cứng, nhưng server guard thật (vượt `bodySizeLimit` lỗi rất mờ mịt)
+- [x] 0 migration; lint + typecheck + build sạch; **pytest 18/18** (thêm
+      `tests/test_project_review.py`); **E2E 9/9** với Gemini thật
+      (`scripts/e2e-project-review.mjs`) — bắt đúng 3 khuyết điểm cố ý gài
+- [x] ai-service ĐỔI → Render phải deploy lại
+
+### Đợt 29 (cùng nhánh `feature/project-review-grading`) — folder/zip cho tab bài tập
+- [x] **Kiểm chứng "không lưu file bài làm"**: rà cả repo, toàn bộ web chỉ có ĐÚNG
+      1 lệnh `.upload()` (file ĐỀ BÀI trong `createAssignment`); ai-service không
+      có lệnh ghi nào. Thêm E2E canh Storage không phình khi chấm
+      (`countSpecFiles` đệ quy, phase3 12→13 test) để về sau không ai phá
+- [x] Tab bài tập hàng ngày nhận **cả thư mục và .zip** như tab sản phẩm: nút
+      "📁 Chọn cả thư mục" + thả thư mục/zip vào ô; đường dẫn tương đối được gửi
+      làm tên file để AI thấy bố cục
+- [x] `skipReasonFor(path, { keepImages, keepDocuments })` — tab bài tập GIỮ ảnh
+      + PDF/Word (ảnh chụp code có thể LÀ bài làm), tab sản phẩm BỎ; `GRADING_BUDGET`
+      riêng (≤30 file, ≤5MB/file, tổng ≤6MB) vì bài tập có PDF scan
+- [x] `lib/zip-submission.ts`: phần giải nén + lọc dùng chung cho cả 2 tab;
+      `extractZipForGrading` trả base64 (giữ nhị phân), `extractZipFiles` trả chữ
+- [x] Lỗi chia 2 mức: **báo to** cho thứ đáng giải thích (.doc đời cũ, .rar không
+      giải nén được) và **bỏ im lặng + tổng kết 1 dòng** cho rác trong thư mục —
+      hiện lỗi đỏ từng file rác làm GV hoảng vô ích
+- [x] Ô thả đổi từ `<label>` sang `div role="button"` (có `cursor-pointer` +
+      Enter/Space) vì bên trong có nút riêng — nằm trong `<label>` thì bấm nút đó
+      kích hoạt cả label
+- [x] 0 migration; ai-service KHÔNG đổi (không cần deploy Render riêng cho đợt này);
+      lint + typecheck + build sạch; **E2E phase3 13/13** với Gemini thật
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
