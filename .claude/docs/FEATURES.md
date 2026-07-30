@@ -340,20 +340,40 @@ quên cấu hình phải mất quyền, không phải mở cho mọi GV).
 
 ## Học viên
 
-Điều hướng: nav trên cùng có **"Lớp học"** (`exact: true` để không sáng khi đang
-ở tab con); 3 khu còn lại đi bằng **tab** (`components/student-tabs.tsx`, render ở
-layout nên hiện ở mọi trang — ở `/student` không tab nào sáng).
+Điều hướng **theo TỪNG LỚP** (đổi 2026-07-30 — học viên học nhiều lớp thì trước
+đây sản phẩm các lớp trộn lẫn): nav chỉ còn **"Lớp học"** (`/student`), 3 tab nằm
+TRONG lớp ở `classes/[classId]/class-tabs.tsx`.
+
+| Route | Nội dung |
+|---|---|
+| `/student` | danh sách lớp, cả thẻ là link "Vào lớp →" |
+| `/student/classes/[classId]/projects` | thư mục Drive + sản phẩm của em ở LỚP NÀY |
+| `/student/classes/[classId]/gallery` | sản phẩm của LỚP NÀY |
+| `/student/classes/[classId]/guide` | hướng dẫn nộp bài |
+
+`classes/[classId]/layout.tsx` chặn 404 nếu em không học lớp đó (RLS vẫn là lớp
+chặn chính) và hiện tiêu đề lớp. Route cũ `/student/projects|gallery|guide`
+**redirect** về `/student` để link cũ không 404 — đừng xóa 3 file redirect đó.
 
 - **Lớp học** (nav, `/student`): CHỈ thẻ thông tin lớp — mã lớp, khóa, tổng số
   buổi, ngày tham gia. **KHÔNG liệt kê từng buổi** và **KHÔNG hiện nhận xét cá
   nhân** (không query `sessions` lẫn `student_reviews`; nhận xét chỉ để GV gửi
   phụ huynh).
-- **Sản phẩm:** CRUD sản phẩm của chính mình (1 sản phẩm/lớp — mỗi lớp một form
-  riêng, không có dropdown chọn lớp) — tên, mô tả, chức năng, link GitHub/Drive/demo,
-  ghi chú. Có **nút Xóa** (ConfirmDialog).
+- **📁 Thư mục nộp bài tập** (đầu tab Sản phẩm): học viên khai **MỘT link Drive
+  dùng cho MỌI lớp** (bảng `student_drive_links`, khóa chính `student_id`) — nơi
+  em upload bài tập các buổi. Lưu xong **thu gọn thành chip bấm được**
+  (`DriveLinkChip`), không gọi dịch vụ tạo link ngắn bên ngoài.
+  **Ai xem được:** chính chủ (sửa/xóa), giáo viên của lớp em học (chỉ đọc), **bạn
+  cùng lớp** (chỉ đọc — để kiểm tra/đánh giá sản phẩm của nhau, chốt 2026-07-30).
+  Học viên/GV lớp khác KHÔNG. `e2e-drive-link.mjs` canh đủ 9 nhánh này.
+- **Sản phẩm của tôi:** CRUD sản phẩm của chính mình ở lớp đang mở (1 sản
+  phẩm/lớp) — tên, mô tả, chức năng, link GitHub/demo, ghi chú. Nút **"Xóa sản
+  phẩm"** viền đỏ cạnh nút lưu (ConfirmDialog; xóa dòng `projects`, bình luận
+  cascade theo → xóa sạch). **KHÔNG còn ô "Link Google Drive"** ở form này: link
+  Drive đã lên cấp học viên (xem trên) — để 2 ô Drive là em không biết điền đâu.
   - **Chức năng nhập dạng chip**: gõ + Enter (hoặc nút Thêm) để thêm từng cái, bấm
     ✕ để bỏ; tự bỏ trùng. (Trước là textarea "mỗi dòng một" dễ lỗi.)
-  - **Link** GitHub/Drive/demo validate ở server (chỉ nhận http/https).
+  - **Link** GitHub/demo validate ở server (chỉ nhận http/https), 2 ô bằng nhau.
   - KHÔNG có trạng thái nộp: cột `status` draft/submitted (thêm Đợt 7) đã GỠ ở
     migration `20260721010000` theo yêu cầu 2026-07-18 — sản phẩm chỉ có
     "Cập nhật lúc", không badge Đang làm/Đã nộp.
@@ -365,9 +385,9 @@ layout nên hiện ở mọi trang — ở `/student` không tab nào sáng).
     là `text[]` chỉ lưu tên).
 - **Sản phẩm của lớp:** lưới **ô từng người** (avatar, tên, tên dự án, số chức
   năng, số bình luận) → bấm mở **popup chi tiết** + nhận xét ngay trong popup.
-  Chỉ trong lớp mình (RLS + lọc lại ở UI).
-  ⚠️ Ô = bạn **đã khai báo sản phẩm**, không phải cả lớp — RLS chỉ cho HV thấy
-  dòng enrollment của chính mình nên không liệt kê được bạn cùng lớp.
+  Chỉ lớp đang mở (query theo đúng `class_id`).
+  Popup **không in lại** tên dự án/tên HV trong thân (đã có ở tiêu đề — dùng
+  `ProjectCard hideHeading`); nút **📁 Thư mục Drive** trỏ tới link em đã cài.
 - **Hướng dẫn:** 4 mục — GitHub / Drive / deploy / **lấy API key Gemini miễn phí**.
   Sửa link video ở biến `VIDEOS` đầu `guide/page.tsx` — nhận cả link đầy đủ lẫn
   ID thuần; để `""` thì hiện ô chờ.
