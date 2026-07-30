@@ -228,9 +228,10 @@ export function GradingTool({
       </div>
 
       <div className="space-y-1.5">
-        {/* Không gắn htmlFor: nhãn nút bấm bên trong vùng thả mới là cái trỏ vào
-            input, gắn cả hai chỗ là bấm tiêu đề cũng mở hộp thoại chọn file. */}
-        <Label>File bài làm của học sinh *</Label>
+        {/* Không gắn htmlFor: vùng thả bên dưới mới là cái trỏ vào input, gắn cả
+            hai chỗ thì bấm tiêu đề cũng mở hộp thoại chọn file. Ràng buộc "một
+            học sinh" nằm ở đây để không phải thêm dòng mô tả trong vùng thả. */}
+        <Label>File bài làm (của một học sinh) *</Label>
 
         {/* Cả vùng thả là một <label> trỏ vào input → bấm ĐÂU trong ô cũng mở
             được hộp thoại chọn file, không cần onClick thủ công (làm vậy sẽ bắn
@@ -251,26 +252,17 @@ export function GradingTool({
             if (dragDepth.current <= 0) setDragging(false);
           }}
           onDrop={handleDrop}
-          className={`block cursor-pointer rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors hover:border-primary/60 hover:bg-accent/40 ${
+          className={`flex cursor-pointer items-center justify-center gap-3 rounded-lg border-2 border-dashed px-4 py-4 text-center transition-colors hover:border-primary/60 hover:bg-accent/40 ${
             dragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25"
           }`}
         >
-          <span className="block text-3xl leading-none" aria-hidden="true">
+          <span className="text-2xl leading-none" aria-hidden="true">
             {dragging ? "📥" : "📄"}
           </span>
-          <span className="mt-2 block text-sm font-medium">
-            Bấm vào đây hoặc kéo thả file bài làm vào
-          </span>
-          <span className="mt-0.5 block text-xs text-muted-foreground">
-            Một hoặc nhiều file của cùng một em
-          </span>
-          <span className="mt-3 inline-flex items-center gap-1.5 rounded-md border bg-background px-3 py-2 text-sm font-medium shadow-xs">
-            📂 Chọn file từ máy
-          </span>
-          <span className="mt-3 block text-xs text-muted-foreground">
-            File code (.html, .js, .py...), Word .docx, PDF, ảnh
+          <span className="text-sm font-medium">
+            Bấm hoặc kéo thả file vào đây
           </span>
         </label>
 
@@ -290,10 +282,6 @@ export function GradingTool({
           }}
           className="sr-only"
         />
-        <p className="text-xs text-muted-foreground">
-          Thả nhiều lượt được — file mới cộng dồn vào danh sách. File không được
-          lưu lại: chấm xong copy kết quả rồi làm em tiếp theo.
-        </p>
       </div>
 
       {files.length > 0 && (
