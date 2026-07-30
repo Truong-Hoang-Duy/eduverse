@@ -28,18 +28,30 @@ function LinkChip({ href, label }: { href: string | null; label: string }) {
 }
 
 /** Hiển thị chi tiết một sản phẩm cuối khóa (read-only). */
-export function ProjectCard({ project }: { project: ProjectView }) {
+export function ProjectCard({
+  project,
+  hideHeading = false,
+}: {
+  project: ProjectView;
+  /**
+   * Bỏ dòng tên dự án + tên học viên. Dùng khi nơi gọi ĐÃ hiện chúng ở tiêu đề
+   * (popup gallery) — để cả hai là lặp y nguyên một thông tin hai lần.
+   */
+  hideHeading?: boolean;
+}) {
   return (
     <div className="space-y-3">
       <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold">{project.name}</h3>
-          <span className="text-xs text-muted-foreground">
-            · {project.authorName}
-            {project.updatedAt &&
-              ` · Cập nhật ${new Date(project.updatedAt).toLocaleDateString("vi-VN")}`}
-          </span>
-        </div>
+        {!hideHeading && (
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold">{project.name}</h3>
+            <span className="text-xs text-muted-foreground">
+              · {project.authorName}
+              {project.updatedAt &&
+                ` · Cập nhật ${new Date(project.updatedAt).toLocaleDateString("vi-VN")}`}
+            </span>
+          </div>
+        )}
         {project.description && (
           <p className="mt-1 text-sm whitespace-pre-wrap text-muted-foreground">
             {project.description}

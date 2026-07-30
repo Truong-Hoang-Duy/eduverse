@@ -128,10 +128,12 @@ export function ProjectGrid({
                 <DialogTitle>{selected.name}</DialogTitle>
                 <DialogDescription>
                   {selected.authorName} · Lớp {selected.classCode}
+                  {selected.updatedAt &&
+                    ` · Cập nhật ${new Date(selected.updatedAt).toLocaleDateString("vi-VN")}`}
                 </DialogDescription>
               </DialogHeader>
 
-              <ProjectCard project={selected} />
+              <ProjectCard project={selected} hideHeading />
 
               <div className="border-t pt-4">
                 <p className="mb-2 text-sm font-medium">
