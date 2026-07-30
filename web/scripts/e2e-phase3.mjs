@@ -41,6 +41,18 @@ async function makeUser(username, metadata) {
   return { client, id: data.user.id };
 }
 
+/**
+ * File .docx thật (ZIP + word/document.xml) chứa đúng bài làm đạt điểm cao, dán
+ * sẵn dạng base64 vì Node thuần không ghi được file ZIP. Dựng lại bằng:
+ *   ai-service/.venv/Scripts/python -c "import base64,io,zipfile; ..."
+ * (chỉ có word/document.xml — đủ để ai-service trích chữ).
+ */
+const DOCX_B64 =
+  "UEsDBBQAAAAIAIw8/lx4SrCG5AAAAL8BAAARAAAAd29yZC9kb2N1bWVudC54bWyVkU1LxDAQhu/+iiF4UMSmCn7QbbrgQcSDF+t9Y5ptA8lMSLJbRfzvJosfBz2sl5cZhucZmGmXL87CVodoCAU7q2oGGhUNBkfBnvrb02u27A7auRlIbZzGBBnA2MyCTSn5hvOoJu1krMhrzLM1BSdTbsPIZwqDD6R0jNnnLD+v60vupEHWZeUzDa87ty9dKJG6G2nASgeOEO7lVj6qYHxqeZmVDLv0vzhFGBNE6qfNwyQTCLhY/Iu6y4sFXO0NJcIxAz8bT749ezrI6srSeLTqs6qBw7eifF8d/4nzz3uV4usX3QdQSwECFAAUAAAACACMPP5ceEqwhuQAAAC/AQAAEQAAAAAAAAAAAAAAgAEAAAAAd29yZC9kb2N1bWVudC54bWxQSwUGAAAAAAEAAQA/AAAAEwEAAAAA";
+
+const DOCX_MIME =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
 /** Gọi ai-service đúng như Server Action gradeFiles làm. */
 async function grade(specPath, files, title = "Tính tổng hai số") {
   const res = await fetch(`${AI_URL}/grade-submission`, {
@@ -51,7 +63,8 @@ async function grade(specPath, files, title = "Tính tổng hai số") {
       files: files.map((f) => ({
         name: f.name,
         mime_type: f.mime ?? null,
-        content_b64: Buffer.from(f.content, "utf8").toString("base64"),
+        // b64 dùng thẳng cho file nhị phân (.docx); còn lại encode từ chữ.
+        content_b64: f.b64 ?? Buffer.from(f.content, "utf8").toString("base64"),
       })),
       course_name: "JavaScript Basic",
       assignment_title: title,
@@ -155,6 +168,28 @@ async function main() {
       bullets.every((b) => !/^\s*[-•*]/.test(b))
     );
   }
+
+  // 4b. Bài làm gửi bằng file Word .docx — ai-service phải tự trích chữ ra
+  // (Gemini không đọc được .docx nhị phân) rồi chấm như file code bình thường.
+  const docx = await grade(specPath, [
+    { name: "bai-lam.docx", mime: DOCX_MIME, b64: DOCX_B64 },
+  ]);
+  check(
+    "AI chấm được bài làm file Word (.docx)",
+    docx.ok && Number.isInteger(docx.body?.score) && docx.body.score >= 50,
+    docx.ok ? `điểm ${docx.body?.score}` : `HTTP ${docx.status}`
+  );
+
+  // 4c. Word đời cũ (.doc) không trích được chữ → phải báo lỗi rõ, không im lặng
+  // chấm bừa trên bytes rác.
+  const legacyDoc = await grade(specPath, [
+    { name: "bai-lam.doc", mime: "application/msword", content: "noi dung word cu" },
+  ]);
+  check(
+    "File Word đời cũ (.doc) bị từ chối kèm hướng dẫn lưu .docx",
+    legacyDoc.status === 400,
+    `HTTP ${legacyDoc.status}`
+  );
 
   // 5. Chấm bài KÉM → điểm phải thấp hơn bài tốt
   const bad = await grade(specPath, [

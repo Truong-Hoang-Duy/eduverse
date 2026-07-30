@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { gradeFiles, type GradeResult } from "@/lib/actions/grading";
-import { checkFileReadable } from "@/lib/file-check";
+import {
+  checkFileReadable,
+  SUBMISSION_ACCEPT,
+  unsupportedSubmissionReason,
+} from "@/lib/file-check";
 
 import type { CourseChoice } from "./assignment-form";
 import { ViewSpecDialog } from "./view-spec-dialog";
@@ -41,6 +45,11 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
+/** Khóa nhận dạng một file để không thêm trùng khi vừa kéo thả vừa chọn tay. */
+function fileKey(file: File): string {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
+
 function scoreColor(score: number): string {
   if (score >= 80) return "text-green-600 dark:text-green-400";
   if (score >= 50) return "text-yellow-600 dark:text-yellow-400";
@@ -61,6 +70,11 @@ export function GradingTool({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [pending, startGrade] = useTransition();
+  const [dragging, setDragging] = useState(false);
+  // dragenter/dragleave bắn cả khi con trỏ đi qua phần tử con → đếm độ sâu, chứ
+  // set/unset theo từng event thì viền highlight nháy liên tục.
+  const dragDepth = useRef(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const courseAssignments = assignments.filter((a) => a.courseId === courseId);
   const selectedAssignment = assignments.find((a) => a.id === assignmentId);
@@ -70,6 +84,46 @@ export function GradingTool({
     setAssignmentId("");
     setGrade(null);
     setError("");
+  }
+
+  /** Thêm dồn (không ghi đè) để kéo thả nhiều lượt/nhiều thư mục khác nhau được. */
+  function addFiles(incoming: File[]) {
+    setGrade(null);
+    setError("");
+
+    const rejected: string[] = [];
+    const accepted: File[] = [];
+    for (const file of incoming) {
+      const reason = unsupportedSubmissionReason(file.name);
+      if (reason) rejected.push(reason);
+      else accepted.push(file);
+    }
+
+    setFiles((prev) => {
+      const seen = new Set(prev.map(fileKey));
+      return [...prev, ...accepted.filter((f) => !seen.has(fileKey(f)))];
+    });
+
+    // Báo lý do đầu tiên + số file còn lại bị loại, đủ để GV hiểu mà không spam.
+    if (rejected.length > 0) {
+      setError(
+        rejected.length === 1
+          ? rejected[0]
+          : `${rejected[0]} (và ${rejected.length - 1} file khác bị loại)`
+      );
+    }
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    dragDepth.current = 0;
+    setDragging(false);
+    addFiles(Array.from(e.dataTransfer.files));
+  }
+
+  function removeFile(key: string) {
+    setFiles((prev) => prev.filter((f) => fileKey(f) !== key));
+    setGrade(null);
   }
 
   function handleGrade() {
@@ -176,31 +230,92 @@ export function GradingTool({
 
       <div className="space-y-1.5">
         <Label htmlFor="submission-files">File bài làm của học sinh *</Label>
-        <Input
-          id="submission-files"
-          type="file"
-          multiple
-          accept=".py,.js,.ts,.jsx,.tsx,.html,.css,.json,.java,.c,.cpp,.cs,.md,.txt,.sql,.pdf,.png,.jpg,.jpeg"
-          onChange={(e) => {
-            setFiles(Array.from(e.target.files ?? []));
-            setGrade(null);
+        <div
+          onDragEnter={(e) => {
+            e.preventDefault();
+            dragDepth.current += 1;
+            setDragging(true);
           }}
-        />
+          // Thiếu preventDefault ở dragOver là trình duyệt tự mở file thay vì thả.
+          onDragOver={(e) => e.preventDefault()}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            dragDepth.current -= 1;
+            if (dragDepth.current <= 0) setDragging(false);
+          }}
+          onDrop={handleDrop}
+          className={`rounded-lg border-2 border-dashed p-4 text-center transition-colors ${
+            dragging
+              ? "border-primary bg-primary/5"
+              : "border-muted-foreground/25"
+          }`}
+        >
+          <p className="text-sm font-medium">
+            📎 Kéo thả một hoặc nhiều file vào đây
+          </p>
+          <p className="mt-1 mb-2 text-xs text-muted-foreground">hoặc chọn tay</p>
+          <Input
+            id="submission-files"
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={SUBMISSION_ACCEPT}
+            onChange={(e) => {
+              addFiles(Array.from(e.target.files ?? []));
+              // Dọn input để chọn LẠI đúng file vừa xóa vẫn kích hoạt onChange.
+              if (fileInputRef.current) fileInputRef.current.value = "";
+            }}
+            className="mx-auto max-w-sm"
+          />
+        </div>
         <p className="text-xs text-muted-foreground">
-          Chọn nhiều file của cùng một em. File không được lưu lại — chấm xong copy
-          kết quả rồi chọn file của em tiếp theo.
+          Nhận file code (.html, .js, .py, .css...), Word .docx, PDF và ảnh — thả
+          bao nhiêu lượt cũng được, file mới cộng dồn vào danh sách. File của cùng
+          MỘT em thôi. File không được lưu lại — chấm xong copy kết quả rồi làm em
+          tiếp theo.
         </p>
       </div>
+
+      {files.length > 0 && (
+        <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-medium">{files.length} file sẽ được chấm</p>
+            <button
+              type="button"
+              onClick={() => {
+                setFiles([]);
+                setGrade(null);
+              }}
+              className="cursor-pointer text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
+            >
+              ✕ Xóa hết
+            </button>
+          </div>
+          <ul className="space-y-1">
+            {files.map((f) => (
+              <li
+                key={fileKey(f)}
+                className="flex items-center justify-between gap-2 text-xs"
+              >
+                <span className="min-w-0 truncate">{f.name}</span>
+                <button
+                  type="button"
+                  aria-label={`Bỏ file ${f.name}`}
+                  onClick={() => removeFile(fileKey(f))}
+                  className="shrink-0 cursor-pointer px-1 text-muted-foreground transition-colors hover:text-destructive"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         <Button onClick={handleGrade} disabled={!canGrade}>
           {pending ? "AI đang chấm..." : "✨ Chấm bài"}
         </Button>
-        {files.length > 0 && (
-          <span className="text-xs text-muted-foreground">
-            {files.length} file: {files.map((f) => f.name).join(", ")}
-          </span>
-        )}
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

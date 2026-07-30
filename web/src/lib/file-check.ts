@@ -5,12 +5,65 @@
  */
 const ENCRYPTED_MARKERS = ["SECURE FILE", "This file is encrypted"];
 
+export const DOCX_MIME =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
 const MAGIC: Record<string, number[]> = {
   "image/png": [0x89, 0x50, 0x4e, 0x47],
   "image/jpeg": [0xff, 0xd8, 0xff],
   "image/gif": [0x47, 0x49, 0x46, 0x38],
   "application/pdf": [0x25, 0x50, 0x44, 0x46],
+  // .docx là file ZIP — DLP mã hóa thì chữ ký PK biến mất, bắt được ngay ở đây.
+  [DOCX_MIME]: [0x50, 0x4b, 0x03, 0x04],
 };
+
+/**
+ * Đuôi file bài làm KHÔNG chấm được. Chủ trương là "mở thoải mái": mọi đuôi code
+ * đều cho qua (ai-service decode ra text cho Gemini đọc), chỉ chặn thứ chắc chắn
+ * vô nghĩa — file nén, file thực thi, media, và Office nhị phân đời cũ.
+ * ⚠️ ai-service có bản đối chiếu ở `ai-service/app/storage.py` — sửa một bên
+ * nhớ xem bên kia.
+ */
+const BLOCKED_EXTENSIONS: Record<string, string> = {
+  doc: 'File "{name}" là Word đời cũ (.doc) — định dạng này không trích được chữ. Hãy mở bằng Word rồi "Lưu thành" .docx (hoặc .pdf) và thử lại.',
+  xls: 'File "{name}" là Excel đời cũ (.xls) — hãy lưu lại thành .pdf rồi thử lại.',
+  ppt: 'File "{name}" là PowerPoint đời cũ (.ppt) — hãy lưu lại thành .pdf rồi thử lại.',
+};
+
+const ARCHIVE_OR_BINARY = [
+  "zip", "rar", "7z", "tar", "gz", "exe", "msi", "dll", "iso",
+  "mp3", "mp4", "avi", "mov", "mkv", "wav",
+];
+
+/** Đuôi gợi ý cho thuộc tính `accept` — chỉ là lọc UX, kéo thả vẫn kiểm lại. */
+export const SUBMISSION_ACCEPT = [
+  ".py", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx", ".html", ".htm", ".css",
+  ".scss", ".json", ".xml", ".yml", ".yaml", ".java", ".c", ".h", ".cpp", ".hpp",
+  ".cs", ".php", ".rb", ".go", ".rs", ".kt", ".swift", ".dart", ".lua", ".r",
+  ".sql", ".sh", ".bat", ".ipynb", ".vue", ".svelte", ".md", ".txt", ".csv",
+  ".docx", ".pdf", ".png", ".jpg", ".jpeg", ".gif", ".webp",
+].join(",");
+
+/**
+ * Lý do KHÔNG nhận file bài làm này, null nếu nhận được. Cần cho kéo thả vì
+ * `accept` của input chỉ lọc hộp thoại chọn file, không lọc thứ được thả vào.
+ */
+export function unsupportedSubmissionReason(name: string): string | null {
+  const parts = name.split(".");
+  if (parts.length < 2 || !parts[parts.length - 1]) {
+    return `"${name}" không rõ định dạng — hãy thả từng file có đuôi cụ thể (VD .py, .html), không thả cả thư mục.`;
+  }
+
+  const ext = parts[parts.length - 1].toLowerCase();
+  const blocked = BLOCKED_EXTENSIONS[ext];
+  if (blocked) {
+    return blocked.replace("{name}", name);
+  }
+  if (ARCHIVE_OR_BINARY.includes(ext)) {
+    return `File "${name}" (.${ext}) không phải bài làm đọc được — hãy giải nén và thả từng file code vào.`;
+  }
+  return null;
+}
 
 /**
  * Nhận diện dấu vết DLP trong vài trăm byte đầu. Tách riêng khỏi

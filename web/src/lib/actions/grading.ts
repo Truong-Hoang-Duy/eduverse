@@ -41,6 +41,12 @@ export async function createAssignment(
   if (file.size > SPEC_MAX_BYTES) {
     return { error: "File đề nặng quá 8MB — hãy dùng file .txt/.md hoặc nén ảnh lại." };
   }
+  // Word đời cũ trích chữ không ra — báo ngay lúc tạo đề, đừng để AI chấm mới lỗi.
+  if (/\.(doc|xls|ppt)$/i.test(file.name)) {
+    return {
+      error: `File "${file.name}" là định dạng Office đời cũ, hệ thống không đọc được chữ. Hãy mở bằng Word rồi "Lưu thành" .docx (hoặc .pdf) và thử lại.`,
+    };
+  }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (looksEncrypted(bytes)) {
@@ -129,7 +135,7 @@ const TEXT_EXTENSIONS = [
 
 export type AssignmentSpec =
   | { kind: "text"; fileName: string; content: string }
-  | { kind: "image" | "pdf"; fileName: string; url: string };
+  | { kind: "image" | "pdf" | "download"; fileName: string; url: string };
 
 /**
  * Đọc file đề đã lưu để GV xem lại trên giao diện. Bucket là private nên ảnh/PDF
@@ -189,13 +195,13 @@ export async function getAssignmentSpec(
     return { error: `Không mở được file đề: ${signErr?.message ?? "không rõ lỗi"}` };
   }
 
-  return {
-    spec: {
-      kind: ext === "pdf" ? "pdf" : "image",
-      fileName,
-      url: signed.signedUrl,
-    },
-  };
+  // .docx không xem thẳng trong trình duyệt được (giải nén ZIP + đọc XML là việc
+  // của ai-service, phía Node không có sẵn thư viện zip) → cho tải về xem bằng
+  // Word. AI vẫn chấm bình thường vì ai-service tự trích chữ từ file này.
+  const kind: AssignmentSpec["kind"] =
+    ext === "pdf" ? "pdf" : ext === "docx" ? "download" : "image";
+
+  return { spec: { kind, fileName, url: signed.signedUrl } };
 }
 
 // ---------- Chấm bài — KHÔNG lưu gì, chỉ trả kết quả để copy ----------

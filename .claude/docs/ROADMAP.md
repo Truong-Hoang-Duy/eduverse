@@ -385,6 +385,28 @@
 - [x] 0 migration; lint + typecheck + build (web) sạch; ai-service KHÔNG đổi
 - [x] Merge lên production (2026-07-27)
 
+### Đợt 27 (`feature/grading-word-dropzone-filter`) — 4 cải thiện nhận xét + chấm bài
+- [x] `MultiSelect`: nút "✕ Bỏ chọn tất cả (n)" dưới dãy badge — xóa sạch điểm
+      mạnh/cần cải thiện đã tick trong 1 nhịp (áp cho cả `combo-manager`)
+- [x] **Chấm bài nhận file Word .docx**: `ai-service/app/storage.py` tự trích chữ
+      bằng `zipfile` + `ElementTree` của stdlib (KHÔNG thêm dependency
+      python-docx/mammoth) — Gemini không đọc được .docx nhị phân. Nhánh docx đặt
+      TRƯỚC nhánh text vì `mimetypes` đoán .docx ra mime riêng
+- [x] Office đời cũ (.doc/.xls/.ppt) bị từ chối kèm hướng dẫn lưu .docx — chặn ở
+      client (`file-check.ts`), server action `createAssignment`, và ai-service
+- [x] Đề bài cũng nhận .docx; `getAssignmentSpec` trả `kind: "download"` để
+      ViewSpecDialog cho tải về (Node không có thư viện đọc ZIP), AI vẫn chấm được
+- [x] **Kéo thả 1 hoặc nhiều file** vào vùng dashed trong `GradingTool`: cộng dồn
+      qua nhiều lượt thả, chống trùng theo `name:size:lastModified`, danh sách file
+      xóa lẻ/xóa hết; `unsupportedSubmissionReason` chặn file nén/exe/media/thư mục
+      (kéo thả KHÔNG chịu thuộc tính `accept`). Đuôi code mở thoải mái
+- [x] **Lọc đề bài đã lưu theo khóa**: tách `saved-assignments.tsx` (client) khỏi
+      `page.tsx`, Select 1-lựa-chọn client-side kèm số đề mỗi khóa
+- [x] 0 migration; lint + typecheck + build (web) sạch; pytest 11/11 (thêm
+      `tests/test_storage.py`); **E2E phase3 12/12** với Gemini thật — có ca chấm
+      .docx thật (100đ) + ca .doc bị chặn 400
+- [x] ai-service ĐỔI → Render phải deploy lại
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
