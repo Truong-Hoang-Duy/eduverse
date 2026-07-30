@@ -4,7 +4,7 @@ import {
   type GalleryProject,
   type RosterMember,
 } from "@/components/gallery/project-grid";
-import { getMyDriveLink } from "@/lib/actions/drive-link";
+import { driveLinksOfStudents } from "@/lib/actions/drive-link";
 import { requireRole } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -77,9 +77,12 @@ export default async function StudentClassGalleryPage({
   const rows = (projectsData ?? []) as unknown as ProjectRow[];
   const comments = (commentsData ?? []) as unknown as CommentRow[];
 
-  // Chỉ link của CHÍNH EM: RLS không cho học viên đọc link của bạn cùng lớp
-  // (e2e-drive-link canh đúng việc này) nên thẻ của bạn khác không có nút Drive.
-  const myDriveUrl = await getMyDriveLink();
+  // Link Drive của MỌI bạn trong lớp — để em mở thư mục của bạn mà kiểm tra và
+  // đánh giá sản phẩm cuối khóa (user chốt 2026-07-30, xem migration
+  // 20260730010000). RLS vẫn chặn học viên lớp khác.
+  const driveLinks = await driveLinksOfStudents(
+    enrollments.map((e) => e.student_id)
+  );
 
   const projects: GalleryProject[] = rows.map((p) => ({
     id: p.id,
@@ -87,7 +90,7 @@ export default async function StudentClassGalleryPage({
     description: p.description,
     features: p.features,
     repo_url: p.repo_url,
-    drive_url: p.student_id === profile.id ? myDriveUrl : null,
+    drive_url: driveLinks[p.student_id] ?? null,
     demo_url: p.demo_url,
     extra_notes: p.extra_notes,
     updatedAt: p.updated_at,

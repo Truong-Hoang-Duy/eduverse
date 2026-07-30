@@ -53,7 +53,8 @@ export function DriveLinkForm({ initialUrl }: { initialUrl: string | null }) {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Giáo viên xem được đường dẫn này. Dùng chung cho tất cả lớp của bạn.
+          Giáo viên và các bạn cùng lớp xem được đường dẫn này. Dùng chung cho
+          tất cả lớp của bạn.
         </p>
       </div>
     );
@@ -89,8 +90,9 @@ export function DriveLinkForm({ initialUrl }: { initialUrl: string | null }) {
         )}
       </div>
       <p className="text-xs text-muted-foreground">
-        Tạo một thư mục trên Google Drive, đặt quyền cho giáo viên xem được, rồi
-        dán đường dẫn vào đây. Bài tập các buổi em upload hết vào thư mục đó.
+        Tạo một thư mục trên Google Drive, đặt quyền cho người có link xem được,
+        rồi dán vào đây. Bài tập các buổi em upload hết vào thư mục đó — giáo
+        viên và các bạn cùng lớp sẽ mở được để xem và góp ý.
         <strong className="font-medium"> Một đường dẫn dùng cho mọi lớp.</strong>
       </p>
       {warnNotDrive && (

@@ -70,7 +70,16 @@ async function main() {
   if (clsErr) throw new Error(`classes: ${clsErr.message}`);
   void cls;
 
-  // Cả 2 học viên vào CÙNG lớp — trigger tự ghi danh theo class_code.
+  // Lớp thứ hai cùng khóa, để có học viên NGOÀI lớp làm đối chứng.
+  const { error: cls2Err } = await gv.client.from("classes").insert({
+    course_id: newCourse.id,
+    class_code: `${CODE}02`,
+    total_sessions: 4,
+    teacher_id: gv.id,
+  });
+  if (cls2Err) throw new Error(`classes 2: ${cls2Err.message}`);
+
+  // 2 em vào CÙNG lớp 01, 1 em vào lớp 02 — trigger tự ghi danh theo class_code.
   const hv = await makeUser(`dl.hv.${ts}`, {
     full_name: "HV Drive",
     role: "student",
@@ -80,6 +89,11 @@ async function main() {
     full_name: "Ban Cung Lop",
     role: "student",
     class_code: `${CODE}01`,
+  });
+  const ngoai = await makeUser(`dl.ngoai.${ts}`, {
+    full_name: "HV Lop Khac",
+    role: "student",
+    class_code: `${CODE}02`,
   });
 
   const LINK = "https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz";
@@ -109,15 +123,28 @@ async function main() {
     `thấy ${seenByTeacher?.length ?? 0} dòng`
   );
 
-  // 4. BẠN CÙNG LỚP KHÔNG được thấy — lý do đặt bảng riêng thay vì cột trong profiles
+  // 4. BẠN CÙNG LỚP xem được — để kiểm tra/đánh giá sản phẩm của nhau
+  // (user chốt 2026-07-30, migration 20260730010000).
   const { data: seenByPeer } = await ban.client
+    .from("student_drive_links")
+    .select("student_id, drive_url")
+    .eq("student_id", hv.id);
+  check(
+    "Bạn CÙNG LỚP xem được link của bạn mình",
+    seenByPeer?.length === 1 && seenByPeer[0].drive_url === LINK,
+    `thấy ${seenByPeer?.length ?? 0} dòng`
+  );
+
+  // 4b. Nhưng học viên LỚP KHÁC thì KHÔNG — chốt chặn phạm vi nới quyền, nếu
+  // policy viết sai thành "mọi học viên" thì test này đỏ.
+  const { data: seenByOutsider } = await ngoai.client
     .from("student_drive_links")
     .select("student_id")
     .eq("student_id", hv.id);
   check(
-    "Bạn cùng lớp KHÔNG thấy link của bạn khác",
-    (seenByPeer?.length ?? 0) === 0,
-    `thấy ${seenByPeer?.length ?? 0} dòng`
+    "Học viên LỚP KHÁC KHÔNG thấy link",
+    (seenByOutsider?.length ?? 0) === 0,
+    `thấy ${seenByOutsider?.length ?? 0} dòng`
   );
 
   // 5. GV lớp khác không thấy
