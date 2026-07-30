@@ -27,7 +27,9 @@ export default async function StudentClassProjectsPage({
   const [{ data: cls }, { data: project }, driveUrl] = await Promise.all([
     supabase
       .from("classes")
-      .select("class_code, courses(code)")
+      // Chỉ cần mã khóa để AI gợi ý tính năng đúng trình độ; tên lớp đã có ở
+      // tiêu đề của layout nên form không hiện lại nữa.
+      .select("courses(code)")
       .eq("id", classId)
       .maybeSingle(),
     supabase
@@ -68,7 +70,6 @@ export default async function StudentClassProjectsPage({
         <CardContent>
           <ProjectEditor
             classId={classId}
-            classCode={cls?.class_code ?? ""}
             courseCode={courseCode}
             project={(project as ProjectData | null) ?? null}
           />
