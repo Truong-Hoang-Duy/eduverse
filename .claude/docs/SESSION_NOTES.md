@@ -11,8 +11,8 @@
 **Đang làm:** KHÔNG có task dở. Toàn bộ đã deploy production, `main`=`develop`
 (lệch 1 commit docs — bình thường).
 
-**`main` = `origin/main` = `da2e254`** — bản đang chạy production (Đợt 26).
-**`develop` = `origin/develop` = `3d9f40f`** = main + 1 commit docs ghi hash
+**`main` = `origin/main` = `03ab717`** — bản đang chạy production (Đợt 27-29).
+**`develop` = `origin/develop` = `266a7cd`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
 
@@ -273,7 +273,7 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-07-30 — Đợt 27 (`grading-word-dropzone-filter`, 0 mig)
+### 2026-07-30 — Đợt 27 (`grading-word-dropzone-filter`, 0 mig, đã deploy)
 4 yêu cầu user: bỏ chọn tất cả điểm mạnh/cải thiện (`MultiSelect`); chấm bài nhận
 Word .docx; lọc đề đã lưu theo khóa (`saved-assignments.tsx`); kéo thả nhiều file.
 **ai-service ĐỔI → Render phải deploy lại.** pytest 11/11, E2E phase3 12/12.
