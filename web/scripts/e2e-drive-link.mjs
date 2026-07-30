@@ -30,7 +30,10 @@ async function makeUser(username, metadata) {
     email_confirm: true,
     user_metadata: { ...metadata, username },
   });
-  if (error) throw new Error(`createUser: ${error.message}`);
+  if (error) {
+    console.error("createUser raw:", error.status, error.code, error.message, JSON.stringify(error));
+    throw new Error(`createUser ${username}: ${error.message}`);
+  }
   userIds.push(data.user.id);
   const client = createClient(URL, ANON);
   await client.auth.signInWithPassword({
@@ -43,10 +46,9 @@ async function makeUser(username, metadata) {
 async function main() {
   const gv = await makeUser(`dl.gv.${ts}`, { full_name: "GV Drive", role: "teacher" });
   const gvKhac = await makeUser(`dl.gv2.${ts}`, { full_name: "GV Khac", role: "teacher" });
-  const hv = await makeUser(`dl.hv.${ts}`, { full_name: "HV Drive", role: "student" });
-  const ban = await makeUser(`dl.ban.${ts}`, { full_name: "Ban Cung Lop", role: "student" });
 
-  // Khóa + lớp của GV, ghi danh cả 2 học viên vào CÙNG lớp.
+  // Lớp phải có TRƯỚC học viên: trigger `handle_new_user` tự ghi danh theo
+  // `class_code` trong user_metadata, nên tạo học viên trước là lỗi 500.
   const { data: newCourse, error: courseErr } = await gv.client
     .from("courses")
     .insert({ code: CODE, name: "Khoa test drive", teacher_id: gv.id })
@@ -66,11 +68,19 @@ async function main() {
     .select("id")
     .single();
   if (clsErr) throw new Error(`classes: ${clsErr.message}`);
+  void cls;
 
-  await gv.client.from("enrollments").insert([
-    { class_id: cls.id, student_id: hv.id },
-    { class_id: cls.id, student_id: ban.id },
-  ]);
+  // Cả 2 học viên vào CÙNG lớp — trigger tự ghi danh theo class_code.
+  const hv = await makeUser(`dl.hv.${ts}`, {
+    full_name: "HV Drive",
+    role: "student",
+    class_code: `${CODE}01`,
+  });
+  const ban = await makeUser(`dl.ban.${ts}`, {
+    full_name: "Ban Cung Lop",
+    role: "student",
+    class_code: `${CODE}01`,
+  });
 
   const LINK = "https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz";
 

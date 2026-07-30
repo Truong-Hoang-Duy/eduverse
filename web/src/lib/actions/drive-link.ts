@@ -101,3 +101,24 @@ export async function driveLinksOfClass(
     (data ?? []).map((row) => [row.student_id, row.drive_url])
   );
 }
+
+/**
+ * Link của một danh sách học viên (map `student_id → drive_url`). RLS tự lọc:
+ * giáo viên thấy học viên lớp mình, học viên chỉ thấy chính mình — nên nơi gọi
+ * KHÔNG cần tự kiểm quyền, thiếu quyền là đơn giản không có dòng nào trả về.
+ */
+export async function driveLinksOfStudents(
+  studentIds: string[]
+): Promise<Record<string, string>> {
+  if (studentIds.length === 0) return {};
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("student_drive_links")
+    .select("student_id, drive_url")
+    .in("student_id", studentIds);
+
+  return Object.fromEntries(
+    (data ?? []).map((row) => [row.student_id, row.drive_url])
+  );
+}

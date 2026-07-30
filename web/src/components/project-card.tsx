@@ -72,7 +72,11 @@ export function ProjectCard({
       {(project.repo_url || project.drive_url || project.demo_url) && (
         <div className="flex flex-wrap gap-2">
           <LinkChip href={project.repo_url} label="GitHub" />
-          <LinkChip href={project.drive_url} label="Google Drive" />
+          {/* Nguồn KHÔNG phải cột `projects.drive_url` (đã bỏ) mà là link Drive
+              học viên tự cài ở "Thư mục nộp bài tập" — nơi lưu đầy đủ bài các
+              buổi. RLS chỉ trả link cho chính chủ và GV của lớp, nên bạn cùng
+              lớp sẽ không thấy nút này. */}
+          <LinkChip href={project.drive_url} label="📁 Thư mục Drive" />
           <LinkChip href={project.demo_url} label="Demo" />
         </div>
       )}

@@ -61,7 +61,7 @@ export default async function ClassDetailPage({
     supabase
       .from("projects")
       .select(
-        "id, name, description, features, repo_url, drive_url, demo_url, extra_notes, profiles!projects_student_id_fkey(full_name)"
+        "id, student_id, name, description, features, repo_url, demo_url, extra_notes, profiles!projects_student_id_fkey(full_name)"
       )
       .eq("class_id", id)
       .order("updated_at", { ascending: false }),
@@ -118,11 +118,11 @@ export default async function ClassDetailPage({
   const projects = (
     (projectsData ?? []) as unknown as {
       id: string;
+      student_id: string;
       name: string;
       description: string | null;
       features: string[];
       repo_url: string | null;
-      drive_url: string | null;
       demo_url: string | null;
       extra_notes: string | null;
       profiles: { full_name: string } | null;
@@ -134,7 +134,7 @@ export default async function ClassDetailPage({
       description: p.description,
       features: p.features,
       repo_url: p.repo_url,
-      drive_url: p.drive_url,
+      drive_url: driveLinks[p.student_id] ?? null,
       demo_url: p.demo_url,
       extra_notes: p.extra_notes,
       authorName: p.profiles?.full_name ?? "Học viên",

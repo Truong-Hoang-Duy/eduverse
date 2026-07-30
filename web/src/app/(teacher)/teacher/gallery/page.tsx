@@ -2,6 +2,7 @@ import type { CommentItem } from "@/components/gallery/comment-section";
 import type { GalleryProject, RosterMember } from "@/components/gallery/project-grid";
 import { PageHeader } from "@/components/page-header";
 import { requireRole } from "@/lib/get-profile";
+import { driveLinksOfStudents } from "@/lib/actions/drive-link";
 import { createClient } from "@/lib/supabase/server";
 
 import { GalleryView } from "./gallery-view";
@@ -16,7 +17,6 @@ interface ProjectRow {
   description: string | null;
   features: string[];
   repo_url: string | null;
-  drive_url: string | null;
   demo_url: string | null;
   extra_notes: string | null;
   updated_at: string;
@@ -63,7 +63,7 @@ export default async function TeacherGalleryPage() {
       supabase
         .from("projects")
         .select(
-          "id, class_id, student_id, name, description, features, repo_url, drive_url, demo_url, extra_notes, updated_at, profiles!projects_student_id_fkey(full_name)"
+          "id, class_id, student_id, name, description, features, repo_url, demo_url, extra_notes, updated_at, profiles!projects_student_id_fkey(full_name)"
         )
         .order("updated_at", { ascending: false }),
       supabase
@@ -84,6 +84,12 @@ export default async function TeacherGalleryPage() {
   const enrollments = (enrollmentsData ?? []) as unknown as EnrollmentRow[];
   const classCodeById = new Map(classes.map((c) => [c.id, c.class_code]));
 
+  // Link "Thư mục Drive" trên thẻ sản phẩm lấy từ `student_drive_links` (link HV
+  // tự cài, dùng chung mọi lớp), KHÔNG phải cột projects.drive_url đã bỏ.
+  const driveLinks = await driveLinksOfStudents(
+    enrollments.map((e) => e.student_id)
+  );
+
   const projects: GalleryProject[] = (
     (projectsData ?? []) as unknown as ProjectRow[]
   )
@@ -94,7 +100,7 @@ export default async function TeacherGalleryPage() {
       description: p.description,
       features: p.features,
       repo_url: p.repo_url,
-      drive_url: p.drive_url,
+      drive_url: driveLinks[p.student_id] ?? null,
       demo_url: p.demo_url,
       extra_notes: p.extra_notes,
       updatedAt: p.updated_at,
