@@ -65,10 +65,21 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
   → ai-service `/generate-review` → GV sửa → lưu `student_reviews`.
 - **Hồ sơ HV xuyên khóa:** bấm tên HV trong lớp → timeline nhận xét gốc từng buổi
   (`student_reviews` + `sessions`) + AI tổng hợp toàn khóa. Chỉ GV của lớp (RLS).
-- **Chấm bài AI (công cụ độc lập, KHÔNG theo lớp):** đề thuộc course + session_number,
-  file đề lưu Storage — **thứ duy nhất được lưu**. GV chọn đề → upload file bài làm 1
-  học sinh → gửi **inline base64** → `/grade-submission` → trả `{score, bullets}` để
-  copy. **Không ghi DB, không lưu file bài làm.**
+- **Chấm bài AI (công cụ độc lập, KHÔNG theo lớp) — 2 tab chung nav "Chấm bài":**
+  - *Bài tập hàng ngày* (`/teacher/assignments`): đề thuộc course + session_number,
+    file đề lưu Storage — **thứ duy nhất toàn hệ thống được lưu**. GV chọn đề →
+    nạp file bài làm 1 học sinh → **inline base64** → `/grade-submission` → trả
+    `{score, bullets}` để copy.
+  - *Sản phẩm cuối khóa* (`/teacher/assignments/project`): **KHÔNG đề bài, KHÔNG
+    điểm** → `/review-project` trả `{diem_manh, can_cai_thien, goi_y}`. File gửi
+    dạng CHỮ (không base64) vì đã lọc bỏ nhị phân.
+  - **Đầu vào cả 2 tab:** file lẻ / kéo thả / **cả thư mục** (`webkitGetAsEntry` +
+    `webkitdirectory`) / **.zip giải nén ở SERVER** (`lib/zip.ts` bằng `node:zlib`,
+    không thêm dependency). Luật lọc rác + ngân sách: `lib/submission-files.ts`
+    (nguồn DUY NHẤT); phần giải nén dùng chung `lib/zip-submission.ts`.
+  - **Không ghi DB, KHÔNG lưu file bài làm** — đã kiểm chứng: cả web chỉ có 1 lệnh
+    `.upload()` (file đề), ai-service không có lệnh ghi nào; `e2e-phase3` canh số
+    object trong bucket không đổi khi chấm.
 
 ## Điểm dễ nhầm (gotchas)
 
