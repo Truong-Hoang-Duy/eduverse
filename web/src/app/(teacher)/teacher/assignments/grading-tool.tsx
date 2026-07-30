@@ -252,16 +252,16 @@ export function GradingTool({
             if (dragDepth.current <= 0) setDragging(false);
           }}
           onDrop={handleDrop}
-          className={`flex cursor-pointer items-center justify-center gap-3 rounded-lg border-2 border-dashed px-4 py-4 text-center transition-colors hover:border-primary/60 hover:bg-accent/40 ${
+          className={`flex cursor-pointer items-center justify-center gap-4 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors hover:border-primary/60 hover:bg-accent/40 ${
             dragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25"
           }`}
         >
-          <span className="text-2xl leading-none" aria-hidden="true">
+          <span className="text-3xl leading-none" aria-hidden="true">
             {dragging ? "📥" : "📄"}
           </span>
-          <span className="text-sm font-medium">
+          <span className="text-base font-medium">
             Bấm hoặc kéo thả file vào đây
           </span>
         </label>
