@@ -114,6 +114,7 @@ export function GradingTool({
   const [skipped, setSkipped] = useState<SkipTally>(emptyTally());
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [copied, setCopied] = useState(false);
   const [pending, startGrade] = useTransition();
   const [reading, startReading] = useTransition();
@@ -136,10 +137,17 @@ export function GradingTool({
   }
 
   /** Thêm dồn (không ghi đè) để kéo thả nhiều lượt/nhiều thư mục khác nhau được. */
-  function addAttachments(incoming: Attachment[], tally: SkipTally) {
+  function addAttachments(
+    incoming: Attachment[],
+    tally: SkipTally,
+    source: string
+  ) {
+    let added = 0;
     setFiles((prev) => {
       const seen = new Set(prev.map((a) => a.key));
-      return [...prev, ...incoming.filter((a) => !seen.has(a.key))];
+      const fresh = incoming.filter((a) => !seen.has(a.key));
+      added = fresh.length;
+      return [...prev, ...fresh];
     });
     setSkipped((prev) => {
       const next = { ...prev };
@@ -148,6 +156,16 @@ export function GradingTool({
       }
       return next;
     });
+
+    // Thông báo của MÌNH sau khi trình duyệt xong việc: nói rõ đã nhận bao nhiêu,
+    // bỏ gì, và nhắc lại là file không rời khỏi máy — hộp thoại của trình duyệt
+    // dùng chữ "Upload" nên GV dễ tưởng file đã bị tải lên và lưu ở đâu đó.
+    // Phần "đã bỏ qua gì" nằm ở khối danh sách bên dưới (số cộng dồn) — ở đây
+    // chỉ nói việc vừa xảy ra, tránh lặp cùng một thông tin hai chỗ.
+    const bytes = incoming.reduce((sum, a) => sum + a.size, 0);
+    setNotice(
+      `Đã nạp ${added} file (${formatBytes(bytes)}) từ ${source} — file không rời khỏi máy bạn, hệ thống không lưu lại.`
+    );
   }
 
   /** Một file .zip → server giải nén (giữ cả ảnh/PDF, khác đường sản phẩm). */
@@ -170,7 +188,8 @@ export function GradingTool({
             contentB64: f.contentB64,
             mimeType: f.mimeType,
           })),
-          res.skipped ?? emptyTally()
+          res.skipped ?? emptyTally(),
+          `file nén "${zip.name}"`
         );
       } catch {
         setError("Không đọc được file .zip này.");
@@ -181,11 +200,16 @@ export function GradingTool({
   function loadPicked(picked: PickedFile[]) {
     setGrade(null);
     setError("");
+    setNotice("");
 
     if (picked.length === 0) {
       setError("Không tìm thấy file bài làm nào trong thứ vừa chọn.");
       return;
     }
+
+    // Tên nguồn để thông báo cho GV: thư mục thì lấy tên thư mục gốc.
+    const root = picked.find((p) => p.path.includes("/"))?.path.split("/")[0];
+    const source = root ? `thư mục "${root}"` : "file đã chọn";
 
     // Đúng một file .zip thì giải nén; còn lại nhận trực tiếp.
     if (picked.length === 1 && picked[0].path.toLowerCase().endsWith(".zip")) {
@@ -226,7 +250,11 @@ export function GradingTool({
     }
 
     // Bỏ đoạn thư mục gốc chung để đường dẫn gọn và AI đọc dễ.
-    addAttachments(stripCommonRoot(kept.map(attachmentFromPicked)), tally);
+    addAttachments(
+      stripCommonRoot(kept.map(attachmentFromPicked)),
+      tally,
+      source
+    );
   }
 
   async function handleDrop(e: React.DragEvent<HTMLElement>) {
@@ -416,6 +444,10 @@ export function GradingTool({
             variant="outline"
             size="sm"
             disabled={reading}
+            // Hộp thoại "Upload N files to this site?" là UI bảo mật của trình
+            // duyệt khi đọc thư mục — KHÔNG sửa/bỏ được, chỉ báo trước bằng
+            // tooltip cho GV đỡ giật mình.
+            title="Trình duyệt sẽ hỏi xác nhận trước khi đọc thư mục — bấm Upload. File vẫn không được lưu lại ở đâu."
             // Chặn nổi bọt, nếu không ô ngoài cũng mở hộp thoại chọn FILE.
             onClick={(e) => {
               e.stopPropagation();
@@ -457,6 +489,12 @@ export function GradingTool({
         </p>
       </div>
 
+      {notice && (
+        <p className="rounded-lg border border-green-600/30 bg-green-600/5 p-3 text-sm text-green-700 dark:text-green-400">
+          ✓ {notice}
+        </p>
+      )}
+
       {warning && (
         <p className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400">
           ⚠️ {warning}
@@ -476,6 +514,7 @@ export function GradingTool({
                 setFiles([]);
                 setSkipped(emptyTally());
                 setGrade(null);
+                setNotice("");
               }}
               className="cursor-pointer text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
             >

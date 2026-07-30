@@ -94,15 +94,16 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
     setCopied(false);
   }
 
-  function applyResult(next: SubmissionFile[], tally: SkipTally) {
+  function applyResult(next: SubmissionFile[], tally: SkipTally, source: string) {
     setFiles(next);
     setExcluded(new Set());
     setSkipped(tally);
 
-    const ignored = describeSkipped(tally);
+    // Phần "đã bỏ qua gì" nằm ở khối danh sách bên dưới — ở đây chỉ nói việc vừa
+    // xảy ra + trấn an, vì hộp thoại của trình duyệt dùng chữ "Upload" nên GV dễ
+    // tưởng file đã bị tải lên và lưu ở đâu đó.
     setNotice(
-      `Đã đọc ${next.length} file (${formatBytes(totalBytes(next))})` +
-        (ignored ? ` · bỏ qua ${ignored}` : "")
+      `Đã đọc ${next.length} file (${formatBytes(totalBytes(next))}) từ ${source} — file không rời khỏi máy bạn, hệ thống không lưu lại.`
     );
   }
 
@@ -115,7 +116,11 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
           setError(res.error);
           return;
         }
-        applyResult(res.files ?? [], res.skipped ?? emptyTally());
+        applyResult(
+          res.files ?? [],
+          res.skipped ?? emptyTally(),
+          `file nén "${zip.name}"`
+        );
       } catch {
         setError("Không đọc được file .zip này.");
       }
@@ -136,13 +141,17 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
       return;
     }
 
+    // Tên nguồn để thông báo cho GV: thư mục thì lấy tên thư mục gốc.
+    const root = picked.find((p) => p.path.includes("/"))?.path.split("/")[0];
+    const source = root ? `thư mục "${root}"` : "file đã chọn";
+
     startReading(async () => {
       const { files: next, skipped: tally } = await readAsSubmissionFiles(picked);
       if (next.length === 0) {
         setError("Không đọc được file nào trong số đã chọn.");
         return;
       }
-      applyResult(next, tally);
+      applyResult(next, tally, source);
     });
   }
 
@@ -272,6 +281,10 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
               variant="outline"
               size="sm"
               disabled={reading}
+              // Hộp thoại "Upload N files to this site?" là UI bảo mật của trình
+              // duyệt khi đọc thư mục — KHÔNG sửa/bỏ được, chỉ báo trước bằng
+              // tooltip cho GV đỡ giật mình.
+              title="Trình duyệt sẽ hỏi xác nhận trước khi đọc thư mục — bấm Upload. File vẫn không được lưu lại ở đâu."
               onClick={() => folderInputRef.current?.click()}
             >
               📁 Chọn thư mục
@@ -315,7 +328,11 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
         </p>
       </div>
 
-      {notice && <p className="text-xs text-muted-foreground">{notice}</p>}
+      {notice && (
+        <p className="rounded-lg border border-green-600/30 bg-green-600/5 p-3 text-sm text-green-700 dark:text-green-400">
+          ✓ {notice}
+        </p>
+      )}
       {warning && (
         <p className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm text-amber-700 dark:text-amber-400">
           ⚠️ {warning}
