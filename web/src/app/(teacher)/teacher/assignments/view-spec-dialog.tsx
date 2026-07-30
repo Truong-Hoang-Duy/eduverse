@@ -105,8 +105,8 @@ export function ViewSpecDialog({
           {spec?.kind === "download" && (
             <div className="space-y-3 rounded-lg border border-dashed p-6 text-center">
               <p className="text-sm text-muted-foreground">
-                File Word không xem trực tiếp trên web được — tải về mở bằng Word.
-                AI vẫn đọc được đề này khi chấm bài.
+                Không đọc được chữ trong file này (có thể đề chỉ là ảnh chụp dán
+                vào Word) — tải về mở bằng Word để xem.
               </p>
               <a
                 href={spec.url}

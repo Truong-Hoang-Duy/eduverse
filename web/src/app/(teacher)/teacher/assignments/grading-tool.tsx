@@ -113,7 +113,7 @@ export function GradingTool({
     }
   }
 
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+  function handleDrop(e: React.DragEvent<HTMLElement>) {
     e.preventDefault();
     dragDepth.current = 0;
     setDragging(false);
@@ -231,7 +231,13 @@ export function GradingTool({
         {/* Không gắn htmlFor: nhãn nút bấm bên trong vùng thả mới là cái trỏ vào
             input, gắn cả hai chỗ là bấm tiêu đề cũng mở hộp thoại chọn file. */}
         <Label>File bài làm của học sinh *</Label>
-        <div
+
+        {/* Cả vùng thả là một <label> trỏ vào input → bấm ĐÂU trong ô cũng mở
+            được hộp thoại chọn file, không cần onClick thủ công (làm vậy sẽ bắn
+            2 lần khi bấm đúng nút giữa). Nội dung bên trong dùng <span> vì <p>
+            không hợp lệ trong <label>. */}
+        <label
+          htmlFor="submission-files"
           onDragEnter={(e) => {
             e.preventDefault();
             dragDepth.current += 1;
@@ -245,48 +251,45 @@ export function GradingTool({
             if (dragDepth.current <= 0) setDragging(false);
           }}
           onDrop={handleDrop}
-          className={`rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors ${
+          className={`block cursor-pointer rounded-lg border-2 border-dashed px-4 py-6 text-center transition-colors hover:border-primary/60 hover:bg-accent/40 ${
             dragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25"
           }`}
         >
-          <p className="text-3xl leading-none" aria-hidden="true">
+          <span className="block text-3xl leading-none" aria-hidden="true">
             {dragging ? "📥" : "📄"}
-          </p>
-          <p className="mt-2 text-sm font-medium">
-            Kéo thả file bài làm vào đây
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          </span>
+          <span className="mt-2 block text-sm font-medium">
+            Bấm vào đây hoặc kéo thả file bài làm vào
+          </span>
+          <span className="mt-0.5 block text-xs text-muted-foreground">
             Một hoặc nhiều file của cùng một em
-          </p>
-
-          {/* Chữ "Choose Files / No file chosen" của input gốc do trình duyệt sinh,
-              không đổi được sang tiếng Việt → ẩn input, cho <label> làm nút bấm. */}
-          <label
-            htmlFor="submission-files"
-            className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-md border bg-background px-3 py-2 text-sm font-medium shadow-xs transition-colors hover:bg-accent"
-          >
+          </span>
+          <span className="mt-3 inline-flex items-center gap-1.5 rounded-md border bg-background px-3 py-2 text-sm font-medium shadow-xs">
             📂 Chọn file từ máy
-          </label>
-          <input
-            id="submission-files"
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={SUBMISSION_ACCEPT}
-            onChange={(e) => {
-              addFiles(Array.from(e.target.files ?? []));
-              // Dọn input để chọn LẠI đúng file vừa xóa vẫn kích hoạt onChange.
-              if (fileInputRef.current) fileInputRef.current.value = "";
-            }}
-            className="sr-only"
-          />
-
-          <p className="mt-3 text-xs text-muted-foreground">
+          </span>
+          <span className="mt-3 block text-xs text-muted-foreground">
             File code (.html, .js, .py...), Word .docx, PDF, ảnh
-          </p>
-        </div>
+          </span>
+        </label>
+
+        {/* Chữ "Choose Files / No file chosen" của input gốc do trình duyệt sinh,
+            không đổi được sang tiếng Việt → ẩn input, để <label> trên điều khiển.
+            `sr-only` (không phải `hidden`) để vẫn tab tới được bằng bàn phím. */}
+        <input
+          id="submission-files"
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept={SUBMISSION_ACCEPT}
+          onChange={(e) => {
+            addFiles(Array.from(e.target.files ?? []));
+            // Dọn input để chọn LẠI đúng file vừa xóa vẫn kích hoạt onChange.
+            if (fileInputRef.current) fileInputRef.current.value = "";
+          }}
+          className="sr-only"
+        />
         <p className="text-xs text-muted-foreground">
           Thả nhiều lượt được — file mới cộng dồn vào danh sách. File không được
           lưu lại: chấm xong copy kết quả rồi làm em tiếp theo.

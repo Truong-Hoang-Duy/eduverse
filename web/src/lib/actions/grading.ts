@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import { docxToText } from "@/lib/docx-text";
 import { looksEncrypted } from "@/lib/file-check";
 import {
   removeSpecFiles,
@@ -188,6 +189,15 @@ export async function getAssignmentSpec(
     return { spec: { kind: "text", fileName, content: new TextDecoder().decode(bytes) } };
   }
 
+  // Word: trích chữ ra xem thẳng trong popup. Đọc không ra (file hỏng, đề chỉ là
+  // ảnh chụp dán vào Word) thì rơi xuống dưới cho tải về mở bằng Word.
+  if (ext === "docx") {
+    const text = docxToText(bytes);
+    if (text) {
+      return { spec: { kind: "text", fileName, content: text } };
+    }
+  }
+
   const { data: signed, error: signErr } = await supabase.storage
     .from("assignment-specs")
     .createSignedUrl(path, 600);
@@ -195,9 +205,8 @@ export async function getAssignmentSpec(
     return { error: `Không mở được file đề: ${signErr?.message ?? "không rõ lỗi"}` };
   }
 
-  // .docx không xem thẳng trong trình duyệt được (giải nén ZIP + đọc XML là việc
-  // của ai-service, phía Node không có sẵn thư viện zip) → cho tải về xem bằng
-  // Word. AI vẫn chấm bình thường vì ai-service tự trích chữ từ file này.
+  // Tới đây .docx nghĩa là trích chữ THẤT BẠI (xem nhánh trên) → cho tải về mở
+  // bằng Word, còn hơn hiện bytes rác.
   const kind: AssignmentSpec["kind"] =
     ext === "pdf" ? "pdf" : ext === "docx" ? "download" : "image";
 

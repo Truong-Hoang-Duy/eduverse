@@ -191,8 +191,12 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   thô cho Gemini và nó từ chối. Gemini KHÔNG đọc được .docx trực tiếp.
   Office nhị phân đời cũ (.doc/.xls/.ppt) **từ chối có hướng dẫn** ở 3 tầng
   (client `file-check.ts`, `createAssignment`, ai-service) — stdlib không mở nổi.
-  Đề bài .docx xem trên web = `kind: "download"` (Node không có thư viện ZIP),
-  AI vẫn chấm được vì đọc từ ai-service.
+  Đề bài .docx xem thẳng trong popup được: `web/src/lib/docx-text.ts` tự đọc ZIP
+  bằng `node:zlib` (`inflateRawSync` + tự parse bảng mục lục EOCD/central
+  directory) — **đừng thêm jszip/mammoth**. Đây là bản TS song song với bản
+  Python, sửa luật trích chữ một bên nhớ xem bên kia. Trích không ra → rơi về
+  `kind: "download"`. File này chỉ dùng SERVER (`node:zlib`), đừng import vào
+  client component.
 - **Kéo thả file KHÔNG chịu thuộc tính `accept`** — phải tự kiểm bằng
   `unsupportedSubmissionReason` (`file-check.ts`, nguồn DUY NHẤT cả cho
   `SUBMISSION_ACCEPT`). Chủ trương: đuôi code mở THOẢI MÁI (ai-service decode ra

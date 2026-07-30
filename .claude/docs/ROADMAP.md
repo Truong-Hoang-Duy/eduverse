@@ -394,9 +394,14 @@
       TRƯỚC nhánh text vì `mimetypes` đoán .docx ra mime riêng
 - [x] Office đời cũ (.doc/.xls/.ppt) bị từ chối kèm hướng dẫn lưu .docx — chặn ở
       client (`file-check.ts`), server action `createAssignment`, và ai-service
-- [x] Đề bài cũng nhận .docx; `getAssignmentSpec` trả `kind: "download"` để
-      ViewSpecDialog cho tải về (Node không có thư viện đọc ZIP), AI vẫn chấm được
-- [x] **Kéo thả 1 hoặc nhiều file** vào vùng dashed trong `GradingTool`: cộng dồn
+- [x] Đề bài cũng nhận .docx và **xem thẳng trong popup "Xem đề"**: `docx-text.ts`
+      tự đọc ZIP bằng `node:zlib` (`inflateRawSync` + đọc bảng mục lục) — Node
+      không có thư viện ZIP nhưng cũng KHÔNG cần thêm jszip/mammoth. Trích chữ
+      thất bại thì rơi về `kind: "download"` cho tải file về
+- [x] **Kéo thả 1 hoặc nhiều file** vào vùng dashed trong `GradingTool` (cả vùng
+      là `<label htmlFor>` nên bấm ĐÂU cũng mở hộp thoại chọn file, có
+      `cursor-pointer`; input gốc `sr-only` vì chữ "Choose Files" do trình duyệt
+      sinh, không dịch được): cộng dồn
       qua nhiều lượt thả, chống trùng theo `name:size:lastModified`, danh sách file
       xóa lẻ/xóa hết; `unsupportedSubmissionReason` chặn file nén/exe/media/thư mục
       (kéo thả KHÔNG chịu thuộc tính `accept`). Đuôi code mở thoải mái
