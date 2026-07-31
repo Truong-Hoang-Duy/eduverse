@@ -716,6 +716,22 @@
 - [x] User nghiệm thu bằng mắt CẢ 3 TAB (test tự động không phủ được phần render);
       deploy cùng Đợt 43, `main` = `237f6cd`
 
+### Đợt 45 (`fix/zip-picked-as-binary`) — 🔴 nộp file .zip luôn báo "không có file"
+- [x] User báo: chọn .zip thì hiện "Không tìm thấy file nào trong thứ vừa chọn"
+      dù bên trong có mã nguồn. User nghi do thư mục lồng nhau cùng tên
+- [x] **Đo lại: nghi ngờ đó SAI.** Thư mục lồng nhau vốn chạy đúng (6 test mới
+      chứng minh). Gốc thật: `.zip` nằm trong `BINARY_EXTENSIONS` nên **chính file
+      nén bị lọc ngay lúc chọn**, chưa từng được mở ra
+- [x] Chọn .zip qua hộp thoại **CHƯA BAO GIỜ chạy** ở cả 3 tab; kéo thả chỉ chạy
+      khi trình duyệt không trả được entry (nhánh dự phòng không lọc)
+- [x] Sửa ở `read-dropped-files.ts` (`isSoleZip`), KHÔNG đụng `skipReasonFor` —
+      xem DECISIONS.md để biết vì sao đặt ở tầng đó
+- [x] Đổi câu thông báo khi danh sách rỗng: câu cũ nói y hệt nhau cho hai tình
+      huống rất khác nhau và không gợi ý được gì
+- [x] 14 unit test mới (8 chọn .zip + 6 giải nén thư mục lồng nhau) → 123 test;
+      lint + typecheck + build sạch
+- [ ] User nghiệm thu với đúng file .zip của học viên + deploy
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
