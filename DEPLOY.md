@@ -29,7 +29,12 @@ Kiến trúc production:
    - `SUPABASE_URL` — giống `NEXT_PUBLIC_SUPABASE_URL` trong web/.env.local
    - `SUPABASE_SERVICE_KEY` — service role key của Supabase
 4. **Apply** → chờ build xong → lấy URL dạng `https://eduverse-ai.onrender.com`.
-5. Kiểm tra: mở `https://<url-render>/health` → phải thấy `{"status":"ok"}`.
+5. Kiểm tra: mở `https://<url-render>/health` → thấy
+   `{"status":"ok","commit":"<7 ký tự>"}`.
+
+**Sau MỖI lần deploy lại ai-service, đối chiếu `commit` với `git log --oneline -1 main`.**
+Khớp = Render đang chạy đúng bản mới; lệch = Render chưa build xong (hoặc auto-deploy
+tắt). Không cần vào dashboard. `commit` là `"local"` khi chạy ở máy dev.
 
 Lưu ý free tier: service ngủ sau 15 phút không dùng; request AI đầu tiên sau đó
 chờ 30–60s là bình thường.

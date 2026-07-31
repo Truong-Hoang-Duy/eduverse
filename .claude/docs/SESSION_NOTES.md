@@ -10,8 +10,13 @@
 
 **Đang làm:** KHÔNG có task dở. Đợt 27→39 đã merge + push production.
 
-🔴 **VIỆC DUY NHẤT CÒN LẠI: deploy lại RENDER cho Đợt 39** (`ai-service` đổi thông
-báo hết lượt). Render của Đợt 35 thì user đã deploy rồi (2026-07-30).
+🔴 **VIỆC DUY NHẤT CÒN LẠI: deploy lại RENDER** cho Đợt 39-40 (`ai-service` đổi
+thông báo hết lượt + `/health` trả commit). Render của Đợt 35 user đã deploy rồi.
+
+**Cách kiểm từ giờ (Đợt 40):** mở `https://eduverse-ai.onrender.com/health` →
+`commit` phải khớp `git log --oneline -1 main`. KHÔNG cần dashboard. ⚠️ Máy dev bị
+mạng chặn `onrender.com` (DNS đúng, HTTPS ra ngoài vẫn tốt, nhưng timeout) → phải
+mở trên máy user.
 
 **Mọi migration của phiên này ĐÃ áp** — đã đo lại trên DB thật, không tin ghi chú:
 `projects.drive_url` báo "does not exist" (drop xong), `student_drive_links` có dữ
@@ -90,7 +95,8 @@ Dấu hiệu nhận biết: `e2e-phase3` cùng key vẫn xanh, và log ai-servic
 `503 UNAVAILABLE`. **Chạy lại trước khi đi tìm bug** — đừng sửa code theo lần đỏ
 đầu tiên.
 
-Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu),
+Công cụ chẩn đoán: `/health` của ai-service (trả commit đang chạy),
+`scripts/check-integrity.mjs` (toàn vẹn dữ liệu),
 `scripts/check-user.mjs <username>` (tra 1 tài khoản),
 `scripts/purge-test-users.mjs [--yes]` (dọn tài khoản rác E2E, mặc định xem thử).
 

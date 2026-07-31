@@ -19,7 +19,29 @@ def fake_env(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_health_needs_no_key() -> None:
+    # Render dùng /health làm healthCheckPath, và người vận hành mở thẳng trên
+    # trình duyệt — đòi key ở đây là tự khóa cả hai đường.
     assert client.get("/health").status_code == 200
+
+
+def test_health_reports_the_running_commit(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Để trả lời "Render deploy chưa?" bằng MỘT request thay vì mở dashboard
+    # (phiên 2026-07-30 đã 3 lần không xác nhận được vì máy dev bị chặn onrender).
+    monkeypatch.setenv("RENDER_GIT_COMMIT", "0d878823456789abcdef")
+    get_settings.cache_clear()
+
+    body = client.get("/health").json()
+
+    assert body["status"] == "ok"
+    # 7 ký tự để so bằng mắt với `git log --oneline`.
+    assert body["commit"] == "0d87882"
+
+
+def test_health_says_local_when_not_on_render(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("RENDER_GIT_COMMIT", raising=False)
+    get_settings.cache_clear()
+
+    assert client.get("/health").json()["commit"] == "local"
 
 
 def test_protected_endpoint_rejects_missing_key() -> None:

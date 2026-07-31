@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     supabase_service_key: str = ""
     gemini_model: str = "gemini-flash-latest"
 
+    # Render tự đặt biến này cho mỗi bản build (tên biến do Render quy định, đừng
+    # đổi). Trả ra ở /health để biết CHÍNH XÁC production đang chạy commit nào —
+    # phiên 2026-07-30 đã 3 lần không xác nhận được "Render deploy chưa" vì phải
+    # vào dashboard mới biết, mà máy dev lại bị mạng công ty chặn onrender.com.
+    render_git_commit: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:

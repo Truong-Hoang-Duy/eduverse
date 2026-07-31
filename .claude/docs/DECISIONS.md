@@ -307,3 +307,11 @@
   gọi 6-10 lượt, nên **chạy 2 bộ là hết ngày**. Đừng coi việc chúng đỏ vì hết lượt là
   việc "đang treo": đọc log (`Gemini quota exhausted`) rồi để đó. Muốn chạy chủ động
   thì đặt `GEMINI_API_KEY` trong `ai-service/.env` là key còn lượt.
+- **Kiểm "Render deploy chưa" bằng `/health`, KHÔNG bằng dashboard** — endpoint trả
+  `{"status":"ok","commit":"<7 ký tự>"}` từ biến `RENDER_GIT_COMMIT` (Render tự đặt,
+  đừng đổi tên biến). Đối chiếu với `git log --oneline -1 main`. Lý do làm: phiên
+  2026-07-30 ba lần không xác nhận được vì mạng công ty chặn `onrender.com` từ máy
+  dev, mà dashboard thì Claude không vào được. `commit` = `"local"` khi chạy máy dev.
+  Cân nhắc đã chốt: `/health` để CÔNG KHAI (không đòi key) vì Render dùng làm
+  healthCheckPath và GV cần mở thẳng trên trình duyệt; SHA của repo private không
+  phải bí mật.
