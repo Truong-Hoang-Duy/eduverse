@@ -8,9 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** Đợt 37 (chặn HV tự ghi danh vào lớp khác) xong code — **chờ user
-dán migration `20260731040000`** rồi chạy `e2e-profile-privileges` (kỳ vọng 10/10;
-chưa dán thì 8/10). Đợt 36 đã dán migration, `e2e-profile-privileges`
+**Đang làm:** KHÔNG có task dở. Đợt 37 đã dán migration + deploy,
+`e2e-profile-privileges` 10/10 và 6 bộ khác chạy lại đều xanh (gồm ca đăng ký HV
+→ luồng signup qua trigger không hỏng). Đợt 36 đã dán migration, `e2e-profile-privileges`
 8/8, và 6 bộ E2E khác chạy lại đều xanh → policy `courses`/`classes` đổi KHÔNG
 gây hồi quy.
 🔴 **Đợt 35 đổi `ai-service` → nhớ deploy lại RENDER** (chưa ai xác nhận).
@@ -19,7 +19,7 @@ gây hồi quy.
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
 `student_drive_links` có dữ liệu thật.
 
-**`main` = `origin/main` = `6d06796`** — production (Đợt 27-36).
+**`main` = `origin/main` = `d9ac17c`** — production (Đợt 27-37).
 **`develop` = `origin/develop`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
