@@ -10,9 +10,12 @@
 
 **Đang làm:** KHÔNG có task dở. Đợt 41→44 đã merge và **push lên `main`**.
 
-**`main` = `origin/main` = `237f6cd`** — bản đang chạy production, **user đã chạy
-thật trên production và xác nhận OK** (cả Vercel lẫn Render; Đợt 43 sửa
-`ai-service/` nên Render cũng đã deploy lại).
+**`main` = `origin/main` = `1ef0a08`** — bản đang chạy production, user nghiệm
+thu từng đợt trước khi deploy.
+
+⚠️ **Render vẫn đang chạy `237f6cd`** và như vậy là ĐÚNG: Đợt 45 chỉ sửa `web/`
+nên chỉ Vercel build lại. `/health` trả `237f6cd` không phải dấu hiệu hỏng.
+Lần deploy ai-service gần nhất là Đợt 43 (endpoint `/help-student`).
 
 - **Đợt 41** (`feature/e2e-action-harness`): chỉ test + tài liệu, **78/78 E2E xanh**.
 - **Đợt 42** (`fix/mobile-nav-and-grading-reset`): sửa `src/` thật (nav mobile,

@@ -730,7 +730,8 @@
       huống rất khác nhau và không gợi ý được gì
 - [x] 14 unit test mới (8 chọn .zip + 6 giải nén thư mục lồng nhau) → 123 test;
       lint + typecheck + build sạch
-- [ ] User nghiệm thu với đúng file .zip của học viên + deploy
+- [x] User nghiệm thu với đúng file .zip của học viên; deploy `main` = `1ef0a08`
+      (chỉ Vercel — không đụng ai-service nên Render giữ nguyên)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
