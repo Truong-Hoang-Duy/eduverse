@@ -8,11 +8,19 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-31, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 41 (`feature/e2e-action-harness`) đã xong và
-merge vào `develop`; **78/78 E2E xanh** cùng lint + typecheck + 92 unit test +
-build. Đây là đợt CHỈ ĐỘNG TỚI TEST + tài liệu: không sửa `src/` (trừ
-`test-user-prefixes.json/.test.ts`), **không có migration**, không đổi hành vi
-production → **KHÔNG cần deploy**.
+**Đang làm:** KHÔNG có task dở. Đợt 41 + 42 đã merge và **push lên `main`**.
+
+**`main` = `origin/main` = `403891b`** — bản vừa đẩy lên production.
+⚠️ **Vercel deploy chưa được xác nhận bằng mắt** — Claude không mở được trang
+production. Vào Vercel (hoặc mở app trên điện thoại) kiểm 3 thứ của Đợt 42: nav
+không đè nhau, nút "Xóa hết N file" nổi rõ, chấm xong nạp bài mới thì file cũ
+biến sạch. ai-service KHÔNG đổi → Render không cần deploy lại.
+
+- **Đợt 41** (`feature/e2e-action-harness`): chỉ test + tài liệu, **78/78 E2E xanh**.
+- **Đợt 42** (`fix/mobile-nav-and-grading-reset`): sửa `src/` thật (nav mobile,
+  nút Xóa hết, luật nạp file) — user đã nghiệm thu bằng mắt trên máy mình.
+
+Cả hai đợt **không có migration**.
 
 ⚠️ **Hạn mức Gemini tính theo GOOGLE CLOUD PROJECT, không theo key** — log ghi
 `quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`. Tạo key mới trong
@@ -142,7 +150,17 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-07-31 — Đợt 41: trả 2 món nợ E2E (đã merge vào develop, không cần deploy)
+### 2026-07-31 — Đợt 42: 3 lỗi UI user báo khi dùng thật (production `403891b`)
+Nav giáo viên đè lên nút đổi giao diện trên điện thoại — 4 nhãn tiếng Việt
+(~214px chữ) cộng logo + nút + avatar không vừa hàng ~360px. Cho nav xuống hàng
+riêng **khi có >2 mục** (học viên 1 mục thì giữ nguyên, đẩy xuống là phí một
+dòng). Nút "Xóa hết" từ chữ xám `text-xs` thành `Button variant="destructive"`
+kèm số file, ở CẢ hai tab. Nạp file sau khi đã chấm giờ mở bài mới thay vì giữ
+file của em trước (trước đây trộn bài hai em mà GV không nhận ra).
+Quyết định + lý do ở DECISIONS.md — trong đó có ngoại lệ CÓ CHỦ Ý của luật
+"mọi hành động xóa dùng ConfirmDialog".
+
+### 2026-07-31 — Đợt 41: trả 2 món nợ E2E (production `403891b`)
 Dựng bộ E2E **gọi thẳng thân Server Action** (`pnpm test:e2e`, config riêng, không
 thêm dependency): stub `next/headers` bằng `CookieJar` giữ session THẬT nên RLS
 còn nguyên hiệu lực — không mock Supabase. Phủ trang vận hành `/teacher/admin`

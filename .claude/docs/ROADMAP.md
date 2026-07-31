@@ -664,6 +664,21 @@
       key ở trang Hồ sơ không giúp gì cho E2E vì bộ test luôn tạo tài khoản mới
 - [x] Không sửa `src/` (trừ `test-user-prefixes.*`), không migration → KHÔNG deploy
 
+### Đợt 42 (`fix/mobile-nav-and-grading-reset`) — 3 lỗi user báo khi dùng thật
+- [x] **Nav giáo viên đè nhau trên điện thoại**: 4 nhãn tiếng Việt + logo + nút
+      giao diện + avatar không vừa hàng ~360px. Nav xuống hàng riêng **khi có >2
+      mục** (học viên 1 mục thì giữ cùng hàng), pill `px-2.5` ở mobile,
+      `overflow-x-auto` làm lưới an toàn. Từ `sm:` trở lên không đổi
+- [x] **Nút "Xóa hết" quá chìm** (chữ xám `text-xs`) → `Button
+      variant="destructive"` kèm số file, ở CẢ hai tab chấm bài. Cố ý KHÔNG hỏi
+      ConfirmDialog — danh sách chưa lưu ở đâu, chọn lại là xong
+- [x] **Nạp file sau khi đã chấm giữ lại file của em trước** → trộn bài hai em
+      trong một lượt chấm mà GV không nhận ra. Nay chấm xong mà nạp tiếp = bài
+      mới (xóa file + kết quả + số "đã bỏ qua"), thông báo nói rõ "Đã bỏ bài
+      trước". Chưa chấm thì vẫn cộng dồn. Tab sản phẩm vốn đã thay thế, không đổi
+- [x] lint + typecheck + 92 unit test + build sạch; user nghiệm thu bằng mắt
+- [x] Deploy: `main` = `403891b` (Vercel). ai-service không đổi → Render giữ nguyên
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
