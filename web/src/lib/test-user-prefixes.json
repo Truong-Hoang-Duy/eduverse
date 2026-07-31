@@ -1,14 +1,16 @@
 {
   "_comment": [
-    "NGUỒN DUY NHẤT các tiền tố username do script e2e-*.mjs sinh ra.",
+    "NGUỒN DUY NHẤT các tiền tố username do bộ E2E sinh ra — cả",
+    "scripts/e2e-*.mjs (probe REST trần) lẫn web/e2e/*.e2e.ts (gọi thẳng",
+    "thân Server Action).",
     "Đọc từ 2 phía: src/lib/admin-report.ts (TypeScript) và",
     "scripts/purge-test-users.mjs (Node thuần, không import được .ts) —",
     "vì vậy phải là JSON chứ không phải .ts.",
-    "Thêm script E2E mới có tiền tố mới thì PHẢI khai vào đây, nếu không",
+    "Thêm bộ E2E mới có tiền tố mới thì PHẢI khai vào đây, nếu không",
     "purge-test-users.mjs sẽ không dọn nổi tài khoản của nó và trang",
     "/teacher/admin đếm chúng là tài khoản thật.",
     "src/lib/test-user-prefixes.test.ts tự đối chiếu danh sách này với",
-    "các script và fail nếu lệch — đừng xóa test đó."
+    "các bộ test và fail nếu lệch — đừng xóa test đó."
   ],
-  "prefixes": ["dl.", "e2f.", "e3g.", "e4.", "ea.", "ek.", "ga."]
+  "prefixes": ["ao.", "dl.", "e2e.", "e2f.", "e3g.", "e4.", "ea.", "ek.", "ga."]
 }

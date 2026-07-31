@@ -307,6 +307,33 @@
   gọi 6-10 lượt, nên **chạy 2 bộ là hết ngày**. Đừng coi việc chúng đỏ vì hết lượt là
   việc "đang treo": đọc log (`Gemini quota exhausted`) rồi để đó. Muốn chạy chủ động
   thì đặt `GEMINI_API_KEY` trong `ai-service/.env` là key còn lượt.
+- **E2E chia làm HAI LOẠI, đừng gộp** (Đợt 41). `web/e2e/*.e2e.ts` chạy bằng
+  `pnpm test:e2e` (config riêng `vitest.e2e.config.ts`) và gọi THẲNG thân Server
+  Action; `scripts/e2e-*.mjs` còn lại gọi REST trần để **giả lập kẻ tấn công** —
+  chuyển nhóm sau sang gọi action là làm hỏng chính ý nghĩa của chúng, ĐỪNG làm.
+  Không mock Supabase: session thật nằm trong `CookieJar` (stub `next/headers`)
+  nên RLS vẫn có hiệu lực. `next/cache`, `next/navigation`, `server-only` cũng
+  có stub trong `web/vitest-stubs/` — chúng chỉ tồn tại trong request của Next,
+  thiếu là action chết ngay dòng `createClient()`.
+  Vì sao KHÔNG viết tiếp bằng `.mjs`: Node thuần không import được `.ts` và
+  không giải được alias `@/`, nên script buộc phải CHÉP LẠI logic action — chép
+  lại thì đổi action mà quên đổi script vẫn xanh. Vì sao KHÔNG gộp vào
+  `pnpm test`: bộ đó phải chạy offline trong vài giây để còn dùng làm cổng kiểm
+  tra. Dùng `process.loadEnvFile` (stdlib) chứ không `loadEnv` của vite — **vite
+  KHÔNG phải dependency khai báo**, pnpm strict không resolve được.
+- **Kiểm file Storage đã xóa chưa thì hỏi `list()`, ĐỪNG hỏi `download()`**
+  (Đợt 41). `download()` đi qua CDN và đã đo được là trả bản CŨ sau khi
+  `remove()` thành công, còn `list()` đọc metadata trong Postgres nên nhất quán
+  mạnh. Đây nhiều khả năng là gốc của flake "file trong Storage cũng biến mất"
+  đã điều tra 2 lượt mà không tái hiện được (Đợt 35 + 38).
+- 🔴 **`{ head: true }` NUỐT LỖI của PostgREST** (đo được Đợt 41): request HEAD
+  không có body nên supabase-js trả `error: null` **kể cả khi bảng không tồn
+  tại** — đã thử với một cái tên bịa hoàn toàn, vẫn `null`. Mọi ca test kiểu
+  "bảng này phải biến mất" viết bằng `head: true` đều pass suông theo CẢ HAI
+  chiều. Muốn biết bảng có thật không thì `.select("id").limit(1)` rồi kiểm mã
+  `PGRST205`, và kèm một ca đối chứng trên bảng có thật.
+  ⚠️ `buildOpsReport` đang đếm dòng bằng `head: true` — nếu một bảng bị drop thì
+  trang vận hành sẽ hiện `0` chứ không báo lỗi. Chưa sửa, biết để đó.
 - **Kiểm "Render deploy chưa" bằng `/health`, KHÔNG bằng dashboard** — endpoint trả
   `{"status":"ok","commit":"<7 ký tự>"}` từ biến `RENDER_GIT_COMMIT` (Render tự đặt,
   đừng đổi tên biến). Đối chiếu với `git log --oneline -1 main`. Lý do làm: phiên
