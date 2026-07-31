@@ -730,7 +730,27 @@
       huống rất khác nhau và không gợi ý được gì
 - [x] 14 unit test mới (8 chọn .zip + 6 giải nén thư mục lồng nhau) → 123 test;
       lint + typecheck + build sạch
-- [ ] User nghiệm thu với đúng file .zip của học viên + deploy
+- [x] User nghiệm thu với đúng file .zip của học viên; deploy `main` = `1ef0a08`
+      (chỉ Vercel — không đụng ai-service nên Render giữ nguyên)
+
+### Đợt 46 (`feature/quiz-grading`) — chấm buổi có lý thuyết + thực hành
+- [x] Buổi 5/9 (lâu lâu 14) có trắc nghiệm (đáp án in trong đề) + thực hành.
+      Thêm `mode` = practice | quiz | both vào `/grade-submission`, mặc định
+      `practice` nên mọi lời gọi cũ giữ nguyên hành vi
+- [x] **Đáp án lấy từ chính file đề** → không cần bảng đáp án riêng, KHÔNG migration
+- [x] **Hai điểm tách bạch** (Lý thuyết N/M câu, Thực hành /100) — gộp lại thì
+      đúng hết trắc nghiệm mà code sai vẫn ra điểm khá, che mất vấn đề
+- [x] Câu sai nêu THẲNG đáp án đúng + 1 câu nhắc kiến thức (cố ý khác tab Hỏi bài)
+- [x] Bài làm trắc nghiệm nằm ở file nào cũng được: Word/text, ảnh chụp giấy, hoặc
+      lẫn trong thư mục/.zip của phần thực hành — không thêm ô nhập riêng
+- [x] 🔴 Không tìm thấy thì báo không thấy, cấm bịa (`tong_so: 0` + cảnh báo vàng)
+- [x] `_keep_requested_parts()` xóa khối ngoài `mode` + đếm lại `so_dung` từ
+      danh sách câu (model đếm không phải lúc nào cũng khớp)
+- [x] `grading-copy-text.ts` dựng text Copy gửi học viên + 13 unit test → 136;
+      11 pytest mới → 50; lint/typecheck/build sạch
+- [x] **E2E chấm trắc nghiệm THẬT bằng Gemini đã XANH**: đề in đáp án 1-C/2-B/3-C,
+      em chọn 1-C/2-A/3-C → AI bắt đúng câu 2 sai và nêu đáp án đúng là B
+- [ ] User nghiệm thu bằng mắt + deploy (Vercel **và Render** — ai-service ĐỔI)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

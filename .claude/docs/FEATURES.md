@@ -243,8 +243,25 @@ Cả ba đều không dính lớp/học viên/danh sách HV và **không lưu g�
 - **Tab này GIỮ ảnh và PDF/Word** khi đọc thư mục/zip (ảnh chụp code có thể CHÍNH
   LÀ bài làm) — khác tab sản phẩm cuối khóa. Ngân sách `GRADING_BUDGET`: ≤30 file,
   ≤5MB/file, tổng ≤6MB.
+- **Chấm phần nào — 3 chế độ** (buổi 5/9, lâu lâu 14 có cả lý thuyết lẫn thực
+  hành). Chọn MỖI LẦN CHẤM, không lưu vào đề:
+  | Chế độ | Kết quả |
+  |---|---|
+  | Thực hành (mặc định) | điểm /100 + gạch đầu dòng, như cũ |
+  | Trắc nghiệm | từng câu đúng/sai + đáp án đúng, KHÔNG có điểm /100 |
+  | Cả hai | đủ hai khối, **hai điểm ĐỨNG RIÊNG** |
+  - **Đáp án lấy từ chính file đề bài** — không phải nhập thêm gì. Bài làm trắc
+    nghiệm của em nằm ở file nào cũng được: Word/text, **ảnh chụp bài trên giấy**,
+    hoặc lẫn trong thư mục/`.zip` của phần thực hành.
+  - **KHÔNG gộp thành một điểm** (user chốt 2026-07-31): đúng hết trắc nghiệm mà
+    code sai thì điểm gộp che mất vấn đề.
+  - **Câu sai nêu THẲNG đáp án đúng** + một câu ngắn nhắc kiến thức cần xem lại.
+    Khác chủ trương "không giải hộ" của tab Hỏi bài — trắc nghiệm đã chấm xong,
+    giấu đáp án chỉ khiến em nhắn hỏi lại.
+  - Không tìm thấy bài làm trắc nghiệm → hiện cảnh báo vàng, KHÔNG chấm bừa.
 - **Kết quả**: **ô điểm riêng** (/100, tô màu: đỏ <50, vàng 50–79, xanh ≥80) +
-  nhận xét **ngắn gọn dạng gạch đầu dòng** (3-6 ý) + nút **Copy**.
+  nhận xét **ngắn gọn dạng gạch đầu dòng** (3-6 ý) + nút **Copy gửi học viên**
+  (`lib/grading-copy-text.ts` dựng text, có unit test — Zalo không có markdown).
 - **KHÔNG lưu gì**: file bài làm gửi inline (base64) sang ai-service, không qua
   Storage; kết quả không ghi DB → tải lại trang là mất. Chấm xong copy rồi làm
   em tiếp theo.
