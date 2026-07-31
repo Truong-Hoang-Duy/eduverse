@@ -8,14 +8,13 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 34 đã dán migration, `e2e-phase4` 25/25.
-Đợt 35 (thông báo lỗi Gemini) xong code — **ai-service ĐỔI nên phải deploy lại
-Render** khi merge. Đợt 27→31 đã deploy, user xác nhận
+**Đang làm:** KHÔNG có task dở. Đợt 34-35 đã merge + push `514131c`.
+🔴 **Đợt 35 đổi `ai-service` → user phải deploy lại RENDER**, không chỉ Vercel. Đợt 27→31 đã deploy, user xác nhận
 2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
 `student_drive_links` có dữ liệu thật.
 
-**`main` = `origin/main` = `f1bdd24`** — production (Đợt 27-33).
+**`main` = `origin/main` = `514131c`** — production (Đợt 27-35).
 **`develop` = `origin/develop`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
