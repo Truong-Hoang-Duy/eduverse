@@ -8,98 +8,75 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 27→40 đã merge + push production.
+**Đang làm:** KHÔNG có task dở. Đợt 26→40 đã merge, deploy (Vercel + Render) và
+user nghiệm thu bằng mắt. 7 migration của phiên đã áp — đã ĐO lại trên DB thật
+chứ không tin ghi chú.
 
-✅ **KHÔNG còn việc treo.** Vercel + Render đều đã deploy (user xác nhận
-2026-07-30), 7 migration đã áp, Đợt 27→40 nghiệm thu bằng mắt xong.
+**`main` = `origin/main` = `b51e818`** — bản đang chạy production.
+**`develop` = `origin/develop`** = main + 1-2 commit docs ghi hash (CỐ Ý không
+merge sang `main`: merge đẻ hash mới làm ghi chú sai lại — vòng lặp đã dính
+2026-07-21). Chỉ còn `main` + `develop`, mọi nhánh feature đã xóa.
 
-**Kiểm bản Render đang chạy (Đợt 40):** mở `https://eduverse-ai.onrender.com/health`
-→ `commit` phải khớp `git log --oneline -1 main` (hiện `b51e818`). KHÔNG cần
-dashboard. ⚠️ Máy dev bị mạng chặn `onrender.com` (DNS đúng, HTTPS ra ngoài vẫn
-tốt, nhưng timeout ở 60/120/180s) → phải mở trên máy user. Claude KHÔNG tự xác
-nhận Render được, chỉ ghi theo user xác nhận.
+**Bắt đầu phiên sau:** `git checkout develop && git checkout -b feature/<slug>`
+**trước khi sửa dòng code nào** (đừng commit thẳng vào main/develop).
 
-**Mọi migration của phiên này ĐÃ áp** — đã đo lại trên DB thật, không tin ghi chú:
-`projects.drive_url` báo "does not exist" (drop xong), `student_drive_links` có dữ
-liệu thật, và `e2e-profile-privileges` 10/10 xác nhận 2 migration phân quyền.
+**Kiểm Render đang chạy bản nào** (Đợt 40): mở
+`https://eduverse-ai.onrender.com/health` → `commit` phải khớp
+`git log --oneline -1 main`. Không cần dashboard.
+⚠️ **Máy dev KHÔNG vào được `onrender.com`** (DNS đúng, HTTPS ra ngoài vẫn tốt,
+nhưng timeout ở 60/120/180s — nghi mạng công ty chặn, môi trường này vốn đã chặn
+cổng 5432/6543). Claude không tự xác nhận Render được → phải mở trên máy user.
+Đừng kết luận "Render hỏng" chỉ vì curl từ máy dev không thông.
 
-**`main` = `origin/main` = `b51e818`** — production (Đợt 27-40).
-**`develop` = `origin/develop`** = main + 1 commit docs ghi hash
-(CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
-lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
-Nhánh `feature/project-review-grading`, `feature/student-class-tabs-drive-link`,
-`chore/drop-project-drive-url` đã merge — **xóa được**.
+⚠️ **`ADMIN_USERNAMES` phải có ở CẢ `web/.env.local` và Vercel** — chưa khai thì
+`/teacher/admin` đá về `/teacher` (fail closed). Biến thêm SAU deploy không áp cho
+bản đã build → phải redeploy.
 
-⚠️ **KHÔNG kiểm chứng được ai-service production từ máy dev**:
-`eduverse-ai.onrender.com` phân giải DNS đúng (216.24.57.x) và HTTPS ra ngoài vẫn
-chạy (github 200), nhưng `/health` trả HTTP 000 sau 60-120s — nghi mạng công ty
-chặn `onrender.com` (môi trường này vốn đã chặn cổng 5432/6543). Muốn kiểm thì
-mở URL đó trên trình duyệt của user, hoặc bấm thử "Nhận xét sản phẩm" trên
-production. **Đừng kết luận Render hỏng chỉ vì curl từ máy dev không thông.**
+**Sản phẩm hiện có** (nghiệp vụ ở FEATURES.md, lịch sử ở ROADMAP.md): auth
+USERNAME; khóa→lớp→buổi + sao chép lớp; nhận xét AI theo buổi + tổng hợp từng HV
+(12 nhóm kỹ năng, xếp loại học lực, đánh vắng, copy nhận xét, bộ combo); tin Zalo
+cả lớp; **chấm bài AI 2 tab** (bài tập hàng ngày CÓ điểm / sản phẩm cuối khóa
+KHÔNG điểm), nhận file lẻ + thư mục + `.zip`, đọc được Word `.docx`; **khu học
+viên chia THEO LỚP** + link Drive nộp bài; gallery + hồ sơ HV xuyên khóa; API key
+Gemini riêng có công tắc; trang vận hành `/teacher/admin`; 3 màn chiếu TV.
 
-✅ **Đợt 27→37 ĐÃ nghiệm thu bằng mắt** (user xác nhận 2026-07-30), gồm cả ca
-quan trọng nhất: **đăng ký học viên mới bằng mã lớp** vẫn chạy sau khi drop policy
-`enrollments_student_insert`.
+## ✅ Cổng kiểm tra & E2E
 
-⚠️ **`ADMIN_USERNAMES` phải có ở `web/.env.local` (local) VÀ Vercel (production)**
-— chưa khai thì `/teacher/admin` đá về `/teacher` (fail closed). Biến thêm SAU
-deploy KHÔNG áp cho bản đã build → phải redeploy.
+`web/`: **lint + typecheck + `pnpm test` (92 unit test) + build**.
+`ai-service/`: **`.venv/Scripts/python -m pytest`** (27 test).
 
-**Sản phẩm hiện có** (nghiệp vụ chi tiết ở FEATURES.md, lịch sử ở ROADMAP.md):
-Auth USERNAME, khóa→lớp→buổi, **sao chép lớp** (giáo án lấy từ lớp khác, thành
-viên chọn, không chép nhận xét); nhận xét AI theo buổi + tổng hợp từng HV (12
-nhóm kỹ năng, **xếp loại học lực** ngữ cảnh AI, **đánh vắng**, **copy điểm
-mạnh/cải thiện** từ bạn cùng buổi/buổi trước, **bộ combo** `review_combos` tạo
-ở Cài đặt + seed ~22 mẫu); tin Zalo tổng hợp cả lớp; **chấm bài AI độc lập 2 tab
-(bài tập hàng ngày có điểm / sản phẩm cuối khóa KHÔNG điểm), nhận cả thư mục và
-.zip, đọc được Word .docx**; sản phẩm cuối khóa + gallery; hồ sơ HV xuyên khóa;
-**API key Gemini riêng có công
-tắc bật/tắt**; đổi mật khẩu không cần cũ; 3 màn chiếu TV; **trang vận hành
-`/teacher/admin`** (ADMIN_USERNAMES); nút "↑ lên đầu trang" + khối thu gọn ở
-trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
+E2E chạy trong `web/` trên DB THẬT (tự tạo, tự dọn). **99/99 các bộ không gọi AI
+đều xanh**; các bộ gọi AI đã xanh cùng ngày trên đúng code production (phase3
+13/13, phase4 25/25, project-review 9/9). Tổng khi đủ lượt Gemini: **146**.
 
-**Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
-**trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
-
-**Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (92 unit test) + build.**
-
-**E2E: 99/99 các bộ KHÔNG gọi AI đều xanh** (chạy lại 2026-07-30 sau migration
-`20260731030000` đổi policy `courses`/`classes` — không hồi quy). Các bộ GỌI AI
-(`phase3` 13, `phase4` ca AI, `project-review` 9) **đã xanh ngày 2026-07-30 trên
-đúng code đang chạy production** — phase3 13/13, project-review 9/9, phase4 25/25.
-Sau đó không chạy lại được vì **hạn mức free tier chỉ 20 lượt/NGÀY** (đọc từ lỗi
-429: `quotaValue: 20`, model `gemini-3.6-flash`) mà mỗi bộ gọi 6-10 lượt → 2 bộ là
-hết ngày. **Đây là ràng buộc môi trường, KHÔNG phải việc đang treo.** Muốn chạy chủ
-động: đặt `GEMINI_API_KEY` là key còn lượt. Tổng khi đủ lượt: 146. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
-
-| Script | Số test | Lệnh |
+| Script | Test | Ghi chú |
 |---|---|---|
-| `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/e2e-phase1.mjs` |
-| `e2e-phase2.mjs` | 17 | như trên (hồ sơ HV xuyên khóa + nhóm kỹ năng) |
-| `e2e-api-key.mjs` | 8 | như trên |
-| `e2e-class-admin.mjs` | 18 | như trên (đổi/đặt lại mật khẩu) |
-| `e2e-gallery-storage.mjs` | 19 | như trên — gallery GV, xóa sạch Storage |
-| `e2e-phase3.mjs` | 13 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
-| `e2e-phase4.mjs` | 25 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
-| `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
-| `e2e-drive-link.mjs` | 14 |
-| `e2e-profile-privileges.mjs` | 10 | như trên — chống leo thang quyền, quyền theo cột | `node --env-file=.env.local ...` — RLS link Drive của HV |
+| `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/<script>` |
+| `e2e-phase2.mjs` | 17 | hồ sơ HV xuyên khóa + nhóm kỹ năng |
+| `e2e-api-key.mjs` | 8 | |
+| `e2e-class-admin.mjs` | 18 | đổi/đặt lại mật khẩu |
+| `e2e-gallery-storage.mjs` | 19 | gallery GV, xóa sạch Storage |
+| `e2e-drive-link.mjs` | 14 | RLS link Drive của HV |
+| `e2e-profile-privileges.mjs` | 10 | chống leo thang quyền, quyền theo CỘT |
+| `e2e-phase3.mjs` | 13 | **cần ai-service** — thêm `--env-file=../ai-service/.env` |
+| `e2e-phase4.mjs` | 25 | như phase3 — xóa SP, RLS, giới hạn nhập liệu ở DB |
+| `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm (không cần Supabase) |
 
-⚠️ Trước khi chạy phase3/4: chỉ được có MỘT ai-service. Nếu port 8000 kẹt
-"socket ma" (tiến trình chết mà listener vẫn trả lời) → chạy port khác + env
-`AI_SERVICE_URL=http://localhost:<port>` (mọi script E2E đều đọc biến này).
+⚠️ Chỉ được có MỘT ai-service. Port 8000 hay kẹt "socket ma" (tiến trình chết mà
+listener vẫn trả lời) → chạy port khác + `AI_SERVICE_URL=http://localhost:<port>`
+(mọi script E2E đều đọc biến này).
 
-⚠️ **Gemini có lúc trả 503 "high demand ... usually temporary"** → ai-service dịch
-thành **502**, E2E đỏ ở các ca gọi AI dù CODE KHÔNG HỀ SAI (dính 2026-07-30:
-`e2e-phase4` 14/15 và `e2e-project-review` 3/7, chạy lại ngay thì 15/15 và 9/9).
-Dấu hiệu nhận biết: `e2e-phase3` cùng key vẫn xanh, và log ai-service ghi rõ
-`503 UNAVAILABLE`. **Chạy lại trước khi đi tìm bug** — đừng sửa code theo lần đỏ
-đầu tiên.
+⚠️ **E2E gọi AI đỏ thì NGHI GEMINI TRƯỚC, đừng sửa code.** Hai nguyên nhân, đọc
+log ai-service là biết ngay (từ Đợt 35 cả hai đều được log):
+`Gemini quota exhausted` = hết lượt — **free tier chỉ 20 lượt/NGÀY** cho
+`gemini-3.6-flash` mà mỗi bộ gọi 6-10 lượt → **2 bộ là hết ngày**, không phải
+task đang treo; `Gemini unavailable (high demand)` = Google tắc nghẽn, chạy lại
+sau ít phút là được.
 
-Công cụ chẩn đoán: `/health` của ai-service (trả commit đang chạy),
-`scripts/check-integrity.mjs` (toàn vẹn dữ liệu),
-`scripts/check-user.mjs <username>` (tra 1 tài khoản),
-`scripts/purge-test-users.mjs [--yes]` (dọn tài khoản rác E2E, mặc định xem thử).
+Công cụ chẩn đoán: `/health` của ai-service (commit đang chạy),
+`scripts/check-integrity.mjs`, `scripts/check-user.mjs <username>`,
+`scripts/purge-test-users.mjs [--yes]`.
+
 
 ## 📌 Quyết định đã chốt → `.claude/docs/DECISIONS.md`
 
@@ -142,63 +119,40 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-07-30 — Đợt 30 (`student-class-tabs-drive-link`, 2 mig, CHƯA merge)
-Khu HV chia theo LỚP (tabs vào trong từng lớp, sản phẩm/gallery query đúng
-`class_id`); link Drive nộp bài 1/HV dùng mọi lớp (`student_drive_links`), GV +
-bạn cùng lớp xem được, hiện dạng chip gọn; bỏ ô Drive khỏi form sản phẩm; dọn
-popup xem sản phẩm. BỎ ý tưởng nhúng ảnh từ Drive. E2E mới 9/9.
+### 2026-07-30 — Đợt 26→40 (một phiên dài, TẤT CẢ đã production `b51e818`)
+Chi tiết từng đợt ở ROADMAP.md; quyết định ở DECISIONS.md. 7 migration, đều đã áp.
 
-### 2026-07-30 — Đợt 27→29 (1 phiên, cùng ngày, đều đã push production `03ab717`)
-Chi tiết từng đợt ở ROADMAP.md; nghiệp vụ ở FEATURES.md. **Đợt 27+28 đổi
-`ai-service` → Render phải deploy lại** (Đợt 29 chỉ web).
-- **Đợt 27** (`grading-word-dropzone-filter`, 0 mig): nút "Bỏ chọn tất cả" ở
-  `MultiSelect`; **chấm bài đọc Word .docx** (`docx_to_text` bằng stdlib
-  `zipfile`+`ElementTree`, KHÔNG thêm dependency); lọc đề đã lưu theo khóa
-  (`saved-assignments.tsx`); kéo thả nhiều file. Sau đó dọn UI ô thả 3 lượt theo
-  yêu cầu user (bỏ chữ "Choose Files" của trình duyệt bằng `<label>`; bấm đâu
-  cũng chọn được file; bớt chữ; to lên) + xem đề .docx thẳng trong popup
-  (`docx-text.ts` tự đọc ZIP bằng `node:zlib`). pytest 11/11, E2E phase3 12/12.
-- **Đợt 28** (`project-review-grading`, 0 mig): **tab "Sản phẩm cuối khóa"** —
-  nav Chấm bài chia 2 tab; `/review-project` KHÔNG đề bài KHÔNG điểm, trả 3 nhóm;
-  3 đường đầu vào (thả thư mục / `webkitdirectory` / .zip giải nén ở server);
-  `lib/zip.ts` + `lib/submission-files.ts`. pytest 18/18, E2E mới 9/9.
-- **Đợt 29** (cùng nhánh, 0 mig): tab bài tập hàng ngày CŨNG nhận thư mục/.zip;
-  `skipReasonFor` có options (bài tập giữ ảnh+PDF/Word, sản phẩm bỏ);
-  `lib/zip-submission.ts` dùng chung; lỗi chia 2 mức; thông báo xanh sau khi đọc
-  file. **Kiểm chứng "không lưu file bài làm"** + thêm E2E canh Storage
-  (phase3 12→13).
+**Tính năng (26→31):** bỏ dòng tiêu đề khỏi text copy nhận xét tổng hợp; chấm bài
+đọc **Word .docx** (stdlib `zipfile`, KHÔNG thêm dep); lọc đề theo khóa; kéo thả
+nhiều file; **tab "Sản phẩm cuối khóa"** (`/review-project` — KHÔNG đề bài, KHÔNG
+điểm, trả 3 nhóm); nạp bài bằng **cả thư mục và .zip** cho hai tab; **khu học viên
+chia THEO LỚP** (`/student/classes/[classId]/...`) + **link Drive nộp bài**
+(`student_drive_links`, 1 link/HV, GV + bạn cùng lớp xem được); drop cột
+`projects.drive_url` đã chết.
 
-### 2026-07-27 — Đợt 26 (`summary-copy-drop-header`, 0 mig, đã deploy)
-`toCopyText` bỏ dòng tiêu đề `NHẬN XÉT TỔNG HỢP — <tên HV>` — text copy bắt đầu
-ngay ở `TRONG QUÁ TRÌNH HỌC:` để GV dán thẳng vào tin phụ huynh. Panel trên màn
-hình VẪN hiện tên HV (chỉ text copy là bỏ) — đừng "sửa lại cho đồng bộ".
+**🔴 Bảo mật (33→37) — 4 lỗ, CÙNG MỘT GỐC "ràng buộc đặt sai tầng":** stored XSS ở
+link người dùng dán · vượt mọi giới hạn nhập liệu · **HV tự nâng role thành teacher**
+(chuỗi dẫn tới đặt lại mật khẩu HV bất kỳ) · **HV tự ghi danh vào lớp khác** rồi đọc
+sản phẩm + link Drive riêng. Cả 4 đều XANH mọi cổng kiểm tra lúc còn tồn tại — tìm
+ra bằng **probe giả lập kẻ tấn công gọi REST API trực tiếp**, bỏ qua code app.
+Mỗi lỗ: probe kiểm chứng TRƯỚC khi sửa, đo dữ liệu thật TRƯỚC khi thêm constraint.
 
-### 2026-07-27 — Đợt 19→25 (7 đợt, đều production; chi tiết ở ROADMAP.md)
-Đợt 19 `academic_level`+`is_absent` (mig `20260726000000`, 🐛 tách
-`review-status.ts` vì gọi hàm client từ server); 20 `user_secrets.use_own_key`
-(mig `20260727000000`); 21 copy nhận xét 2 nhóm + bảng `review_combos` (mig
-`20260728000000`); 22 gõ câu mới trong ô tick + seed ~22 combo; 23 sao chép lớp;
-24 nút "↑ lên đầu trang" + `CollapsibleCard`; 25 dọn nhận xét tổng hợp + nút quay
-lại. **Bài học git**: Đợt 20 suýt deploy trước khi dán migration → từ đó luôn
+**Chất lượng & vận hành (32, 38→40):** Vitest + **92 unit test** (bắt được bug `đ`
+trong `sanitizeFileName`: "đề bài" → `_e_bai`); tách `DECISIONS.md`; xóa 14 nhánh đã
+merge; gộp nguồn duy nhất cho tiền tố tài khoản test (danh sách ĐÃ lệch thật, dọn 6
+tài khoản rác nó bỏ sót); thông báo lỗi Gemini phân biệt hết-lượt vs tắc-nghẽn + log
+cả hai; phát hiện hạn mức thật **20 lượt/ngày** (4 chỗ ghi 1.500, kể cả text cho học
+viên); `/health` trả commit đang chạy.
+
+**Bài học quy trình:** 3 lần test tôi viết đỏ mà CODE ĐÚNG (kỳ vọng sai); 1 lần test
+**pass suông** vì nạn nhân chưa có dữ liệu gì để mất; flake `e2e-gallery-storage`
+điều tra 2 lượt, 15 lượt chạy liên tiếp đều xanh → **không tái hiện được**, chỉ làm
+nó chẩn đoán được.
+
+
+### 2026-07-18 → 27 — Đợt 13→25 (đều production; chi tiết đầy đủ ở ROADMAP.md)
+Nhóm kỹ năng + `TONE_RULE`; accordion Cài đặt; mỗi nhóm ≥10 lựa chọn (Đợt 13-17).
+Trang vận hành `/teacher/admin` chặn bằng `ADMIN_USERNAMES` (18). `academic_level`
++ `is_absent`; công tắc key riêng; `review_combos`; sao chép lớp; nút lên đầu trang
+(19-25). **Bài học git:** Đợt 20 suýt deploy trước khi dán migration → từ đó luôn
 hỏi user xác nhận migration trước khi push.
-
-### 2026-07-24 — Trang vận hành `/teacher/admin` (Đợt 18, production)
-Bản web của 3 script chẩn đoán + 2 kiểm tra mới (khóa/lớp mất GV chủ, file
-Storage mồ côi). Chặn bằng `ADMIN_USERNAMES`, service-role nên mọi action tự
-`denyIfNotAdmin()`.
-
-### 2026-07-21 — gallery/review/chấm bài + gợi ý buổi + Zalo 1-1 (production)
-MultiSelect có ô tìm; roster "chưa khai báo" bên GV + `project-limits.ts`; lọc
-lớp gallery GV; chống lặp lời văn review (`prior_comments`); nhập tự do điểm
-mạnh/cải thiện (tự lưu vào `review_options`); gợi ý nội dung buổi bằng AI; Zalo
-cá nhân hóa lớp 1-1. Zalo chống-lặp-qua-buổi: HỦY (yêu cầu nhầm).
-
-### 2026-07-18 — Đợt 13→17 + 4 fix (1 ngày, đều production)
-Nhóm kỹ năng + `TONE_RULE` (13); copy nhận xét riêng + bộ lọc Đã/Chưa (14); Zalo
-quay lại liệt kê kiến thức (15 — suýt xóa nhầm 50 câu GV tự soạn, bài học ở
-"Quyết định đã chốt"); accordion Cài đặt theo nhóm (16); mỗi nhóm ≥10 lựa chọn,
-seed 112+112 (17). 4 fix: API key chặn nhầm key không "AIza"; prompt Zalo sai 3
-lần liên tiếp.
-
-> Lịch sử cũ hơn 2 tuần (GĐ 1–5 + Đợt 1–12, nền tảng 2026-07-15→16) đã xóa khỏi
-> file này — xem `ROADMAP.md` và git log.
