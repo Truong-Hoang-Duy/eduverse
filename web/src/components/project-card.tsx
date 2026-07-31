@@ -28,18 +28,30 @@ function LinkChip({ href, label }: { href: string | null; label: string }) {
 }
 
 /** Hiển thị chi tiết một sản phẩm cuối khóa (read-only). */
-export function ProjectCard({ project }: { project: ProjectView }) {
+export function ProjectCard({
+  project,
+  hideHeading = false,
+}: {
+  project: ProjectView;
+  /**
+   * Bỏ dòng tên dự án + tên học viên. Dùng khi nơi gọi ĐÃ hiện chúng ở tiêu đề
+   * (popup gallery) — để cả hai là lặp y nguyên một thông tin hai lần.
+   */
+  hideHeading?: boolean;
+}) {
   return (
     <div className="space-y-3">
       <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold">{project.name}</h3>
-          <span className="text-xs text-muted-foreground">
-            · {project.authorName}
-            {project.updatedAt &&
-              ` · Cập nhật ${new Date(project.updatedAt).toLocaleDateString("vi-VN")}`}
-          </span>
-        </div>
+        {!hideHeading && (
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold">{project.name}</h3>
+            <span className="text-xs text-muted-foreground">
+              · {project.authorName}
+              {project.updatedAt &&
+                ` · Cập nhật ${new Date(project.updatedAt).toLocaleDateString("vi-VN")}`}
+            </span>
+          </div>
+        )}
         {project.description && (
           <p className="mt-1 text-sm whitespace-pre-wrap text-muted-foreground">
             {project.description}
@@ -60,7 +72,11 @@ export function ProjectCard({ project }: { project: ProjectView }) {
       {(project.repo_url || project.drive_url || project.demo_url) && (
         <div className="flex flex-wrap gap-2">
           <LinkChip href={project.repo_url} label="GitHub" />
-          <LinkChip href={project.drive_url} label="Google Drive" />
+          {/* Nguồn KHÔNG phải cột `projects.drive_url` (đã bỏ) mà là link Drive
+              học viên tự cài ở "Thư mục nộp bài tập" — nơi lưu đầy đủ bài các
+              buổi. RLS chỉ trả link cho chính chủ và GV của lớp, nên bạn cùng
+              lớp sẽ không thấy nút này. */}
+          <LinkChip href={project.drive_url} label="📁 Thư mục Drive" />
           <LinkChip href={project.demo_url} label="Demo" />
         </div>
       )}

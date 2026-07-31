@@ -456,7 +456,41 @@
 - [x] 0 migration; ai-service KHÔNG đổi (không cần deploy Render riêng cho đợt này);
       lint + typecheck + build sạch; **E2E phase3 13/13** với Gemini thật
 
+### Đợt 30 (`feature/student-class-tabs-drive-link`) — khu HV theo lớp + link Drive
+- [x] **Tabs vào TỪNG LỚP**: `/student/classes/[classId]/{projects,gallery,guide}`
+      (`class-tabs.tsx`); `/student` chỉ còn danh sách lớp, cả thẻ là link vào lớp;
+      layout của lớp chặn 404 nếu HV không học lớp đó. Route cũ redirect về
+      `/student` (giữ 3 file redirect để link cũ không 404). Sản phẩm + gallery
+      query theo đúng `class_id` — HV học 2 lớp không còn thấy trộn lẫn
+- [x] **Link Drive nộp bài, MỘT link/HV dùng mọi lớp** — bảng `student_drive_links`
+      (mig `20260730000000`), khóa chính `student_id`. **Bảng riêng chứ KHÔNG phải
+      cột trong `profiles`** vì `profiles_select` cho bạn cùng lớp đọc profile của
+      nhau (cùng lý do đã tách `user_secrets`)
+- [x] Hiển thị "rút gọn" = thu gọn CÁCH HIỂN THỊ (`DriveLinkChip` +
+      `shortenDriveUrl`), **KHÔNG gọi dịch vụ tạo link ngắn ngoài** (user chốt):
+      dịch vụ chết là link chết, và dự án đang 0đ/tháng
+- [x] GV xem link của toàn bộ HV trong lớp (cột "Thư mục nộp bài" ở bảng học viên)
+- [x] **Bạn cùng lớp CŨNG xem được** (mig `20260730010000`, user chốt sau khi đã
+      làm bản chỉ-GV) — để kiểm tra/đánh giá sản phẩm của nhau. Nới CHỈ `SELECT`,
+      CHỈ cho bạn cùng lớp: HV/GV lớp khác vẫn không thấy, ghi vẫn chỉ chính chủ
+- [x] Nút **📁 Thư mục Drive** trong popup sản phẩm (nguồn: `student_drive_links`,
+      KHÔNG phải cột `projects.drive_url`). **BỎ ý tưởng nhúng ảnh từ link Drive** —
+      Drive không phải image host, đường `uc?export=view` đang bị siết, link
+      `googleusercontent` không có tài liệu chính thức
+- [x] Bỏ ô "Link Google Drive" khỏi form sản phẩm (2 ô Drive là HV không biết điền
+      đâu); 2 ô GitHub/demo bằng nhau; nút "Xóa sản phẩm" viền đỏ cạnh nút lưu;
+      bỏ hiện tên lớp ở chân form
+- [x] Popup xem sản phẩm: bỏ tiêu đề + tên HV in lặp 2 lần (`hideHeading`), dồn
+      ngày "Cập nhật" lên dòng mô tả; nút Gửi cao bằng ô nhập (h-9, trước là h-7)
+- [x] 2 migration (user đã dán); lint + typecheck + build sạch;
+      **E2E `e2e-drive-link.mjs` 9/9** trên DB thật — canh đủ: chính chủ, GV của
+      lớp, bạn cùng lớp, HV lớp khác, GV lớp khác, GV không sửa được, HV khác
+      không ghi được, xóa được
+- [x] ai-service KHÔNG đổi → không cần deploy Render cho đợt này
+
 ## Ý tưởng còn để ngỏ (chưa làm)
+- **Drop cột `projects.drive_url`** — không còn code nào đọc/ghi nó (Đợt 30).
+  Theo luật dự án: deploy Đợt 30 TRƯỚC, rồi mới tạo migration drop và dán.
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
   lớp xem, kết quả không lưu nữa

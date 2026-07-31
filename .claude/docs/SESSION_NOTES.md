@@ -6,15 +6,23 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-27, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Toàn bộ đã deploy production, `main`=`develop`
-(lệch 1 commit docs — bình thường).
+**Đang làm:** Đợt 30 XONG CODE nhưng **CHƯA merge** — nhánh
+`feature/student-class-tabs-drive-link` (5 commit + 1 commit docs). 2 migration
+của đợt này user ĐÃ dán, E2E 9/9 xanh. Chỉ còn merge + deploy Vercel.
 
-**`main` = `origin/main` = `da2e254`** — bản đang chạy production (Đợt 26).
-**`develop` = `origin/develop` = `3d9f40f`** = main + 1 commit docs ghi hash
+**`main` = `origin/main` = `03ab717`** — bản đang chạy production (Đợt 27-29).
+**`develop` = `origin/develop` = `d5e80d9`** = main + 1-2 commit docs
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
-lặp đã dính 2026-07-21). Lệch 1 commit docs này là BÌNH THƯỜNG.
+lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
+Nhánh `feature/project-review-grading` đã push, đã merge, **xóa được**.
+
+🔴 **VIỆC ĐẦU TIÊN CỦA PHIÊN SAU: hỏi user đã deploy Render chưa.** Đợt 27+28 đổi
+`ai-service` (endpoint `/review-project` + trích chữ .docx). Chưa deploy Render
+thì tab "Sản phẩm cuối khóa" bấm nhận xét → 404, và chấm bài `.docx` lỗi. Vercel
+đã push nhưng chưa ai xác nhận cả 2 bên xanh — **chưa có nghiệm thu bằng mắt nào
+cho Đợt 27-29**.
 
 ⚠️ **`ADMIN_USERNAMES` phải có ở `web/.env.local` (local) VÀ Vercel (production)**
 — chưa khai thì `/teacher/admin` đá về `/teacher` (fail closed). Biến thêm SAU
@@ -25,8 +33,10 @@ Auth USERNAME, khóa→lớp→buổi, **sao chép lớp** (giáo án lấy từ
 viên chọn, không chép nhận xét); nhận xét AI theo buổi + tổng hợp từng HV (12
 nhóm kỹ năng, **xếp loại học lực** ngữ cảnh AI, **đánh vắng**, **copy điểm
 mạnh/cải thiện** từ bạn cùng buổi/buổi trước, **bộ combo** `review_combos` tạo
-ở Cài đặt + seed ~22 mẫu); tin Zalo tổng hợp cả lớp; chấm bài AI độc lập; sản
-phẩm cuối khóa + gallery; hồ sơ HV xuyên khóa; **API key Gemini riêng có công
+ở Cài đặt + seed ~22 mẫu); tin Zalo tổng hợp cả lớp; **chấm bài AI độc lập 2 tab
+(bài tập hàng ngày có điểm / sản phẩm cuối khóa KHÔNG điểm), nhận cả thư mục và
+.zip, đọc được Word .docx**; sản phẩm cuối khóa + gallery; hồ sơ HV xuyên khóa;
+**API key Gemini riêng có công
 tắc bật/tắt**; đổi mật khẩu không cần cũ; 3 màn chiếu TV; **trang vận hành
 `/teacher/admin`** (ADMIN_USERNAMES); nút "↑ lên đầu trang" + khối thu gọn ở
 trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
@@ -34,7 +44,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
 
-**E2E 111/111 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+**E2E 120/120 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
@@ -46,6 +56,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 | `e2e-phase3.mjs` | 13 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
 | `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
 | `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
+| `e2e-drive-link.mjs` | 9 | `node --env-file=.env.local ...` — RLS link Drive của HV |
 
 ⚠️ Trước khi chạy phase3/4: chỉ được có MỘT ai-service. Nếu port 8000 kẹt
 "socket ma" (tiến trình chết mà listener vẫn trả lời) → chạy port khác + env
@@ -235,9 +246,58 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   (`next.config.ts`) thì Next.js báo lỗi rất mờ mịt, GV không hiểu vì sao —
   `PROJECT_BUDGET` 2MB chừa sẵn chỗ cho base64 (+33%).
 
+- **Hộp thoại "Upload N files to this site?" KHÔNG sửa được** — UI bảo mật của
+  trình duyệt khi `<input webkitdirectory>` xin đọc thư mục, không có API nào đổi
+  chữ/style/bỏ qua (cùng loại "Choose Files" của input file). Đã xử lý bằng cách
+  duy nhất có thể: tooltip báo trước + thông báo xanh sau khi đọc nói rõ "file
+  không rời khỏi máy" (chữ "Upload" của trình duyệt gây hiểu nhầm là đã lưu).
+  **Kéo thả thư mục thì KHÔNG hiện hộp thoại này** (chưa kiểm chứng bằng mắt).
+  `showDirectoryPicker()` gọn hơn nhưng CHỈ Chromium → đã cân nhắc và BỎ.
+
+- **Khu học viên chia THEO LỚP** (Đợt 30): tabs nằm trong
+  `/student/classes/[classId]/{projects,gallery,guide}`, `/student` chỉ là danh
+  sách lớp. Route cũ `/student/projects|gallery|guide` là **file redirect** — đừng
+  xóa, có để link/bookmark cũ không 404. `revalidatePath` cho khu này phải truyền
+  MẪU route động (`"/student/classes/[classId]/gallery", "page"`), truyền đường
+  tĩnh cũ thì không khớp page nào và cache lớp vẫn cũ.
+- **Link Drive nộp bài của HV: bảng `student_drive_links`, MỘT link/HV dùng mọi
+  lớp** (Đợt 30). Đặt bảng riêng chứ KHÔNG phải cột trong `profiles` vì
+  `profiles_select` cho bạn cùng lớp đọc profile của nhau — cùng lý do đã tách
+  `user_secrets`. Ai đọc được: chính chủ (+sửa/xóa), GV của lớp em học, **bạn cùng
+  lớp** (2 migration: `20260730000000` chỉ-GV, rồi `20260730010000` nới cho bạn
+  cùng lớp để các em đánh giá sản phẩm của nhau). HV/GV lớp khác KHÔNG; GHI chỉ
+  chính chủ. `e2e-drive-link.mjs` canh đủ 9 nhánh — **có cả ca đối chứng "HV lớp
+  khác không thấy"** để policy viết hỏng thành "mọi học viên" là test đỏ.
+- **"Rút gọn link" = rút gọn CÁCH HIỂN THỊ**, không gọi dịch vụ link ngắn bên
+  ngoài (user chốt 2026-07-30): `DriveLinkChip` + `shortenDriveUrl`. Dịch vụ thứ 3
+  chết là link chết, và dự án đang 0đ/tháng — đừng "nâng cấp" thành TinyURL.
+- **KHÔNG nhúng ảnh lấy từ link Google Drive** (đã nghiên cứu và BỎ 2026-07-30):
+  Drive không phải image host, `uc?export=view` đang bị Google siết, link
+  `lh3.googleusercontent.com` không có tài liệu chính thức, lại cần khai
+  `remotePatterns`. Thay bằng nút mở thẳng thư mục Drive. Muốn ảnh thật thì upload
+  lên Supabase Storage — đừng quay lại hướng nhúng link Drive.
+- **Cột `projects.drive_url` đã CHẾT** nhưng chưa drop: không còn code nào đọc/ghi
+  (Đợt 30 bỏ khỏi mọi `select` + form). Theo luật: deploy Đợt 30 TRƯỚC rồi mới tạo
+  migration drop.
+- **Tạo học viên trong script E2E phải có lớp TRƯỚC + truyền `class_code`** —
+  trigger `handle_new_user` tự ghi danh theo mã lớp; thiếu thì `createUser` trả
+  **500 `AuthRetryableFetchError` với message rỗng `{}`**, không hề nói thiếu gì
+  (đã dính 2026-07-30, mất mấy lượt mới lần ra).
+
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
+- 🔴 **Đợt 27-29 CHƯA nghiệm thu bằng mắt** — code đã push production nhưng chưa
+  ai bấm thử tab mới trên bản deploy. Xem mục "Trạng thái hiện tại".
+- 🟡 **Logic đọc thư mục/.zip phía web KHÔNG có test được commit** — tôi nghiệm
+  thu bằng script tạm rồi xóa (`listZipEntries` + `skipReasonFor` trên .zip thật
+  có node_modules/ảnh/file quá lớn, và `docxToText` trên .docx deflate+stored).
+  E2E hiện chỉ phủ ai-service. Sửa luật lọc mà quên chạy lại tay thì không có gì
+  bắt lỗi → nếu web có Vitest thì đây là chỗ đầu tiên nên viết test.
+- 🟡 **SESSION_NOTES.md đang ~340 dòng** (header tự đặt mục tiêu ~150). Phần phình
+  là "Quyết định đã chốt" (~180 dòng) — đó là kiến thức KHÔNG suy ra được từ code
+  nên tôi không tự xóa. Muốn gọn thì tách sang `.claude/docs/DECISIONS.md` và
+  thêm vào bảng Docs Router của CLAUDE.md — cần user đồng ý vì đổi cấu trúc docs.
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
   action mà quên đổi script thì test vẫn xanh; UI phải nghiệm thu bằng mắt.
 - 🟡 **Trang vận hành chưa có E2E** — chỉ lint/typecheck/build + user bấm tay.
@@ -273,75 +333,63 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-07-30 — Đợt 27 (`grading-word-dropzone-filter`, 0 mig)
-4 yêu cầu user: bỏ chọn tất cả điểm mạnh/cải thiện (`MultiSelect`); chấm bài nhận
-Word .docx; lọc đề đã lưu theo khóa (`saved-assignments.tsx`); kéo thả nhiều file.
-**ai-service ĐỔI → Render phải deploy lại.** pytest 11/11, E2E phase3 12/12.
+### 2026-07-30 — Đợt 30 (`student-class-tabs-drive-link`, 2 mig, CHƯA merge)
+Khu HV chia theo LỚP (tabs vào trong từng lớp, sản phẩm/gallery query đúng
+`class_id`); link Drive nộp bài 1/HV dùng mọi lớp (`student_drive_links`), GV +
+bạn cùng lớp xem được, hiện dạng chip gọn; bỏ ô Drive khỏi form sản phẩm; dọn
+popup xem sản phẩm. BỎ ý tưởng nhúng ảnh từ Drive. E2E mới 9/9.
+
+### 2026-07-30 — Đợt 27→29 (1 phiên, cùng ngày, đều đã push production `03ab717`)
+Chi tiết từng đợt ở ROADMAP.md; nghiệp vụ ở FEATURES.md. **Đợt 27+28 đổi
+`ai-service` → Render phải deploy lại** (Đợt 29 chỉ web).
+- **Đợt 27** (`grading-word-dropzone-filter`, 0 mig): nút "Bỏ chọn tất cả" ở
+  `MultiSelect`; **chấm bài đọc Word .docx** (`docx_to_text` bằng stdlib
+  `zipfile`+`ElementTree`, KHÔNG thêm dependency); lọc đề đã lưu theo khóa
+  (`saved-assignments.tsx`); kéo thả nhiều file. Sau đó dọn UI ô thả 3 lượt theo
+  yêu cầu user (bỏ chữ "Choose Files" của trình duyệt bằng `<label>`; bấm đâu
+  cũng chọn được file; bớt chữ; to lên) + xem đề .docx thẳng trong popup
+  (`docx-text.ts` tự đọc ZIP bằng `node:zlib`). pytest 11/11, E2E phase3 12/12.
+- **Đợt 28** (`project-review-grading`, 0 mig): **tab "Sản phẩm cuối khóa"** —
+  nav Chấm bài chia 2 tab; `/review-project` KHÔNG đề bài KHÔNG điểm, trả 3 nhóm;
+  3 đường đầu vào (thả thư mục / `webkitdirectory` / .zip giải nén ở server);
+  `lib/zip.ts` + `lib/submission-files.ts`. pytest 18/18, E2E mới 9/9.
+- **Đợt 29** (cùng nhánh, 0 mig): tab bài tập hàng ngày CŨNG nhận thư mục/.zip;
+  `skipReasonFor` có options (bài tập giữ ảnh+PDF/Word, sản phẩm bỏ);
+  `lib/zip-submission.ts` dùng chung; lỗi chia 2 mức; thông báo xanh sau khi đọc
+  file. **Kiểm chứng "không lưu file bài làm"** + thêm E2E canh Storage
+  (phase3 12→13).
 
 ### 2026-07-27 — Đợt 26 (`summary-copy-drop-header`, 0 mig, đã deploy)
 `toCopyText` bỏ dòng tiêu đề `NHẬN XÉT TỔNG HỢP — <tên HV>` — text copy bắt đầu
 ngay ở `TRONG QUÁ TRÌNH HỌC:` để GV dán thẳng vào tin phụ huynh. Panel trên màn
 hình VẪN hiện tên HV (chỉ text copy là bỏ) — đừng "sửa lại cho đồng bộ".
 
-### 2026-07-27 — Đợt 19→25 (7 đợt, đều đã deploy production)
-Phiên dài, mỗi đợt 1 nhánh riêng, deploy từng cụm khi user duyệt. Chi tiết
-từng đợt ở ROADMAP.md; nghiệp vụ ở FEATURES.md.
-- **Đợt 19** (`review-level-absent-copy`, mig `20260726000000`): `student_reviews`
-  thêm `academic_level` (CHECK 4 mức) + `is_absent`. ai-service `/generate-review`
-  nhận `academic_level` (Render deploy lại). 🐛 fix lỗi gọi hàm client từ server
-  → tách `review-status.ts`.
-- **Đợt 20** (`api-key-toggle`, mig `20260727000000`): `user_secrets.use_own_key`
-  công tắc bật/tắt key riêng, `getMyApiKey()` trả null khi tắt.
-- **Đợt 21** (`review-copy-prior-combos`, mig `20260728000000`): copy nhận xét
-  2 nhóm (bạn cùng buổi + buổi trước của em); bảng `review_combos` + quản lý ở
-  Cài đặt. **Migration bảng mới an toàn dán bất kỳ lúc nào** (`listMyCombos`
-  nuốt lỗi table-chưa-tồn-tại → trang không vỡ).
-- **Đợt 22** (`review-input-ux-combo-seed`, 0 mig): gõ câu mới trong ô tick
-  (`MultiSelect.onCreate`), badge giới hạn cao/cuộn, seed ~22 bộ combo mẫu
-  (`seedDefaultCombos` rút từ danh mục GV theo nhóm, bỏ presentation), khối Cài
-  đặt đóng mặc định.
-- **Đợt 23** (`duplicate-class`, 0 mig): sao chép lớp — giáo án lấy từ LỚP KHÁC
-  do GV chọn (`duplicateClass`, upsert đè buổi trigger sinh), thành viên từ lớp
-  đang mở, KHÔNG chép nhận xét/sản phẩm.
-- **Đợt 24** (`ui-scrolltop-backbtn-collapse`, 0 mig): nút "↑ lên đầu trang"
-  (`scroll-to-top.tsx` trong `AppShell`), nút quay lại to hơn, `CollapsibleCard`
-  ở trang lớp (chỉ "Buổi học" mở).
-- **Đợt 25** (`review-summary-format-backbtn`, 0 mig): bỏ khối tổng hợp trùng ở
-  trang lớp; format "tổng hợp toàn khóa" bỏ icon; đồng bộ nút quay lại +
-  `cursor-pointer`; cắt đuôi "— <hướng dẫn thừa>" ở mô tả subtitle tính năng.
-- **Git**: Đợt 22+23 gộp merge cùng lúc (xung đột docs — resolve tay). Đợt 20
-  từng suýt deploy trước khi dán migration → đã dừng hỏi user xác nhận migration
-  trước khi push (cột thêm vào bảng đang SELECT thì BẮT BUỘC dán trước deploy).
+### 2026-07-27 — Đợt 19→25 (7 đợt, đều production; chi tiết ở ROADMAP.md)
+Đợt 19 `academic_level`+`is_absent` (mig `20260726000000`, 🐛 tách
+`review-status.ts` vì gọi hàm client từ server); 20 `user_secrets.use_own_key`
+(mig `20260727000000`); 21 copy nhận xét 2 nhóm + bảng `review_combos` (mig
+`20260728000000`); 22 gõ câu mới trong ô tick + seed ~22 combo; 23 sao chép lớp;
+24 nút "↑ lên đầu trang" + `CollapsibleCard`; 25 dọn nhận xét tổng hợp + nút quay
+lại. **Bài học git**: Đợt 20 suýt deploy trước khi dán migration → từ đó luôn
+hỏi user xác nhận migration trước khi push.
 
-### 2026-07-24 — Trang vận hành `/teacher/admin` (Đợt 18, đã deploy production)
-Bản web của 3 script chẩn đoán (`check-integrity`/`check-user`/`purge-test-users`)
-+ 2 kiểm tra script không có (khóa/lớp mất GV chủ, file Storage mồ côi). Chặn
-bằng `ADMIN_USERNAMES` (không thêm role `admin` vào DB — xem Quyết định đã chốt),
-service-role nên mọi action tự `denyIfNotAdmin()`. Cũng XÓA hẳn 2 ý treo cũ
-(chia sẻ màn hình real-time + 8 ý brainstorm) theo yêu cầu user.
+### 2026-07-24 — Trang vận hành `/teacher/admin` (Đợt 18, production)
+Bản web của 3 script chẩn đoán + 2 kiểm tra mới (khóa/lớp mất GV chủ, file
+Storage mồ côi). Chặn bằng `ADMIN_USERNAMES`, service-role nên mọi action tự
+`denyIfNotAdmin()`.
 
-### 2026-07-21 — gallery/review/chấm bài + nhập tự do + gợi ý buổi + Zalo 1-1 (đã deploy)
-MultiSelect có ô tìm; đánh vắng trước random nhóm (client-only); roster "chưa
-khai báo" bên GV + giới hạn nhập liệu (`project-limits.ts`); lọc lớp gallery GV;
-chống lặp lời văn review (`prior_comments`); sửa tên đề chấm bài; nhập tự do
-điểm mạnh/cải thiện (tự lưu vào `review_options`); gợi ý nội dung buổi bằng AI;
-Zalo cá nhân hóa lớp 1-1. Zalo chống-lặp-qua-buổi: HỦY (yêu cầu nhầm). Chi tiết
-nghiệp vụ + lý do ở "Quyết định đã chốt".
+### 2026-07-21 — gallery/review/chấm bài + gợi ý buổi + Zalo 1-1 (production)
+MultiSelect có ô tìm; roster "chưa khai báo" bên GV + `project-limits.ts`; lọc
+lớp gallery GV; chống lặp lời văn review (`prior_comments`); nhập tự do điểm
+mạnh/cải thiện (tự lưu vào `review_options`); gợi ý nội dung buổi bằng AI; Zalo
+cá nhân hóa lớp 1-1. Zalo chống-lặp-qua-buổi: HỦY (yêu cầu nhầm).
 
-### 2026-07-18 — Đợt 13→17 + 4 fix (tất cả trong 1 ngày, đều production)
-Nhóm kỹ năng cho review_options + `TONE_RULE` (Đợt 13); Copy nhận xét riêng
-phụ huynh + bộ lọc Đã/Chưa hoàn thành (Đợt 14); Zalo thử "toàn văn xuôi" rồi
-quay lại liệt kê kiến thức + nhóm `presentation` (Đợt 15 — suýt xóa nhầm 50
-câu GV tự soạn khi tưởng "xóa hết", dừng hỏi lại thay vì làm theo nghĩa đen,
-bài học đã ghi ở "Quyết định đã chốt"); accordion Cài đặt theo nhóm + 6 nhóm
-mới (Đợt 16); mỗi nhóm ≥10 lựa chọn, seed 112+112 (Đợt 17). 4 fix cùng ngày:
-API key validation chặn nhầm key không "AIza"; prompt Zalo lặp tiêu đề +
-thiếu đoạn đánh giá + đè mục "Đánh giá chung" của GV (3 lần sửa, chốt cuối ở
-"Quyết định đã chốt"); user tự xóa câu ví dụ few-shot trong
-`build_zalo_summary_prompt`.
+### 2026-07-18 — Đợt 13→17 + 4 fix (1 ngày, đều production)
+Nhóm kỹ năng + `TONE_RULE` (13); copy nhận xét riêng + bộ lọc Đã/Chưa (14); Zalo
+quay lại liệt kê kiến thức (15 — suýt xóa nhầm 50 câu GV tự soạn, bài học ở
+"Quyết định đã chốt"); accordion Cài đặt theo nhóm (16); mỗi nhóm ≥10 lựa chọn,
+seed 112+112 (17). 4 fix: API key chặn nhầm key không "AIza"; prompt Zalo sai 3
+lần liên tiếp.
 
-### 2026-07-15→16 — GĐ 1–5 + Đợt 1–12 (nền tảng, đều production)
-Auth username, khóa/lớp/buổi + nhận xét AI, Zalo, chấm bài viết lại, sản phẩm
-+ gallery (HV/GV, roster bạn chưa nộp), hồ sơ HV xuyên khóa, font Be Vietnam
-Pro, API key riêng, responsive, xóa schema chết, 3 màn chiếu TV, đổi mật khẩu
-không cần cũ. Deploy 0đ/tháng (Vercel + Render + Supabase).
+> Lịch sử cũ hơn 2 tuần (GĐ 1–5 + Đợt 1–12, nền tảng 2026-07-15→16) đã xóa khỏi
+> file này — xem `ROADMAP.md` và git log.

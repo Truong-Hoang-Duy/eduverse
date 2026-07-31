@@ -53,12 +53,10 @@ type DesiredDifficulty = "auto" | FeatureSuggestion["difficulty"];
 
 export function ProjectEditor({
   classId,
-  classCode,
   courseCode,
   project,
 }: {
   classId: string;
-  classCode: string;
   courseCode: string;
   project: ProjectData | null;
 }) {
@@ -73,7 +71,6 @@ export function ProjectEditor({
   const [description, setDescription] = useState(project?.description ?? "");
   const [features, setFeatures] = useState<string[]>(project?.features ?? []);
   const [repoUrl, setRepoUrl] = useState(project?.repo_url ?? "");
-  const [driveUrl, setDriveUrl] = useState(project?.drive_url ?? "");
   const [demoUrl, setDemoUrl] = useState(project?.demo_url ?? "");
   const [notes, setNotes] = useState(project?.extra_notes ?? "");
 
@@ -91,7 +88,6 @@ export function ProjectEditor({
     setDescription(saved.description ?? "");
     setFeatures(saved.features);
     setRepoUrl(saved.repo_url ?? "");
-    setDriveUrl(saved.drive_url ?? "");
     setDemoUrl(saved.demo_url ?? "");
     setNotes(saved.extra_notes ?? "");
   }, [state]);
@@ -257,7 +253,9 @@ export function ProjectEditor({
         )}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      {/* 2 cột bằng nhau, trải hết chiều rộng. Trước là `sm:grid-cols-3` từ hồi
+          còn ô Drive — bỏ ô đó rồi mà giữ 3 cột thì chừa một cột trống bên phải. */}
+      <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor={`repo-${classId}`}>Link GitHub</Label>
           <Input
@@ -269,17 +267,9 @@ export function ProjectEditor({
             placeholder="https://github.com/..."
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor={`drive-${classId}`}>Link Google Drive</Label>
-          <Input
-            id={`drive-${classId}`}
-            name="drive_url"
-            type="url"
-            value={driveUrl}
-            onChange={(e) => setDriveUrl(e.target.value)}
-            placeholder="https://drive.google.com/..."
-          />
-        </div>
+        {/* KHÔNG còn ô "Link Google Drive" ở đây: link Drive đã chuyển lên cấp
+            HỌC VIÊN (một link dùng cho mọi lớp, khai ở khối "Thư mục nộp bài
+            tập" phía trên) — để 2 ô Drive là học viên không biết điền vào đâu. */}
         <div className="space-y-1.5">
           <Label htmlFor={`demo-${classId}`}>Link demo</Label>
           <Input
@@ -314,21 +304,25 @@ export function ProjectEditor({
               ? "Cập nhật sản phẩm"
               : "Lưu sản phẩm"}
         </Button>
+        {/* Chỉ hiện khi ĐÃ có sản phẩm — chưa tạo thì không có gì để xóa. */}
         {isEditing && (
           <ConfirmDialog
             trigger={
-              <Button type="button" variant="ghost" size="sm">
-                Xóa
+              <Button
+                type="button"
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                Xóa sản phẩm
               </Button>
             }
             title="Xóa sản phẩm này?"
-            description="Sản phẩm cùng các nhận xét của bạn bè sẽ bị xóa vĩnh viễn."
-            confirmLabel="Xóa sản phẩm"
+            description="Toàn bộ thông tin sản phẩm và các nhận xét của bạn bè sẽ bị xóa vĩnh viễn khỏi hệ thống, không lấy lại được. Bạn có thể khai báo lại từ đầu sau đó."
+            confirmLabel="Xóa vĩnh viễn"
             action={deleteProject}
             fields={{ id: projectId }}
           />
         )}
-        <span className="text-xs text-muted-foreground">Lớp {classCode}</span>
         <FormMessage result={state} />
       </div>
     </form>

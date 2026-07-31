@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { removeStudent, transferStudent } from "@/lib/actions/classes";
+import { DriveLinkChip } from "@/components/drive-link-chip";
 import type { ActionResult } from "@/lib/types";
 
 import { ResetPasswordDialog } from "./reset-password-dialog";
@@ -31,6 +32,8 @@ export interface StudentRow {
   studentId: string;
   fullName: string;
   username: string | null;
+  /** Link Drive nộp bài em tự khai; null nếu chưa khai. Chỉ GV của lớp đọc được. */
+  driveUrl: string | null;
 }
 
 export interface ClassOption {
@@ -68,6 +71,7 @@ export function StudentsTable({
           <TableRow>
             <TableHead>Họ tên</TableHead>
             <TableHead>Tên tài khoản</TableHead>
+            <TableHead>Thư mục nộp bài</TableHead>
             <TableHead className="w-[380px]">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
@@ -83,6 +87,15 @@ export function StudentsTable({
                 </Link>
               </TableCell>
               <TableCell>{student.username ?? "—"}</TableCell>
+              <TableCell>
+                {student.driveUrl ? (
+                  <DriveLinkChip url={student.driveUrl} />
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Chưa khai báo
+                  </span>
+                )}
+              </TableCell>
               <TableCell>
                 <div className="flex items-center gap-3">
                   <form action={formAction} className="flex items-center gap-2">

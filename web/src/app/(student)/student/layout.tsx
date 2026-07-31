@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/app-shell";
-import { StudentTabs } from "@/components/student-tabs";
 import { requireRole } from "@/lib/get-profile";
 
 export default async function StudentLayout({
@@ -12,9 +11,8 @@ export default async function StudentLayout({
   const profile = await requireRole("student");
 
   return (
-    <AppShell profile={profile}>
-      <StudentTabs />
-      {children}
-    </AppShell>
+    // Tab (Sản phẩm / Sản phẩm của lớp / Hướng dẫn) KHÔNG còn ở đây: chúng thuộc
+    // từng lớp, nằm trong `classes/[classId]/layout.tsx`.
+    <AppShell profile={profile}>{children}</AppShell>
   );
 }
