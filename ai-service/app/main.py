@@ -5,6 +5,7 @@ from fastapi.security import APIKeyHeader
 
 from app.config import get_settings
 from app.routes import grading, projects, reviews
+from app.schemas import HealthResponse
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
@@ -20,10 +21,17 @@ app = FastAPI(
     description="Gemini-backed endpoints: review, zalo summary, feature suggestions, grading.",
 )
 
-# /health không cần key — Render dùng để health-check.
+# /health không cần key — Render dùng để health-check, VÀ để người vận hành tự
+# kiểm bản đang chạy mà không cần vào dashboard. Mở thẳng trên trình duyệt được.
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> HealthResponse:
+    commit = get_settings().render_git_commit
+    return HealthResponse(
+        status="ok",
+        # 7 ký tự đầu để so bằng mắt với `git log --oneline`; "local" khi chạy máy
+        # dev (Render mới đặt biến này).
+        commit=commit[:7] if commit else "local",
+    )
 
 
 protected = [Depends(verify_api_key)]
