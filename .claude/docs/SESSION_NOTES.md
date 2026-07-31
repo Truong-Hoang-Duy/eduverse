@@ -8,15 +8,16 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** Đợt 30 XONG CODE nhưng **CHƯA merge** — nhánh
-`feature/student-class-tabs-drive-link` (5 commit + 1 commit docs). 2 migration
-của đợt này user ĐÃ dán, E2E 9/9 xanh. Chỉ còn merge + deploy Vercel.
+**Đang làm:** Đợt 30 đã merge + push production (`244ed83`). Đợt 31 (drop cột
+`projects.drive_url`) đã merge vào develop — **chờ user dán migration
+`20260731000000` SAU khi Vercel build xong Đợt 31**.
 
-**`main` = `origin/main` = `03ab717`** — bản đang chạy production (Đợt 27-29).
-**`develop` = `origin/develop` = `d5e80d9`** = main + 1-2 commit docs
+**`main` = `origin/main` = `244ed83`** — production (Đợt 27-30). Đợt 31 đang push.
+**`develop` = `origin/develop`** = main + Đợt 31 + commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
-Nhánh `feature/project-review-grading` đã push, đã merge, **xóa được**.
+Nhánh `feature/project-review-grading`, `feature/student-class-tabs-drive-link`,
+`chore/drop-project-drive-url` đã merge — **xóa được**.
 
 🔴 **VIỆC ĐẦU TIÊN CỦA PHIÊN SAU: hỏi user đã deploy Render chưa.** Đợt 27+28 đổi
 `ai-service` (endpoint `/review-project` + trích chữ .docx). Chưa deploy Render
