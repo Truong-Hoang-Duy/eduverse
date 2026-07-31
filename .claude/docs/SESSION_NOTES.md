@@ -58,7 +58,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
 
-**Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (54 unit test) + build.**
+**Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (92 unit test) + build.**
 
 **E2E: 99/99 các bộ KHÔNG gọi AI đều xanh** (chạy lại 2026-07-30 sau migration
 `20260731030000` đổi policy `courses`/`classes` — không hồi quy). Các bộ GỌI AI
@@ -107,12 +107,16 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
   action mà quên đổi script thì test vẫn xanh; UI phải nghiệm thu bằng mắt.
 - 🟡 **Trang vận hành chưa có E2E** — chỉ lint/typecheck/build + user bấm tay.
-- 🟡 **Vitest chỉ phủ LOGIC THUẦN** (54 test: lọc file, ZIP, docx, drive-url).
-  Component + Server Action vẫn không có test — nghiệm thu bằng E2E + bấm tay.
+- 🟡 **Vitest phủ LOGIC THUẦN** (92 test: lọc file, ZIP, docx, drive-url, quyền
+  admin, xếp loại, trạng thái nhận xét, tên file). Phần RENDER của component và
+  thân Server Action (cần mock Supabase) vẫn không có test — nghiệm thu bằng E2E +
+  bấm tay. Đây là lựa chọn có ý thức: bug render lộ ra ngay khi nhìn, còn logic
+  thuần thì không.
 - 🟡 `e2e-gallery-storage` flake 3 lần ở ca "file trong Storage cũng biến mất".
-  Đã điều tra (Đợt 35): **không tái hiện được**, giả thuyết CDN cache sai. Đã làm
-  nó CHẨN ĐOÁN ĐƯỢC (đọc error của `remove()` + đối chiếu `list` vs `download`) —
-  lần đỏ tiếp theo sẽ tự nói nguyên nhân, xem thông báo trước khi đoán.
+  Điều tra 2 lượt (Đợt 35 + 38): giả thuyết CDN cache SAI, và **15 lượt chạy liên
+  tiếp đều xanh → không tái hiện được**. Đã làm nó CHẨN ĐOÁN ĐƯỢC (đọc error của
+  `remove()` + đối chiếu `list` vs `download`). Lần đỏ tiếp theo: ĐỌC thông báo
+  trước, đừng đoán lại — và đừng điều tra thêm khi chưa có lần đỏ mới.
 
 ### Ràng buộc môi trường (không sửa được, phải sống chung)
 - **Migration dán tay vào Supabase SQL Editor** — mạng chặn cổng 5432/6543.

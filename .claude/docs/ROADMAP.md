@@ -595,6 +595,23 @@
       link Drive lớp khác" ban đầu **pass suông** vì nạn nhân chưa có link — đã
       cho nạn nhân lưu link trước để ca đó thật sự đỏ được
 
+### Đợt 38 (`chore/pay-down-last-debt`) — trả 2 món nợ cuối
+- [x] **Test cho logic thuần mà Server Action/component dựa vào** (62 → 92 test):
+      `admin-access` (RANH GIỚI BẢO MẬT của /teacher/admin, trước KHÔNG có test —
+      canh fail-closed khi thiếu env, khớp cả tên chứ không khớp tiền tố),
+      `academic-levels` (kèm test đọc migration để bắt lệch giữa TS và CHECK
+      constraint), `review-status` (module sinh ra từ bug gọi hàm client từ server),
+      `spec-storage`
+- [x] 🐛 **Bug thật do test bắt được**: `sanitizeFileName` biến "đề bài" thành
+      `_e_bai` — `đ` là ký tự độc lập nên `normalize("NFD")` không tách được. Đã
+      map đ→d, Đ→D trước khi NFD
+- [x] Một test tôi viết theo giả định SAI (file đề dùng base64) — thực tế đi
+      FormData nhị phân; đã sửa test và ghi lại vào DECISIONS.md
+- [x] **Flake `e2e-gallery-storage`: chạy 12 lượt liên tiếp + 3 lượt trước = 15/15
+      xanh, KHÔNG tái hiện được.** Chốt: giữ nguyên phần instrumentation đã thêm ở
+      Đợt 35, đóng món nợ ở mức "đã điều tra, chưa biết gốc, nhưng lần sau đỏ sẽ
+      tự nói nguyên nhân". KHÔNG đoán thêm khi không có dữ liệu
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
