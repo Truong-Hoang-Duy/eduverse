@@ -10,11 +10,11 @@
 
 **Đang làm:** KHÔNG có task dở. Đợt 41 + 42 đã merge và **push lên `main`**.
 
-**`main` = `origin/main` = `403891b`** — bản vừa đẩy lên production.
-⚠️ **Vercel deploy chưa được xác nhận bằng mắt** — Claude không mở được trang
-production. Vào Vercel (hoặc mở app trên điện thoại) kiểm 3 thứ của Đợt 42: nav
-không đè nhau, nút "Xóa hết N file" nổi rõ, chấm xong nạp bài mới thì file cũ
-biến sạch. ai-service KHÔNG đổi → Render không cần deploy lại.
+**`main` = `origin/main` = `403891b`** — bản đang chạy production, **user đã
+nghiệm thu trên điện thoại thật** (nav không đè nhau, nút "Xóa hết N file" nổi
+rõ, chấm xong nạp bài mới thì file cũ biến sạch).
+ai-service KHÔNG đổi ở hai đợt này → Render vẫn chạy bản cũ, `/health` trả commit
+cũ là ĐÚNG, không phải dấu hiệu hỏng.
 
 - **Đợt 41** (`feature/e2e-action-harness`): chỉ test + tài liệu, **78/78 E2E xanh**.
 - **Đợt 42** (`fix/mobile-nav-and-grading-reset`): sửa `src/` thật (nav mobile,
