@@ -37,6 +37,10 @@
 - Tên biến/hàm/comment kỹ thuật, commit message: tiếng Anh.
 
 ## Test
-- web/: đặt cạnh file nguồn `foo.ts` → `foo.test.ts` (Vitest).
+- web/: đặt cạnh file nguồn `foo.ts` → `foo.test.ts` (Vitest, `pnpm test`).
+  Chỉ test LOGIC THUẦN (lọc file, đọc ZIP, validate/format) — không test
+  component/Server Action, phần đó nghiệm thu bằng E2E + bấm tay.
+  Alias `@/` chạy được nhờ `vitest.config.ts`; fixture ZIP/docx dựng bằng
+  `src/lib/zip-fixture.ts` (chỉ dùng cho test).
 - ai-service/: `tests/test_*.py` (pytest), mock Gemini — test không được gọi API thật.
 - Tên test mô tả hành vi: "should reject student accessing teacher page", không đặt "test 1".

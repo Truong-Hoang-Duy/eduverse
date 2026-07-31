@@ -20,7 +20,8 @@
 Khi bắt đầu MỌI phiên làm việc mới, TRƯỚC KHI làm bất cứ việc gì:
 
 1. Đọc `.claude/docs/SESSION_NOTES.md` để nắm trạng thái công việc gần nhất
-   (task đang dở, quyết định đã chốt, việc cần làm tiếp).
+   (task đang dở, việc cần làm tiếp). Quyết định đã chốt nằm ở
+   `.claude/docs/DECISIONS.md` — đọc khi định làm ngược một lựa chọn cũ.
 2. Đọc `.claude/docs/ROADMAP.md` để biết đang ở giai đoạn nào.
 3. Nếu SESSION_NOTES.md nhắc đến branch/PR cụ thể, chạy `git status` và
    `git log --oneline -10` để đối chiếu.
@@ -33,6 +34,7 @@ Khi phiên làm việc sắp kết thúc hoặc user gõ `/handoff`, cập nhậ
 | Task liên quan đến | Đọc file |
 |---|---|
 | Trạng thái phiên trước / tiếp tục việc dở | `.claude/docs/SESSION_NOTES.md` |
+| **Quyết định đã chốt** — đọc TRƯỚC khi làm ngược một lựa chọn cũ | `.claude/docs/DECISIONS.md` |
 | Giai đoạn, checklist tiến độ | `.claude/docs/ROADMAP.md` |
 | Sơ đồ hệ thống, ranh giới service | `.claude/docs/ARCHITECTURE.md` |
 | Schema DB, RLS, quan hệ course→class→session | `.claude/docs/DATABASE.md` |
@@ -50,6 +52,7 @@ pnpm install               # KHÔNG dùng npm/yarn
 pnpm dev                   # dev server http://localhost:3000
 pnpm lint                  # eslint
 pnpm typecheck             # tsc --noEmit
+pnpm test                  # vitest run (unit test logic thuần)
 pnpm build                 # production build
 # --- ai-service/ (chạy trong thư mục ai-service/) ---
 .venv/Scripts/python -m uvicorn app.main:app --reload --port 8000
@@ -79,8 +82,11 @@ Luôn chạy lint + typecheck + test liên quan trước khi coi task là hoàn 
 - Mọi hành động xóa dùng `ConfirmDialog`; không dùng `confirm()` của trình duyệt.
 - Xóa là XÓA SẠCH: DB cascade sẵn nhưng **Storage không cascade** — xóa dòng có
   file (VD `assignments.spec_file_path`) phải đọc path TRƯỚC rồi gọi
-  `removeSpecFiles` (`web/src/lib/spec-storage.ts`). Không upload file lên Storage
-  trước khi dòng DB được tạo thành công.
+  `removeSpecFiles` (`web/src/lib/spec-storage.ts`).
+- File lên Storage phải có đường DỌN nếu dòng DB không tạo được. `createAssignment`
+  upload TRƯỚC rồi insert vì cần path để insert — và tự `removeSpecFiles` khi
+  insert lỗi. Cách nào cũng được, miễn là **không có nhánh nào để lại file mồ côi**;
+  đừng upload rồi bỏ đó chờ ai dọn tay.
 - Không thêm dependency mới khi chưa hỏi ý kiến user.
 
 ## 7. Git Workflow (chi tiết trong .claude/rules/git-workflow.md)

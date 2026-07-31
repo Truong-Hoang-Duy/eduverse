@@ -487,12 +487,41 @@
       lớp, bạn cùng lớp, HV lớp khác, GV lớp khác, GV không sửa được, HV khác
       không ghi được, xóa được
 - [x] ai-service KHÔNG đổi → không cần deploy Render cho đợt này
+- [x] Merge lên production + user nghiệm thu bằng mắt (2026-07-30)
 
 ### Đợt 31 (`chore/drop-project-drive-url`) — dọn cột chết
 - [x] Bỏ 3 chỗ CUỐI còn tham chiếu `projects.drive_url`: `SavedProject` +
       `saved.drive_url` trong `saveProject`, `ProjectData` của form, và types
 - [x] Migration `20260731000000` drop cột — **dán SAU khi Đợt 30 đã deploy**
 - [x] 0 dòng dữ liệu bị ảnh hưởng (đã đo: production có 0 project)
+- [x] Deploy + dán migration + nghiệm thu bằng mắt (2026-07-30)
+
+### Đợt 32 (`chore/pay-down-debt`) — trả nợ kỹ thuật
+- [x] **Vitest cho web** (devDependency, user duyệt 2026-07-30): `vitest.config.ts`
+      có alias `@/` + `environment: "node"`; `pnpm test` / `pnpm test:watch`.
+      **54 unit test** phủ đúng phần trước đây không có gì canh:
+      `submission-files` (luật lọc rác + ngân sách 2 tab), `zip` (deflate/stored,
+      extra field lệch, entry hỏng không làm mất bài, `keep` chặn TRƯỚC khi bung),
+      `docx-text` (đoạn/tab/br/entity/trim), `drive-url` (chặn `javascript:`,
+      rút gọn hiển thị). Fixture ZIP/docx dựng trong `src/lib/zip-fixture.ts`
+      thay vì base64 dán cứng — sửa/mở rộng được
+- [x] **Tách `.claude/docs/DECISIONS.md`** khỏi SESSION_NOTES (390 → 186 dòng);
+      đăng ký ở Docs Router + Session Startup Protocol của CLAUDE.md
+- [x] Xóa 14 nhánh đã merge (local) + 2 nhánh trên remote — chỉ còn main/develop
+- [x] `pnpm test` vào bảng lệnh CLAUDE.md; `coding-style.md` ghi rõ phạm vi test
+- [x] **`TEST_USER_PREFIXES` về NGUỒN DUY NHẤT** `src/lib/test-user-prefixes.json`
+      (JSON vì script Node không import được `.ts`). Phát hiện danh sách ĐÃ lệch
+      thật: `dl.`/`e4.`/`ek.` được script dùng mà chưa khai → `purge-test-users`
+      không dọn nổi tài khoản của 3 bộ E2E đó; `e1f.`/`e4h.`/`e5i.` khai mà không
+      script nào dùng. Đã dọn 6 tài khoản `dl.` mồ côi trong DB thật
+- [x] Test chống lệch trở lại: `test-user-prefixes.test.ts` đọc thẳng
+      `scripts/e2e-*.mjs`, đỏ nếu thiếu/thừa tiền tố, hoặc tiền tố không có dấu
+      chấm / lồng nhau (script này XÓA tài khoản nên phạm vi phải khớp đúng).
+      Đã nghiệm thu guard đỏ được bằng cách phá JSON thử
+- [x] `vitest-stubs/server-only.ts` + alias → test được module có `import
+      "server-only"` (trước đó bị ném oan vì vitest chạy Node thuần)
+- [x] Sửa luật CLAUDE.md đang lệch với `createAssignment`: yêu cầu thật là "mọi
+      nhánh lỗi phải có đường dọn file", không phải "cấm upload trước insert"
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
