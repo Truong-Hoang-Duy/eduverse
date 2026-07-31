@@ -20,7 +20,8 @@
 Khi bắt đầu MỌI phiên làm việc mới, TRƯỚC KHI làm bất cứ việc gì:
 
 1. Đọc `.claude/docs/SESSION_NOTES.md` để nắm trạng thái công việc gần nhất
-   (task đang dở, quyết định đã chốt, việc cần làm tiếp).
+   (task đang dở, việc cần làm tiếp). Quyết định đã chốt nằm ở
+   `.claude/docs/DECISIONS.md` — đọc khi định làm ngược một lựa chọn cũ.
 2. Đọc `.claude/docs/ROADMAP.md` để biết đang ở giai đoạn nào.
 3. Nếu SESSION_NOTES.md nhắc đến branch/PR cụ thể, chạy `git status` và
    `git log --oneline -10` để đối chiếu.
@@ -33,6 +34,7 @@ Khi phiên làm việc sắp kết thúc hoặc user gõ `/handoff`, cập nhậ
 | Task liên quan đến | Đọc file |
 |---|---|
 | Trạng thái phiên trước / tiếp tục việc dở | `.claude/docs/SESSION_NOTES.md` |
+| **Quyết định đã chốt** — đọc TRƯỚC khi làm ngược một lựa chọn cũ | `.claude/docs/DECISIONS.md` |
 | Giai đoạn, checklist tiến độ | `.claude/docs/ROADMAP.md` |
 | Sơ đồ hệ thống, ranh giới service | `.claude/docs/ARCHITECTURE.md` |
 | Schema DB, RLS, quan hệ course→class→session | `.claude/docs/DATABASE.md` |
