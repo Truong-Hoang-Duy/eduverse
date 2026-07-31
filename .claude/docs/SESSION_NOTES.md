@@ -8,17 +8,14 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 37 đã dán migration + deploy,
-`e2e-profile-privileges` 10/10 và 6 bộ khác chạy lại đều xanh (gồm ca đăng ký HV
-→ luồng signup qua trigger không hỏng). Đợt 36 đã dán migration, `e2e-profile-privileges`
-8/8, và 6 bộ E2E khác chạy lại đều xanh → policy `courses`/`classes` đổi KHÔNG
-gây hồi quy.
-🔴 **Đợt 39 đổi `ai-service` (thông báo hết lượt) → cần deploy lại RENDER.**
-Đợt 35 thì user đã deploy Render rồi (2026-07-30).
-🔴 **Đợt 35 đổi `ai-service` → user phải deploy lại RENDER**, không chỉ Vercel. Đợt 27→31 đã deploy, user xác nhận
-2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
-lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
-`student_drive_links` có dữ liệu thật.
+**Đang làm:** KHÔNG có task dở. Đợt 27→39 đã merge + push production.
+
+🔴 **VIỆC DUY NHẤT CÒN LẠI: deploy lại RENDER cho Đợt 39** (`ai-service` đổi thông
+báo hết lượt). Render của Đợt 35 thì user đã deploy rồi (2026-07-30).
+
+**Mọi migration của phiên này ĐÃ áp** — đã đo lại trên DB thật, không tin ghi chú:
+`projects.drive_url` báo "does not exist" (drop xong), `student_drive_links` có dữ
+liệu thật, và `e2e-profile-privileges` 10/10 xác nhận 2 migration phân quyền.
 
 **`main` = `origin/main` = `0d87882`** — production (Đợt 27-39).
 **`develop` = `origin/develop`** = main + 1 commit docs ghi hash
