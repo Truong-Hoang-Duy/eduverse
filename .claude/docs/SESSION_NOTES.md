@@ -8,13 +8,16 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-31, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 41 + 42 đã merge và **push lên `main`**.
+**Đang làm:** KHÔNG có task dở. Đợt 41→44 đã merge và **push lên `main`**.
 
-**`main` = `origin/main` = `403891b`** — bản đang chạy production, **user đã
-nghiệm thu trên điện thoại thật** (nav không đè nhau, nút "Xóa hết N file" nổi
-rõ, chấm xong nạp bài mới thì file cũ biến sạch).
-ai-service KHÔNG đổi ở hai đợt này → Render vẫn chạy bản cũ, `/health` trả commit
-cũ là ĐÚNG, không phải dấu hiệu hỏng.
+**`main` = `origin/main` = `237f6cd`** — vừa đẩy lên production, user đã nghiệm
+thu trên máy dev trước khi deploy.
+
+⚠️ **Đợt 43 SỬA `ai-service/` (endpoint `/help-student`) → Render PHẢI deploy
+lại.** Kiểm bằng cách mở `https://eduverse-ai.onrender.com/health`, trường
+`commit` phải là **`237f6cd`**. Còn hiện `403891b` nghĩa là Render CHƯA build
+xong — tab "Hỏi bài" sẽ báo lỗi kết nối cho tới lúc đó (Vercel deploy nhanh hơn
+Render nhiều). Máy dev KHÔNG vào được `onrender.com`, phải mở trên máy user.
 
 - **Đợt 41** (`feature/e2e-action-harness`): chỉ test + tài liệu, **78/78 E2E xanh**.
 - **Đợt 42** (`fix/mobile-nav-and-grading-reset`): sửa `src/` thật (nav mobile,
@@ -150,7 +153,20 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-07-31 — Đợt 42: 3 lỗi UI user báo khi dùng thật (production `403891b`)
+### 2026-07-31 — Đợt 43 + 44: tab "Hỏi bài" và gộp phần nhận file (production `237f6cd`)
+**Đợt 43** — tab thứ 3 của khu Chấm bài: GV nạp đề (+ code/ảnh chụp màn hình của
+em nếu có) → AI trả gợi ý ĐƠN GIẢN để GV Copy dán lại cho em qua Zalo. Đây là chỗ
+DUY NHẤT trong hệ thống mà văn bản AI sinh ra được HỌC VIÊN đọc tận mắt, nên có
+`STUDENT_HELP_RULE` riêng (ghì độ khó, cấm giải hộ bài, code minh họa ≤3 dòng).
+KHÔNG chấm điểm. Bắt được khi chạy E2E: Gemini vẫn tự viết `dang_o_dau` dù prompt
+dặn trả rỗng → phải ép ở server, chế độ đã biết chắc từ đầu vào.
+
+**Đợt 44** — user chỉ ra 3 tab đang có 3 logic nhận file. Đo lại: 2 bản gần y hệt
+(nợ tôi tự tạo ở Đợt 43) + 1 bản khác thật. Gộp thành 1 hook + 2 component,
+**1635 → 830 dòng** ở 3 tool. Giữ tham số hóa 4 khác biệt nghiệp vụ, thống nhất 3
+thứ về thao tác — chi tiết ở DECISIONS.md.
+
+### 2026-07-31 — Đợt 42: 3 lỗi UI user báo khi dùng thật
 Nav giáo viên đè lên nút đổi giao diện trên điện thoại — 4 nhãn tiếng Việt
 (~214px chữ) cộng logo + nút + avatar không vừa hàng ~360px. Cho nav xuống hàng
 riêng **khi có >2 mục** (học viên 1 mục thì giữ nguyên, đẩy xuống là phí một
