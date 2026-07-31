@@ -215,14 +215,15 @@ trong bảng danh sách lớp.
   mạch, không xuống dòng, không bullet — chỉ đổi CHỖ ĐẶT, không đổi CÁCH VIẾT.
 
 ### Chấm bài bằng AI — công cụ ĐỘC LẬP, KHÔNG theo lớp
-Nav "Chấm bài" chia **2 tab** (`grading-tabs.tsx`, URL riêng nên chia sẻ được):
+Nav "Chấm bài" chia **3 tab** (`grading-tabs.tsx`, URL riêng nên chia sẻ được):
 
-| Tab | URL | Có đề bài? | Có điểm? |
-|---|---|---|---|
-| Bài tập hàng ngày | `/teacher/assignments` | Có (bắt buộc) | Có (/100) |
-| Sản phẩm cuối khóa | `/teacher/assignments/project` | **Không** | **Không** |
+| Tab | URL | Có đề bài? | Có điểm? | Ai đọc kết quả |
+|---|---|---|---|---|
+| Bài tập hàng ngày | `/teacher/assignments` | Có (bắt buộc) | Có (/100) | Giáo viên |
+| Sản phẩm cuối khóa | `/teacher/assignments/project` | **Không** | **Không** | Giáo viên |
+| Hỏi bài | `/teacher/assignments/help` | Có (bắt buộc) | **Không** | **HỌC VIÊN** |
 
-Cả hai đều không dính lớp/học viên/danh sách HV và **không lưu gì** ngoài đề bài.
+Cả ba đều không dính lớp/học viên/danh sách HV và **không lưu gì** ngoài đề bài.
 
 #### Tab "Bài tập hàng ngày"
 
@@ -277,6 +278,29 @@ Sản phẩm cuối khóa là cả một project nhiều file, không có đề 
   thư mục vào prompt để AI hiểu bố cục, nhận xét TỔNG THỂ chứ không chấm rời
   từng file.
 - **KHÔNG lưu gì** — giống tab bài tập.
+
+#### Tab "Hỏi bài" (`/help-student`) — GỢI Ý cho em, không chấm
+Em nhắn Zalo hỏi bài; GV mở tab này, lấy gợi ý rồi **bấm Copy dán lại cho em**.
+Đây là chỗ DUY NHẤT trong hệ thống mà văn bản AI sinh ra được HỌC VIÊN đọc tận
+mắt — mọi chỗ khác viết cho GV hoặc phụ huynh.
+
+- **Chỉ giáo viên dùng.** Không có giao diện phía học viên: mở cho cả lớp là mở
+  luôn hạn mức Gemini và kéo theo một tầng RLS mới (chốt 2026-07-31).
+- **Một ô, hai chế độ, tự nhận biết theo việc CÓ NẠP FILE HAY KHÔNG**:
+  - *Chưa nạp gì* → em chưa biết bắt đầu → trả **CÁC BƯỚC LÀM BÀI** (3-6 bước).
+  - *Có nạp* → em làm dở → thêm **EM ĐANG LÀM ĐẾN ĐÂU** + **CẦN SỬA**, và mục
+    bước đổi tên thành **LÀM GÌ TIẾP**. Hướng đi sai thì AI phải nói thẳng ngay
+    ở khối đầu, không để em đi tiếp rồi hỏng.
+- **Nhận cả ảnh**: code, cả thư mục, `.zip`, **ảnh chụp màn hình code, ảnh giao
+  diện đang chạy** — em hay chụp màn hình gửi Zalo. Dùng chung đường base64 +
+  bộ lọc rác + ngân sách `GRADING_BUDGET` với tab bài tập.
+- **Ô "Em hỏi gì" (tùy chọn)**: GV chép câu em nhắn vào; có câu hỏi cụ thể thì
+  gợi ý trúng hơn nhiều so với để AI tự đoán từ code.
+- **Hướng dẫn phải ĐƠN GIẢN** (`STUDENT_HELP_RULE`): từ ngữ dễ, câu ngắn, cấm kỹ
+  thuật nâng cao, thuật ngữ bắt buộc thì giải thích ngay. **Không giải hộ cả
+  bài**; chỉ cho phép đoạn code minh họa tối đa 2-3 dòng để chỉ cú pháp.
+- **TUYỆT ĐỐI không điểm số** — em đang hỏi bài, không nộp bài.
+- **KHÔNG lưu gì** — giống hai tab kia.
 
 ### Sản phẩm cuối khóa (góc nhìn GV)
 Trang `/teacher/gallery` (nav "Sản phẩm") — dùng CHUNG component với gallery của

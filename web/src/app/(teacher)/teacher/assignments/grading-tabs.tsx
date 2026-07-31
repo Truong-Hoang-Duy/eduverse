@@ -9,9 +9,10 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { href: "/teacher/assignments", label: "Bài tập hàng ngày", exact: true },
   { href: "/teacher/assignments/project", label: "Sản phẩm cuối khóa" },
+  { href: "/teacher/assignments/help", label: "Hỏi bài" },
 ];
 
-/** Hai kiểu chấm nằm chung nav "Chấm bài" — dùng Link nên URL chia sẻ được. */
+/** Ba công cụ nằm chung nav "Chấm bài" — dùng Link nên URL chia sẻ được. */
 export function GradingTabs() {
   const pathname = usePathname();
 
