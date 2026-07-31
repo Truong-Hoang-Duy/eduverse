@@ -296,3 +296,14 @@
 - **File ĐỀ BÀI đi qua FormData (nhị phân), KHÔNG base64** — chỉ đường CHẤM BÀI mới
   base64 (`GRADING_BUDGET` đã chừa +33%). Nên `SPEC_MAX_BYTES` 8MB dưới trần 10MB là
   đủ, không cần trừ thêm cho base64 (tôi từng viết test sai theo giả định này).
+- **ĐỪNG hardcode hạn mức của Google vào thông báo** (2026-07-30). 4 chỗ ghi
+  "1.500 lượt/ngày" — kể cả văn bản hiển thị cho HỌC VIÊN ở trang Hướng dẫn — nhưng
+  đọc chính lỗi 429 thì `gemini-flash-latest` đang trỏ `gemini-3.6-flash` với
+  `quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`, **`quotaValue: 20`
+  lượt/NGÀY**. Sai gấp 75 lần. Nay chỉ nói "miễn phí, có hạn mức riêng" + trỏ tới
+  `ai.google.dev/gemini-api/docs/rate-limits`. Cùng họ bài học với "đừng đoán format
+  API key bên thứ 3" (2026-07-18): đừng chép số/định dạng của bên thứ 3 vào code.
+- **E2E gọi AI KHÔNG chạy được tùy ý** — hạn mức free tier 20 lượt/ngày mà mỗi bộ
+  gọi 6-10 lượt, nên **chạy 2 bộ là hết ngày**. Đừng coi việc chúng đỏ vì hết lượt là
+  việc "đang treo": đọc log (`Gemini quota exhausted`) rồi để đó. Muốn chạy chủ động
+  thì đặt `GEMINI_API_KEY` trong `ai-service/.env` là key còn lượt.
