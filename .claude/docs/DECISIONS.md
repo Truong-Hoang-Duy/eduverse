@@ -259,3 +259,18 @@
 - **E2E gọi AI đỏ thì NGHI NGOẠI CẢNH TRƯỚC** (2026-07-30): Gemini 503 "high demand"
   và hết lượt đều làm đỏ mà code không sai. Đọc log ai-service (giờ đã log cả 2
   nhánh) rồi chạy lại, đừng sửa code theo lần đỏ đầu tiên.
+- 🔴 **RLS của Postgres KHÔNG giới hạn CỘT — phải dùng `grant update (cột)`**
+  (sự cố leo thang quyền 2026-07-30, nặng nhất phiên). `profiles_update_own` chỉ nói
+  được sửa DÒNG nào, nên học viên `PATCH` thẳng `role` của mình thành `'teacher'`.
+  Chuỗi đã kiểm chứng đầy đủ: tự nâng quyền → `search_students` (SECURITY DEFINER)
+  trả về HV lớp khác → tự tạo khóa+lớp → ghi danh nạn nhân vào lớp mình → thỏa điều
+  kiện `resetStudentPassword` = **đặt lại mật khẩu học viên bất kỳ**.
+  Sửa ở `20260731030000`: `revoke update on profiles from authenticated` rồi
+  `grant update (full_name, age, school, hobbies, avatar_url)`. **Thêm cột mới vào
+  `profiles` mà muốn người dùng tự sửa thì phải GRANT thêm cột đó** — không grant
+  thì action sửa hồ sơ lặng lẽ không đổi được gì.
+- **Policy `teacher_id = auth.uid()` KHÔNG đủ để nghĩa là "giáo viên"** — một học
+  viên set `teacher_id` là chính mình rồi insert là tạo được khóa/lớp (không cần đổi
+  role). Đã thêm `public.is_teacher()` (SECURITY DEFINER) vào `courses_teacher_all`
+  và `classes_teacher_all`. Viết policy mới cho bảng của GV thì nhớ kèm nó.
+  `e2e-profile-privileges.mjs` canh cả 8 nhánh này — đừng xóa.
