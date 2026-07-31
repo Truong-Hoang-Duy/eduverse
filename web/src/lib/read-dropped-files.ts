@@ -7,9 +7,7 @@
  */
 import {
   emptyTally,
-  PROJECT_BUDGET,
   skipReasonFor,
-  stripCommonRoot,
   type FilterOptions,
   type SkipTally,
   type SubmissionFile,
@@ -109,29 +107,26 @@ export function pickedFromInput(
     .filter((picked) => !skipReasonFor(picked.path, options));
 }
 
-/** Đọc nội dung thành chữ + đếm những file bị bỏ để báo cho GV. */
-export async function readAsSubmissionFiles(
+/**
+ * Đọc nội dung đã lọc thành chữ.
+ *
+ * CHỈ đọc — lọc theo tên và ngân sách đã do `useSubmissionPicker` làm trước đó
+ * (trước đây hàm này tự lọc lấy, nên luật lọc bị chẻ làm hai nơi). Cái duy nhất
+ * còn đếm ở đây là file mở ra mới biết hỏng: lọc theo tên không thể bắt được.
+ */
+export async function readPickedAsText(
   picked: PickedFile[]
-): Promise<{ files: SubmissionFile[]; skipped: SkipTally }> {
+): Promise<{ items: SubmissionFile[]; skipped: SkipTally }> {
   const skipped = emptyTally();
-  const files: SubmissionFile[] = [];
+  const items: SubmissionFile[] = [];
 
   for (const { file, path } of picked) {
-    const reason = skipReasonFor(path);
-    if (reason) {
-      skipped[reason] += 1;
-      continue;
-    }
-    if (file.size > PROJECT_BUDGET.maxFileBytes) {
-      skipped["too-big"] += 1;
-      continue;
-    }
     try {
-      files.push({ path, content: await file.text(), size: file.size });
+      items.push({ path, content: await file.text(), size: file.size });
     } catch {
       skipped.junk += 1;
     }
   }
 
-  return { files: stripCommonRoot(files), skipped };
+  return { items, skipped };
 }
