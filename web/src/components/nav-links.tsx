@@ -26,7 +26,10 @@ export function NavLinks({ links }: { links: NavLink[] }) {
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   return (
-    <nav className="flex items-center gap-1 text-sm">
+    // Lưới an toàn cho máy hẹp hơn ~360px: 4 mục vẫn tràn dù đã xuống hàng
+    // riêng, nên cho cuộn ngang thay vì để chúng đè lên nhau. `scrollbar-none`
+    // không có trong Tailwind mặc định — giấu thanh cuộn bằng utility dưới đây.
+    <nav className="-mx-1 flex items-center gap-1 overflow-x-auto px-1 text-sm [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {links.map((link) => {
         const active = link.href === activeHref;
         return (
@@ -35,7 +38,9 @@ export function NavLinks({ links }: { links: NavLink[] }) {
             href={link.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "rounded-md px-3 py-1.5 font-medium transition-colors",
+              // px nhỏ hơn trên điện thoại: đủ để 4 mục tiếng Việt vừa một hàng
+              // ngang màn hình, vẫn giữ vùng bấm cao 32px cho ngón tay.
+              "shrink-0 rounded-md px-2.5 py-1.5 font-medium whitespace-nowrap transition-colors sm:px-3",
               active
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
