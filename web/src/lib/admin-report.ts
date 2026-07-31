@@ -7,21 +7,16 @@ import "server-only";
 
 import { SPEC_BUCKET } from "@/lib/spec-storage";
 import { createAdminClient } from "@/lib/supabase/admin";
+import testUserPrefixes from "@/lib/test-user-prefixes.json";
 
 /**
- * Tiền tố tài khoản do các script `e2e-*.mjs` sinh ra.
- * Giữ KHỚP với `web/scripts/purge-test-users.mjs` (script chạy bằng Node thuần
- * nên không import được file .ts này) — sửa một bên nhớ sửa bên kia.
+ * Tiền tố tài khoản do các script `e2e-*.mjs` sinh ra — đọc từ NGUỒN DUY NHẤT
+ * `test-user-prefixes.json` (JSON vì `scripts/purge-test-users.mjs` chạy bằng
+ * Node thuần, không import được `.ts`). Trước đây danh sách này bị chép ở 2 nơi
+ * và đã lệch thật: `dl.`/`e4.`/`ek.` thiếu nên script dọn không thấy tài khoản
+ * của 3 bộ E2E đó.
  */
-export const TEST_USER_PREFIXES = [
-  "e1f.",
-  "e2f.",
-  "e3g.",
-  "e4h.",
-  "e5i.",
-  "ea.",
-  "ga.",
-];
+export const TEST_USER_PREFIXES: readonly string[] = testUserPrefixes.prefixes;
 
 /**
  * `createAssignment` upload file TRƯỚC rồi mới insert dòng (có rollback nếu

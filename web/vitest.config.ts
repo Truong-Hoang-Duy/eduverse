@@ -7,6 +7,11 @@ export default defineConfig({
     // trong code đang test đều không giải được.
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // `server-only` ném lỗi khi import ngoài Server Component → test module
+      // server bị ném oan. Xem vitest-stubs/server-only.ts.
+      "server-only": fileURLToPath(
+        new URL("./vitest-stubs/server-only.ts", import.meta.url)
+      ),
     },
   },
   test: {
