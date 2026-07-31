@@ -8,15 +8,16 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 27→39 đã merge + push production.
+**Đang làm:** KHÔNG có task dở. Đợt 27→40 đã merge + push production.
 
-🔴 **VIỆC DUY NHẤT CÒN LẠI: deploy lại RENDER** cho Đợt 39-40 (`ai-service` đổi
-thông báo hết lượt + `/health` trả commit). Render của Đợt 35 user đã deploy rồi.
+✅ **KHÔNG còn việc treo.** Vercel + Render đều đã deploy (user xác nhận
+2026-07-30), 7 migration đã áp, Đợt 27→40 nghiệm thu bằng mắt xong.
 
-**Cách kiểm từ giờ (Đợt 40):** mở `https://eduverse-ai.onrender.com/health` →
-`commit` phải khớp `git log --oneline -1 main`. KHÔNG cần dashboard. ⚠️ Máy dev bị
-mạng chặn `onrender.com` (DNS đúng, HTTPS ra ngoài vẫn tốt, nhưng timeout) → phải
-mở trên máy user.
+**Kiểm bản Render đang chạy (Đợt 40):** mở `https://eduverse-ai.onrender.com/health`
+→ `commit` phải khớp `git log --oneline -1 main` (hiện `b51e818`). KHÔNG cần
+dashboard. ⚠️ Máy dev bị mạng chặn `onrender.com` (DNS đúng, HTTPS ra ngoài vẫn
+tốt, nhưng timeout ở 60/120/180s) → phải mở trên máy user. Claude KHÔNG tự xác
+nhận Render được, chỉ ghi theo user xác nhận.
 
 **Mọi migration của phiên này ĐÃ áp** — đã đo lại trên DB thật, không tin ghi chú:
 `projects.drive_url` báo "does not exist" (drop xong), `student_drive_links` có dữ
