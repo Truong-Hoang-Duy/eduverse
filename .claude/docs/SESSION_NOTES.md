@@ -10,14 +10,9 @@
 
 **Đang làm:** KHÔNG có task dở. Đợt 41→44 đã merge và **push lên `main`**.
 
-**`main` = `origin/main` = `237f6cd`** — vừa đẩy lên production, user đã nghiệm
-thu trên máy dev trước khi deploy.
-
-⚠️ **Đợt 43 SỬA `ai-service/` (endpoint `/help-student`) → Render PHẢI deploy
-lại.** Kiểm bằng cách mở `https://eduverse-ai.onrender.com/health`, trường
-`commit` phải là **`237f6cd`**. Còn hiện `403891b` nghĩa là Render CHƯA build
-xong — tab "Hỏi bài" sẽ báo lỗi kết nối cho tới lúc đó (Vercel deploy nhanh hơn
-Render nhiều). Máy dev KHÔNG vào được `onrender.com`, phải mở trên máy user.
+**`main` = `origin/main` = `237f6cd`** — bản đang chạy production, **user đã chạy
+thật trên production và xác nhận OK** (cả Vercel lẫn Render; Đợt 43 sửa
+`ai-service/` nên Render cũng đã deploy lại).
 
 - **Đợt 41** (`feature/e2e-action-harness`): chỉ test + tài liệu, **78/78 E2E xanh**.
 - **Đợt 42** (`fix/mobile-nav-and-grading-reset`): sửa `src/` thật (nav mobile,
