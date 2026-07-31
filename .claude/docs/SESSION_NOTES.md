@@ -8,7 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 27→31 đã deploy, user xác nhận
+**Đang làm:** Đợt 33 (bịt stored XSS ở link người dùng dán) đã code + merge
+develop — **chờ user dán migration `20260731010000`** rồi chạy lại
+`e2e-drive-link` (kỳ vọng 14/14; chưa dán thì 10/14).
+
+**Trước đó:** KHÔNG có task dở. Đợt 27→31 đã deploy, user xác nhận
 2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
 `student_drive_links` có dữ liệu thật.
@@ -52,7 +56,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 
 **Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (54 unit test) + build.**
 
-**E2E 120/120 PASS** — chạy lại ĐỦ 9 script ngày 2026-07-30 sau khi drop cột
+**E2E 125/125 PASS** — chạy lại ĐỦ 9 script ngày 2026-07-30 sau khi drop cột
 `projects.drive_url` và đổi route khu HV, không script nào vỡ. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
@@ -65,7 +69,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 | `e2e-phase3.mjs` | 13 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
 | `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
 | `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
-| `e2e-drive-link.mjs` | 9 | `node --env-file=.env.local ...` — RLS link Drive của HV |
+| `e2e-drive-link.mjs` | 14 | `node --env-file=.env.local ...` — RLS link Drive của HV |
 
 ⚠️ Trước khi chạy phase3/4: chỉ được có MỘT ai-service. Nếu port 8000 kẹt
 "socket ma" (tiến trình chết mà listener vẫn trả lời) → chạy port khác + env

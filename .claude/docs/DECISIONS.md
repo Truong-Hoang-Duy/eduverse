@@ -222,3 +222,16 @@
   trigger `handle_new_user` tự ghi danh theo mã lớp; thiếu thì `createUser` trả
   **500 `AuthRetryableFetchError` với message rỗng `{}`**, không hề nói thiếu gì
   (đã dính 2026-07-30, mất mấy lượt mới lần ra).
+- **URL do người dùng dán phải kiểm Ở CHỖ RENDER, không chỉ lúc lưu** (sự cố
+  bảo mật 2026-07-30). Validate trong Server Action là KHÔNG đủ: RLS cho học viên
+  ghi thẳng dòng của mình qua REST API, bỏ qua action. Đã kiểm chứng em ghi được
+  `javascript:alert(document.cookie)` vào `student_drive_links.drive_url`, rồi GV
+  và bạn cùng lớp mở trang lớp thấy `<a href="javascript:...">` bấm được → script
+  chạy trong phiên NGƯỜI XEM (stored XSS). `projects.repo_url`/`demo_url` cũng
+  cùng lỗ, có từ Đợt 2.
+  Chốt 3 tầng, đừng bỏ tầng nào: (1) CHECK constraint ở DB
+  (`20260731010000`, `~ '^https?://'` — chặn cả khoảng trắng đầu); (2)
+  `isSafeHttpUrl` ở MỌI chỗ render link (`DriveLinkChip`, `LinkChip`,
+  `BigLink`) để dòng cũ đã lọt vào DB không bấm được; (3) validate trong action
+  cho thông báo lỗi tử tế. Thêm chỗ render URL người dùng mới → PHẢI gọi
+  `isSafeHttpUrl`.

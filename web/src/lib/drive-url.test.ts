@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { driveUrlError, looksLikeGoogleDrive, shortenDriveUrl } from "./drive-url";
+import {
+  driveUrlError,
+  isSafeHttpUrl,
+  looksLikeGoogleDrive,
+  shortenDriveUrl,
+} from "./drive-url";
 
 const FOLDER =
   "https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz?usp=sharing";
@@ -78,5 +83,29 @@ describe("shortenDriveUrl", () => {
     // "Rút gọn" ở dự án này là rút gọn CÁCH HIỂN THỊ, không gọi TinyURL.
     expect(shortenDriveUrl(FOLDER)).not.toContain("tinyurl");
     expect(shortenDriveUrl(FOLDER)).not.toMatch(/^https?:/);
+  });
+});
+
+describe("isSafeHttpUrl", () => {
+  it("should accept http and https", () => {
+    expect(isSafeHttpUrl(FOLDER)).toBe(true);
+    expect(isSafeHttpUrl("http://example.com")).toBe(true);
+  });
+
+  it("should reject script-bearing schemes even with padding", () => {
+    // Đây là chốt chặn chỗ RENDER: dòng `javascript:` có thể đã nằm trong DB do
+    // học viên ghi thẳng qua API (bug 2026-07-30) — bọc nó thành <a href> là
+    // stored XSS nhắm vào giáo viên và bạn cùng lớp.
+    expect(isSafeHttpUrl("javascript:alert(1)")).toBe(false);
+    expect(isSafeHttpUrl("  javascript:alert(1)")).toBe(false);
+    expect(isSafeHttpUrl("JavaScript:alert(1)")).toBe(false);
+    expect(isSafeHttpUrl("data:text/html,<script>alert(1)</script>")).toBe(false);
+    expect(isSafeHttpUrl("vbscript:msgbox(1)")).toBe(false);
+  });
+
+  it("should reject anything that is not a url", () => {
+    expect(isSafeHttpUrl("")).toBe(false);
+    expect(isSafeHttpUrl("khong-phai-url")).toBe(false);
+    expect(isSafeHttpUrl("/duong-dan-noi-bo")).toBe(false);
   });
 });
