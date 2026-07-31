@@ -69,6 +69,15 @@ async function fileExists(path) {
   return Boolean(data);
 }
 
+/** Có trong danh sách của bucket không — đọc metadata (Postgres), không qua CDN. */
+async function fileListed(path) {
+  const slash = path.lastIndexOf("/");
+  const dir = slash === -1 ? "" : path.slice(0, slash);
+  const name = path.slice(slash + 1);
+  const { data } = await admin.storage.from(BUCKET).list(dir, { limit: 1000 });
+  return (data ?? []).some((f) => f.name === name);
+}
+
 async function main() {
   const gv = await makeUser(`ga.gv.${ts}`, { full_name: "GV Gallery", role: "teacher" });
   const teacher = gv.client;
@@ -184,15 +193,35 @@ async function main() {
     specText.slice(0, 40)
   );
 
-  // Mô phỏng deleteAssignment: xóa file TRƯỚC rồi xóa dòng
-  await teacher.storage.from(BUCKET).remove([p1]);
+  // Mô phỏng deleteAssignment: xóa file TRƯỚC rồi xóa dòng.
+  // ⚠️ PHẢI đọc error của remove(): ca này đã flake 3 lần (17/18) mà không ai biết
+  // vì sao — chính vì error bị bỏ qua nên lỗi thật (RLS chặn / mạng hỏng) hiện ra
+  // dưới dạng "file vẫn còn", không nói được nguyên nhân.
+  const { error: removeErr } = await teacher.storage.from(BUCKET).remove([p1]);
+  check(
+    "Xóa đề: lệnh xóa file không báo lỗi",
+    !removeErr,
+    removeErr?.message ?? ""
+  );
+
   await teacher.from("assignments").delete().eq("id", a1.id);
   const { data: rowGone } = await admin
     .from("assignments")
     .select("id")
     .eq("id", a1.id);
   check("Xóa đề: dòng trong DB biến mất", (rowGone ?? []).length === 0);
-  check("Xóa đề: file trong Storage cũng biến mất", !(await fileExists(p1)));
+
+  // Đối chiếu bằng CẢ list (metadata trong Postgres, nhất quán mạnh) và download,
+  // để lần sau đỏ thì biết ngay là "chưa xóa thật" hay "đọc còn thấy bản cũ".
+  const stillListed = await fileListed(p1);
+  const stillDownloadable = await fileExists(p1);
+  check(
+    "Xóa đề: file trong Storage cũng biến mất",
+    !stillListed && !stillDownloadable,
+    stillListed !== stillDownloadable
+      ? `list=${stillListed} nhưng download=${stillDownloadable} → đọc lệch nhau`
+      : ""
+  );
 
   // ---------- 5. Xóa khóa → cascade dòng + dọn mọi file đề ----------
   const { path: p2 } = await makeAssignment(teacher, course.id, 2, "Đề buổi 2");
