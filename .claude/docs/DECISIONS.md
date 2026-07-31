@@ -274,3 +274,18 @@
   role). Đã thêm `public.is_teacher()` (SECURITY DEFINER) vào `courses_teacher_all`
   và `classes_teacher_all`. Viết policy mới cho bảng của GV thì nhớ kèm nó.
   `e2e-profile-privileges.mjs` canh cả 8 nhánh này — đừng xóa.
+- 🔴 **HỌC VIÊN KHÔNG được tự ghi danh — policy insert trần là rò rỉ giữa các lớp**
+  (sự cố 2026-07-30). `enrollments_student_insert` chỉ kiểm `student_id = auth.uid()`,
+  không ràng buộc `class_id`. Chuỗi đã kiểm chứng: mã lớp rất dễ đoán (CSB06,
+  JSB01...) → RPC `get_class_id_by_code` (SECURITY DEFINER) đổi mã thành UUID → tự
+  insert enrollment → thành "bạn cùng lớp" → **đọc sản phẩm, roster và LINK DRIVE
+  riêng của học viên lớp khác** (lỗ này nặng thêm vì cùng ngày đã nới cho bạn cùng
+  lớp xem link Drive).
+  Đã DROP policy ở `20260731040000`. Bỏ được vì app KHÔNG dùng: đăng ký HV đi qua
+  admin API + trigger `handle_new_user` (SECURITY DEFINER), còn "thêm HV vào lớp" và
+  "sao chép lớp" chạy bằng client GIÁO VIÊN. **Muốn cho HV tự vào lớp bằng mã sau
+  khi đăng ký thì viết hàm SECURITY DEFINER kiểm mã lớp — ĐỪNG mở lại policy insert
+  trần.**
+- **Test canh bảo mật phải có DỮ LIỆU THẬT để lộ, không thì pass suông** — ca "HV
+  không đọc được link Drive lớp khác" ban đầu xanh chỉ vì nạn nhân chưa từng lưu
+  link nào. Cho nạn nhân lưu link trước rồi ca đó mới đỏ đúng (2026-07-30).

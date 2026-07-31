@@ -582,6 +582,19 @@
       không revoke quá tay (3/8 khi chưa dán migration)
 - [x] Đo dữ liệu thật trước: 18 profile (tên dài nhất 22), 0 khóa/lớp thuộc student
 
+### Đợt 37 (`fix/student-self-enroll`) — 🔴 chặn rò rỉ dữ liệu giữa các lớp
+- [x] Quét tiếp `enrollments`/`student_reviews`/`user_secrets`: reviews HV chỉ
+      SELECT ✅, user_secrets chỉ dòng mình ✅, nhưng `enrollments_student_insert`
+      không ràng buộc `class_id` → HV tự vào lớp bất kỳ
+- [x] Kiểm chứng chuỗi: đoán mã lớp → `get_class_id_by_code` trả UUID → tự ghi
+      danh → đọc sản phẩm + **link Drive riêng** của HV lớp khác
+- [x] Migration `20260731040000` DROP policy đó. Rà kỹ trước: app không dùng
+      (đăng ký qua trigger SECURITY DEFINER; thêm HV/sao chép lớp chạy bằng
+      client GV) → bỏ không mất tính năng nào
+- [x] 2 ca E2E mới trong `e2e-profile-privileges` (8/10 khi chưa dán). Ca "đọc
+      link Drive lớp khác" ban đầu **pass suông** vì nạn nhân chưa có link — đã
+      cho nạn nhân lưu link trước để ca đó thật sự đỏ được
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
