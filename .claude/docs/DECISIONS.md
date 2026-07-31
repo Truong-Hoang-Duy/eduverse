@@ -162,6 +162,25 @@
   cùng một lượt chấm là chấm sai mà GV không nhận ra.
   Tab **sản phẩm cuối khóa** vốn đã luôn THAY THẾ (`applyResult` gán thẳng) —
   không đổi gì, đừng "sửa cho nhất quán" theo chiều ngược lại.
+- **Chấm bài buổi có LÝ THUYẾT + THỰC HÀNH — 3 chế độ, chọn mỗi lần chấm**
+  (user chốt 2026-07-31). Buổi 5/9, lâu lâu 14. Chọn ở UI chứ KHÔNG lưu cột vào
+  `assignments` — khỏi migration, và cùng một đề vẫn chấm riêng từng phần được.
+  - **Đáp án IN SẴN TRONG ĐỀ BÀI** → không cần bảng đáp án riêng, không cần
+    migration. Prompt bắt model dùng CHÍNH bảng đó, cấm tự suy ra.
+  - **HAI ĐIỂM TÁCH BẠCH, không gộp**: "Lý thuyết 8/10 câu" và "Thực hành
+    75/100". Gộp lại thì đúng hết trắc nghiệm mà code sai vẫn ra điểm khá — che
+    mất đúng thứ cần thấy. Trắc nghiệm KHÔNG quy ra thang 100.
+  - **Câu sai NÊU THẲNG đáp án đúng** + 1 câu nhắc kiến thức. Cố ý KHÁC tab Hỏi
+    bài (nơi cấm giải hộ): ở đây bài đã chấm xong, giấu đáp án chỉ khiến em nhắn
+    hỏi lại. Đừng "sửa cho nhất quán" với tab kia.
+  - **Bài làm trắc nghiệm nằm ở file nào cũng được** — Word/text, ảnh chụp giấy,
+    hoặc lẫn trong thư mục/`.zip` của phần thực hành. Không thêm ô nhập riêng.
+  - 🔴 **Không tìm thấy thì báo không thấy, TUYỆT ĐỐI không bịa** (`tong_so: 0`,
+    UI hiện cảnh báo vàng). Chấm bịa nguy hiểm hơn không chấm: GV dán thẳng cho
+    em, em tin đó là điểm thật.
+  - `_keep_requested_parts()` ở route xóa khối không thuộc `mode` và **đếm lại
+    `so_dung` từ danh sách câu** — cùng họ với `_drop_diagnosis_without_code`:
+    chế độ do người dùng chọn, đừng tin model tự giữ đúng.
 - 🔴 **File `.zip` NGƯỜI DÙNG NỘP không được đi qua bộ lọc đuôi file** (bug thật
   2026-07-31, user báo). `.zip` nằm trong `BINARY_EXTENSIONS` — đúng cho file nén
   NẰM TRONG thư mục bài làm (đó là rác), nhưng khi chính nó là thứ được nộp thì

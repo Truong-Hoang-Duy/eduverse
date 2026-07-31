@@ -132,17 +132,49 @@ class InlineFile(BaseModel):
     content_b64: str
 
 
+GradingMode = Literal["quiz", "practice", "both"]
+
+
 class GradeSubmissionRequest(AiRequest):
     spec_file_path: str  # đề bài (bucket assignment-specs) — thứ duy nhất được lưu
     files: list[InlineFile] = Field(min_length=1)
     course_name: str
     assignment_title: str
     instructions: str | None = None
+    # Buổi 5/9/14 có cả lý thuyết lẫn thực hành. Mặc định "practice" để mọi lời
+    # gọi cũ giữ nguyên hành vi.
+    mode: GradingMode = "practice"
+
+
+class QuizAnswer(BaseModel):
+    """Một câu trắc nghiệm đã đối chiếu với đáp án in trong ĐỀ BÀI."""
+
+    cau: int
+    dung: bool
+    # Rỗng khi em bỏ trống câu đó.
+    em_chon: str = ""
+    dap_an_dung: str = ""
+    # Một câu ngắn vì sao sai — chỉ điền cho câu sai.
+    giai_thich: str = ""
+
+
+class QuizResult(BaseModel):
+    tong_so: int
+    so_dung: int
+    cau_hoi: list[QuizAnswer] = Field(default_factory=list)
 
 
 class GradeSubmissionResponse(BaseModel):
-    score: int = Field(ge=0, le=100)
-    bullets: list[str] = Field(min_length=1)
+    """Ba khối, khối nào có mặt là do `mode` quyết định (không phải do model).
+
+    `score`/`bullets` cho phần THỰC HÀNH, `quiz` cho phần TRẮC NGHIỆM. Chấm
+    trắc nghiệm KHÔNG quy ra thang 100 — user chốt 2026-07-31 là để hai phần
+    tách bạch, vì đúng hết trắc nghiệm mà code sai thì điểm gộp sẽ che mất.
+    """
+
+    score: int | None = Field(default=None, ge=0, le=100)
+    bullets: list[str] = Field(default_factory=list)
+    quiz: QuizResult | None = None
 
 
 # ---------- /review-project ----------

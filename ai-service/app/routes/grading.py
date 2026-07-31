@@ -27,8 +27,32 @@ GRADING_SCHEMA = {
     "properties": {
         "score": {"type": "integer", "minimum": 0, "maximum": 100},
         "bullets": {"type": "array", "items": {"type": "string"}},
+        # Phần trắc nghiệm của buổi 5/9/14. Luôn khai trong schema (model hay bỏ
+        # trống khóa không dùng rồi làm hỏng JSON); khóa thừa bị xóa theo `mode`.
+        "quiz": {
+            "type": "object",
+            "properties": {
+                "tong_so": {"type": "integer", "minimum": 0},
+                "so_dung": {"type": "integer", "minimum": 0},
+                "cau_hoi": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "cau": {"type": "integer"},
+                            "dung": {"type": "boolean"},
+                            "em_chon": {"type": "string"},
+                            "dap_an_dung": {"type": "string"},
+                            "giai_thich": {"type": "string"},
+                        },
+                        "required": ["cau", "dung", "em_chon", "dap_an_dung", "giai_thich"],
+                    },
+                },
+            },
+            "required": ["tong_so", "so_dung", "cau_hoi"],
+        },
     },
-    "required": ["score", "bullets"],
+    "required": ["score", "bullets", "quiz"],
 }
 
 _STRING_LIST = {"type": "array", "items": {"type": "string"}}
@@ -82,6 +106,31 @@ def _inline_parts(files: list[InlineFile]) -> list[types.Part]:
     return parts
 
 
+def _keep_requested_parts(data: dict, mode: str) -> dict:
+    """Giữ đúng những khối GV yêu cầu, bỏ phần thừa model vẫn trả về.
+
+    Cùng lý do với `_drop_diagnosis_without_code`: schema buộc model trả đủ 3
+    khóa (bỏ trống khóa hay làm hỏng JSON), nhưng CHẾ ĐỘ là do giáo viên chọn
+    chứ không phải do model đoán. Chấm "chỉ thực hành" mà lòi ra bảng trắc
+    nghiệm bịa là sai nghiêm trọng — em sẽ tin đó là điểm thật.
+    """
+    if mode not in ("quiz", "both"):
+        data["quiz"] = None
+    if mode not in ("practice", "both"):
+        data["score"] = None
+        data["bullets"] = []
+
+    quiz = data.get("quiz")
+    if quiz:
+        # Model đếm `so_dung` không phải lúc nào cũng khớp danh sách câu — lấy
+        # danh sách làm chuẩn, đó mới là thứ GV và học viên đọc.
+        cau_hoi = quiz.get("cau_hoi") or []
+        quiz["so_dung"] = sum(1 for c in cau_hoi if c.get("dung"))
+        if cau_hoi:
+            quiz["tong_so"] = len(cau_hoi)
+    return data
+
+
 @router.post("/grade-submission", response_model=GradeSubmissionResponse)
 def grade_submission(body: GradeSubmissionRequest) -> GradeSubmissionResponse:
     # Đề bài lấy từ Storage (được lưu); bài làm gửi inline, không lưu ở đâu cả.
@@ -92,6 +141,7 @@ def grade_submission(body: GradeSubmissionRequest) -> GradeSubmissionResponse:
         course_name=body.course_name,
         assignment_title=body.assignment_title,
         instructions=body.instructions,
+        mode=body.mode,
     )
     data = generate_json(
         prompt,
@@ -99,7 +149,7 @@ def grade_submission(body: GradeSubmissionRequest) -> GradeSubmissionResponse:
         file_parts=file_parts,
         api_key=body.api_key,
     )
-    return GradeSubmissionResponse(**data)
+    return GradeSubmissionResponse(**_keep_requested_parts(data, body.mode))
 
 
 def _drop_diagnosis_without_code(data: dict, has_code: bool) -> dict:
