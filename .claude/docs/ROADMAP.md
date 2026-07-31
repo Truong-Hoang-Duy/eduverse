@@ -679,6 +679,26 @@
 - [x] lint + typecheck + 92 unit test + build sạch; user nghiệm thu bằng mắt
 - [x] Deploy: `main` = `403891b` (Vercel). ai-service không đổi → Render giữ nguyên
 
+### Đợt 43 (`feature/student-help`) — tab "Hỏi bài": gợi ý cho học viên đang bí
+- [x] Endpoint `/help-student` + `build_student_help_prompt` + `STUDENT_HELP_RULE`
+      — luật riêng cho prompt DUY NHẤT mà HỌC VIÊN đọc (ghì độ khó xuống, cấm
+      giải hộ bài, code minh họa tối đa 2-3 dòng). KHÔNG áp `TONE_RULE`
+- [x] Một ô, hai chế độ tự nhận biết: chưa nạp file → các bước làm bài; có file →
+      thêm "em đang ở đâu" + "cần sửa". Chế độ quyết định bởi ĐẦU VÀO, không bởi
+      model — `_drop_diagnosis_without_code` xóa phần chẩn đoán khi không có file
+- [x] **Nhận ảnh chụp màn hình code / giao diện** — dùng đường base64 của chấm
+      bài (không phải đường chữ của sản phẩm cuối khóa). Không phải viết gì thêm,
+      `bytes_to_part` đã xử lý ảnh sẵn
+- [x] `student-help-text.ts` dựng đoạn để Copy dán Zalo (3 khối tiêu đề CHỮ HOA,
+      đánh số lại từ 1 mỗi khối, bỏ khối rỗng) + 9 unit test → 101 test
+- [x] 12 pytest mới → 39; 9 ca E2E mới (7 guard miễn phí + 2 gọi Gemini) → 87
+- [x] **Bug bắt được khi chạy E2E**: Gemini vẫn tự viết `dang_o_dau` dù prompt dặn
+      trả rỗng → khối "EM ĐANG LÀM ĐẾN ĐÂU" hiện vô nghĩa và tiêu đề mục bước bị
+      chọn sai. Ép ở server thay vì tin prompt
+- [x] Đảo thứ tự: giải base64 TRƯỚC khi tải đề từ Storage — file hỏng ra 400 đúng
+      nghĩa thay vì bị 404 che mất, và không tốn một lượt gọi Storage vô ích
+- [ ] User nghiệm thu bằng mắt + deploy (Vercel **và Render** — ai-service ĐỔI)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

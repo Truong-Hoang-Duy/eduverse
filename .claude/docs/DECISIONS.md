@@ -162,6 +162,23 @@
   cùng một lượt chấm là chấm sai mà GV không nhận ra.
   Tab **sản phẩm cuối khóa** vốn đã luôn THAY THẾ (`applyResult` gán thẳng) —
   không đổi gì, đừng "sửa cho nhất quán" theo chiều ngược lại.
+- **"Hỏi bài" là công cụ thứ 3 của khu Chấm bài, KHÔNG chấm điểm** (user chốt
+  2026-07-31). Tab `/teacher/assignments/help`. Chỉ GIÁO VIÊN dùng: em nhắn hỏi
+  qua Zalo, GV nạp code/ảnh của em vào, lấy gợi ý rồi bấm Copy dán lại cho em.
+  **KHÔNG làm giao diện phía học viên** — làm thế là mở hạn mức Gemini cho cả lớp
+  và kéo theo cả một tầng RLS mới.
+  - **Một ô, tự nhận biết chế độ**: chưa nạp file → gợi ý cách làm; có file →
+    phân tích bài đang dở. Không tách hai nút.
+  - **Mức bật mí**: gợi ý bằng lời + cho phép đoạn code minh họa **tối đa 2-3
+    dòng** chỉ để chỉ cú pháp, TUYỆT ĐỐI không giải trọn bài. Đừng nới ra thành
+    "cho code mẫu cho nhanh" — em sẽ chép.
+  - **Chế độ do ĐẦU VÀO quyết định, không do model**: `_drop_diagnosis_without_code`
+    xóa `dang_o_dau`/`can_sua` khi không có file. Chi tiết + sự cố ở AI-SERVICE.md.
+  - Dùng `InlineFile` base64 (đường của chấm bài) chứ KHÔNG phải đường chữ của
+    sản phẩm cuối khóa — em hay CHỤP MÀN HÌNH code/giao diện gửi Zalo.
+  - Text để copy dựng bởi `web/src/lib/student-help-text.ts` (logic thuần, có
+    unit test): 3 khối có tiêu đề CHỮ HOA, đánh số lại từ 1 trong từng khối, bỏ
+    khối rỗng. Zalo không có markdown nên đừng thêm `**`/`#`.
 - **Nav trên điện thoại xuống hàng riêng khi có >2 mục** (2026-07-31): 4 mục
   tiếng Việt của giáo viên (~214px chữ) cộng logo + nút giao diện + avatar không
   vừa một hàng ~360px, "Vận hành" đè lên nút đổi giao diện. Học viên chỉ có 1

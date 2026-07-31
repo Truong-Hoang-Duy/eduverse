@@ -78,10 +78,50 @@ Gemini trả 400 "Unable to process input image" rất khó hiểu. `storage.py`
 sớm bằng marker + magic bytes (PNG/JPEG/GIF/PDF) → 400 kèm hướng dẫn tiếng Việt;
 `web/src/lib/file-check.ts` chặn thêm ở trình duyệt. Đừng gỡ 2 lớp này.
 
+### POST /help-student — gợi ý cho học viên đang bí (KHÔNG chấm điểm)
+Input: giống `/grade-submission` cộng `question`, nhưng **`files` được phép RỖNG**:
+```json
+{
+  "spec_file_path": "<path trong bucket assignment-specs>",
+  "files": [],
+  "course_name": "JavaScript Basic",
+  "assignment_title": "Tính tổng hai số",
+  "instructions": null,
+  "question": "Em chạy không ra kết quả ạ"
+}
+```
+Output:
+```json
+{ "dang_o_dau": "", "can_sua": [], "cac_buoc": ["bước 1", "bước 2"] }
+```
+
+**Hai chế độ, quyết định bởi ĐẦU VÀO chứ không bởi model:**
+- `files` rỗng = em chưa biết bắt đầu → chỉ trả `cac_buoc` (các bước làm bài).
+- `files` có = em gửi bài dở → thêm `dang_o_dau` + `can_sua`.
+
+⚠️ `_drop_diagnosis_without_code()` XÓA `dang_o_dau`/`can_sua` khi không có file,
+**dù Gemini có trả về hay không**. Đo được 2026-07-31: prompt dặn trả rỗng nhưng
+model vẫn viết "Em đang ở bước chuẩn bị và chưa biết bắt đầu". Câu đó vô nghĩa với
+em, và web dựa vào `dang_o_dau` rỗng để đặt tiêu đề "CÁC BƯỚC LÀM BÀI" thay vì
+"LÀM GÌ TIẾP". Đừng gỡ hàm này để "tin prompt hơn".
+
+**Ảnh chụp màn hình chạy được**: dùng `InlineFile` (base64) như chấm bài, nên
+`bytes_to_part` gửi ảnh code / ảnh giao diện dạng nhị phân cho Gemini. Đây là lý
+do KHÔNG dùng đường chữ của `/review-project`.
+
+Lỗi: giống `/grade-submission`, trừ việc thiếu `files` KHÔNG phải lỗi.
+
 ## Nguyên tắc prompt
 
 - Luôn chỉ định: vai ("giáo viên dạy lập trình cho học sinh"), ngôn ngữ output
   (tiếng Việt), độ dài, và JSON schema.
+- **`STUDENT_HELP_RULE` — luật cho prompt DUY NHẤT mà HỌC VIÊN đọc**
+  (`/help-student`). Mọi prompt khác viết cho giáo viên hoặc phụ huynh đọc. Luật
+  này ghì ĐỘ KHÓ của kiến thức xuống (từ ngữ đơn giản, cấm kỹ thuật nâng cao,
+  thuật ngữ bắt buộc thì giải thích ngay), cấm giải hộ cả bài, và chỉ cho phép
+  đoạn code minh họa **tối đa 2-3 dòng** để chỉ cú pháp — user chốt 2026-07-31.
+  KHÔNG áp `TONE_RULE` ở đây và ngược lại: hai luật giải quyết hai vấn đề khác
+  nhau (độ khó vs độ khoa trương), trộn vào nhau là hiểu sai cả hai.
 - Xưng hô với học viên: "em" hoặc gọi tên — KHÔNG BAO GIỜ dùng "con" (đã ghi
   trong SYSTEM_ROLE).
 - **Giọng điệu nhận xét đúng mực** (`TONE_RULE`, áp cho `/generate-review`,
