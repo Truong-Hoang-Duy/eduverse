@@ -1,4 +1,4 @@
-import { shortenDriveUrl } from "@/lib/drive-url";
+import { isSafeHttpUrl, shortenDriveUrl } from "@/lib/drive-url";
 
 /**
  * Hiển thị GỌN một link Drive: bấm là mở tab mới. Dùng chung cho khu học viên và
@@ -12,6 +12,16 @@ export function DriveLinkChip({
   /** Đặt nhãn cố định (VD "Mở thư mục Drive") thay vì hiện link đã cắt ngắn. */
   label?: string;
 }) {
+  // Chốt chặn cuối: link tới đây có thể là dòng cũ trong DB có `javascript:`
+  // (ghi trước khi có constraint). Hiện chữ trơ, KHÔNG bọc thành <a href>.
+  if (!isSafeHttpUrl(url)) {
+    return (
+      <span className="text-xs text-destructive" title="Đường dẫn không hợp lệ">
+        ⚠️ Đường dẫn không hợp lệ
+      </span>
+    );
+  }
+
   return (
     <a
       href={url}

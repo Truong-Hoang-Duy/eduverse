@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { isSafeHttpUrl } from "@/lib/drive-url";
 
 export interface ProjectView {
   id: string;
@@ -15,6 +16,10 @@ export interface ProjectView {
 
 function LinkChip({ href, label }: { href: string | null; label: string }) {
   if (!href) return null;
+  // repo_url/demo_url là URL học viên dán. Validate ở `saveProject` KHÔNG đủ:
+  // RLS cho em ghi thẳng dòng `projects` của mình qua API, nên `javascript:`
+  // lọt vào DB được và đây là chỗ nó biến thành link bấm được cho GV/bạn học.
+  if (!isSafeHttpUrl(href)) return null;
   return (
     <a
       href={href}
