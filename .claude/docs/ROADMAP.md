@@ -550,6 +550,23 @@
 - [x] Đã đo dữ liệu thật trước khi thêm constraint: 1 project (name 24, mô tả 276,
       7 chức năng) + 0 bình luận → ALTER không vỡ
 
+### Đợt 35 (`fix/gemini-error-clarity`) — lỗi AI nói đúng việc cần làm
+- [x] Điều tra flake `e2e-gallery-storage` (lần thứ 3 — đúng ngưỡng đã hẹn): giả
+      thuyết CDN cache **KHÔNG tái hiện** (8/8 `download` và `list` đều đúng).
+      Tìm ra test **bỏ qua error của `remove()`** — chính thứ giải thích được lỗi.
+      Giờ error thành một check riêng + đối chiếu `list` (metadata Postgres) với
+      `download`, nên lần sau đỏ là biết "chưa xóa thật" hay "đọc thấy bản cũ".
+      Chạy 3 lượt liền 19/19. **Chưa tìm ra nguyên nhân gốc — chỉ làm nó chẩn
+      đoán được**
+- [x] Phát hiện nhánh 429 (hết lượt) của `gemini.py` **KHÔNG log gì** → log và lỗi
+      khác không phân biệt được, đã gây chẩn đoán sai. Nay log cả 429 và 503
+- [x] Tách `BUSY_MESSAGE` (Gemini 503 "high demand" → chờ ít phút) khỏi thông báo
+      hết lượt; sửa `QUOTA_MESSAGE` cho key hệ thống từ "AI đang bận, thử lại sau
+      ít phút" (SAI — hết tới hôm sau) thành chỉ đường khai key riêng ở trang Hồ sơ
+- [x] `tests/test_gemini_errors.py` — 8 test canh mã HTTP + nội dung + có log
+      (pytest 18 → 25). 2 assertion đầu tôi viết sai, code đúng
+- [x] ai-service ĐỔI → Render phải deploy lại
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

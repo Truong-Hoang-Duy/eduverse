@@ -247,3 +247,15 @@
   tạo migration đổi bên kia.
   Mẹo Postgres: CHECK **không cho subquery**, nên "phần tử dài nhất của mảng" phải
   bọc vào hàm IMMUTABLE (`public.max_text_length`) rồi gọi trong CHECK.
+- **Lỗi Gemini phải phân biệt HẾT LƯỢT với TẮC NGHẼN** (2026-07-30). Cả hai đều ra
+  HTTP 503 nên chỉ `detail` mới nói được GV phải làm gì:
+  hết lượt key dùng chung → chỉ sang trang Hồ sơ khai key riêng (chờ thêm VÔ ÍCH,
+  hết tới hôm sau); hết lượt key riêng → `QUOTA_MESSAGE_OWN_KEY`; Gemini trả 503
+  UNAVAILABLE "high demand" → `BUSY_MESSAGE`, chờ một hai phút là được.
+  Câu cũ cho key hệ thống là "AI đang bận, thử lại sau ít phút" — SAI, khiến GV bấm
+  lại vô ích. **Mọi nhánh lỗi Gemini PHẢI log**: nhánh 429 trước đây im lặng nên
+  trong log không phân biệt được với lỗi khác, đã làm chẩn đoán sai mấy lần khi E2E
+  đỏ. `tests/test_gemini_errors.py` canh cả mã HTTP, nội dung, và việc có log.
+- **E2E gọi AI đỏ thì NGHI NGOẠI CẢNH TRƯỚC** (2026-07-30): Gemini 503 "high demand"
+  và hết lượt đều làm đỏ mà code không sai. Đọc log ai-service (giờ đã log cả 2
+  nhánh) rồi chạy lại, đừng sửa code theo lần đỏ đầu tiên.
