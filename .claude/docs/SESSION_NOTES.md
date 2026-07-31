@@ -27,9 +27,8 @@ chặn `onrender.com` (môi trường này vốn đã chặn cổng 5432/6543). 
 mở URL đó trên trình duyệt của user, hoặc bấm thử "Nhận xét sản phẩm" trên
 production. **Đừng kết luận Render hỏng chỉ vì curl từ máy dev không thông.**
 
-⚠️ **Đợt 27→31 chưa có nghiệm thu bằng mắt đầy đủ.** Bằng chứng gián tiếp là
-`student_drive_links` đã có dòng dữ liệu thật do user tự nhập qua UI production
-→ luồng Vercel + migration + RLS chạy được thật.
+✅ **Đợt 27→31 ĐÃ nghiệm thu bằng mắt** (user xác nhận 2026-07-30) — không còn
+việc treo nào của các đợt này.
 
 ⚠️ **`ADMIN_USERNAMES` phải có ở `web/.env.local` (local) VÀ Vercel (production)**
 — chưa khai thì `/teacher/admin` đá về `/teacher` (fail closed). Biến thêm SAU
@@ -293,8 +292,6 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
-- 🔴 **Đợt 27-29 CHƯA nghiệm thu bằng mắt** — code đã push production nhưng chưa
-  ai bấm thử tab mới trên bản deploy. Xem mục "Trạng thái hiện tại".
 - 🟡 **Logic đọc thư mục/.zip phía web KHÔNG có test được commit** — tôi nghiệm
   thu bằng script tạm rồi xóa (`listZipEntries` + `skipReasonFor` trên .zip thật
   có node_modules/ảnh/file quá lớn, và `docxToText` trên .docx deflate+stored).

@@ -487,12 +487,14 @@
       lớp, bạn cùng lớp, HV lớp khác, GV lớp khác, GV không sửa được, HV khác
       không ghi được, xóa được
 - [x] ai-service KHÔNG đổi → không cần deploy Render cho đợt này
+- [x] Merge lên production + user nghiệm thu bằng mắt (2026-07-30)
 
 ### Đợt 31 (`chore/drop-project-drive-url`) — dọn cột chết
 - [x] Bỏ 3 chỗ CUỐI còn tham chiếu `projects.drive_url`: `SavedProject` +
       `saved.drive_url` trong `saveProject`, `ProjectData` của form, và types
 - [x] Migration `20260731000000` drop cột — **dán SAU khi Đợt 30 đã deploy**
 - [x] 0 dòng dữ liệu bị ảnh hưởng (đã đo: production có 0 project)
+- [x] Deploy + dán migration + nghiệm thu bằng mắt (2026-07-30)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
