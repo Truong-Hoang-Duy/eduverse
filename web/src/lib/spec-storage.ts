@@ -11,10 +11,17 @@ type Client = SupabaseClient<Database>;
 
 /** Đổi tên file an toàn cho Storage key (bỏ dấu, ký tự lạ). */
 export function sanitizeFileName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-zA-Z0-9._-]/g, "_");
+  return (
+    name
+      // đ/Đ phải xử lý RIÊNG: chúng là ký tự độc lập, KHÔNG phải d + dấu, nên
+      // `normalize("NFD")` không tách ra được và chúng rơi vào nhánh "ký tự lạ"
+      // → "đề bài" từng thành "_e_bai". Tên file tiếng Việt hay bắt đầu bằng "đề".
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-zA-Z0-9._-]/g, "_")
+  );
 }
 
 /**
