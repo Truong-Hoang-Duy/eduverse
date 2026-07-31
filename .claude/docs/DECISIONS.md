@@ -162,6 +162,18 @@
   cùng một lượt chấm là chấm sai mà GV không nhận ra.
   Tab **sản phẩm cuối khóa** vốn đã luôn THAY THẾ (`applyResult` gán thẳng) —
   không đổi gì, đừng "sửa cho nhất quán" theo chiều ngược lại.
+- 🔴 **File `.zip` NGƯỜI DÙNG NỘP không được đi qua bộ lọc đuôi file** (bug thật
+  2026-07-31, user báo). `.zip` nằm trong `BINARY_EXTENSIONS` — đúng cho file nén
+  NẰM TRONG thư mục bài làm (đó là rác), nhưng khi chính nó là thứ được nộp thì
+  nó là cái HỘP, phải đi lọt để còn được giải nén. Trước khi sửa, chọn .zip qua
+  hộp thoại LUÔN ra "Không tìm thấy file nào trong thứ vừa chọn" — nghe như file
+  nén rỗng, nên user mất thời gian đi tìm ở ruột file.
+  Sửa ở `read-dropped-files.ts` (`isSoleZip`), **KHÔNG sửa `skipReasonFor`**:
+  tầng đó phân loại đuôi file, không phải tầng quyết định ngữ cảnh. Điều kiện
+  "đúng MỘT file" khớp chính xác nhánh giải nén ở `useSubmissionPicker` — chọn
+  .zip lẫn file khác thì không giải nén được, lúc đó lọc bỏ như cũ mới đúng.
+  Thư mục lồng nhau cùng tên (`BaiTap/BaiTap/BaiTap/`) vốn ĐÃ chạy đúng — đã đo,
+  không phải nguyên nhân dù user nghi thế. `zip-submission.test.ts` canh việc này.
 - **Phần nhận file của 3 tab Chấm bài dùng CHUNG một hạ tầng** (2026-07-31):
   `lib/use-submission-picker.ts` (state + kéo thả + lọc + cộng dồn/thay thế),
   `components/submission/submission-dropzone.tsx` và `submission-file-list.tsx`.
