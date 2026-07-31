@@ -276,9 +276,8 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   `lh3.googleusercontent.com` không có tài liệu chính thức, lại cần khai
   `remotePatterns`. Thay bằng nút mở thẳng thư mục Drive. Muốn ảnh thật thì upload
   lên Supabase Storage — đừng quay lại hướng nhúng link Drive.
-- **Cột `projects.drive_url` đã CHẾT** nhưng chưa drop: không còn code nào đọc/ghi
-  (Đợt 30 bỏ khỏi mọi `select` + form). Theo luật: deploy Đợt 30 TRƯỚC rồi mới tạo
-  migration drop.
+- **Cột `projects.drive_url` đã DROP** (mig `20260731000000`, Đợt 31) — link Drive
+  ở cấp học viên. Đừng hồi sinh cột này.
 - **Tạo học viên trong script E2E phải có lớp TRƯỚC + truyền `class_code`** —
   trigger `handle_new_user` tự ghi danh theo mã lớp; thiếu thì `createUser` trả
   **500 `AuthRetryableFetchError` với message rỗng `{}`**, không hề nói thiếu gì

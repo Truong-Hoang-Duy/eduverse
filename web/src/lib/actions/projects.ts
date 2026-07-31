@@ -51,7 +51,6 @@ export interface SavedProject {
   description: string | null;
   features: string[];
   repo_url: string | null;
-  drive_url: string | null;
   demo_url: string | null;
   extra_notes: string | null;
 }
@@ -113,8 +112,7 @@ export async function saveProject(
     description: description || null,
     features,
     repo_url: repoUrl || null,
-    // drive_url KHÔNG còn nhận từ form: link Drive đã lên cấp học viên (bảng
-    // `student_drive_links`). Cột cũ giữ lại, drop ở migration sau.
+    // Không có drive_url: link Drive ở cấp học viên (`student_drive_links`).
     demo_url: demoUrl || null,
     extra_notes: extraNotes || null,
     updated_at: new Date().toISOString(),
@@ -139,7 +137,6 @@ export async function saveProject(
       description: saved.description,
       features: saved.features,
       repo_url: saved.repo_url,
-      drive_url: saved.drive_url,
       demo_url: saved.demo_url,
       extra_notes: saved.extra_notes,
     },
