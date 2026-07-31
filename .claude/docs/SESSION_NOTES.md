@@ -13,7 +13,8 @@
 → luồng signup qua trigger không hỏng). Đợt 36 đã dán migration, `e2e-profile-privileges`
 8/8, và 6 bộ E2E khác chạy lại đều xanh → policy `courses`/`classes` đổi KHÔNG
 gây hồi quy.
-🔴 **Đợt 35 đổi `ai-service` → nhớ deploy lại RENDER** (chưa ai xác nhận).
+✅ **Render ĐÃ deploy** (Đợt 35 — thông báo lỗi Gemini + log) — user xác nhận
+2026-07-30.
 🔴 **Đợt 35 đổi `ai-service` → user phải deploy lại RENDER**, không chỉ Vercel. Đợt 27→31 đã deploy, user xác nhận
 2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
@@ -33,7 +34,9 @@ chặn `onrender.com` (môi trường này vốn đã chặn cổng 5432/6543). 
 mở URL đó trên trình duyệt của user, hoặc bấm thử "Nhận xét sản phẩm" trên
 production. **Đừng kết luận Render hỏng chỉ vì curl từ máy dev không thông.**
 
-✅ **Đợt 27→33 ĐÃ nghiệm thu bằng mắt** (user xác nhận 2026-07-30).
+✅ **Đợt 27→37 ĐÃ nghiệm thu bằng mắt** (user xác nhận 2026-07-30), gồm cả ca
+quan trọng nhất: **đăng ký học viên mới bằng mã lớp** vẫn chạy sau khi drop policy
+`enrollments_student_insert`.
 
 ⚠️ **`ADMIN_USERNAMES` phải có ở `web/.env.local` (local) VÀ Vercel (production)**
 — chưa khai thì `/teacher/admin` đá về `/teacher` (fail closed). Biến thêm SAU
@@ -59,10 +62,11 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 
 **E2E: 99/99 các bộ KHÔNG gọi AI đều xanh** (chạy lại 2026-07-30 sau migration
 `20260731030000` đổi policy `courses`/`classes` — không hồi quy). Các bộ GỌI AI
-(`phase3`, `phase4` ca AI, `project-review`) hôm đó **hết lượt Gemini key dùng
-chung** nên đỏ; log ai-service ghi rõ `Gemini quota exhausted (own_key=False)`.
-Cùng code đó sáng cùng ngày đã 13/13 và 9/9 → KHÔNG phải hồi quy, chạy lại hôm sau
-hoặc dùng key riêng. Tổng khi đủ lượt: 146. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+(`phase3`, `phase4` ca AI, `project-review`) **chưa xác nhận lại được từ máy dev**:
+key hệ thống trong `ai-service/.env` đã hết lượt ngày 2026-07-30, log ghi rõ
+`Gemini quota exhausted (own_key=False)`. Cùng code đó SÁNG cùng ngày đã 13/13 và
+9/9 → không phải hồi quy. Muốn xác nhận thì đặt `GEMINI_API_KEY` là key riêng còn
+lượt, hoặc chạy sang ngày sau. Tổng khi đủ lượt: 146. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
