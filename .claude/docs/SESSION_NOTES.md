@@ -22,7 +22,7 @@ mở trên máy user.
 `projects.drive_url` báo "does not exist" (drop xong), `student_drive_links` có dữ
 liệu thật, và `e2e-profile-privileges` 10/10 xác nhận 2 migration phân quyền.
 
-**`main` = `origin/main` = `0d87882`** — production (Đợt 27-39).
+**`main` = `origin/main` = `b51e818`** — production (Đợt 27-40).
 **`develop` = `origin/develop`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
