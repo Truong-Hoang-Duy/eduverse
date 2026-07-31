@@ -8,16 +8,14 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** Đợt 33 (bịt stored XSS ở link người dùng dán) đã code + merge
-develop — **chờ user dán migration `20260731010000`** rồi chạy lại
-`e2e-drive-link` (kỳ vọng 14/14; chưa dán thì 10/14).
-
-**Trước đó:** KHÔNG có task dở. Đợt 27→31 đã deploy, user xác nhận
+**Đang làm:** KHÔNG có task dở. Đợt 34 đã dán migration, `e2e-phase4` 25/25.
+Đợt 35 (thông báo lỗi Gemini) xong code — **ai-service ĐỔI nên phải deploy lại
+Render** khi merge. Đợt 27→31 đã deploy, user xác nhận
 2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
 `student_drive_links` có dữ liệu thật.
 
-**`main` = `origin/main` = `6f35c3d`** — production (Đợt 27-32 + trả nợ kỹ thuật).
+**`main` = `origin/main` = `f1bdd24`** — production (Đợt 27-33).
 **`develop` = `origin/develop`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
@@ -31,8 +29,7 @@ chặn `onrender.com` (môi trường này vốn đã chặn cổng 5432/6543). 
 mở URL đó trên trình duyệt của user, hoặc bấm thử "Nhận xét sản phẩm" trên
 production. **Đừng kết luận Render hỏng chỉ vì curl từ máy dev không thông.**
 
-✅ **Đợt 27→31 ĐÃ nghiệm thu bằng mắt** (user xác nhận 2026-07-30) — không còn
-việc treo nào của các đợt này.
+✅ **Đợt 27→33 ĐÃ nghiệm thu bằng mắt** (user xác nhận 2026-07-30).
 
 ⚠️ **`ADMIN_USERNAMES` phải có ở `web/.env.local` (local) VÀ Vercel (production)**
 — chưa khai thì `/teacher/admin` đá về `/teacher` (fail closed). Biến thêm SAU
@@ -56,7 +53,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 
 **Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (54 unit test) + build.**
 
-**E2E 125/125 PASS** — chạy lại ĐỦ 9 script ngày 2026-07-30 sau khi drop cột
+**E2E 136/136 PASS** — chạy lại ĐỦ 9 script ngày 2026-07-30 sau khi drop cột
 `projects.drive_url` và đổi route khu HV, không script nào vỡ. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
@@ -65,9 +62,9 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 | `e2e-phase2.mjs` | 17 | như trên (hồ sơ HV xuyên khóa + nhóm kỹ năng) |
 | `e2e-api-key.mjs` | 8 | như trên |
 | `e2e-class-admin.mjs` | 18 | như trên (đổi/đặt lại mật khẩu) |
-| `e2e-gallery-storage.mjs` | 18 | như trên — gallery GV, xóa sạch Storage |
+| `e2e-gallery-storage.mjs` | 19 | như trên — gallery GV, xóa sạch Storage |
 | `e2e-phase3.mjs` | 13 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
-| `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
+| `e2e-phase4.mjs` | 25 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
 | `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
 | `e2e-drive-link.mjs` | 14 | `node --env-file=.env.local ...` — RLS link Drive của HV |
 
@@ -99,8 +96,10 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 - 🟡 **Trang vận hành chưa có E2E** — chỉ lint/typecheck/build + user bấm tay.
 - 🟡 **Vitest chỉ phủ LOGIC THUẦN** (54 test: lọc file, ZIP, docx, drive-url).
   Component + Server Action vẫn không có test — nghiệm thu bằng E2E + bấm tay.
-- 🟡 `e2e-gallery-storage` đã flake **2 lần riêng biệt** (17/18 → rerun 18/18,
-  nghi race Storage) — gặp lần thứ 3 thì điều tra nghiêm túc.
+- 🟡 `e2e-gallery-storage` flake 3 lần ở ca "file trong Storage cũng biến mất".
+  Đã điều tra (Đợt 35): **không tái hiện được**, giả thuyết CDN cache sai. Đã làm
+  nó CHẨN ĐOÁN ĐƯỢC (đọc error của `remove()` + đối chiếu `list` vs `download`) —
+  lần đỏ tiếp theo sẽ tự nói nguyên nhân, xem thông báo trước khi đoán.
 
 ### Ràng buộc môi trường (không sửa được, phải sống chung)
 - **Migration dán tay vào Supabase SQL Editor** — mạng chặn cổng 5432/6543.
