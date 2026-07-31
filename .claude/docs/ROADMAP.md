@@ -633,6 +633,37 @@
 - [x] DEPLOY.md thêm bước đối chiếu `commit` với `git log --oneline -1 main`
 - [x] ai-service ĐỔI → lần deploy Render tới sẽ kích hoạt luôn tính năng này
 
+### Đợt 41 (`feature/e2e-action-harness`) — trả 2 món nợ E2E cùng lúc
+- [x] **Hạ tầng**: `vitest.e2e.config.ts` + `pnpm test:e2e` + `web/e2e/_harness.ts`
+      — gọi THẲNG thân Server Action trên Supabase thật. Stub `next/headers`
+      (`CookieJar` giữ session thật → RLS còn hiệu lực), `next/cache`,
+      `next/navigation`. KHÔNG thêm dependency nào
+- [x] **Nợ "trang vận hành chưa có E2E"** (từ Đợt 18) → `admin-ops.e2e.ts`, 21 ca:
+      4 nhánh của `requireAdmin`, fail-closed khi thiếu `ADMIN_USERNAMES`,
+      `denyIfNotAdmin` cho cả 3 action chạy service-role, `buildOpsReport`,
+      dò + dọn file mồ côi (có ca canh "KHÔNG dọn quá tay sang file đang dùng")
+- [x] **Nợ "E2E chỉ mô phỏng logic action"** → chuyển đúng 3 chỗ chép lại logic:
+      `e2e-phase1` → `signup-login.e2e.ts` (22 ca), `e2e-gallery-storage` →
+      `assignments-storage.e2e.ts` (19 ca), `e2e-phase3` → `grading.e2e.ts` (16 ca).
+      Xóa 3 script `.mjs` cũ. Giữ nguyên 7 script probe RLS — chúng CỐ Ý gọi REST trần
+- [x] Ca mới mà script cũ không thể có: `createAssignment` upload xong mà insert
+      hỏng **phải tự dọn file** (không để lại rác mồ côi); `gradeFiles` chặn
+      phiên hết hạn / quá 30 file / quá 6MB / đề của GV khác — trước đây chưa
+      từng có test nào
+- [x] **Lỗ có sẵn**: `e2e-phase1.mjs` tạo tài khoản `e2e.*` mà tiền tố đó CHƯA
+      TỪNG được khai → `purge-test-users.mjs` không dọn nổi. Regex của
+      `test-user-prefixes.test.ts` chỉ bắt `makeUser(` nên bỏ sót; nay bắt theo
+      HÌNH DẠNG username và quét cả `web/e2e/`
+- [x] **Đo được 2 cạm bẫy** (chi tiết ở DECISIONS.md): `download()` trả bản cũ
+      sau khi xóa còn `list()` thì không — nhiều khả năng là gốc của flake
+      `e2e-gallery-storage` đã điều tra 2 lượt; và `{ head: true }` nuốt lỗi
+      PostgREST nên ca "bảng phải biến mất" viết kiểu đó pass suông cả hai chiều
+- [x] lint + typecheck + 92 unit test + build sạch; **E2E 78/78** (đủ cả 3 ca gọi
+      Gemini thật). Dọc đường đo được: hạn mức Gemini tính theo Google Cloud
+      PROJECT chứ không theo key (`GenerateRequestsPerDayPerProjectPerModel`), và
+      key ở trang Hồ sơ không giúp gì cho E2E vì bộ test luôn tạo tài khoản mới
+- [x] Không sửa `src/` (trừ `test-user-prefixes.*`), không migration → KHÔNG deploy
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

@@ -56,6 +56,14 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
 ## Ranh giới & quy tắc phụ thuộc
 
 - Phân quyền thật nằm ở RLS (Postgres); UI check chỉ để trải nghiệm.
+- ⚠️ **RLS giới hạn DÒNG, không giới hạn CỘT.** Cột nào người dùng không được sửa
+  thì phải dùng `grant update (cột)` — `profiles.role`/`username` đã bị lợi dụng
+  để tự nâng quyền (mig `20260731030000`). Xem DECISIONS.md.
+- ⚠️ **Ràng buộc dữ liệu (độ dài, scheme URL) phải có CHECK ở DB**, không chỉ trong
+  Server Action: RLS cho người dùng ghi thẳng dòng của mình qua REST API, bỏ qua
+  action (mig `20260731010000`, `20260731020000`).
+- ⚠️ **`teacher_id = auth.uid()` KHÔNG có nghĩa là "giáo viên"** — policy của bảng
+  GV phải kèm `public.is_teacher()`.
 - **Ngoại lệ duy nhất: khu `/teacher/admin`** chạy bằng service-role nên KHÔNG có
   RLS đỡ — mọi action ở đó phải tự kiểm quyền ngay dòng đầu (`denyIfNotAdmin`).
 - Chỉ server-side của Next.js gọi ai-service; browser không bao giờ có X-API-Key.
@@ -99,5 +107,10 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
 
 - `courses` (JSB) ≠ `classes` (JSB01): đề bài gắn course, học viên gắn class.
 - Render free ngủ sau 15 phút → request AI đầu tiên có thể chờ 30–60s (cold start).
+- `GET /health` của ai-service trả `{"status","commit"}` — `commit` là 7 ký tự của
+  `RENDER_GIT_COMMIT`, so với `git log --oneline -1 main` để biết Render đã deploy
+  bản mới chưa (không cần dashboard). `"local"` khi chạy máy dev.
+- Gemini free tier hiện chỉ **20 lượt/ngày** cho `gemini-3.6-flash` → E2E gọi AI
+  không chạy được tùy ý. Đừng hardcode con số hạn mức vào thông báo.
 - Supabase free pause project sau 7 ngày không hoạt động.
 - Storage KHÔNG cascade như FK — xóa dòng có file phải xóa file tay (`spec-storage.ts`).

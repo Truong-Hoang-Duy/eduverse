@@ -136,40 +136,48 @@ export function GradingTool({
     setError("");
   }
 
-  /** Thêm dồn (không ghi đè) để kéo thả nhiều lượt/nhiều thư mục khác nhau được. */
+  /**
+   * Nạp thêm file vào danh sách chờ chấm.
+   *
+   * `startFresh` = lượt nạp này mở BÀI MỚI (xóa sạch bài trước) thay vì thêm
+   * dồn. Chưa chấm thì cộng dồn, để kéo thả nhiều lượt / thêm file quên cho
+   * CÙNG một học sinh vẫn được; chấm xong rồi mà nạp tiếp thì gần như chắc chắn
+   * là sang học sinh khác — giữ lại file cũ ở đó là chấm nhầm cả bài của hai em.
+   */
   function addAttachments(
     incoming: Attachment[],
     tally: SkipTally,
-    source: string
+    source: string,
+    startFresh: boolean
   ) {
     let added = 0;
     setFiles((prev) => {
-      const seen = new Set(prev.map((a) => a.key));
+      const base = startFresh ? [] : prev;
+      const seen = new Set(base.map((a) => a.key));
       const fresh = incoming.filter((a) => !seen.has(a.key));
       added = fresh.length;
-      return [...prev, ...fresh];
+      return [...base, ...fresh];
     });
     setSkipped((prev) => {
-      const next = { ...prev };
+      const next = startFresh ? emptyTally() : { ...prev };
       for (const key of Object.keys(tally) as (keyof SkipTally)[]) {
         next[key] += tally[key];
       }
       return next;
     });
 
-    // Thông báo của MÌNH sau khi trình duyệt xong việc: nói rõ đã nhận bao nhiêu,
-    // bỏ gì, và nhắc lại là file không rời khỏi máy — hộp thoại của trình duyệt
-    // dùng chữ "Upload" nên GV dễ tưởng file đã bị tải lên và lưu ở đâu đó.
-    // Phần "đã bỏ qua gì" nằm ở khối danh sách bên dưới (số cộng dồn) — ở đây
-    // chỉ nói việc vừa xảy ra, tránh lặp cùng một thông tin hai chỗ.
+    // Thông báo của MÌNH sau khi trình duyệt xong việc: đã nhận bao nhiêu file,
+    // từ đâu, và có bỏ bài trước đi không. Phần "đã bỏ qua gì" nằm ở khối danh
+    // sách bên dưới, còn "file không được lưu lại" nằm ở vùng thả — không lặp
+    // lại ở đây để câu thông báo còn đọc được.
     const bytes = incoming.reduce((sum, a) => sum + a.size, 0);
     setNotice(
-      `Đã nạp ${added} file (${formatBytes(bytes)}) từ ${source} — file không rời khỏi máy bạn, hệ thống không lưu lại.`
+      `${startFresh ? "Đã bỏ bài trước. " : ""}Đã nạp ${added} file (${formatBytes(bytes)}) từ ${source}.`
     );
   }
 
   /** Một file .zip → server giải nén (giữ cả ảnh/PDF, khác đường sản phẩm). */
-  function loadZip(zip: File) {
+  function loadZip(zip: File, startFresh: boolean) {
     startReading(async () => {
       try {
         const res = await extractZipForGrading({
@@ -189,7 +197,8 @@ export function GradingTool({
             mimeType: f.mimeType,
           })),
           res.skipped ?? emptyTally(),
-          `file nén "${zip.name}"`
+          `file nén "${zip.name}"`,
+          startFresh
         );
       } catch {
         setError("Không đọc được file .zip này.");
@@ -198,6 +207,10 @@ export function GradingTool({
   }
 
   function loadPicked(picked: PickedFile[]) {
+    // Đọc TRƯỚC khi xóa kết quả: đã có điểm trên màn hình nghĩa là bài trước
+    // chấm xong, nên lượt nạp này mở bài mới.
+    const startFresh = grade !== null;
+
     setGrade(null);
     setError("");
     setNotice("");
@@ -213,7 +226,7 @@ export function GradingTool({
 
     // Đúng một file .zip thì giải nén; còn lại nhận trực tiếp.
     if (picked.length === 1 && picked[0].path.toLowerCase().endsWith(".zip")) {
-      loadZip(picked[0].file);
+      loadZip(picked[0].file, startFresh);
       return;
     }
 
@@ -253,7 +266,8 @@ export function GradingTool({
     addAttachments(
       stripCommonRoot(kept.map(attachmentFromPicked)),
       tally,
-      source
+      source,
+      startFresh
     );
   }
 
@@ -425,11 +439,10 @@ export function GradingTool({
             if (dragDepth.current <= 0) setDragging(false);
           }}
           onDrop={handleDrop}
-          className={`space-y-3 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors hover:border-primary/60 hover:bg-accent/40 ${
-            dragging
+          className={`space-y-3 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors hover:border-primary/60 hover:bg-accent/40 ${dragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25"
-          } cursor-pointer`}
+            } cursor-pointer`}
         >
           <p className="text-3xl leading-none" aria-hidden="true">
             {dragging ? "📥" : "📄"}
@@ -508,18 +521,24 @@ export function GradingTool({
               {files.length} file sẽ được chấm ·{" "}
               {formatBytes(files.reduce((sum, f) => sum + f.size, 0))}
             </p>
-            <button
+            {/* Nút thật (không phải chữ xám cỡ xs như trước): đây là lối thoát
+                khi GV chọn nhầm cả thư mục hàng chục file, mà lúc đó danh sách
+                dài khiến chữ nhỏ càng chìm. Không hỏi ConfirmDialog vì không có
+                gì để mất — danh sách chưa lưu ở đâu, chọn lại là xong. */}
+            <Button
               type="button"
+              variant="destructive"
+              size="sm"
               onClick={() => {
                 setFiles([]);
                 setSkipped(emptyTally());
                 setGrade(null);
                 setNotice("");
+                setError("");
               }}
-              className="cursor-pointer text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
             >
-              ✕ Xóa hết
-            </button>
+              ✕ Xóa hết {files.length} file
+            </Button>
           </div>
           <ul className="max-h-64 space-y-1 overflow-y-auto">
             {files.map((f) => (
@@ -544,10 +563,10 @@ export function GradingTool({
           </ul>
           {skipped.folder + skipped.junk + skipped.binary + skipped["too-big"] >
             0 && (
-            <p className="text-xs text-muted-foreground">
-              Đã bỏ qua {describeSkipped(skipped)}.
-            </p>
-          )}
+              <p className="text-xs text-muted-foreground">
+                Đã bỏ qua {describeSkipped(skipped)}.
+              </p>
+            )}
         </div>
       )}
 

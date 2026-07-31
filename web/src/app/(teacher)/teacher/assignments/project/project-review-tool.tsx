@@ -99,11 +99,10 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
     setExcluded(new Set());
     setSkipped(tally);
 
-    // Phần "đã bỏ qua gì" nằm ở khối danh sách bên dưới — ở đây chỉ nói việc vừa
-    // xảy ra + trấn an, vì hộp thoại của trình duyệt dùng chữ "Upload" nên GV dễ
-    // tưởng file đã bị tải lên và lưu ở đâu đó.
+    // Chỉ nói việc vừa xảy ra. Phần "đã bỏ qua gì" nằm ở khối danh sách bên
+    // dưới, còn "file không được lưu lại" nằm ở vùng thả — không lặp lại ở đây.
     setNotice(
-      `Đã đọc ${next.length} file (${formatBytes(totalBytes(next))}) từ ${source} — file không rời khỏi máy bạn, hệ thống không lưu lại.`
+      `Đã đọc ${next.length} file (${formatBytes(totalBytes(next))}) từ ${source}.`
     );
   }
 
@@ -263,9 +262,8 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
             if (dragDepth.current <= 0) setDragging(false);
           }}
           onDrop={handleDrop}
-          className={`space-y-3 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors ${
-            dragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
-          }`}
+          className={`space-y-3 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors ${dragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
+            }`}
         >
           <p className="text-3xl leading-none" aria-hidden="true">
             {dragging ? "📥" : "📁"}
@@ -346,18 +344,20 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
               Nhận xét {chosen.length}/{files.length} file ·{" "}
               {formatBytes(totalBytes(chosen))}
             </p>
-            <button
+            {/* Cùng kiểu với nút ở tab bài tập hàng ngày — xem chú thích bên đó. */}
+            <Button
               type="button"
+              variant="destructive"
+              size="sm"
               onClick={() => {
                 setFiles([]);
                 setExcluded(new Set());
                 setSkipped(emptyTally());
                 reset();
               }}
-              className="cursor-pointer text-xs font-medium text-muted-foreground transition-colors hover:text-destructive"
             >
-              ✕ Xóa hết
-            </button>
+              ✕ Xóa hết {files.length} file
+            </Button>
           </div>
           <ul className="max-h-64 space-y-1 overflow-y-auto">
             {files.map((f) => (

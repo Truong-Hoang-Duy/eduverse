@@ -52,7 +52,8 @@ pnpm install               # KHÔNG dùng npm/yarn
 pnpm dev                   # dev server http://localhost:3000
 pnpm lint                  # eslint
 pnpm typecheck             # tsc --noEmit
-pnpm test                  # vitest run (unit test logic thuần)
+pnpm test                  # vitest run (unit test logic thuần, offline)
+pnpm test:e2e              # E2E gọi thẳng thân Server Action trên Supabase THẬT
 pnpm build                 # production build
 # --- ai-service/ (chạy trong thư mục ai-service/) ---
 .venv/Scripts/python -m uvicorn app.main:app --reload --port 8000

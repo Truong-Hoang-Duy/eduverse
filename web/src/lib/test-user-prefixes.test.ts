@@ -12,23 +12,43 @@ import { TEST_USER_PREFIXES } from "./admin-report";
  * tài khoản `dl.` trong DB thật lúc phát hiện) và `/teacher/admin` đếm chúng là
  * tài khoản thật.
  *
- * Test này đọc THẲNG các script E2E nên thêm script mới với tiền tố mới là
+ * Test này đọc THẲNG các bộ E2E nên thêm bộ mới với tiền tố mới là
  * `pnpm test` đỏ ngay, không chờ tới lúc dọn rác mới biết.
  */
-const SCRIPTS_DIR = join(process.cwd(), "scripts");
+const SOURCES: { dir: string; matches: (file: string) => boolean }[] = [
+  {
+    dir: join(process.cwd(), "scripts"),
+    matches: (f) => f.startsWith("e2e-") && f.endsWith(".mjs"),
+  },
+  // Bộ gọi thẳng thân Server Action — cũng tạo tài khoản thật, cũng phải dọn được.
+  {
+    dir: join(process.cwd(), "e2e"),
+    matches: (f) => f.endsWith(".e2e.ts"),
+  },
+];
 
-/** Tiền tố của mọi `makeUser(\`xx.vai-tro.${ts}\`)` trong các script E2E. */
+/**
+ * Tiền tố của mọi username dạng `xx.vai-tro.${ts}` trong các bộ E2E.
+ *
+ * Cố ý bắt theo HÌNH DẠNG username chứ không theo tên hàm tạo: bản cũ chỉ tìm
+ * `makeUser(` nên bỏ lọt `e2e-phase1.mjs` (dùng `signupAndLogin`) — tiền tố
+ * `e2e.` của nó không được khai suốt một thời gian dài mà test vẫn xanh.
+ */
 function prefixesUsedByScripts(): Map<string, string[]> {
   const found = new Map<string, string[]>();
 
-  for (const file of readdirSync(SCRIPTS_DIR)) {
-    if (!file.startsWith("e2e-") || !file.endsWith(".mjs")) continue;
+  for (const { dir, matches } of SOURCES) {
+    for (const file of readdirSync(dir)) {
+      if (!matches(file)) continue;
 
-    const source = readFileSync(join(SCRIPTS_DIR, file), "utf8");
-    for (const [, prefix] of source.matchAll(/makeUser\(`([a-z0-9]+\.)/g)) {
-      const files = found.get(prefix) ?? [];
-      if (!files.includes(file)) files.push(file);
-      found.set(prefix, files);
+      const source = readFileSync(join(dir, file), "utf8");
+      for (const [, prefix] of source.matchAll(
+        /`([a-z0-9]+\.)[a-z0-9]+\.\$\{ts\}`/g
+      )) {
+        const files = found.get(prefix) ?? [];
+        if (!files.includes(file)) files.push(file);
+        found.set(prefix, files);
+      }
     }
   }
 
