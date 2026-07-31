@@ -1,5 +1,15 @@
-/** Nguồn duy nhất cho giới hạn nhập liệu sản phẩm cuối khóa — dùng cả client (UX) và server (thẩm quyền thật). */
+/**
+ * Nguồn duy nhất cho giới hạn nhập liệu sản phẩm cuối khóa.
+ *
+ * Dùng ở 3 nơi và phải KHỚP cả 3: client (chặn UX), Server Action (thông báo lỗi
+ * tử tế), và **CHECK constraint ở DB** (migration `20260731020000` — thẩm quyền
+ * THẬT, vì RLS cho học viên ghi thẳng dòng của mình qua API, bỏ qua action).
+ * Sửa số ở đây thì phải tạo migration đổi constraint theo.
+ */
 export const PROJECT_NAME_MAX = 100;
 export const PROJECT_TEXT_MAX = 1000;
 export const PROJECT_FEATURES_MAX = 15;
 export const PROJECT_FEATURE_MAX = 80;
+
+/** Bình luận sản phẩm — trước 2026-07-30 KHÔNG có giới hạn nào ở đâu cả. */
+export const PROJECT_COMMENT_MAX = 2000;

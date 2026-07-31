@@ -144,6 +144,50 @@ async function main() {
   const { data: gone } = await admin.from("projects").select("id").eq("id", proj.id);
   check("HV xóa được sản phẩm của mình", (gone ?? []).length === 0);
 
+  // 9c-bis. Giới hạn nhập liệu phải do DB ép, KHÔNG chỉ `saveProject`: RLS cho HV
+  // ghi thẳng dòng của mình qua API nên trước migration 20260731020000, một em ghi
+  // được mô tả 200.000 ký tự / 500 chức năng và làm vỡ gallery của CẢ LỚP.
+  const overLimit = [
+    ["name quá dài", { name: "N".repeat(200) }],
+    ["mô tả quá dài", { description: "D".repeat(2000) }],
+    ["ghi chú quá dài", { extra_notes: "E".repeat(2000) }],
+    ["quá nhiều chức năng", { features: Array.from({ length: 30 }, (_, i) => `cn${i}`) }],
+    ["một chức năng quá dài", { features: ["x".repeat(200)] }],
+    ["repo_url không phải http", { repo_url: "javascript:alert(1)" }],
+    ["demo_url không phải http", { demo_url: "javascript:alert(1)" }],
+    ["name rỗng", { name: "   " }],
+  ];
+  for (const [label, patch] of overLimit) {
+    const { error } = await alice.client.from("projects").insert({
+      student_id: alice.id,
+      class_id: clsA.id,
+      name: "Ten hop le",
+      ...patch,
+    });
+    check(`DB chặn ${label}`, Boolean(error), error ? "" : "DB NHẬN — thiếu constraint!");
+    if (!error) await admin.from("projects").delete().eq("student_id", alice.id);
+  }
+
+  // 9c-ter. Bình luận quá dài cũng phải bị DB chặn (trước đây không có giới hạn nào).
+  const { data: cmtProj } = await alice.client
+    .from("projects")
+    .insert({ student_id: alice.id, class_id: clsA.id, name: "SP cho binh luan" })
+    .select("id")
+    .single();
+  const { error: longCmtErr } = await bob.client.from("project_comments").insert({
+    project_id: cmtProj.id,
+    author_id: bob.id,
+    content: "C".repeat(5000),
+  });
+  check("DB chặn bình luận quá dài", Boolean(longCmtErr));
+  const { error: okCmtErr } = await bob.client.from("project_comments").insert({
+    project_id: cmtProj.id,
+    author_id: bob.id,
+    content: "Nhận xét bình thường, dài vừa phải.",
+  });
+  check("Bình luận bình thường vẫn gửi được", !okCmtErr, okCmtErr?.message ?? "");
+  await alice.client.from("projects").delete().eq("id", cmtProj.id);
+
   // 9d. Roster lớp (policy enrollments_classmates_select, migration 20260720000000):
   // Bob thấy cả ghi danh của Alice → gallery hiện được bạn CHƯA có sản phẩm.
   const { data: bobRoster } = await bob.client

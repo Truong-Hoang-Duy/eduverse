@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addComment, deleteComment } from "@/lib/actions/projects";
 import type { ActionResult } from "@/lib/types";
+import { PROJECT_COMMENT_MAX } from "@/lib/project-limits";
 
 export interface CommentItem {
   id: string;
@@ -87,7 +88,12 @@ export function CommentSection({
         className="flex gap-2"
       >
         <input type="hidden" name="project_id" value={projectId} />
-        <Input name="content" placeholder={placeholder} className="h-9" />
+        <Input
+          name="content"
+          placeholder={placeholder}
+          maxLength={PROJECT_COMMENT_MAX}
+          className="h-9"
+        />
         {/* h-9 khớp đúng chiều cao Input. `size="sm"` của Button là h-7 nên
             trước đây nút thấp hơn ô nhập một khoảng thấy rõ. */}
         <Button type="submit" className="h-9 shrink-0">

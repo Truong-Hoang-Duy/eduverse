@@ -8,8 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 33 (bịt stored XSS) đã dán migration + deploy;
-`e2e-drive-link` 14/14 với constraint áp thật. Đợt 27→31 đã deploy, user xác nhận
+**Đang làm:** Đợt 34 (giới hạn nhập liệu ở tầng DB) đã code + merge develop —
+**chờ user dán migration `20260731020000`** rồi chạy lại `e2e-phase4`
+(kỳ vọng 25/25; chưa dán thì 16/25). Đợt 27→31 đã deploy, user xác nhận
 2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
 `student_drive_links` có dữ liệu thật.
@@ -28,8 +29,7 @@ chặn `onrender.com` (môi trường này vốn đã chặn cổng 5432/6543). 
 mở URL đó trên trình duyệt của user, hoặc bấm thử "Nhận xét sản phẩm" trên
 production. **Đừng kết luận Render hỏng chỉ vì curl từ máy dev không thông.**
 
-✅ **Đợt 27→31 ĐÃ nghiệm thu bằng mắt** (user xác nhận 2026-07-30) — không còn
-việc treo nào của các đợt này.
+✅ **Đợt 27→33 ĐÃ nghiệm thu bằng mắt** (user xác nhận 2026-07-30).
 
 ⚠️ **`ADMIN_USERNAMES` phải có ở `web/.env.local` (local) VÀ Vercel (production)**
 — chưa khai thì `/teacher/admin` đá về `/teacher` (fail closed). Biến thêm SAU
@@ -53,7 +53,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 
 **Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (54 unit test) + build.**
 
-**E2E 125/125 PASS** — chạy lại ĐỦ 9 script ngày 2026-07-30 sau khi drop cột
+**E2E 135/135 PASS** — chạy lại ĐỦ 9 script ngày 2026-07-30 sau khi drop cột
 `projects.drive_url` và đổi route khu HV, không script nào vỡ. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
@@ -64,7 +64,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 | `e2e-class-admin.mjs` | 18 | như trên (đổi/đặt lại mật khẩu) |
 | `e2e-gallery-storage.mjs` | 18 | như trên — gallery GV, xóa sạch Storage |
 | `e2e-phase3.mjs` | 13 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
-| `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
+| `e2e-phase4.mjs` | 25 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
 | `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
 | `e2e-drive-link.mjs` | 14 | `node --env-file=.env.local ...` — RLS link Drive của HV |
 
