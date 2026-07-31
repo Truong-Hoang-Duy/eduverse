@@ -277,7 +277,6 @@ export type Database = {
           created_at: string
           demo_url: string | null
           description: string | null
-          drive_url: string | null
           extra_notes: string | null
           features: string[]
           id: string
@@ -291,7 +290,6 @@ export type Database = {
           created_at?: string
           demo_url?: string | null
           description?: string | null
-          drive_url?: string | null
           extra_notes?: string | null
           features?: string[]
           id?: string
@@ -305,7 +303,6 @@ export type Database = {
           created_at?: string
           demo_url?: string | null
           description?: string | null
-          drive_url?: string | null
           extra_notes?: string | null
           features?: string[]
           id?: string

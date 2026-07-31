@@ -38,7 +38,6 @@ export interface ProjectData {
   description: string | null;
   features: string[];
   repo_url: string | null;
-  drive_url: string | null;
   demo_url: string | null;
   extra_notes: string | null;
 }
