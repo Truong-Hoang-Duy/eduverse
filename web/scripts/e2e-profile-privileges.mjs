@@ -79,6 +79,14 @@ async function main() {
     class_code: `${CODE}02`,
   });
 
+  // Nạn nhân (lớp khác) có link Drive riêng — để ca "đọc được link lớp khác" ở
+  // dưới KHÔNG pass suông vì đơn giản là chẳng có dữ liệu nào.
+  const VICTIM_LINK = "https://drive.google.com/drive/folders/RIENG-TU-LOP-B";
+  const { error: victimLinkErr } = await victim.client
+    .from("student_drive_links")
+    .upsert({ student_id: victim.id, drive_url: VICTIM_LINK });
+  if (victimLinkErr) throw new Error(`victim drive link: ${victimLinkErr.message}`);
+
   // ---------- 1. KHÔNG tự nâng quyền ----------
   const { error: roleErr } = await hv.client
     .from("profiles")
@@ -170,6 +178,33 @@ async function main() {
     .from("enrollments")
     .insert({ class_id: myClass.id, student_id: victim.id });
   check("HV KHÔNG ghi danh được người khác vào lớp", Boolean(enrollErr));
+
+  // ---------- 8. KHÔNG tự ghi danh mình vào lớp khác ----------
+  // Mã lớp rất dễ đoán và `get_class_id_by_code` (SECURITY DEFINER) đổi mã → UUID,
+  // nên nếu còn policy insert trần thì HV tự vào lớp bất kỳ rồi đọc sản phẩm,
+  // roster và LINK DRIVE riêng của các em lớp đó (migration 20260731040000).
+  const { data: otherClassId } = await hv.client.rpc("get_class_id_by_code", {
+    p_class_code: `${CODE}02`,
+  });
+  const { error: selfEnrollErr } = await hv.client
+    .from("enrollments")
+    .insert({ class_id: otherClassId, student_id: hv.id });
+  check(
+    "HV KHÔNG tự ghi danh mình vào lớp khác",
+    Boolean(selfEnrollErr),
+    selfEnrollErr ? "" : "🔴 tự vào được lớp khác → đọc được dữ liệu lớp đó"
+  );
+
+  // Và vẫn không đọc được link Drive riêng của em lớp đó
+  const { data: leaked } = await hv.client
+    .from("student_drive_links")
+    .select("drive_url")
+    .eq("student_id", victim.id);
+  check(
+    "HV KHÔNG đọc được link Drive của HV lớp khác",
+    (leaked ?? []).length === 0,
+    leaked?.length ? `🔴 đọc được: ${leaked[0].drive_url}` : "thấy 0 dòng"
+  );
 
   // Dọn: xóa khóa TRƯỚC tài khoản, rồi xóa user.
   for (const id of courseIds) await admin.from("courses").delete().eq("id", id);
