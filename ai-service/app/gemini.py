@@ -19,11 +19,16 @@ logger = logging.getLogger(__name__)
 # Câu cũ "AI đang bận, thử lại sau ít phút" khiến GV bấm lại vô ích (sửa 2026-07-30).
 QUOTA_MESSAGE = (
     "Key dùng chung của hệ thống đã hết lượt hôm nay. Vào trang Hồ sơ thêm API "
-    "key Gemini riêng của bạn (miễn phí, 1.500 lượt/ngày) để dùng tiếp ngay."
+    "key Gemini riêng của bạn (miễn phí) để có hạn mức riêng, dùng tiếp ngay."
 )
+# KHÔNG ghi con số hạn mức vào đây: Google đổi theo model và theo thời điểm. Ngày
+# 2026-07-30 `gemini-flash-latest` trỏ tới gemini-3.6-flash với hạn mức free tier
+# chỉ 20 lượt/NGÀY (đọc được từ chính lỗi 429), trong khi các thông báo cũ ghi
+# 1.500 — sai gấp 75 lần. Cùng bài học với "đừng đoán format API key bên thứ 3".
 QUOTA_MESSAGE_OWN_KEY = (
-    "API key của bạn đã hết lượt dùng hôm nay (Gemini free: 1.500 lượt/ngày). "
-    "Thử lại sau hoặc dùng key khác."
+    "API key của bạn đã hết lượt dùng hôm nay. Chờ sang ngày mai, hoặc dùng key "
+    "khác. Hạn mức miễn phí của Google thay đổi theo model — xem "
+    "ai.google.dev/gemini-api/docs/rate-limits."
 )
 # Gemini tự trả 503 UNAVAILABLE khi model đang tắc nghẽn — KHÁC hết lượt: thử lại
 # sau ít phút là được, không phải chờ sang ngày mai. Nói rõ để GV không đi tìm key

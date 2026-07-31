@@ -612,6 +612,18 @@
       Đợt 35, đóng món nợ ở mức "đã điều tra, chưa biết gốc, nhưng lần sau đỏ sẽ
       tự nói nguyên nhân". KHÔNG đoán thêm khi không có dữ liệu
 
+### Đợt 39 (`fix/gemini-quota-wording`) — hạn mức thật là 20/ngày, không phải 1.500
+- [x] Đọc nguyên văn lỗi 429 (thay vì chỉ xem mã HTTP) và phát hiện hạn mức thật:
+      `quotaValue: 20` lượt/NGÀY cho `gemini-3.6-flash` — model mà
+      `gemini-flash-latest` đang trỏ tới
+- [x] Sửa 4 chỗ ghi "1.500 lượt/ngày", gồm cả text hiển thị cho HỌC VIÊN ở trang
+      Hướng dẫn và trang Hồ sơ. Nay không hardcode số nữa, trỏ tới trang rate-limits
+      của Google
+- [x] Ghi lại vì sao E2E gọi AI không chạy được tùy ý (20 lượt/ngày ÷ 6-10 lượt mỗi
+      bộ) → đóng việc "treo", đây là ràng buộc môi trường chứ không phải task
+- [x] pytest 25/25, 92 unit test, lint/typecheck/build sạch. ai-service ĐỔI → deploy
+      lại Render
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

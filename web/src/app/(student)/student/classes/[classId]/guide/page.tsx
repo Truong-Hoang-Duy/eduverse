@@ -66,7 +66,7 @@ const SECTIONS = [
     key: "apikey" as const,
     title: "4. Lấy API key Gemini miễn phí (để dùng AI riêng)",
     description:
-      "Cả lớp đang dùng chung một key nên dễ hết lượt. Có key riêng thì bạn có hạn mức riêng: 1.500 lượt/ngày, miễn phí, không cần thẻ.",
+      "Cả lớp đang dùng chung một key nên rất dễ hết lượt. Có key riêng thì em có hạn mức riêng, miễn phí, không cần thẻ.",
     steps: [
       "Mở aistudio.google.com/apikey, đăng nhập bằng tài khoản Google.",
       'Bấm "Create API key" → chọn project bất kỳ (hoặc tạo mới).',
