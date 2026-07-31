@@ -50,6 +50,8 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
 
+**Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (54 unit test) + build.**
+
 **E2E 120/120 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
@@ -80,15 +82,6 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
-- 🟡 **Logic đọc thư mục/.zip phía web KHÔNG có test được commit** — tôi nghiệm
-  thu bằng script tạm rồi xóa (`listZipEntries` + `skipReasonFor` trên .zip thật
-  có node_modules/ảnh/file quá lớn, và `docxToText` trên .docx deflate+stored).
-  E2E hiện chỉ phủ ai-service. Sửa luật lọc mà quên chạy lại tay thì không có gì
-  bắt lỗi → nếu web có Vitest thì đây là chỗ đầu tiên nên viết test.
-- 🟡 **SESSION_NOTES.md đang ~340 dòng** (header tự đặt mục tiêu ~150). Phần phình
-  là "Quyết định đã chốt" (~180 dòng) — đó là kiến thức KHÔNG suy ra được từ code
-  nên tôi không tự xóa. Muốn gọn thì tách sang `.claude/docs/DECISIONS.md` và
-  thêm vào bảng Docs Router của CLAUDE.md — cần user đồng ý vì đổi cấu trúc docs.
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
   action mà quên đổi script thì test vẫn xanh; UI phải nghiệm thu bằng mắt.
 - 🟡 **Trang vận hành chưa có E2E** — chỉ lint/typecheck/build + user bấm tay.
@@ -99,9 +92,8 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
   `createAssignment` upload trước rồi mới insert** (có rollback nếu insert
   hỏng). Không phải bug, nhưng luật và code đang lệch — sửa luật hoặc sửa code
   khi có dịp.
-- 🟡 **`coding-style.md` nói web dùng Vitest nhưng repo chưa có vitest lẫn file
-  `.test.ts` nào** — cổng kiểm tra thực tế của `web/` chỉ là lint + typecheck +
-  build.
+- 🟡 **Vitest chỉ phủ LOGIC THUẦN** (54 test: lọc file, ZIP, docx, drive-url).
+  Component + Server Action vẫn không có test — nghiệm thu bằng E2E + bấm tay.
 - 🟡 `e2e-gallery-storage` đã flake **2 lần riêng biệt** (17/18 → rerun 18/18,
   nghi race Storage) — gặp lần thứ 3 thì điều tra nghiêm túc.
 
