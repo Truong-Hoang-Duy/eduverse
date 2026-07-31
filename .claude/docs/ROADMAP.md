@@ -624,6 +624,15 @@
 - [x] pytest 25/25, 92 unit test, lint/typecheck/build sạch. ai-service ĐỔI → deploy
       lại Render
 
+### Đợt 40 (`chore/health-reports-commit`) — /health nói bản đang chạy
+- [x] `/health` trả thêm `commit` (7 ký tự từ `RENDER_GIT_COMMIT`) + `HealthResponse`
+      Pydantic thay vì dict thô. `"local"` khi chạy máy dev
+- [x] Trả lời "Render deploy chưa?" bằng MỘT request, không cần dashboard — phiên
+      2026-07-30 đã 3 lần không xác nhận được (mạng dev chặn `onrender.com`)
+- [x] 2 pytest mới (có/không có biến Render) → 27; nghiệm thu tay cả 2 nhánh
+- [x] DEPLOY.md thêm bước đối chiếu `commit` với `git log --oneline -1 main`
+- [x] ai-service ĐỔI → lần deploy Render tới sẽ kích hoạt luôn tính năng này
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

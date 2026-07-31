@@ -114,6 +114,15 @@ class SuggestFeaturesResponse(BaseModel):
     suggestions: list[FeatureSuggestion]
 
 
+# ---------- /health ----------
+class HealthResponse(BaseModel):
+    """Render dùng để health-check; người vận hành dùng để biết bản đang chạy."""
+
+    status: str
+    # 7 ký tự đầu của commit đang chạy, hoặc "local" khi chạy ở máy dev.
+    commit: str
+
+
 # ---------- /grade-submission ----------
 class InlineFile(BaseModel):
     """File bài làm gửi thẳng nội dung — KHÔNG lưu ở Storage."""
