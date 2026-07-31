@@ -289,3 +289,10 @@
 - **Test canh bảo mật phải có DỮ LIỆU THẬT để lộ, không thì pass suông** — ca "HV
   không đọc được link Drive lớp khác" ban đầu xanh chỉ vì nạn nhân chưa từng lưu
   link nào. Cho nạn nhân lưu link trước rồi ca đó mới đỏ đúng (2026-07-30).
+- **`đ`/`Đ` phải xử lý RIÊNG khi bỏ dấu tiếng Việt** — chúng là ký tự độc lập, KHÔNG
+  phải `d` + dấu, nên `normalize("NFD")` không tách ra được và rơi vào nhánh "ký tự
+  lạ". `sanitizeFileName` từng biến "đề bài" thành `_e_bai` (bug thật, unit test bắt
+  được 2026-07-30). Chỗ nào bỏ dấu tiếng Việt cũng nhớ map đ→d, Đ→D TRƯỚC khi NFD.
+- **File ĐỀ BÀI đi qua FormData (nhị phân), KHÔNG base64** — chỉ đường CHẤM BÀI mới
+  base64 (`GRADING_BUDGET` đã chừa +33%). Nên `SPEC_MAX_BYTES` 8MB dưới trần 10MB là
+  đủ, không cần trừ thêm cho base64 (tôi từng viết test sai theo giả định này).
