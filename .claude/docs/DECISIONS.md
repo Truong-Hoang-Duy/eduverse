@@ -235,3 +235,15 @@
   `BigLink`) để dòng cũ đã lọt vào DB không bấm được; (3) validate trong action
   cho thông báo lỗi tử tế. Thêm chỗ render URL người dùng mới → PHẢI gọi
   `isSafeHttpUrl`.
+- **Giới hạn nhập liệu phải có CHECK constraint ở DB, không chỉ ở Server Action**
+  (sự cố 2026-07-30, cùng lớp lỗi với XSS `drive_url`). Đã kiểm chứng: học viên gọi
+  REST API trực tiếp ghi được `name` 5.000 ký tự, mô tả 200.000, **500 chức năng**,
+  bình luận 500.000 — trong khi `project-limits.ts` khai 100/1.000/15/80 và bình
+  luận trước đó KHÔNG có giới hạn nào. Hậu quả: MỘT em làm vỡ trang gallery của cả
+  lớp + của GV + màn chiếu TV (trang tải mọi sản phẩm trong lớp).
+  Migration `20260731020000` thêm constraint cho `projects` (name/description/
+  extra_notes/features/repo_url/demo_url) và `project_comments.content` (≤2000).
+  **Số ở `project-limits.ts` và số trong constraint phải KHỚP** — đổi một bên thì
+  tạo migration đổi bên kia.
+  Mẹo Postgres: CHECK **không cho subquery**, nên "phần tử dài nhất của mảng" phải
+  bọc vào hàm IMMUTABLE (`public.max_text_length`) rồi gọi trong CHECK.

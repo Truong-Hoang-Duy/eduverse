@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import {
+  PROJECT_COMMENT_MAX,
   PROJECT_FEATURE_MAX,
   PROJECT_FEATURES_MAX,
   PROJECT_NAME_MAX,
@@ -161,6 +162,9 @@ export async function addComment(
 
   if (!projectId || !content) {
     return { error: "Nhập nội dung nhận xét." };
+  }
+  if (content.length > PROJECT_COMMENT_MAX) {
+    return { error: `Nhận xét tối đa ${PROJECT_COMMENT_MAX} ký tự.` };
   }
 
   const supabase = await createClient();
