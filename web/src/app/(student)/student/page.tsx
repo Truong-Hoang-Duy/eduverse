@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import {
@@ -77,29 +79,37 @@ export default async function StudentDashboard() {
           {myClasses.map((row) => {
             if (!row.classes) return null;
             return (
-              <Card
+              // Cả thẻ là một link vào lớp — sản phẩm/gallery/hướng dẫn giờ nằm
+              // TRONG từng lớp nên đây là đường duy nhất đi tới chúng.
+              <Link
                 key={row.id}
-                className="gap-3 border-l-4 border-l-primary shadow-sm"
+                href={`/student/classes/${row.classes.id}`}
+                className="rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Lớp {row.classes.class_code}
-                  </CardTitle>
-                  <CardDescription>
-                    {row.classes.courses
-                      ? `${row.classes.courses.code} — ${row.classes.courses.name}`
-                      : ""}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-1 text-sm text-muted-foreground">
-                  <p>📅 {row.classes.total_sessions} buổi</p>
-                  {row.classes.description && <p>{row.classes.description}</p>}
-                  <p className="text-xs">
-                    Tham gia ngày{" "}
-                    {new Date(row.joined_at).toLocaleDateString("vi-VN")}
-                  </p>
-                </CardContent>
-              </Card>
+                <Card className="h-full gap-3 border-l-4 border-l-primary shadow-sm transition-colors hover:border-primary hover:bg-accent/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg">
+                      Lớp {row.classes.class_code}
+                    </CardTitle>
+                    <CardDescription>
+                      {row.classes.courses
+                        ? `${row.classes.courses.code} — ${row.classes.courses.name}`
+                        : ""}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-1 text-sm text-muted-foreground">
+                    <p>📅 {row.classes.total_sessions} buổi</p>
+                    {row.classes.description && <p>{row.classes.description}</p>}
+                    <p className="text-xs">
+                      Tham gia ngày{" "}
+                      {new Date(row.joined_at).toLocaleDateString("vi-VN")}
+                    </p>
+                    <p className="pt-1 text-xs font-medium text-primary">
+                      Vào lớp →
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </div>

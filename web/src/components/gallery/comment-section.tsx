@@ -88,7 +88,9 @@ export function CommentSection({
       >
         <input type="hidden" name="project_id" value={projectId} />
         <Input name="content" placeholder={placeholder} className="h-9" />
-        <Button type="submit" size="sm">
+        {/* h-9 khớp đúng chiều cao Input. `size="sm"` của Button là h-7 nên
+            trước đây nút thấp hơn ô nhập một khoảng thấy rõ. */}
+        <Button type="submit" className="h-9 shrink-0">
           Gửi
         </Button>
       </form>

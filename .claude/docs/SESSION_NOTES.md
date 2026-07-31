@@ -8,7 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 27→29 đã merge + push production.
+**Đang làm:** Đợt 30 XONG CODE nhưng **CHƯA merge** — nhánh
+`feature/student-class-tabs-drive-link` (5 commit + 1 commit docs). 2 migration
+của đợt này user ĐÃ dán, E2E 9/9 xanh. Chỉ còn merge + deploy Vercel.
 
 **`main` = `origin/main` = `03ab717`** — bản đang chạy production (Đợt 27-29).
 **`develop` = `origin/develop` = `d5e80d9`** = main + 1-2 commit docs
@@ -42,7 +44,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 **Bắt đầu phiên sau thế nào:** `git checkout develop && git checkout -b feature/<slug>`
 **trước khi sửa bất kỳ dòng code nào** (đừng commit thẳng vào main/develop).
 
-**E2E 111/111 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+**E2E 120/120 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
@@ -54,6 +56,7 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 | `e2e-phase3.mjs` | 13 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
 | `e2e-phase4.mjs` | 15 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
 | `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
+| `e2e-drive-link.mjs` | 9 | `node --env-file=.env.local ...` — RLS link Drive của HV |
 
 ⚠️ Trước khi chạy phase3/4: chỉ được có MỘT ai-service. Nếu port 8000 kẹt
 "socket ma" (tiến trình chết mà listener vẫn trả lời) → chạy port khác + env
@@ -251,6 +254,36 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   **Kéo thả thư mục thì KHÔNG hiện hộp thoại này** (chưa kiểm chứng bằng mắt).
   `showDirectoryPicker()` gọn hơn nhưng CHỈ Chromium → đã cân nhắc và BỎ.
 
+- **Khu học viên chia THEO LỚP** (Đợt 30): tabs nằm trong
+  `/student/classes/[classId]/{projects,gallery,guide}`, `/student` chỉ là danh
+  sách lớp. Route cũ `/student/projects|gallery|guide` là **file redirect** — đừng
+  xóa, có để link/bookmark cũ không 404. `revalidatePath` cho khu này phải truyền
+  MẪU route động (`"/student/classes/[classId]/gallery", "page"`), truyền đường
+  tĩnh cũ thì không khớp page nào và cache lớp vẫn cũ.
+- **Link Drive nộp bài của HV: bảng `student_drive_links`, MỘT link/HV dùng mọi
+  lớp** (Đợt 30). Đặt bảng riêng chứ KHÔNG phải cột trong `profiles` vì
+  `profiles_select` cho bạn cùng lớp đọc profile của nhau — cùng lý do đã tách
+  `user_secrets`. Ai đọc được: chính chủ (+sửa/xóa), GV của lớp em học, **bạn cùng
+  lớp** (2 migration: `20260730000000` chỉ-GV, rồi `20260730010000` nới cho bạn
+  cùng lớp để các em đánh giá sản phẩm của nhau). HV/GV lớp khác KHÔNG; GHI chỉ
+  chính chủ. `e2e-drive-link.mjs` canh đủ 9 nhánh — **có cả ca đối chứng "HV lớp
+  khác không thấy"** để policy viết hỏng thành "mọi học viên" là test đỏ.
+- **"Rút gọn link" = rút gọn CÁCH HIỂN THỊ**, không gọi dịch vụ link ngắn bên
+  ngoài (user chốt 2026-07-30): `DriveLinkChip` + `shortenDriveUrl`. Dịch vụ thứ 3
+  chết là link chết, và dự án đang 0đ/tháng — đừng "nâng cấp" thành TinyURL.
+- **KHÔNG nhúng ảnh lấy từ link Google Drive** (đã nghiên cứu và BỎ 2026-07-30):
+  Drive không phải image host, `uc?export=view` đang bị Google siết, link
+  `lh3.googleusercontent.com` không có tài liệu chính thức, lại cần khai
+  `remotePatterns`. Thay bằng nút mở thẳng thư mục Drive. Muốn ảnh thật thì upload
+  lên Supabase Storage — đừng quay lại hướng nhúng link Drive.
+- **Cột `projects.drive_url` đã CHẾT** nhưng chưa drop: không còn code nào đọc/ghi
+  (Đợt 30 bỏ khỏi mọi `select` + form). Theo luật: deploy Đợt 30 TRƯỚC rồi mới tạo
+  migration drop.
+- **Tạo học viên trong script E2E phải có lớp TRƯỚC + truyền `class_code`** —
+  trigger `handle_new_user` tự ghi danh theo mã lớp; thiếu thì `createUser` trả
+  **500 `AuthRetryableFetchError` với message rỗng `{}`**, không hề nói thiếu gì
+  (đã dính 2026-07-30, mất mấy lượt mới lần ra).
+
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
@@ -299,6 +332,12 @@ Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu
   (Node resolve package theo vị trí script).
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
+
+### 2026-07-30 — Đợt 30 (`student-class-tabs-drive-link`, 2 mig, CHƯA merge)
+Khu HV chia theo LỚP (tabs vào trong từng lớp, sản phẩm/gallery query đúng
+`class_id`); link Drive nộp bài 1/HV dùng mọi lớp (`student_drive_links`), GV +
+bạn cùng lớp xem được, hiện dạng chip gọn; bỏ ô Drive khỏi form sản phẩm; dọn
+popup xem sản phẩm. BỎ ý tưởng nhúng ảnh từ Drive. E2E mới 9/9.
 
 ### 2026-07-30 — Đợt 27→29 (1 phiên, cùng ngày, đều đã push production `03ab717`)
 Chi tiết từng đợt ở ROADMAP.md; nghiệp vụ ở FEATURES.md. **Đợt 27+28 đổi

@@ -497,6 +497,32 @@ export type Database = {
           },
         ]
       }
+      student_drive_links: {
+        Row: {
+          drive_url: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          drive_url: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          drive_url?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_drive_links_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_secrets: {
         Row: {
           gemini_api_key: string | null

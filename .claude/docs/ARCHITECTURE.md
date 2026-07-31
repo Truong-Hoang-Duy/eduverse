@@ -28,21 +28,26 @@ web/src/
 ├── app/(teacher)/       # GV: courses+classes (+ hồ sơ HV), sessions, assignments
 │                        #     (chấm bài), gallery (sản phẩm HV), settings,
 │                        #     admin (vận hành — chỉ ADMIN_USERNAMES)
-├── app/(student)/       # HV: nav "Lớp học" (/student) + 3 tab: projects, gallery, guide
+├── app/(student)/       # HV: /student = danh sách lớp; 3 tab nằm TRONG từng lớp:
+│                        #     classes/[classId]/{projects,gallery,guide}
 ├── components/          # dùng chung: app-shell/nav/footer, page-header, stat-card,
-│                        # confirm-dialog, theme-toggle, student-tabs, project-card,
+│                        # confirm-dialog, theme-toggle, drive-link-chip, project-card,
 │                        # page-skeleton, nav-link-label, gallery/
 ├── components/ui/       # shadcn/ui
 ├── lib/supabase/        # client (browser/server), admin (service key), database.types.ts
 ├── lib/get-profile.ts   # requireProfile/requireRole (bọc cache() — 1 lượt/request)
 ├── lib/file-check.ts    # chặn file bị DLP mã hóa trước khi upload
 ├── lib/spec-storage.ts  # dọn file đề trong Storage khi xóa (Storage KHÔNG cascade)
+├── lib/zip.ts           # đọc ZIP bằng node:zlib (docx + bài làm .zip), server-only
+├── lib/submission-files.ts # nguồn DUY NHẤT: lọc rác + ngân sách file bài làm
+├── lib/drive-url.ts     # validate + rút gọn CÁCH HIỂN THỊ link Drive của HV
 ├── lib/admin-access.ts  # ai vào được /teacher/admin (ADMIN_USERNAMES, fail closed)
 ├── lib/admin-report.ts  # số liệu + dò dữ liệu hỏng cho trang vận hành
 └── lib/ai-client.ts     # gọi ai-service, duy nhất nơi biết AI_SERVICE_API_KEY
 ai-service/app/
 ├── main.py              # FastAPI app + auth middleware
-├── routes/              # review, student-summary, zalo-summary, suggest-features, grade
+├── routes/              # review, student-summary, zalo-summary, suggest-features,
+│                        # grade-submission, review-project (sản phẩm cuối khóa)
 ├── prompts.py           # toàn bộ prompt Gemini
 └── schemas.py           # Pydantic models
 supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng chặn 5432)
@@ -60,7 +65,16 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
 ## Luồng quan trọng
 
 - **Đăng ký học viên:** signup + nhập `class_code` (VD JSB01) → tạo profile role=student
-  → tạo enrollment vào lớp có mã đó.
+  → tạo enrollment vào lớp có mã đó. ⚠️ Trigger `handle_new_user` ĐÒI `class_code`
+  cho role=student; thiếu thì admin API trả 500 với message rỗng, không nói thiếu gì.
+- **Khu học viên chia THEO LỚP:** `/student` = danh sách lớp →
+  `/student/classes/[classId]/{projects,gallery,guide}`. Route phẳng cũ redirect về
+  `/student`. Sản phẩm/gallery query theo đúng `class_id` (HV học nhiều lớp không
+  thấy trộn lẫn).
+- **Link Drive nộp bài của học viên:** bảng `student_drive_links`, MỘT link/HV dùng
+  mọi lớp. RLS: chính chủ toàn quyền; GV của lớp em học + **bạn cùng lớp** chỉ
+  SELECT; ngoài lớp không thấy gì. Đặt bảng riêng vì `profiles` bị bạn cùng lớp đọc
+  được — cùng lý do đã tách `user_secrets`.
 - **AI nhận xét:** GV tick điểm mạnh/cải thiện → Server Action gửi ngữ cảnh buổi học
   → ai-service `/generate-review` → GV sửa → lưu `student_reviews`.
 - **Hồ sơ HV xuyên khóa:** bấm tên HV trong lớp → timeline nhận xét gốc từng buổi

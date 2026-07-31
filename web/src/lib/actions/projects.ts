@@ -18,8 +18,10 @@ import type { ActionResult } from "@/lib/types";
  * gallery của GV. Đổi ở đâu cũng phải làm mới cả ba, nếu không trang kia còn cache cũ.
  */
 function revalidateGallery(): void {
-  revalidatePath("/student/projects");
-  revalidatePath("/student/gallery");
+  // Khu HV giờ theo từng lớp → phải làm mới theo MẪU route động, truyền đường dẫn
+  // tĩnh cũ sẽ không khớp page nào và cache lớp vẫn cũ.
+  revalidatePath("/student/classes/[classId]/projects", "page");
+  revalidatePath("/student/classes/[classId]/gallery", "page");
   revalidatePath("/teacher/gallery");
 }
 
@@ -66,7 +68,6 @@ export async function saveProject(
   const description = String(formData.get("description") ?? "").trim();
   const features = parseFeatures(String(formData.get("features") ?? ""));
   const repoUrl = String(formData.get("repo_url") ?? "").trim();
-  const driveUrl = String(formData.get("drive_url") ?? "").trim();
   const demoUrl = String(formData.get("demo_url") ?? "").trim();
   const extraNotes = String(formData.get("extra_notes") ?? "").trim();
 
@@ -90,7 +91,6 @@ export async function saveProject(
   }
   for (const [label, url] of [
     ["GitHub", repoUrl],
-    ["Google Drive", driveUrl],
     ["demo", demoUrl],
   ] as const) {
     if (!isValidUrl(url)) {
@@ -113,7 +113,8 @@ export async function saveProject(
     description: description || null,
     features,
     repo_url: repoUrl || null,
-    drive_url: driveUrl || null,
+    // drive_url KHÔNG còn nhận từ form: link Drive đã lên cấp học viên (bảng
+    // `student_drive_links`). Cột cũ giữ lại, drop ở migration sau.
     demo_url: demoUrl || null,
     extra_notes: extraNotes || null,
     updated_at: new Date().toISOString(),
