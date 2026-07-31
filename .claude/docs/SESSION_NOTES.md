@@ -6,19 +6,26 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-31, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 26→40 đã merge, deploy (Vercel + Render) và
-user nghiệm thu bằng mắt. 7 migration của phiên đã áp — đã ĐO lại trên DB thật
-chứ không tin ghi chú.
+**Đang làm:** Đợt 41 (`feature/e2e-action-harness`) — CODE XONG, cổng kiểm tra
+sạch, **CHƯA merge, CHƯA deploy**. Đây là đợt CHỈ ĐỘNG TỚI TEST + tài liệu:
+không sửa `src/` (trừ `test-user-prefixes.json/.test.ts`), **không có migration**,
+không đổi hành vi production.
 
-**`main` = `origin/main` = `b51e818`** — bản đang chạy production.
-**`develop` = `origin/develop`** = main + 1-2 commit docs ghi hash (CỐ Ý không
+**Việc còn lại của đợt này:** 3 ca "chấm thật" trong `grading.e2e.ts` chưa xác
+nhận được vì **hết lượt Gemini hôm nay** (log ai-service nói `quota exhausted`,
+`quotaValue: 20`). Chạy lại `pnpm test:e2e` khi có lượt (hôm sau, hoặc đặt
+`GEMINI_API_KEY` còn lượt trong `ai-service/.env`) rồi mới merge.
+
+**`main` = `origin/main` = `b51e818`** — bản đang chạy production, KHÔNG đổi.
+**`develop` = `origin/develop`** = main + vài commit docs ghi hash (CỐ Ý không
 merge sang `main`: merge đẻ hash mới làm ghi chú sai lại — vòng lặp đã dính
-2026-07-21). Chỉ còn `main` + `develop`, mọi nhánh feature đã xóa.
+2026-07-21).
 
-**Bắt đầu phiên sau:** `git checkout develop && git checkout -b feature/<slug>`
-**trước khi sửa dòng code nào** (đừng commit thẳng vào main/develop).
+**Bắt đầu phiên sau:** nếu làm việc KHÁC thì
+`git checkout develop && git checkout -b feature/<slug>` **trước khi sửa dòng
+code nào** (đừng commit thẳng vào main/develop).
 
 **Kiểm Render đang chạy bản nào** (Đợt 40): mở
 `https://eduverse-ai.onrender.com/health` → `commit` phải khớp
@@ -45,22 +52,32 @@ Gemini riêng có công tắc; trang vận hành `/teacher/admin`; 3 màn chiế
 `web/`: **lint + typecheck + `pnpm test` (92 unit test) + build**.
 `ai-service/`: **`.venv/Scripts/python -m pytest`** (27 test).
 
-E2E chạy trong `web/` trên DB THẬT (tự tạo, tự dọn). **99/99 các bộ không gọi AI
-đều xanh**; các bộ gọi AI đã xanh cùng ngày trên đúng code production (phase3
-13/13, phase4 25/25, project-review 9/9). Tổng khi đủ lượt Gemini: **146**.
+E2E chạy trong `web/` trên DB THẬT (tự tạo, tự dọn), chia **HAI LOẠI** từ Đợt 41:
+
+**A. `pnpm test:e2e`** — gọi THẲNG thân Server Action (`web/e2e/*.e2e.ts`).
+Đổi chữ ký hàm là `pnpm typecheck` đỏ, đổi hành vi là bộ này đỏ. Không mock
+Supabase: session thật trong `CookieJar` nên RLS còn hiệu lực. **75/78 xanh**
+(3 ca "chấm thật" chờ lượt Gemini).
+
+| Bộ | Test | Ghi chú |
+|---|---|---|
+| `admin-ops.e2e.ts` | 21 | trang vận hành: guard, 3 action service-role, dọn file |
+| `signup-login.e2e.ts` | 22 | signup/login/logout + createCourse/createClass |
+| `assignments-storage.e2e.ts` | 19 | createAssignment (có ca **rollback file**), deleteCourse |
+| `grading.e2e.ts` | 16 | **cần ai-service**; chỉ tiêu 3 lượt Gemini, các ca khác miễn phí |
+
+**B. `node --env-file=.env.local scripts/<script>`** — probe RLS gọi REST trần,
+CỐ Ý bỏ qua code app để giả lập kẻ tấn công. **ĐỪNG chuyển sang gọi action.**
 
 | Script | Test | Ghi chú |
 |---|---|---|
-| `e2e-phase1.mjs` | 13 | `node --env-file=.env.local scripts/<script>` |
 | `e2e-phase2.mjs` | 17 | hồ sơ HV xuyên khóa + nhóm kỹ năng |
 | `e2e-api-key.mjs` | 8 | |
 | `e2e-class-admin.mjs` | 18 | đổi/đặt lại mật khẩu |
-| `e2e-gallery-storage.mjs` | 19 | gallery GV, xóa sạch Storage |
 | `e2e-drive-link.mjs` | 14 | RLS link Drive của HV |
 | `e2e-profile-privileges.mjs` | 10 | chống leo thang quyền, quyền theo CỘT |
-| `e2e-phase3.mjs` | 13 | **cần ai-service** — thêm `--env-file=../ai-service/.env` |
-| `e2e-phase4.mjs` | 25 | như phase3 — xóa SP, RLS, giới hạn nhập liệu ở DB |
-| `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm (không cần Supabase) |
+| `e2e-phase4.mjs` | 25 | **cần ai-service** — thêm `--env-file=../ai-service/.env` |
+| `e2e-project-review.mjs` | 9 | như phase4 — nhận xét sản phẩm (không cần Supabase) |
 
 ⚠️ Chỉ được có MỘT ai-service. Port 8000 hay kẹt "socket ma" (tiến trình chết mà
 listener vẫn trả lời) → chạy port khác + `AI_SERVICE_URL=http://localhost:<port>`
@@ -86,19 +103,23 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
-- 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
-  action mà quên đổi script thì test vẫn xanh; UI phải nghiệm thu bằng mắt.
-- 🟡 **Trang vận hành chưa có E2E** — chỉ lint/typecheck/build + user bấm tay.
-- 🟡 **Vitest phủ LOGIC THUẦN** (92 test: lọc file, ZIP, docx, drive-url, quyền
-  admin, xếp loại, trạng thái nhận xét, tên file). Phần RENDER của component và
-  thân Server Action (cần mock Supabase) vẫn không có test — nghiệm thu bằng E2E +
-  bấm tay. Đây là lựa chọn có ý thức: bug render lộ ra ngay khi nhìn, còn logic
-  thuần thì không.
-- 🟡 `e2e-gallery-storage` flake 3 lần ở ca "file trong Storage cũng biến mất".
-  Điều tra 2 lượt (Đợt 35 + 38): giả thuyết CDN cache SAI, và **15 lượt chạy liên
-  tiếp đều xanh → không tái hiện được**. Đã làm nó CHẨN ĐOÁN ĐƯỢC (đọc error của
-  `remove()` + đối chiếu `list` vs `download`). Lần đỏ tiếp theo: ĐỌC thông báo
-  trước, đừng đoán lại — và đừng điều tra thêm khi chưa có lần đỏ mới.
+- 🟡 **Phần RENDER của component không có test** — nghiệm thu bằng mắt. Lựa chọn
+  có ý thức: bug render lộ ra ngay khi nhìn, còn logic thuần thì không.
+- 🟡 **`buildOpsReport` đếm dòng bằng `{ head: true }`**, mà cách gọi đó NUỐT lỗi
+  PostgREST (xem DECISIONS.md) → bảng bị drop sẽ hiện `0` thay vì báo lỗi. Nhỏ,
+  biết để đó.
+- 🟡 **Các bộ E2E gọi action mới chưa phủ hết action** — mới có admin, auth,
+  khóa/lớp, đề bài, chấm bài. Nhận xét (`reviews`, `zalo`), sản phẩm
+  (`projects`), API key, mật khẩu vẫn chỉ có probe RLS. Thêm bộ mới thì theo mẫu
+  `web/e2e/_harness.ts` và nhớ khai tiền tố vào `test-user-prefixes.json`.
+
+### Đã trả xong (Đợt 41) — đừng mở lại
+- ✅ ~~E2E chỉ mô phỏng logic server action~~ — 3 chỗ chép lại logic đã chuyển
+  sang gọi thẳng thân hàm; 7 script còn lại là probe RLS, CỐ Ý giữ nguyên.
+- ✅ ~~Trang vận hành chưa có E2E~~ — `admin-ops.e2e.ts`, 21 ca.
+- ✅ ~~`e2e-gallery-storage` flake ở ca "file cũng biến mất"~~ — nhiều khả năng do
+  hỏi `download()` (qua CDN, trả bản cũ) thay vì `list()` (metadata Postgres).
+  Bộ mới chỉ hỏi `list()`. Nếu còn đỏ nữa thì mới điều tra tiếp.
 
 ### Ràng buộc môi trường (không sửa được, phải sống chung)
 - **Migration dán tay vào Supabase SQL Editor** — mạng chặn cổng 5432/6543.
@@ -118,6 +139,22 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
   (Node resolve package theo vị trí script).
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
+
+### 2026-07-31 — Đợt 41: trả 2 món nợ E2E (CHƯA merge)
+Dựng bộ E2E **gọi thẳng thân Server Action** (`pnpm test:e2e`, config riêng, không
+thêm dependency): stub `next/headers` bằng `CookieJar` giữ session THẬT nên RLS
+còn nguyên hiệu lực — không mock Supabase. Phủ trang vận hành `/teacher/admin`
+(21 ca, khu chạy service-role nên không có RLS đỡ) và chuyển 3 chỗ E2E đang chép
+lại logic action sang gọi thật; 7 script probe RLS giữ nguyên vì chúng CỐ Ý gọi
+REST trần để giả lập kẻ tấn công. 78 ca, 75 xanh.
+
+**Bắt được khi làm:** `e2e-phase1.mjs` tạo tài khoản `e2e.*` mà tiền tố đó chưa
+từng được khai → script dọn không thấy; regex canh chuyện này chỉ bắt `makeUser(`
+nên bỏ sót suốt. **Đo được 2 cạm bẫy** (đã ghi DECISIONS.md): `download()` trả
+bản cũ sau khi xóa file còn `list()` thì không — nhiều khả năng là gốc của flake
+điều tra 2 lượt không ra; và `{ head: true }` nuốt lỗi PostgREST nên ca "bảng
+phải biến mất" viết kiểu đó pass suông theo cả hai chiều (đã thử tên bảng bịa,
+vẫn `error: null`).
 
 ### 2026-07-30 — Đợt 26→40 (một phiên dài, TẤT CẢ đã production `b51e818`)
 Chi tiết từng đợt ở ROADMAP.md; quyết định ở DECISIONS.md. 7 migration, đều đã áp.

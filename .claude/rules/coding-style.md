@@ -37,10 +37,20 @@
 - Tên biến/hàm/comment kỹ thuật, commit message: tiếng Anh.
 
 ## Test
-- web/: đặt cạnh file nguồn `foo.ts` → `foo.test.ts` (Vitest, `pnpm test`).
-  Chỉ test LOGIC THUẦN (lọc file, đọc ZIP, validate/format) — không test
-  component/Server Action, phần đó nghiệm thu bằng E2E + bấm tay.
-  Alias `@/` chạy được nhờ `vitest.config.ts`; fixture ZIP/docx dựng bằng
-  `src/lib/zip-fixture.ts` (chỉ dùng cho test).
+web/ có HAI bộ, hai config, hai lệnh — đừng trộn vào nhau:
+
+- **`pnpm test`** (`vitest.config.ts`) — đặt cạnh file nguồn `foo.ts` →
+  `foo.test.ts`. Chỉ LOGIC THUẦN (lọc file, đọc ZIP, validate/format), chạy
+  offline trong vài giây. **KHÔNG test component**: phần render nghiệm thu bằng
+  mắt. Fixture ZIP/docx dựng bằng `src/lib/zip-fixture.ts` (chỉ dùng cho test).
+- **`pnpm test:e2e`** (`vitest.e2e.config.ts`) — `web/e2e/*.e2e.ts`, gọi THẲNG
+  thân Server Action trên Supabase THẬT (cần `.env.local` + mạng). KHÔNG mock
+  Supabase: người dùng là người dùng thật, session thật trong `CookieJar`, nên
+  **RLS vẫn có hiệu lực**. Dùng `e2e/_harness.ts` (`createUser`, `runAs`,
+  `expectRedirect`, `cleanupAll`) — mọi bộ phải TỰ DỌN trong `afterAll`.
+  Tài khoản test phải mang tiền tố đã khai ở `src/lib/test-user-prefixes.json`.
+- `scripts/e2e-*.mjs` còn lại là **probe RLS gọi REST trần**, cố ý bỏ qua code
+  app để giả lập kẻ tấn công — ĐỪNG chuyển chúng sang gọi action.
+- Ca kiểm bảo mật phải có DỮ LIỆU THẬT để lộ, nếu không là pass suông.
 - ai-service/: `tests/test_*.py` (pytest), mock Gemini — test không được gọi API thật.
 - Tên test mô tả hành vi: "should reject student accessing teacher page", không đặt "test 1".
