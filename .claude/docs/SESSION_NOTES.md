@@ -52,7 +52,8 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 
 **Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (54 unit test) + build.**
 
-**E2E 120/120 PASS** trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+**E2E 120/120 PASS** — chạy lại ĐỦ 9 script ngày 2026-07-30 sau khi drop cột
+`projects.drive_url` và đổi route khu HV, không script nào vỡ. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
@@ -69,6 +70,13 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 ⚠️ Trước khi chạy phase3/4: chỉ được có MỘT ai-service. Nếu port 8000 kẹt
 "socket ma" (tiến trình chết mà listener vẫn trả lời) → chạy port khác + env
 `AI_SERVICE_URL=http://localhost:<port>` (mọi script E2E đều đọc biến này).
+
+⚠️ **Gemini có lúc trả 503 "high demand ... usually temporary"** → ai-service dịch
+thành **502**, E2E đỏ ở các ca gọi AI dù CODE KHÔNG HỀ SAI (dính 2026-07-30:
+`e2e-phase4` 14/15 và `e2e-project-review` 3/7, chạy lại ngay thì 15/15 và 9/9).
+Dấu hiệu nhận biết: `e2e-phase3` cùng key vẫn xanh, và log ai-service ghi rõ
+`503 UNAVAILABLE`. **Chạy lại trước khi đi tìm bug** — đừng sửa code theo lần đỏ
+đầu tiên.
 
 Công cụ chẩn đoán: `scripts/check-integrity.mjs` (toàn vẹn dữ liệu),
 `scripts/check-user.mjs <username>` (tra 1 tài khoản),
