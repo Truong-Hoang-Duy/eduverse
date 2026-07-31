@@ -13,8 +13,8 @@
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
 `student_drive_links` có dữ liệu thật.
 
-**`main` = `origin/main` = `31d6165`** — bản đang chạy production (Đợt 27-31).
-**`develop` = `origin/develop`** = main + Đợt 31 + commit docs ghi hash
+**`main` = `origin/main` = `6f35c3d`** — production (Đợt 27-32 + trả nợ kỹ thuật).
+**`develop` = `origin/develop`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
 Nhánh `feature/project-review-grading`, `feature/student-class-tabs-drive-link`,
