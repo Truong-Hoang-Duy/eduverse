@@ -496,6 +496,20 @@
 - [x] 0 dòng dữ liệu bị ảnh hưởng (đã đo: production có 0 project)
 - [x] Deploy + dán migration + nghiệm thu bằng mắt (2026-07-30)
 
+### Đợt 32 (`chore/pay-down-debt`) — trả nợ kỹ thuật
+- [x] **Vitest cho web** (devDependency, user duyệt 2026-07-30): `vitest.config.ts`
+      có alias `@/` + `environment: "node"`; `pnpm test` / `pnpm test:watch`.
+      **54 unit test** phủ đúng phần trước đây không có gì canh:
+      `submission-files` (luật lọc rác + ngân sách 2 tab), `zip` (deflate/stored,
+      extra field lệch, entry hỏng không làm mất bài, `keep` chặn TRƯỚC khi bung),
+      `docx-text` (đoạn/tab/br/entity/trim), `drive-url` (chặn `javascript:`,
+      rút gọn hiển thị). Fixture ZIP/docx dựng trong `src/lib/zip-fixture.ts`
+      thay vì base64 dán cứng — sửa/mở rộng được
+- [x] **Tách `.claude/docs/DECISIONS.md`** khỏi SESSION_NOTES (390 → 186 dòng);
+      đăng ký ở Docs Router + Session Startup Protocol của CLAUDE.md
+- [x] Xóa 14 nhánh đã merge (local) + 2 nhánh trên remote — chỉ còn main/develop
+- [x] `pnpm test` vào bảng lệnh CLAUDE.md; `coding-style.md` ghi rõ phạm vi test
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
