@@ -31,8 +31,12 @@ async function makeUser(username, metadata) {
     user_metadata: { ...metadata, username },
   });
   if (error) {
-    console.error("createUser raw:", error.status, error.code, error.message, JSON.stringify(error));
-    throw new Error(`createUser ${username}: ${error.message}`);
+    // Lỗi 500 với message rỗng ở đây gần như luôn là trigger `handle_new_user`:
+    // role=student mà thiếu `class_code`, hoặc lớp đó chưa tồn tại.
+    throw new Error(
+      `createUser ${username}: ${error.message || `HTTP ${error.status}`} ` +
+        `(kiểm tra class_code trong metadata và lớp đã được tạo chưa)`
+    );
   }
   userIds.push(data.user.id);
   const client = createClient(URL, ANON);

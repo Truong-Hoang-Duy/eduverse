@@ -76,36 +76,10 @@ export async function getMyDriveLink(): Promise<string | null> {
 }
 
 /**
- * Link của mọi học viên trong một lớp, cho giáo viên xem. Trả về map
- * `student_id → drive_url`; RLS tự lọc nên GV lớp khác không lấy được gì.
- */
-export async function driveLinksOfClass(
-  classId: string
-): Promise<Record<string, string>> {
-  const supabase = await createClient();
-
-  const { data: enrollments } = await supabase
-    .from("enrollments")
-    .select("student_id")
-    .eq("class_id", classId);
-
-  const studentIds = (enrollments ?? []).map((e) => e.student_id);
-  if (studentIds.length === 0) return {};
-
-  const { data } = await supabase
-    .from("student_drive_links")
-    .select("student_id, drive_url")
-    .in("student_id", studentIds);
-
-  return Object.fromEntries(
-    (data ?? []).map((row) => [row.student_id, row.drive_url])
-  );
-}
-
-/**
- * Link của một danh sách học viên (map `student_id → drive_url`). RLS tự lọc:
- * giáo viên thấy học viên lớp mình, học viên chỉ thấy chính mình — nên nơi gọi
- * KHÔNG cần tự kiểm quyền, thiếu quyền là đơn giản không có dòng nào trả về.
+ * Link của một danh sách học viên (map `student_id → drive_url`).
+ *
+ * KHÔNG cần tự kiểm quyền ở đây — RLS tự lọc: chính chủ, giáo viên của lớp em
+ * học, và bạn cùng lớp thì thấy; ai khác đơn giản không nhận được dòng nào.
  */
 export async function driveLinksOfStudents(
   studentIds: string[]
@@ -121,4 +95,17 @@ export async function driveLinksOfStudents(
   return Object.fromEntries(
     (data ?? []).map((row) => [row.student_id, row.drive_url])
   );
+}
+
+/** Link của mọi học viên trong một lớp — tiện cho trang lớp của giáo viên. */
+export async function driveLinksOfClass(
+  classId: string
+): Promise<Record<string, string>> {
+  const supabase = await createClient();
+  const { data: enrollments } = await supabase
+    .from("enrollments")
+    .select("student_id")
+    .eq("class_id", classId);
+
+  return driveLinksOfStudents((enrollments ?? []).map((e) => e.student_id));
 }
