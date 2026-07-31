@@ -10,6 +10,7 @@ import {
   enterBrowserFullscreen,
   exitBrowserFullscreen,
 } from "@/components/tv-overlay";
+import { isSafeHttpUrl } from "@/lib/drive-url";
 
 /** Bộ màu xoay vòng cho thẻ ở màn tổng quan — literal đầy đủ cho Tailwind JIT. */
 const CARD_THEMES = [
@@ -23,6 +24,8 @@ const CARD_THEMES = [
 
 function BigLink({ href, label }: { href: string | null; label: string }) {
   if (!href) return null;
+  // Cùng lý do như LinkChip: URL do học viên dán, chặn ở chỗ render.
+  if (!isSafeHttpUrl(href)) return null;
   return (
     <a
       href={href}

@@ -184,6 +184,32 @@ async function main() {
     .upsert({ student_id: hv.id, drive_url: "https://evil.example.com" });
   check("Học viên khác KHÔNG ghi được link của bạn", Boolean(peerWriteErr));
 
+  // 7b. DB phải TỰ chặn URL nguy hiểm, không dựa vào Server Action: policy cho
+  // học viên ghi thẳng dòng của mình qua API nên `javascript:` từng lọt vào được
+  // và biến thành <a href> bấm được cho GV/bạn cùng lớp (sự cố 2026-07-30,
+  // migration 20260731010000 thêm CHECK constraint).
+  for (const payload of [
+    "javascript:alert(document.cookie)",
+    "data:text/html,<script>alert(1)</script>",
+    "  javascript:alert(1)",
+    "khong-phai-url",
+  ]) {
+    const { error: xssErr } = await hv.client
+      .from("student_drive_links")
+      .upsert({ student_id: hv.id, drive_url: payload });
+    check(
+      `DB chặn URL nguy hiểm: ${payload.slice(0, 28)}`,
+      Boolean(xssErr),
+      xssErr ? "" : "DB NHẬN — thiếu CHECK constraint!"
+    );
+  }
+
+  // 7c. Link http(s) bình thường vẫn lưu được (constraint không quá tay)
+  const { error: okErr } = await hv.client
+    .from("student_drive_links")
+    .upsert({ student_id: hv.id, drive_url: LINK });
+  check("Link https bình thường vẫn lưu được", !okErr, okErr?.message ?? "");
+
   // 8. Xóa link (ô rỗng = xóa) — chính chủ làm được
   const { error: delErr } = await hv.client
     .from("student_drive_links")

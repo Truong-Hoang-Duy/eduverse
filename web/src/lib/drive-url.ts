@@ -9,6 +9,23 @@
 /** Độ dài tối đa của link khi hiển thị dạng chữ. */
 const MAX_DISPLAY = 42;
 
+/**
+ * Link có an toàn để render thành `<a href>` không.
+ *
+ * Phải kiểm Ở CHỖ RENDER, không chỉ lúc lưu: policy `drive_links_own_all` cho
+ * học viên ghi thẳng dòng của mình qua REST API nên `javascript:`/`data:` lọt vào
+ * DB được (đã kiểm chứng 2026-07-30). Migration `20260731010000` chặn ghi mới,
+ * còn hàm này chặn những dòng đã lỡ nằm trong DB.
+ */
+export function isSafeHttpUrl(raw: string): boolean {
+  try {
+    const { protocol } = new URL(raw.trim());
+    return protocol === "https:" || protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 /** Lý do link không dùng được, null nếu OK. */
 export function driveUrlError(raw: string): string | null {
   const value = raw.trim();

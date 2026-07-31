@@ -523,6 +523,19 @@
 - [x] Sửa luật CLAUDE.md đang lệch với `createAssignment`: yêu cầu thật là "mọi
       nhánh lỗi phải có đường dọn file", không phải "cấm upload trước insert"
 
+### Đợt 33 (`fix/user-url-xss`) — bịt stored XSS ở link người dùng dán
+- [x] **Tự soi lại phần vừa ship và tìm ra lỗ thật**: học viên ghi
+      `javascript:alert(document.cookie)` vào `drive_url` của mình qua REST API
+      (bỏ qua Server Action), GV/bạn cùng lớp mở trang lớp là có link bấm được →
+      script chạy trong phiên người xem. `repo_url`/`demo_url` cùng lỗ từ Đợt 2
+- [x] Đã kiểm chứng bằng script probe TRƯỚC khi sửa (DB nhận cả 4 payload), và
+      kiểm mọi dòng production hợp lệ trước khi thêm constraint
+- [x] Tầng DB: migration `20260731010000` CHECK `~ '^https?://'` + ≤500 ký tự
+- [x] Tầng render: `isSafeHttpUrl` trong `DriveLinkChip` + `LinkChip` + `BigLink`
+      — dòng cũ đã lọt vào DB thì hiện "⚠️ Đường dẫn không hợp lệ", không bọc <a>
+- [x] 3 unit test cho `isSafeHttpUrl` + 5 ca E2E canh constraint ở tầng DB
+      (10/14 khi chưa dán migration → chứng minh test phát hiện được lỗ)
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
