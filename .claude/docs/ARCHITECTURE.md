@@ -47,7 +47,8 @@ web/src/
 ai-service/app/
 ├── main.py              # FastAPI app + auth middleware
 ├── routes/              # review, student-summary, zalo-summary, suggest-features,
-│                        # grade-submission, review-project (sản phẩm cuối khóa)
+│                        # grade-submission (có mode quiz/practice/both),
+│                        # review-project, help-student (gợi ý cho HV đang bí)
 ├── prompts.py           # toàn bộ prompt Gemini
 └── schemas.py           # Pydantic models
 supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng chặn 5432)
@@ -87,21 +88,35 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
   → ai-service `/generate-review` → GV sửa → lưu `student_reviews`.
 - **Hồ sơ HV xuyên khóa:** bấm tên HV trong lớp → timeline nhận xét gốc từng buổi
   (`student_reviews` + `sessions`) + AI tổng hợp toàn khóa. Chỉ GV của lớp (RLS).
-- **Chấm bài AI (công cụ độc lập, KHÔNG theo lớp) — 2 tab chung nav "Chấm bài":**
+- **Chấm bài AI (công cụ độc lập, KHÔNG theo lớp) — 3 tab chung nav "Chấm bài":**
   - *Bài tập hàng ngày* (`/teacher/assignments`): đề thuộc course + session_number,
     file đề lưu Storage — **thứ duy nhất toàn hệ thống được lưu**. GV chọn đề →
     nạp file bài làm 1 học sinh → **inline base64** → `/grade-submission` → trả
-    `{score, bullets}` để copy.
+    `{score, bullets, quiz}` để copy. Buổi 5/9/14 có **trắc nghiệm**: GV tick
+    "Chọn phần" → `mode` quiz/practice/both; đáp án lấy từ CHÍNH file đề, hai
+    điểm hiển thị TÁCH BẠCH.
   - *Sản phẩm cuối khóa* (`/teacher/assignments/project`): **KHÔNG đề bài, KHÔNG
     điểm** → `/review-project` trả `{diem_manh, can_cai_thien, goi_y}`. File gửi
     dạng CHỮ (không base64) vì đã lọc bỏ nhị phân.
-  - **Đầu vào cả 2 tab:** file lẻ / kéo thả / **cả thư mục** (`webkitGetAsEntry` +
+  - *Hỏi bài* (`/teacher/assignments/help`): đề bài (+ code/ảnh của em nếu có) →
+    `/help-student` trả `{dang_o_dau, can_sua, cac_buoc}`. **KHÔNG điểm.** Chỗ
+    DUY NHẤT văn bản AI sinh ra được HỌC VIÊN đọc → có `STUDENT_HELP_RULE` riêng.
+  - **Đầu vào cả 3 tab:** file lẻ / kéo thả / **cả thư mục** (`webkitGetAsEntry` +
     `webkitdirectory`) / **.zip giải nén ở SERVER** (`lib/zip.ts` bằng `node:zlib`,
     không thêm dependency). Luật lọc rác + ngân sách: `lib/submission-files.ts`
-    (nguồn DUY NHẤT); phần giải nén dùng chung `lib/zip-submission.ts`.
+    (nguồn DUY NHẤT); phần giải nén dùng chung `lib/zip-submission.ts`. Toàn bộ
+    state + UI nhận file dùng chung `lib/use-submission-picker.ts` +
+    `components/submission/` — 4 khác biệt nghiệp vụ (lọc, ngân sách, kiểu item,
+    hàm giải nén) là THAM SỐ, xem DECISIONS.md trước khi gộp thêm.
   - **Không ghi DB, KHÔNG lưu file bài làm** — đã kiểm chứng: cả web chỉ có 1 lệnh
-    `.upload()` (file đề), ai-service không có lệnh ghi nào; `e2e-phase3` canh số
-    object trong bucket không đổi khi chấm.
+    `.upload()` (file đề), ai-service không có lệnh ghi nào; `grading.e2e.ts` canh
+    số object trong bucket không đổi khi chấm.
+
+- **Hai loại E2E, đừng trộn** (từ Đợt 41): `web/e2e/*.e2e.ts` (`pnpm test:e2e`)
+  **gọi THẲNG thân Server Action** — stub `next/headers` bằng `CookieJar` giữ
+  session THẬT nên RLS còn hiệu lực, không mock Supabase. Còn `scripts/e2e-*.mjs`
+  gọi REST trần để **giả lập kẻ tấn công**, CỐ Ý bỏ qua code app — đừng chuyển
+  chúng sang gọi action.
 
 ## Điểm dễ nhầm (gotchas)
 
@@ -112,5 +127,10 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
   bản mới chưa (không cần dashboard). `"local"` khi chạy máy dev.
 - Gemini free tier hiện chỉ **20 lượt/ngày** cho `gemini-3.6-flash` → E2E gọi AI
   không chạy được tùy ý. Đừng hardcode con số hạn mức vào thông báo.
+  Hạn mức tính theo **Google Cloud PROJECT, không theo key** — key mới trong cùng
+  project vẫn chung hạn mức đã cạn.
+- **Model không phải lúc nào cũng tuân prompt.** Thứ đã biết chắc từ ĐẦU VÀO thì
+  ép ở server, đừng tin model giữ đúng (`_drop_diagnosis_without_code`,
+  `_keep_requested_parts` trong `routes/grading.py` là 2 ví dụ đang chạy).
 - Supabase free pause project sau 7 ngày không hoạt động.
 - Storage KHÔNG cascade như FK — xóa dòng có file phải xóa file tay (`spec-storage.ts`).
