@@ -132,7 +132,13 @@ export function useSubmissionPicker<T extends PickedItem>({
     setNotice("");
 
     if (picked.length === 0) {
-      setError("Không tìm thấy file nào trong thứ vừa chọn.");
+      // Câu cũ ("Không tìm thấy file nào trong thứ vừa chọn") nói y hệt nhau cho
+      // hai tình huống rất khác nhau và không gợi ý được gì — user đã mất thời
+      // gian vì tưởng file .zip của mình rỗng, trong khi lỗi thật nằm ở chỗ
+      // chính file nén bị lọc (2026-07-31).
+      setError(
+        "Không còn file bài làm nào sau khi lọc — thứ vừa chọn có thể toàn thư mục sinh tự động (node_modules, .git) hoặc file nén nằm bên trong thư mục. Nếu bài của em là một file .zip, hãy chọn thẳng file .zip đó."
+      );
       return;
     }
 

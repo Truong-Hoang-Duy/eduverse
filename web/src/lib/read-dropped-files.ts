@@ -22,6 +22,24 @@ export interface PickedFile {
 /** Chặn thư mục lồng quá sâu — vòng lặp symlink sẽ đọc vô tận. */
 const MAX_DEPTH = 12;
 
+/**
+ * Người dùng đang nộp ĐÚNG MỘT file .zip?
+ *
+ * `.zip` nằm trong danh sách đuôi nhị phân bị lọc — đúng cho file nén NẰM TRONG
+ * thư mục bài làm (đó là rác), nhưng sai khi chính nó là thứ được nộp: nó là cái
+ * HỘP chứ không phải bài làm, phải đi lọt để còn được giải nén.
+ *
+ * Bug thật 2026-07-31: chọn .zip qua hộp thoại luôn ra "Không tìm thấy file nào
+ * trong thứ vừa chọn" vì file nén bị lọc ngay từ đây, chưa từng được mở.
+ *
+ * Điều kiện "đúng một file" khớp CHÍNH XÁC nhánh giải nén ở
+ * `useSubmissionPicker`: chọn kèm file khác thì không giải nén được, lúc đó lọc
+ * bỏ như cũ là đúng.
+ */
+function isSoleZip(paths: string[]): boolean {
+  return paths.length === 1 && paths[0].toLowerCase().endsWith(".zip");
+}
+
 function readEntriesBatch(
   reader: FileSystemDirectoryReader
 ): Promise<FileSystemEntry[]> {
@@ -87,7 +105,15 @@ export async function pickedFromDrop(
   // Trình duyệt không cho đọc entry (hoặc thả từ nguồn lạ) → lùi về danh sách
   // file phẳng, mất cấu trúc thư mục nhưng vẫn nhận xét được.
   if (usable.length === 0) {
-    return plainFiles.map((file) => ({ file, path: file.name }));
+    const flat = plainFiles.map((file) => ({ file, path: file.name }));
+    if (isSoleZip(flat.map((p) => p.path))) return flat;
+    return flat.filter((picked) => !skipReasonFor(picked.path, options));
+  }
+
+  // Thả đúng một file .zip → đi thẳng, không qua bộ lọc (xem `isSoleZip`).
+  if (usable.length === 1 && usable[0].isFile && isSoleZip([usable[0].name])) {
+    const entry = usable[0] as FileSystemFileEntry;
+    return [{ file: await readFileOf(entry), path: entry.name }];
   }
 
   const out: PickedFile[] = [];
@@ -102,9 +128,13 @@ export function pickedFromInput(
   files: File[],
   options: FilterOptions = {}
 ): PickedFile[] {
-  return files
-    .map((file) => ({ file, path: file.webkitRelativePath || file.name }))
-    .filter((picked) => !skipReasonFor(picked.path, options));
+  const all = files.map((file) => ({
+    file,
+    path: file.webkitRelativePath || file.name,
+  }));
+
+  if (isSoleZip(all.map((p) => p.path))) return all;
+  return all.filter((picked) => !skipReasonFor(picked.path, options));
 }
 
 /**

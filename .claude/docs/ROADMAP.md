@@ -697,7 +697,7 @@
       chọn sai. Ép ở server thay vì tin prompt
 - [x] Đảo thứ tự: giải base64 TRƯỚC khi tải đề từ Storage — file hỏng ra 400 đúng
       nghĩa thay vì bị 404 che mất, và không tốn một lượt gọi Storage vô ích
-- [ ] User nghiệm thu bằng mắt + deploy (Vercel **và Render** — ai-service ĐỔI)
+- [x] User nghiệm thu bằng mắt; deploy `main` = `237f6cd` (Vercel **và Render** — ai-service ĐỔI)
 
 ### Đợt 44 (`refactor/shared-submission-picker`) — gộp phần nhận file của 3 tab
 - [x] User chỉ ra 3 tab Chấm bài đang có 3 logic nhận file khác nhau. Đo lại:
@@ -713,8 +713,24 @@
       bị chẻ làm hai nơi)
 - [x] 8 unit test mới cho luật đặt `key` (thứ quyết định chống trùng khi thả
       nhiều lượt) → 109 test; lint + typecheck + build sạch
-- [ ] User nghiệm thu bằng mắt CẢ 3 TAB — đây là refactor UI, test tự động không
-      phủ được phần render
+- [x] User nghiệm thu bằng mắt CẢ 3 TAB (test tự động không phủ được phần render);
+      deploy cùng Đợt 43, `main` = `237f6cd`
+
+### Đợt 45 (`fix/zip-picked-as-binary`) — 🔴 nộp file .zip luôn báo "không có file"
+- [x] User báo: chọn .zip thì hiện "Không tìm thấy file nào trong thứ vừa chọn"
+      dù bên trong có mã nguồn. User nghi do thư mục lồng nhau cùng tên
+- [x] **Đo lại: nghi ngờ đó SAI.** Thư mục lồng nhau vốn chạy đúng (6 test mới
+      chứng minh). Gốc thật: `.zip` nằm trong `BINARY_EXTENSIONS` nên **chính file
+      nén bị lọc ngay lúc chọn**, chưa từng được mở ra
+- [x] Chọn .zip qua hộp thoại **CHƯA BAO GIỜ chạy** ở cả 3 tab; kéo thả chỉ chạy
+      khi trình duyệt không trả được entry (nhánh dự phòng không lọc)
+- [x] Sửa ở `read-dropped-files.ts` (`isSoleZip`), KHÔNG đụng `skipReasonFor` —
+      xem DECISIONS.md để biết vì sao đặt ở tầng đó
+- [x] Đổi câu thông báo khi danh sách rỗng: câu cũ nói y hệt nhau cho hai tình
+      huống rất khác nhau và không gợi ý được gì
+- [x] 14 unit test mới (8 chọn .zip + 6 giải nén thư mục lồng nhau) → 123 test;
+      lint + typecheck + build sạch
+- [ ] User nghiệm thu với đúng file .zip của học viên + deploy
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
