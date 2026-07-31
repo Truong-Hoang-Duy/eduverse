@@ -8,9 +8,10 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** Đợt 36 (🔴 chặn leo thang quyền) xong code — **chờ user dán
-migration `20260731030000`** rồi chạy `e2e-profile-privileges` (kỳ vọng 8/8;
-chưa dán thì 3/8). Đợt 34-35 đã merge + push `514131c`.
+**Đang làm:** KHÔNG có task dở. Đợt 36 đã dán migration, `e2e-profile-privileges`
+8/8, và 6 bộ E2E khác chạy lại đều xanh → policy `courses`/`classes` đổi KHÔNG
+gây hồi quy.
+🔴 **Đợt 35 đổi `ai-service` → nhớ deploy lại RENDER** (chưa ai xác nhận).
 🔴 **Đợt 35 đổi `ai-service` → user phải deploy lại RENDER**, không chỉ Vercel. Đợt 27→31 đã deploy, user xác nhận
 2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
@@ -54,8 +55,12 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 
 **Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (54 unit test) + build.**
 
-**E2E 144/144 PASS** — chạy lại ĐỦ 9 script ngày 2026-07-30 sau khi drop cột
-`projects.drive_url` và đổi route khu HV, không script nào vỡ. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+**E2E: 97/97 các bộ KHÔNG gọi AI đều xanh** (chạy lại 2026-07-30 sau migration
+`20260731030000` đổi policy `courses`/`classes` — không hồi quy). Các bộ GỌI AI
+(`phase3`, `phase4` ca AI, `project-review`) hôm đó **hết lượt Gemini key dùng
+chung** nên đỏ; log ai-service ghi rõ `Gemini quota exhausted (own_key=False)`.
+Cùng code đó sáng cùng ngày đã 13/13 và 9/9 → KHÔNG phải hồi quy, chạy lại hôm sau
+hoặc dùng key riêng. Tổng khi đủ lượt: 144. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
