@@ -162,6 +162,39 @@
   cùng một lượt chấm là chấm sai mà GV không nhận ra.
   Tab **sản phẩm cuối khóa** vốn đã luôn THAY THẾ (`applyResult` gán thẳng) —
   không đổi gì, đừng "sửa cho nhất quán" theo chiều ngược lại.
+- **Phần nhận file của 3 tab Chấm bài dùng CHUNG một hạ tầng** (2026-07-31):
+  `lib/use-submission-picker.ts` (state + kéo thả + lọc + cộng dồn/thay thế),
+  `components/submission/submission-dropzone.tsx` và `submission-file-list.tsx`.
+  Trước đó 3 tab viết 3 kiểu, riêng grading và help trùng nhau ~200 dòng.
+  **Bốn thứ vẫn tham số hóa vì là quyết định nghiệp vụ, ĐỪNG gộp nốt:**
+  `filter` (bài tập/hỏi bài giữ ảnh + PDF/Word, sản phẩm bỏ), `budget` (6MB vs
+  2MB), `toItems` (base64 vs đọc chữ), `unzip` (2 Server Action khác nhau).
+  **Ba thứ ĐÃ thống nhất** (user chốt): thao tác vùng thả (bấm đâu cũng mở, cùng
+  bộ nút — tab sản phẩm trước đây bắt bấm đúng nút, không có lý do nghiệp vụ
+  nào); luật nạp lần 2 (chưa có kết quả thì cộng dồn, có rồi thì thay); và lỗi
+  ĐÁNG GIẢI THÍCH (.doc đời cũ, .rar) nay báo to ở cả 3 tab.
+  Ô tick bỏ file CHỈ tab sản phẩm có — đầu vào là cả thư mục nên GV cần soát
+  trước khi tiêu một lượt Gemini. `SubmissionFileList` đổi kiểu dòng theo việc
+  có truyền `onToggle` hay không.
+  ⚠️ `readAsSubmissionFiles` đã đổi thành `readPickedAsText` và **KHÔNG còn tự
+  lọc** — lọc do hook làm, trước đây luật lọc bị chẻ làm hai nơi.
+- **"Hỏi bài" là công cụ thứ 3 của khu Chấm bài, KHÔNG chấm điểm** (user chốt
+  2026-07-31). Tab `/teacher/assignments/help`. Chỉ GIÁO VIÊN dùng: em nhắn hỏi
+  qua Zalo, GV nạp code/ảnh của em vào, lấy gợi ý rồi bấm Copy dán lại cho em.
+  **KHÔNG làm giao diện phía học viên** — làm thế là mở hạn mức Gemini cho cả lớp
+  và kéo theo cả một tầng RLS mới.
+  - **Một ô, tự nhận biết chế độ**: chưa nạp file → gợi ý cách làm; có file →
+    phân tích bài đang dở. Không tách hai nút.
+  - **Mức bật mí**: gợi ý bằng lời + cho phép đoạn code minh họa **tối đa 2-3
+    dòng** chỉ để chỉ cú pháp, TUYỆT ĐỐI không giải trọn bài. Đừng nới ra thành
+    "cho code mẫu cho nhanh" — em sẽ chép.
+  - **Chế độ do ĐẦU VÀO quyết định, không do model**: `_drop_diagnosis_without_code`
+    xóa `dang_o_dau`/`can_sua` khi không có file. Chi tiết + sự cố ở AI-SERVICE.md.
+  - Dùng `InlineFile` base64 (đường của chấm bài) chứ KHÔNG phải đường chữ của
+    sản phẩm cuối khóa — em hay CHỤP MÀN HÌNH code/giao diện gửi Zalo.
+  - Text để copy dựng bởi `web/src/lib/student-help-text.ts` (logic thuần, có
+    unit test): 3 khối có tiêu đề CHỮ HOA, đánh số lại từ 1 trong từng khối, bỏ
+    khối rỗng. Zalo không có markdown nên đừng thêm `**`/`#`.
 - **Nav trên điện thoại xuống hàng riêng khi có >2 mục** (2026-07-31): 4 mục
   tiếng Việt của giáo viên (~214px chữ) cộng logo + nút giao diện + avatar không
   vừa một hàng ~360px, "Vận hành" đè lên nút đổi giao diện. Học viên chỉ có 1

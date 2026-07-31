@@ -8,9 +8,14 @@
 // ⚠️ Cần ai-service chạy: `.venv/Scripts/python -m uvicorn app.main:app --port 8000`
 //    (port khác thì đặt AI_SERVICE_URL=http://localhost:<port>).
 //
-// ⚠️ HẠN MỨC GEMINI free tier là 20 lượt/NGÀY. Bộ này cố ý chỉ tiêu 3 lượt:
-// mọi ca chặn-trước-khi-gọi-AI và 2 ca lỗi của ai-service (.doc đời cũ, đề
-// không tồn tại) đều KHÔNG đụng tới Gemini. Thêm ca gọi AI thì cân nhắc kỹ.
+// Bộ này phủ CẢ `/teacher/assignments` (chấm bài) lẫn tab "Hỏi bài" — hai công
+// cụ dùng chung đề bài, chung guard, chung đường file, nên dùng chung fixture
+// luôn thay vì tạo thêm một bộ tài khoản + khóa + đề cho mỗi lần chạy.
+//
+// ⚠️ HẠN MỨC GEMINI free tier là 20 lượt/NGÀY. Bộ này cố ý chỉ tiêu 5 lượt (3
+// chấm bài + 2 hỏi bài): mọi ca chặn-trước-khi-gọi-AI và 2 ca lỗi của ai-service
+// (.doc đời cũ, đề không tồn tại) đều KHÔNG đụng tới Gemini. Thêm ca gọi AI thì
+// cân nhắc kỹ.
 // E2E gọi AI đỏ thì NGHI GEMINI TRƯỚC — đọc log ai-service, đừng sửa code.
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -19,6 +24,7 @@ import {
   gradeFiles,
   type GradeInputFile,
 } from "@/lib/actions/grading";
+import { helpStudent } from "@/lib/actions/student-help";
 import { SPEC_BUCKET } from "@/lib/spec-storage";
 import { GRADING_BUDGET } from "@/lib/submission-files";
 import { buildZip } from "@/lib/zip-fixture";
@@ -306,6 +312,103 @@ describe("gradeFiles — chấm thật bằng Gemini (3 lượt)", () => {
     );
     expect(error, "đỏ ở đây thì NGHI GEMINI TRƯỚC — đọc log ai-service").toBeUndefined();
     expect(grade!.score, `tốt=${goodScore} vs kém=${grade!.score}`).toBeLessThan(goodScore);
+  });
+});
+
+describe("helpStudent — chặn TRƯỚC khi gọi AI (không tốn lượt Gemini)", () => {
+  const oneFile = [textFile("bai-lam.js", "console.log(1);")];
+
+  it("should refuse a signed-out caller", async () => {
+    const { error } = await runAs(null, () =>
+      helpStudent({ assignmentId, files: oneFile })
+    );
+    expect(error).toContain("Phiên đăng nhập");
+  });
+
+  it("should require an assignment to give hints about", async () => {
+    const { error } = await runAs(gv, () =>
+      helpStudent({ assignmentId: "", files: [] })
+    );
+    expect(error).toContain("chọn đề bài");
+  });
+
+  it("should refuse more files than the budget allows", async () => {
+    const files = Array.from({ length: GRADING_BUDGET.maxFiles + 1 }, (_, i) =>
+      textFile(`file-${i}.js`, "console.log(1);")
+    );
+    const { error } = await runAs(gv, () => helpStudent({ assignmentId, files }));
+    expect(error).toContain(`Tối đa ${GRADING_BUDGET.maxFiles} file`);
+  });
+
+  it("should refuse a payload over the total size budget", async () => {
+    const files: GradeInputFile[] = [
+      { ...textFile("to.js", "x"), size: GRADING_BUDGET.maxTotalBytes + 1 },
+    ];
+    const { error } = await runAs(gv, () => helpStudent({ assignmentId, files }));
+    expect(error).toContain("dung lượng file quá lớn");
+  });
+
+  it("should not find an assignment that belongs to another teacher", async () => {
+    const { error } = await runAs(otherGv, () =>
+      helpStudent({ assignmentId, files: oneFile })
+    );
+    expect(error).toBe("Không tìm thấy đề bài.");
+  });
+
+  it("should refuse an assignment with no spec file attached", async () => {
+    const { error } = await runAs(gv, () =>
+      helpStudent({ assignmentId: filelessAssignmentId, files: oneFile })
+    );
+    expect(error).toContain("chưa có file");
+  });
+
+  it("should ACCEPT an empty file list — that is the 'em chưa biết bắt đầu' case", async () => {
+    // Khác hẳn `gradeFiles` (đòi ít nhất 1 file). Dùng đề hỏng để đi hết guard
+    // rồi dừng ở bước tải đề — chứng minh không guard nào chặn, mà KHÔNG tốn
+    // một lượt Gemini nào.
+    const { error } = await runAs(gv, () =>
+      helpStudent({ assignmentId: brokenAssignmentId, files: [] })
+    );
+    expect(error, "danh sách file rỗng phải đi lọt mọi guard").not.toContain(
+      "Chưa chọn"
+    );
+    expect(error).toBeTruthy();
+  });
+});
+
+describe("helpStudent — gợi ý thật bằng Gemini (2 lượt)", () => {
+  it("should give starting steps and no diagnosis when there is no code", async () => {
+    const { help, error } = await runAs(gv, () =>
+      helpStudent({
+        assignmentId,
+        files: [],
+        question: "Em chưa biết bắt đầu từ đâu ạ",
+      })
+    );
+    expect(error, "đỏ ở đây thì NGHI GEMINI TRƯỚC — đọc log ai-service").toBeUndefined();
+
+    expect(help!.cac_buoc.length).toBeGreaterThan(0);
+    // Em chưa gửi gì thì không thể chẩn đoán "em đang ở đâu" hay "cần sửa gì".
+    expect(help!.dang_o_dau).toBe("");
+    expect(help!.can_sua).toEqual([]);
+  });
+
+  it("should diagnose where the student got to when code is attached", async () => {
+    const halfDone = [
+      // Khai báo biến xong, CHƯA tính tổng — đúng kiểu bài dở em hay gửi.
+      textFile("bai-lam.js", "const a = 5;\nconst b = 7;\nconsole.log(a);"),
+    ];
+    const { help, error } = await runAs(gv, () =>
+      helpStudent({
+        assignmentId,
+        files: halfDone,
+        question: "Em chạy ra 5 thôi ạ, không ra Tong: 12",
+      })
+    );
+    expect(error, "đỏ ở đây thì NGHI GEMINI TRƯỚC — đọc log ai-service").toBeUndefined();
+
+    expect(help!.dang_o_dau, "có code thì phải nói được em đang ở đâu").not.toBe("");
+    expect(help!.cac_buoc.length).toBeGreaterThan(0);
   });
 });
 

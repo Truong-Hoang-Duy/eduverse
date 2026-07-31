@@ -16,6 +16,23 @@ TONE_RULE = (
     "mang tính xây dựng."
 )
 
+# Áp cho prompt DUY NHẤT mà HỌC VIÊN là người đọc (`build_student_help_prompt`).
+# Mọi prompt khác viết cho giáo viên hoặc phụ huynh đọc — đừng áp luật này cho
+# chúng, và cũng đừng áp TONE_RULE cho cái này: ở đây cái phải kiềm chế là ĐỘ KHÓ
+# của kiến thức, không phải độ khoa trương của lời khen.
+STUDENT_HELP_RULE = (
+    "Người đọc đoạn này là một HỌC SINH NHỎ TUỔI đang bí, không phải giáo viên. "
+    "Vì vậy: dùng từ ngữ đơn giản, câu ngắn, mỗi ý một việc. Chỉ dùng kiến thức "
+    "trong tầm bài học hiện tại — TUYỆT ĐỐI không nhắc tới kỹ thuật nâng cao "
+    "(design pattern, tối ưu hiệu năng, thư viện ngoài, cú pháp lạ) dù chúng hay "
+    "hơn. Gặp thuật ngữ bắt buộc phải dùng thì giải thích ngay bằng một câu. "
+    "KHÔNG giải hộ cả bài: dẫn em tự nghĩ ra bước tiếp theo. "
+    "Được phép kèm đoạn code MINH HỌA TỐI ĐA 2-3 DÒNG và CHỈ khi cần cho em thấy "
+    "cú pháp viết thế nào — tuyệt đối không viết sẵn lời giải của bài. "
+    "KHÔNG viết lời chào, không hỏi lại em, không hứa hẹn gì. "
+    "Không tự thêm ký tự '-' hay '•' ở đầu mỗi ý (hệ thống tự thêm)."
+)
+
 
 def build_review_prompt(
     student_name: str,
@@ -280,6 +297,73 @@ def build_grading_prompt(
     parts.append(
         'Trả về JSON: {"score": <0-100>, "bullets": ["<ý 1>", "<ý 2>", ...]}'
     )
+    return "\n".join(parts)
+
+
+def build_student_help_prompt(
+    course_name: str,
+    assignment_title: str,
+    instructions: str | None,
+    question: str | None,
+    has_code: bool,
+    file_names: list[str],
+) -> str:
+    """Gợi ý cách làm bài / gỡ bài đang dở — văn bản để GV DÁN CHO HỌC VIÊN đọc.
+
+    Khác cả `build_grading_prompt` lẫn `build_project_review_prompt` ở NGƯỜI ĐỌC:
+    hai cái kia viết cho giáo viên, cái này viết cho một em học sinh nhỏ tuổi
+    đang bí. Vì thế có `STUDENT_HELP_RULE` riêng và TUYỆT ĐỐI không chấm điểm —
+    em đang hỏi bài chứ không nộp bài.
+
+    KHÔNG áp `TONE_RULE` (luật chống đại ngôn dành cho nhận xét gửi phụ huynh);
+    ở đây cái cần kiềm chế là ĐỘ KHÓ của kiến thức, không phải độ khoa trương.
+    """
+    parts = [
+        SYSTEM_ROLE,
+        "Nhiệm vụ: GIÚP MỘT HỌC VIÊN ĐANG BÍ BÀI TẬP. File đầu tiên đính kèm là "
+        "ĐỀ BÀI. Em nhắn tin hỏi giáo viên, và đoạn em sắp đọc chính là câu trả "
+        "lời của giáo viên gửi lại cho em.",
+        "TUYỆT ĐỐI KHÔNG chấm điểm, không xếp loại, không nhận xét kiểu tổng kết.",
+        STUDENT_HELP_RULE,
+        f"Bài tập: {assignment_title}",
+    ]
+    if course_name:
+        parts.append(
+            f"Khóa học: {course_name} — chỉ dùng kiến thức trong tầm của khóa này."
+        )
+    if instructions:
+        parts.append(f"Ghi chú của giáo viên về bài này (ưu tiên tuân theo): {instructions}")
+    if question:
+        parts.append(
+            f"Câu hỏi em nhắn cho giáo viên (TRẢ LỜI ĐÚNG CÁI NÀY TRƯỚC): {question}"
+        )
+
+    if has_code:
+        parts.append(
+            "Các file sau ĐỀ BÀI là bài em đang làm dở (có thể là ảnh chụp màn hình "
+            "code hoặc ảnh giao diện đang chạy):\n" + "\n".join(file_names)
+        )
+        parts.append(
+            "Hãy: (1) đọc đề để biết bài cần ra cái gì; (2) đọc bài em đang làm để "
+            "biết em đã đi được tới đâu; (3) chỉ ra chỗ sai hoặc còn thiếu; (4) nói "
+            "em làm gì tiếp. Nếu hướng em đang đi là SAI thì phải nói thẳng ngay ở "
+            "'dang_o_dau', kèm lý do ngắn gọn, đừng để em đi tiếp rồi hỏng."
+        )
+        parts.append(
+            'Trả về JSON: {"dang_o_dau": "<1-3 câu nói em đã làm được gì và còn '
+            'thiếu gì>", "can_sua": ["<0-4 lỗi cụ thể, nói rõ ở dòng/chỗ nào>"], '
+            '"cac_buoc": ["<2-5 việc em làm tiếp, theo thứ tự>"]}'
+        )
+    else:
+        parts.append(
+            "Em CHƯA gửi code — em chưa biết bắt đầu từ đâu. Hãy chia bài thành "
+            "các bước nhỏ để em tự làm được, KHÔNG giải hộ cả bài."
+        )
+        parts.append(
+            'Trả về JSON: {"dang_o_dau": "", "can_sua": [], '
+            '"cac_buoc": ["<3-6 bước làm bài, theo thứ tự, mỗi bước một việc>"]}'
+        )
+
     return "\n".join(parts)
 
 

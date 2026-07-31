@@ -170,3 +170,38 @@ class ReviewProjectResponse(BaseModel):
     diem_manh: list[str] = Field(min_length=1)
     can_cai_thien: list[str] = Field(min_length=1)
     goi_y: list[str] = Field(default_factory=list)
+
+
+# ---------- /help-student ----------
+class HelpStudentRequest(AiRequest):
+    """Gợi ý cho học viên đang bí, KHÔNG chấm điểm.
+
+    Dùng `InlineFile` (base64) chứ không `ProjectFile` (chữ) như sản phẩm cuối
+    khóa: học viên hay chụp MÀN HÌNH code hoặc giao diện gửi qua Zalo, mà ảnh thì
+    phải đi đường nhị phân.
+
+    `files` được phép RỖNG — đó là ca "em chưa biết bắt đầu từ đâu", chỉ có đề
+    bài. Khác `GradeSubmissionRequest` (đòi `min_length=1`) ở đúng chỗ này.
+    """
+
+    spec_file_path: str
+    files: list[InlineFile] = Field(default_factory=list)
+    course_name: str = ""
+    assignment_title: str
+    instructions: str | None = None
+    # Câu hỏi của em, do GV chép lại từ tin nhắn — thường cụ thể hơn nhiều so với
+    # những gì đoán được từ code.
+    question: str | None = None
+
+
+class HelpStudentResponse(BaseModel):
+    """Ba khối để GV dán thẳng cho học viên.
+
+    `dang_o_dau` và `can_sua` RỖNG khi em chưa gửi code — lúc đó chỉ có
+    `cac_buoc` (các bước bắt đầu làm bài). Không tách thành hai response riêng vì
+    cùng một câu hỏi của GV, chỉ khác chỗ em đang đứng.
+    """
+
+    dang_o_dau: str = ""
+    can_sua: list[str] = Field(default_factory=list)
+    cac_buoc: list[str] = Field(min_length=1)

@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 
+import { SubmissionDropzone } from "@/components/submission/submission-dropzone";
+import { SubmissionFileList } from "@/components/submission/submission-file-list";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -17,22 +19,17 @@ import {
   reviewProject,
   type ProjectReview,
 } from "@/lib/actions/project-review";
-import {
-  pickedFromDrop,
-  pickedFromInput,
-  readAsSubmissionFiles,
-  type PickedFile,
-} from "@/lib/read-dropped-files";
+import { readPickedAsText } from "@/lib/read-dropped-files";
+import { fileToBase64 } from "@/lib/submission-attachment";
 import {
   budgetWarning,
-  describeSkipped,
   emptyTally,
   formatBytes,
   PROJECT_BUDGET,
   totalBytes,
-  type SkipTally,
   type SubmissionFile,
 } from "@/lib/submission-files";
+import { useSubmissionPicker } from "@/lib/use-submission-picker";
 
 import type { CourseChoice } from "../assignment-form";
 
@@ -41,6 +38,16 @@ const SECTIONS: { key: keyof ProjectReview; label: string }[] = [
   { key: "can_cai_thien", label: "🎯 Cần cải thiện" },
   { key: "goi_y", label: "💡 Gợi ý nâng cấp" },
 ];
+
+/**
+ * File của sản phẩm cuối khóa: đọc thành CHỮ ngay (khác hai tab kia gửi base64).
+ * `key` = đường dẫn, vì trong một project không có hai file cùng đường dẫn.
+ */
+type ProjectItem = SubmissionFile & { key: string };
+
+function withKey(file: SubmissionFile): ProjectItem {
+  return { ...file, key: file.path };
+}
 
 function toCopyText(review: ProjectReview): string {
   return SECTIONS.filter((s) => review[s.key].length > 0)
@@ -52,152 +59,67 @@ function toCopyText(review: ProjectReview): string {
     .join("\n\n");
 }
 
-/** Đọc File thành base64 (bỏ phần "data:...;base64," ở đầu). */
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = String(reader.result);
-      resolve(result.slice(result.indexOf(",") + 1));
-    };
-    reader.onerror = () => reject(new Error(`Không đọc được file ${file.name}`));
-    reader.readAsDataURL(file);
-  });
-}
-
 export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
   const [courseId, setCourseId] = useState("");
   const [notes, setNotes] = useState("");
-  const [files, setFiles] = useState<SubmissionFile[]>([]);
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
-  const [skipped, setSkipped] = useState<SkipTally>(emptyTally());
   const [review, setReview] = useState<ProjectReview | null>(null);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [copied, setCopied] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const [reading, startReading] = useTransition();
   const [pending, startReview] = useTransition();
 
-  const dragDepth = useRef(0);
-  const folderInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const picker = useSubmissionPicker<ProjectItem>({
+    // Sản phẩm cuối khóa chỉ đọc file chữ: ảnh là asset (logo, background),
+    // PDF/Word không phải code. Khác chủ ý với hai tab kia.
+    filter: {},
+    budget: PROJECT_BUDGET,
+    toItems: async (picked) => {
+      const read = await readPickedAsText(picked);
+      return { items: read.items.map(withKey), skipped: read.skipped };
+    },
+    unzip: async (zip) => {
+      const res = await extractZipFiles({ zipB64: await fileToBase64(zip) });
+      return {
+        items: (res.files ?? []).map(withKey),
+        skipped: res.skipped ?? emptyTally(),
+        error: res.error,
+      };
+    },
+    hasResult: review !== null,
+    onItemsChanged: () => {
+      setReview(null);
+      setCopied(false);
+      setExcluded(new Set());
+    },
+  });
 
-  const chosen = files.filter((f) => !excluded.has(f.path));
+  // GV bỏ tick file không muốn gửi — chỉ tab này có, vì đầu vào là cả một thư
+  // mục nên cần soát trước khi tiêu một lượt Gemini.
+  const chosen = picker.items.filter((f) => !excluded.has(f.path));
   const warning = budgetWarning(chosen, PROJECT_BUDGET);
-  const canReview = chosen.length > 0 && !pending && !reading;
+  const canReview = chosen.length > 0 && !pending && !picker.reading;
 
-  function reset() {
-    setReview(null);
-    setError("");
-    setNotice("");
-    setCopied(false);
-  }
-
-  function applyResult(next: SubmissionFile[], tally: SkipTally, source: string) {
-    setFiles(next);
-    setExcluded(new Set());
-    setSkipped(tally);
-
-    // Chỉ nói việc vừa xảy ra. Phần "đã bỏ qua gì" nằm ở khối danh sách bên
-    // dưới, còn "file không được lưu lại" nằm ở vùng thả — không lặp lại ở đây.
-    setNotice(
-      `Đã đọc ${next.length} file (${formatBytes(totalBytes(next))}) từ ${source}.`
-    );
-  }
-
-  /** Một file .zip → giải nén ở server (dùng lại bộ đọc ZIP đã có). */
-  function loadZip(zip: File) {
-    startReading(async () => {
-      try {
-        const res = await extractZipFiles({ zipB64: await fileToBase64(zip) });
-        if (res.error) {
-          setError(res.error);
-          return;
-        }
-        applyResult(
-          res.files ?? [],
-          res.skipped ?? emptyTally(),
-          `file nén "${zip.name}"`
-        );
-      } catch {
-        setError("Không đọc được file .zip này.");
-      }
-    });
-  }
-
-  function loadPicked(picked: PickedFile[]) {
-    if (picked.length === 0) {
-      setError(
-        "Không tìm thấy file code nào — thư mục có thể chỉ chứa ảnh hoặc file sinh tự động."
-      );
-      return;
-    }
-
-    // Đúng một file .zip thì giải nén, còn lại đọc thẳng thành chữ.
-    if (picked.length === 1 && picked[0].path.toLowerCase().endsWith(".zip")) {
-      loadZip(picked[0].file);
-      return;
-    }
-
-    // Tên nguồn để thông báo cho GV: thư mục thì lấy tên thư mục gốc.
-    const root = picked.find((p) => p.path.includes("/"))?.path.split("/")[0];
-    const source = root ? `thư mục "${root}"` : "file đã chọn";
-
-    startReading(async () => {
-      const { files: next, skipped: tally } = await readAsSubmissionFiles(picked);
-      if (next.length === 0) {
-        setError("Không đọc được file nào trong số đã chọn.");
-        return;
-      }
-      applyResult(next, tally, source);
-    });
-  }
-
-  async function handleDrop(e: React.DragEvent<HTMLElement>) {
-    e.preventDefault();
-    dragDepth.current = 0;
-    setDragging(false);
-    reset();
-
-    // PHẢI gom entry đồng bộ ở đây: dataTransfer.items bị xóa ngay khi handler
-    // trả về, `await` trước khi gom là mất sạch dữ liệu.
-    const entries = Array.from(e.dataTransfer.items).map((item) =>
-      item.webkitGetAsEntry()
-    );
-    const plainFiles = Array.from(e.dataTransfer.files);
-
-    loadPicked(await pickedFromDrop(entries, plainFiles));
-  }
-
-  function handleInput(list: FileList | null, input: HTMLInputElement | null) {
-    reset();
-    loadPicked(pickedFromInput(Array.from(list ?? [])));
-    // Dọn input để chọn LẠI đúng thư mục vừa bỏ vẫn kích hoạt onChange.
-    if (input) input.value = "";
-  }
-
-  function toggleFile(path: string) {
+  function toggleFile(item: ProjectItem) {
     setExcluded((prev) => {
       const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
+      if (next.has(item.path)) next.delete(item.path);
+      else next.add(item.path);
       return next;
     });
     setReview(null);
   }
 
   function handleReview() {
-    setError("");
+    picker.setError("");
     setReview(null);
     setCopied(false);
     startReview(async () => {
       const res = await reviewProject({
         courseId: courseId || undefined,
         notes: notes || undefined,
-        files: chosen,
+        // Bỏ `key` (thứ chỉ dùng để dựng danh sách) trước khi gửi qua mạng.
+        files: chosen.map(({ path, content, size }) => ({ path, content, size })),
       });
-      if (res.error) setError(res.error);
+      if (res.error) picker.setError(res.error);
       else setReview(res.review ?? null);
     });
   }
@@ -248,87 +170,19 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
 
       <div className="space-y-1.5">
         <Label>File sản phẩm của một học viên *</Label>
-        <div
-          onDragEnter={(e) => {
-            e.preventDefault();
-            dragDepth.current += 1;
-            setDragging(true);
-          }}
-          // Thiếu preventDefault ở dragOver là trình duyệt tự mở file thay vì thả.
-          onDragOver={(e) => e.preventDefault()}
-          onDragLeave={(e) => {
-            e.preventDefault();
-            dragDepth.current -= 1;
-            if (dragDepth.current <= 0) setDragging(false);
-          }}
-          onDrop={handleDrop}
-          className={`space-y-3 rounded-lg border-2 border-dashed px-4 py-8 text-center transition-colors ${dragging ? "border-primary bg-primary/5" : "border-muted-foreground/25"
-            }`}
-        >
-          <p className="text-3xl leading-none" aria-hidden="true">
-            {dragging ? "📥" : "📁"}
-          </p>
-          <p className="text-base font-medium">
-            {reading
-              ? "Đang đọc file..."
-              : "Kéo thả cả thư mục (hoặc file .zip) vào đây"}
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={reading}
-              // Hộp thoại "Upload N files to this site?" là UI bảo mật của trình
-              // duyệt khi đọc thư mục — KHÔNG sửa/bỏ được, chỉ báo trước bằng
-              // tooltip cho GV đỡ giật mình.
-              title="Trình duyệt sẽ hỏi xác nhận trước khi đọc thư mục — bấm Upload. File vẫn không được lưu lại ở đâu."
-              onClick={() => folderInputRef.current?.click()}
-            >
-              📁 Chọn thư mục
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={reading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              📄 Chọn file / .zip
-            </Button>
-          </div>
-        </div>
-
-        {/* webkitdirectory không có trong type của React → phải spread vào. */}
-        <input
-          ref={folderInputRef}
-          type="file"
-          multiple
-          {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
-          onChange={(e) => handleInput(e.target.files, e.target)}
-          className="sr-only"
-          aria-hidden="true"
-          tabIndex={-1}
+        <SubmissionDropzone
+          handlers={picker.dropzone}
+          idleIcon="📁"
+          idleLabel="Bấm hoặc kéo thả cả thư mục (hoặc file .zip) vào đây"
+          // Sản phẩm nhận mọi đuôi code, không giới hạn như tab bài tập.
+          accept=""
+          hint="Tự bỏ qua node_modules, .git, ảnh và file nén bên trong. Sản phẩm của một em mỗi lần; không lưu lại gì."
         />
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          onChange={(e) => handleInput(e.target.files, e.target)}
-          className="sr-only"
-          aria-hidden="true"
-          tabIndex={-1}
-        />
-
-        <p className="text-xs text-muted-foreground">
-          Tự bỏ qua node_modules, .git, ảnh và file nén bên trong. Sản phẩm của một
-          em mỗi lần; không lưu lại gì.
-        </p>
       </div>
 
-      {notice && (
+      {picker.notice && (
         <p className="rounded-lg border border-green-600/30 bg-green-600/5 p-3 text-sm text-green-700 dark:text-green-400">
-          ✓ {notice}
+          ✓ {picker.notice}
         </p>
       )}
       {warning && (
@@ -337,61 +191,22 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
         </p>
       )}
 
-      {files.length > 0 && (
-        <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-medium">
-              Nhận xét {chosen.length}/{files.length} file ·{" "}
-              {formatBytes(totalBytes(chosen))}
-            </p>
-            {/* Cùng kiểu với nút ở tab bài tập hàng ngày — xem chú thích bên đó. */}
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              onClick={() => {
-                setFiles([]);
-                setExcluded(new Set());
-                setSkipped(emptyTally());
-                reset();
-              }}
-            >
-              ✕ Xóa hết {files.length} file
-            </Button>
-          </div>
-          <ul className="max-h-64 space-y-1 overflow-y-auto">
-            {files.map((f) => (
-              <li key={f.path}>
-                <label className="flex cursor-pointer items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={!excluded.has(f.path)}
-                    onChange={() => toggleFile(f.path)}
-                    className="size-3.5 shrink-0"
-                  />
-                  <span className="min-w-0 flex-1 truncate font-mono">
-                    {f.path}
-                  </span>
-                  <span className="shrink-0 text-muted-foreground">
-                    {formatBytes(f.size)}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
-          {skipped.folder + skipped.junk + skipped.image + skipped.binary > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Đã bỏ qua {describeSkipped(skipped)}.
-            </p>
-          )}
-        </div>
-      )}
+      <SubmissionFileList
+        items={picker.items}
+        skipped={picker.skipped}
+        summary={`Nhận xét ${chosen.length}/${picker.items.length} file · ${formatBytes(
+          totalBytes(chosen)
+        )}`}
+        onClear={picker.clear}
+        isExcluded={(item) => excluded.has(item.path)}
+        onToggle={toggleFile}
+      />
 
       <Button onClick={handleReview} disabled={!canReview}>
         {pending ? "AI đang xem sản phẩm..." : "✨ Nhận xét sản phẩm"}
       </Button>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {picker.error && <p className="text-sm text-destructive">{picker.error}</p>}
 
       {review && (
         <div className="space-y-4 rounded-lg border p-4">

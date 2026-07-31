@@ -679,6 +679,43 @@
 - [x] lint + typecheck + 92 unit test + build sạch; user nghiệm thu bằng mắt
 - [x] Deploy: `main` = `403891b` (Vercel). ai-service không đổi → Render giữ nguyên
 
+### Đợt 43 (`feature/student-help`) — tab "Hỏi bài": gợi ý cho học viên đang bí
+- [x] Endpoint `/help-student` + `build_student_help_prompt` + `STUDENT_HELP_RULE`
+      — luật riêng cho prompt DUY NHẤT mà HỌC VIÊN đọc (ghì độ khó xuống, cấm
+      giải hộ bài, code minh họa tối đa 2-3 dòng). KHÔNG áp `TONE_RULE`
+- [x] Một ô, hai chế độ tự nhận biết: chưa nạp file → các bước làm bài; có file →
+      thêm "em đang ở đâu" + "cần sửa". Chế độ quyết định bởi ĐẦU VÀO, không bởi
+      model — `_drop_diagnosis_without_code` xóa phần chẩn đoán khi không có file
+- [x] **Nhận ảnh chụp màn hình code / giao diện** — dùng đường base64 của chấm
+      bài (không phải đường chữ của sản phẩm cuối khóa). Không phải viết gì thêm,
+      `bytes_to_part` đã xử lý ảnh sẵn
+- [x] `student-help-text.ts` dựng đoạn để Copy dán Zalo (3 khối tiêu đề CHỮ HOA,
+      đánh số lại từ 1 mỗi khối, bỏ khối rỗng) + 9 unit test → 101 test
+- [x] 12 pytest mới → 39; 9 ca E2E mới (7 guard miễn phí + 2 gọi Gemini) → 87
+- [x] **Bug bắt được khi chạy E2E**: Gemini vẫn tự viết `dang_o_dau` dù prompt dặn
+      trả rỗng → khối "EM ĐANG LÀM ĐẾN ĐÂU" hiện vô nghĩa và tiêu đề mục bước bị
+      chọn sai. Ép ở server thay vì tin prompt
+- [x] Đảo thứ tự: giải base64 TRƯỚC khi tải đề từ Storage — file hỏng ra 400 đúng
+      nghĩa thay vì bị 404 che mất, và không tốn một lượt gọi Storage vô ích
+- [ ] User nghiệm thu bằng mắt + deploy (Vercel **và Render** — ai-service ĐỔI)
+
+### Đợt 44 (`refactor/shared-submission-picker`) — gộp phần nhận file của 3 tab
+- [x] User chỉ ra 3 tab Chấm bài đang có 3 logic nhận file khác nhau. Đo lại:
+      thực tế là 2 bản gần y hệt (grading/help trùng ~200 dòng — nợ tôi tự tạo ở
+      Đợt 43) + 1 bản khác thật (sản phẩm cuối khóa)
+- [x] Tách `lib/use-submission-picker.ts` (hook, generic theo kiểu item),
+      `components/submission/submission-dropzone.tsx`,
+      `submission-file-list.tsx`, `lib/submission-attachment.ts`
+- [x] **3 tool: 1635 → 830 dòng**; phần chung 593 dòng dùng lại được cho tool sau
+- [x] Thống nhất 3 thứ (user chốt): thao tác vùng thả, luật nạp lần 2, lỗi đáng
+      giải thích. Giữ tham số hóa 4 thứ là quyết định nghiệp vụ — xem DECISIONS.md
+- [x] `readAsSubmissionFiles` → `readPickedAsText`, bỏ phần tự lọc (luật lọc từng
+      bị chẻ làm hai nơi)
+- [x] 8 unit test mới cho luật đặt `key` (thứ quyết định chống trùng khi thả
+      nhiều lượt) → 109 test; lint + typecheck + build sạch
+- [ ] User nghiệm thu bằng mắt CẢ 3 TAB — đây là refactor UI, test tự động không
+      phủ được phần render
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
