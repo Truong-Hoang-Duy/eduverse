@@ -567,6 +567,21 @@
       (pytest 18 → 25). 2 assertion đầu tôi viết sai, code đúng
 - [x] ai-service ĐỔI → Render phải deploy lại
 
+### Đợt 36 (`fix/profile-privilege-escalation`) — 🔴 chặn leo thang quyền
+- [x] **Tìm ra lỗ nặng nhất phiên** khi quét tiếp lớp lỗi "ràng buộc chỉ ở action":
+      HV tự sửa `profiles.role` → `teacher` được, vì RLS không giới hạn CỘT
+- [x] Kiểm chứng CHUỖI đầy đủ bằng tài khoản test: tự nâng quyền → `search_students`
+      trả HV lớp khác → tự tạo khóa+lớp → ghi danh nạn nhân → đủ điều kiện
+      `resetStudentPassword` = chiếm tài khoản học viên bất kỳ
+- [x] Phát hiện thêm: KHÔNG cần đổi role, HV vẫn tự tạo được khóa (policy chỉ kiểm
+      `teacher_id = auth.uid()`, không kiểm vai trò)
+- [x] Migration `20260731030000`: `revoke update` rồi `grant update (cột)` trên
+      `profiles`; CHECK độ dài `full_name`/`school`/`hobbies`; thêm
+      `public.is_teacher()` vào policy `courses`/`classes`
+- [x] `e2e-profile-privileges.mjs` — 8 ca, gồm cả ca "HV VẪN sửa được họ tên" để
+      không revoke quá tay (3/8 khi chưa dán migration)
+- [x] Đo dữ liệu thật trước: 18 profile (tên dài nhất 22), 0 khóa/lớp thuộc student
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

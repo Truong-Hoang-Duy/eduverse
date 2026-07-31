@@ -8,14 +8,16 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 34 đã dán migration, `e2e-phase4` 25/25.
-Đợt 35 (thông báo lỗi Gemini) xong code — **ai-service ĐỔI nên phải deploy lại
-Render** khi merge. Đợt 27→31 đã deploy, user xác nhận
+**Đang làm:** KHÔNG có task dở. Đợt 36 đã dán migration, `e2e-profile-privileges`
+8/8, và 6 bộ E2E khác chạy lại đều xanh → policy `courses`/`classes` đổi KHÔNG
+gây hồi quy.
+🔴 **Đợt 35 đổi `ai-service` → nhớ deploy lại RENDER** (chưa ai xác nhận).
+🔴 **Đợt 35 đổi `ai-service` → user phải deploy lại RENDER**, không chỉ Vercel. Đợt 27→31 đã deploy, user xác nhận
 2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
 `student_drive_links` có dữ liệu thật.
 
-**`main` = `origin/main` = `f1bdd24`** — production (Đợt 27-33).
+**`main` = `origin/main` = `514131c`** — production (Đợt 27-35).
 **`develop` = `origin/develop`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
@@ -53,8 +55,12 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 
 **Cổng kiểm tra `web/`: lint + typecheck + `pnpm test` (54 unit test) + build.**
 
-**E2E 136/136 PASS** — chạy lại ĐỦ 9 script ngày 2026-07-30 sau khi drop cột
-`projects.drive_url` và đổi route khu HV, không script nào vỡ. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+**E2E: 97/97 các bộ KHÔNG gọi AI đều xanh** (chạy lại 2026-07-30 sau migration
+`20260731030000` đổi policy `courses`/`classes` — không hồi quy). Các bộ GỌI AI
+(`phase3`, `phase4` ca AI, `project-review`) hôm đó **hết lượt Gemini key dùng
+chung** nên đỏ; log ai-service ghi rõ `Gemini quota exhausted (own_key=False)`.
+Cùng code đó sáng cùng ngày đã 13/13 và 9/9 → KHÔNG phải hồi quy, chạy lại hôm sau
+hoặc dùng key riêng. Tổng khi đủ lượt: 144. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
@@ -66,7 +72,8 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 | `e2e-phase3.mjs` | 13 | **cần ai-service chạy** — thêm `--env-file=../ai-service/.env` |
 | `e2e-phase4.mjs` | 25 | như phase3 (xóa SP, RLS, roster bạn cùng lớp) |
 | `e2e-project-review.mjs` | 9 | như phase3 — nhận xét sản phẩm cuối khóa (không cần Supabase) |
-| `e2e-drive-link.mjs` | 14 | `node --env-file=.env.local ...` — RLS link Drive của HV |
+| `e2e-drive-link.mjs` | 14 |
+| `e2e-profile-privileges.mjs` | 8 | như trên — chống leo thang quyền, quyền theo cột | `node --env-file=.env.local ...` — RLS link Drive của HV |
 
 ⚠️ Trước khi chạy phase3/4: chỉ được có MỘT ai-service. Nếu port 8000 kẹt
 "socket ma" (tiến trình chết mà listener vẫn trả lời) → chạy port khác + env
