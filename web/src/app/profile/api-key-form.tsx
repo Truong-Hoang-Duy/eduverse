@@ -54,7 +54,7 @@ export function ApiKeyForm({ info }: { info: ApiKeyInfo }) {
         <CardDescription>
           Tùy chọn. Chưa đặt thì các tính năng AI dùng chung key của hệ thống —
           nhiều người dùng cùng lúc sẽ nhanh hết lượt. Đặt key riêng để có hạn
-          mức riêng (miễn phí 1.500 lượt/ngày).
+          mức riêng (miễn phí, không cần thẻ).
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

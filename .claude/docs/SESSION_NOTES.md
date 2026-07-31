@@ -20,7 +20,7 @@ gây hồi quy.
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
 `student_drive_links` có dữ liệu thật.
 
-**`main` = `origin/main` = `d9ac17c`** — production (Đợt 27-37).
+**`main` = `origin/main` = `1bcaaa6`** — production (Đợt 27-38).
 **`develop` = `origin/develop`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
@@ -62,11 +62,12 @@ trang lớp/Cài đặt; GitHub Action keep-alive Supabase.
 
 **E2E: 99/99 các bộ KHÔNG gọi AI đều xanh** (chạy lại 2026-07-30 sau migration
 `20260731030000` đổi policy `courses`/`classes` — không hồi quy). Các bộ GỌI AI
-(`phase3`, `phase4` ca AI, `project-review`) **chưa xác nhận lại được từ máy dev**:
-key hệ thống trong `ai-service/.env` đã hết lượt ngày 2026-07-30, log ghi rõ
-`Gemini quota exhausted (own_key=False)`. Cùng code đó SÁNG cùng ngày đã 13/13 và
-9/9 → không phải hồi quy. Muốn xác nhận thì đặt `GEMINI_API_KEY` là key riêng còn
-lượt, hoặc chạy sang ngày sau. Tổng khi đủ lượt: 146. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
+(`phase3` 13, `phase4` ca AI, `project-review` 9) **đã xanh ngày 2026-07-30 trên
+đúng code đang chạy production** — phase3 13/13, project-review 9/9, phase4 25/25.
+Sau đó không chạy lại được vì **hạn mức free tier chỉ 20 lượt/NGÀY** (đọc từ lỗi
+429: `quotaValue: 20`, model `gemini-3.6-flash`) mà mỗi bộ gọi 6-10 lượt → 2 bộ là
+hết ngày. **Đây là ràng buộc môi trường, KHÔNG phải việc đang treo.** Muốn chạy chủ
+động: đặt `GEMINI_API_KEY` là key còn lượt. Tổng khi đủ lượt: 146. Trên DB thật (chạy trong `web/`, tự tạo & tự dọn dữ liệu):
 
 | Script | Số test | Lệnh |
 |---|---|---|
