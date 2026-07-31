@@ -10,13 +10,9 @@
 
 **Đang làm:** KHÔNG có task dở. Đợt 41→44 đã merge và **push lên `main`**.
 
-**`main` = `origin/main` = `76c7106`** — vừa đẩy lên production, user nghiệm thu
-từng đợt trước khi deploy.
-
-⚠️ **Đợt 46 SỬA `ai-service/` → Render PHẢI deploy lại.** Mở
-`https://eduverse-ai.onrender.com/health`, `commit` phải là **`76c7106`**. Còn
-hiện `237f6cd` nghĩa là Render CHƯA build xong — lúc đó chấm trắc nghiệm sẽ lỗi
-(Vercel deploy nhanh hơn Render nhiều). Máy dev KHÔNG vào được `onrender.com`.
+**`main` = `origin/main` = `76c7106`** — bản đang chạy production, **user đã chạy
+thật và xác nhận OK** (cả Vercel lẫn Render; Đợt 46 sửa `ai-service/` nên Render
+cũng đã deploy lại).
 
 - **Đợt 41** (`feature/e2e-action-harness`): chỉ test + tài liệu, **78/78 E2E xanh**.
 - **Đợt 42** (`fix/mobile-nav-and-grading-reset`): sửa `src/` thật (nav mobile,
