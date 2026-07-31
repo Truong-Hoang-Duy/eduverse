@@ -1,0 +1,26 @@
+-- Bỏ policy cho HỌC VIÊN TỰ GHI DANH — rò rỉ dữ liệu giữa các lớp.
+--
+-- Sự cố tìm được 2026-07-30. `enrollments_student_insert` chỉ kiểm
+-- `student_id = auth.uid()`, KHÔNG ràng buộc `class_id` — nên học viên tự thêm mình
+-- vào BẤT KỲ lớp nào biết UUID.
+--
+-- Chuỗi đã kiểm chứng đầy đủ bằng tài khoản test:
+--   1. Mã lớp rất dễ đoán (CSB06, JSB01...). RPC `get_class_id_by_code`
+--      (SECURITY DEFINER) đổi mã lớp → UUID, gọi được sau khi đăng nhập.
+--   2. Tự `insert` vào `enrollments` với class_id đó            → thành công
+--   3. Giờ là "bạn cùng lớp": đọc được sản phẩm của lớp đó, roster, bình luận,
+--      VÀ link Drive riêng của từng em (policy `drive_links_classmate_select`
+--      thêm cùng ngày cho các em đánh giá sản phẩm của nhau).
+--
+-- Bỏ policy này KHÔNG ảnh hưởng luồng nào của app — đã rà:
+--   * Đăng ký học viên đi qua admin API + trigger `handle_new_user`
+--     (SECURITY DEFINER), KHÔNG cần quyền insert của học viên.
+--   * "Thêm học viên vào lớp" và "Sao chép lớp" chạy bằng client GIÁO VIÊN,
+--     dùng `enrollments_teacher_all`.
+-- Tức là chỉ có kẻ tấn công dùng policy này.
+--
+-- Sau khi bỏ: biết UUID lớp cũng vô hại vì không ghi danh vào được.
+-- Muốn cho HV tự vào lớp bằng mã lớp sau khi đã đăng ký thì làm hàm
+-- SECURITY DEFINER kiểm mã lớp tử tế, ĐỪNG mở lại policy insert trần này.
+
+drop policy if exists "enrollments_student_insert" on public.enrollments;
