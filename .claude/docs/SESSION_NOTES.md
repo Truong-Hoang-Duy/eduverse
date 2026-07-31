@@ -10,12 +10,13 @@
 
 **Đang làm:** KHÔNG có task dở. Đợt 41→44 đã merge và **push lên `main`**.
 
-**`main` = `origin/main` = `1ef0a08`** — bản đang chạy production, user nghiệm
-thu từng đợt trước khi deploy.
+**`main` = `origin/main` = `76c7106`** — vừa đẩy lên production, user nghiệm thu
+từng đợt trước khi deploy.
 
-⚠️ **Render vẫn đang chạy `237f6cd`** và như vậy là ĐÚNG: Đợt 45 chỉ sửa `web/`
-nên chỉ Vercel build lại. `/health` trả `237f6cd` không phải dấu hiệu hỏng.
-Lần deploy ai-service gần nhất là Đợt 43 (endpoint `/help-student`).
+⚠️ **Đợt 46 SỬA `ai-service/` → Render PHẢI deploy lại.** Mở
+`https://eduverse-ai.onrender.com/health`, `commit` phải là **`76c7106`**. Còn
+hiện `237f6cd` nghĩa là Render CHƯA build xong — lúc đó chấm trắc nghiệm sẽ lỗi
+(Vercel deploy nhanh hơn Render nhiều). Máy dev KHÔNG vào được `onrender.com`.
 
 - **Đợt 41** (`feature/e2e-action-harness`): chỉ test + tài liệu, **78/78 E2E xanh**.
 - **Đợt 42** (`fix/mobile-nav-and-grading-reset`): sửa `src/` thật (nav mobile,
@@ -150,6 +151,20 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
   (Node resolve package theo vị trí script).
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
+
+### 2026-07-31 — Đợt 45 + 46: sửa nộp .zip và chấm buổi có trắc nghiệm (production `76c7106`)
+**Đợt 45** — user báo nộp .zip luôn ra "Không tìm thấy file nào". User nghi thư
+mục lồng nhau cùng tên; **đo lại thì nghi ngờ đó SAI** (thư mục lồng nhau vốn
+chạy đúng). Gốc thật: `.zip` nằm trong `BINARY_EXTENSIONS` nên chính file nén bị
+lọc ngay lúc chọn — chọn .zip qua hộp thoại CHƯA BAO GIỜ chạy ở cả 3 tab. Sửa ở
+tầng chọn file, không đụng `skipReasonFor`. Đổi luôn câu thông báo đã dẫn user
+đi sai hướng.
+
+**Đợt 46** — buổi 5/9 (lâu lâu 14) có trắc nghiệm (đáp án in trong đề) + thực
+hành. Thêm 2 ô tick "Chọn phần"; hai điểm TÁCH BẠCH (không gộp); câu sai nêu
+thẳng đáp án đúng (cố ý khác tab Hỏi bài). Hai lớp chặn chấm bịa: model được dặn
+thà báo không thấy còn hơn bịa, và route xóa khối ngoài chế độ GV chọn.
+E2E chấm trắc nghiệm thật bằng Gemini đã xanh.
 
 ### 2026-07-31 — Đợt 43 + 44: tab "Hỏi bài" và gộp phần nhận file (production `237f6cd`)
 **Đợt 43** — tab thứ 3 của khu Chấm bài: GV nạp đề (+ code/ảnh chụp màn hình của

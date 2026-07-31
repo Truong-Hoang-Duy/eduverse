@@ -750,7 +750,8 @@
       11 pytest mới → 50; lint/typecheck/build sạch
 - [x] **E2E chấm trắc nghiệm THẬT bằng Gemini đã XANH**: đề in đáp án 1-C/2-B/3-C,
       em chọn 1-C/2-A/3-C → AI bắt đúng câu 2 sai và nêu đáp án đúng là B
-- [ ] User nghiệm thu bằng mắt + deploy (Vercel **và Render** — ai-service ĐỔI)
+- [x] Đổi cụm 3 nút thành 2 Ô TICK độc lập + tiêu đề "Chọn phần" (user yêu cầu)
+- [x] User nghiệm thu bằng mắt; deploy `main` = `76c7106` (Vercel **và Render** — ai-service ĐỔI)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
