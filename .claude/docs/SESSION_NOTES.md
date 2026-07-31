@@ -8,22 +8,28 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** Đợt 30 đã merge + push production (`244ed83`). Đợt 31 (drop cột
-`projects.drive_url`) đã merge vào develop — **chờ user dán migration
-`20260731000000` SAU khi Vercel build xong Đợt 31**.
+**Đang làm:** KHÔNG có task dở. Đợt 27→31 đã deploy, user xác nhận
+2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
+lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
+`student_drive_links` có dữ liệu thật.
 
-**`main` = `origin/main` = `244ed83`** — production (Đợt 27-30). Đợt 31 đang push.
+**`main` = `origin/main` = `31d6165`** — bản đang chạy production (Đợt 27-31).
 **`develop` = `origin/develop`** = main + Đợt 31 + commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
 Nhánh `feature/project-review-grading`, `feature/student-class-tabs-drive-link`,
 `chore/drop-project-drive-url` đã merge — **xóa được**.
 
-🔴 **VIỆC ĐẦU TIÊN CỦA PHIÊN SAU: hỏi user đã deploy Render chưa.** Đợt 27+28 đổi
-`ai-service` (endpoint `/review-project` + trích chữ .docx). Chưa deploy Render
-thì tab "Sản phẩm cuối khóa" bấm nhận xét → 404, và chấm bài `.docx` lỗi. Vercel
-đã push nhưng chưa ai xác nhận cả 2 bên xanh — **chưa có nghiệm thu bằng mắt nào
-cho Đợt 27-29**.
+⚠️ **KHÔNG kiểm chứng được ai-service production từ máy dev**:
+`eduverse-ai.onrender.com` phân giải DNS đúng (216.24.57.x) và HTTPS ra ngoài vẫn
+chạy (github 200), nhưng `/health` trả HTTP 000 sau 60-120s — nghi mạng công ty
+chặn `onrender.com` (môi trường này vốn đã chặn cổng 5432/6543). Muốn kiểm thì
+mở URL đó trên trình duyệt của user, hoặc bấm thử "Nhận xét sản phẩm" trên
+production. **Đừng kết luận Render hỏng chỉ vì curl từ máy dev không thông.**
+
+⚠️ **Đợt 27→31 chưa có nghiệm thu bằng mắt đầy đủ.** Bằng chứng gián tiếp là
+`student_drive_links` đã có dòng dữ liệu thật do user tự nhập qua UI production
+→ luồng Vercel + migration + RLS chạy được thật.
 
 ⚠️ **`ADMIN_USERNAMES` phải có ở `web/.env.local` (local) VÀ Vercel (production)**
 — chưa khai thì `/teacher/admin` đá về `/teacher` (fail closed). Biến thêm SAU
