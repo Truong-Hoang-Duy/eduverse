@@ -82,8 +82,11 @@ Luôn chạy lint + typecheck + test liên quan trước khi coi task là hoàn 
 - Mọi hành động xóa dùng `ConfirmDialog`; không dùng `confirm()` của trình duyệt.
 - Xóa là XÓA SẠCH: DB cascade sẵn nhưng **Storage không cascade** — xóa dòng có
   file (VD `assignments.spec_file_path`) phải đọc path TRƯỚC rồi gọi
-  `removeSpecFiles` (`web/src/lib/spec-storage.ts`). Không upload file lên Storage
-  trước khi dòng DB được tạo thành công.
+  `removeSpecFiles` (`web/src/lib/spec-storage.ts`).
+- File lên Storage phải có đường DỌN nếu dòng DB không tạo được. `createAssignment`
+  upload TRƯỚC rồi insert vì cần path để insert — và tự `removeSpecFiles` khi
+  insert lỗi. Cách nào cũng được, miễn là **không có nhánh nào để lại file mồ côi**;
+  đừng upload rồi bỏ đó chờ ai dọn tay.
 - Không thêm dependency mới khi chưa hỏi ý kiến user.
 
 ## 7. Git Workflow (chi tiết trong .claude/rules/git-workflow.md)

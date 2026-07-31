@@ -509,6 +509,19 @@
       đăng ký ở Docs Router + Session Startup Protocol của CLAUDE.md
 - [x] Xóa 14 nhánh đã merge (local) + 2 nhánh trên remote — chỉ còn main/develop
 - [x] `pnpm test` vào bảng lệnh CLAUDE.md; `coding-style.md` ghi rõ phạm vi test
+- [x] **`TEST_USER_PREFIXES` về NGUỒN DUY NHẤT** `src/lib/test-user-prefixes.json`
+      (JSON vì script Node không import được `.ts`). Phát hiện danh sách ĐÃ lệch
+      thật: `dl.`/`e4.`/`ek.` được script dùng mà chưa khai → `purge-test-users`
+      không dọn nổi tài khoản của 3 bộ E2E đó; `e1f.`/`e4h.`/`e5i.` khai mà không
+      script nào dùng. Đã dọn 6 tài khoản `dl.` mồ côi trong DB thật
+- [x] Test chống lệch trở lại: `test-user-prefixes.test.ts` đọc thẳng
+      `scripts/e2e-*.mjs`, đỏ nếu thiếu/thừa tiền tố, hoặc tiền tố không có dấu
+      chấm / lồng nhau (script này XÓA tài khoản nên phạm vi phải khớp đúng).
+      Đã nghiệm thu guard đỏ được bằng cách phá JSON thử
+- [x] `vitest-stubs/server-only.ts` + alias → test được module có `import
+      "server-only"` (trước đó bị ném oan vì vitest chạy Node thuần)
+- [x] Sửa luật CLAUDE.md đang lệch với `createAssignment`: yêu cầu thật là "mọi
+      nhánh lỗi phải có đường dọn file", không phải "cấm upload trước insert"
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

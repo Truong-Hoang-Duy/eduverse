@@ -3,14 +3,18 @@
 // Xóa thật: node --env-file=.env.local scripts/purge-test-users.mjs --yes
 import { createClient } from "@supabase/supabase-js";
 
+import testUserPrefixes from "../src/lib/test-user-prefixes.json" with { type: "json" };
+
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   { auth: { autoRefreshToken: false } }
 );
 
-// Tiền tố do các script e2e-*.mjs sinh ra: <prefix>.<vai trò>.<timestamp>
-const TEST_PREFIXES = ["e1f.", "e2f.", "e3g.", "e4h.", "e5i.", "ea.", "ga."];
+// Tiền tố do các script e2e-*.mjs sinh ra: <prefix>.<vai trò>.<timestamp>.
+// Đọc từ NGUỒN DUY NHẤT dùng chung với src/lib/admin-report.ts — trước đây chép
+// tay ở 2 nơi và đã lệch thật (thiếu dl./e4./ek.).
+const { prefixes: TEST_PREFIXES } = testUserPrefixes;
 const APPLY = process.argv.includes("--yes");
 
 const { data, error } = await admin.auth.admin.listUsers({ perPage: 1000 });

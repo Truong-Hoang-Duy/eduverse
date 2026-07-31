@@ -85,13 +85,6 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 - 🟡 **E2E chỉ mô phỏng logic server action, không gọi thẳng thân hàm** — đổi
   action mà quên đổi script thì test vẫn xanh; UI phải nghiệm thu bằng mắt.
 - 🟡 **Trang vận hành chưa có E2E** — chỉ lint/typecheck/build + user bấm tay.
-- 🟡 **`TEST_USER_PREFIXES` chép ở 2 nơi** (`web/src/lib/admin-report.ts` và
-  `web/scripts/purge-test-users.mjs`) vì script Node thuần không import được
-  `.ts`. Sửa một bên nhớ sửa bên kia — đã ghi chú chéo ở cả hai file.
-- 🟡 **CLAUDE.md nói "không upload Storage trước khi dòng DB tạo xong" nhưng
-  `createAssignment` upload trước rồi mới insert** (có rollback nếu insert
-  hỏng). Không phải bug, nhưng luật và code đang lệch — sửa luật hoặc sửa code
-  khi có dịp.
 - 🟡 **Vitest chỉ phủ LOGIC THUẦN** (54 test: lọc file, ZIP, docx, drive-url).
   Component + Server Action vẫn không có test — nghiệm thu bằng E2E + bấm tay.
 - 🟡 `e2e-gallery-storage` đã flake **2 lần riêng biệt** (17/18 → rerun 18/18,
