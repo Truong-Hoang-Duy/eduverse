@@ -71,7 +71,20 @@ export function GradingTool({
   // Buổi 5/9 (lâu lâu 14) có cả lý thuyết lẫn thực hành. Chọn mỗi lần chấm chứ
   // KHÔNG lưu vào đề (user chốt 2026-07-31): khỏi migration, và cùng một đề vẫn
   // chấm riêng từng phần được khi cần.
-  const [mode, setMode] = useState<GradingMode>("practice");
+  //
+  // Hai ô tick độc lập thay vì một cụm 3 nút (user chốt 2026-07-31): "cả hai"
+  // không phải một lựa chọn thứ ba mà là tick cả hai ô — đúng bản chất hơn.
+  const [gradeQuiz, setGradeQuiz] = useState(false);
+  const [gradePractice, setGradePractice] = useState(true);
+  /** null = chưa tick ô nào → không có gì để chấm. */
+  const mode: GradingMode | null =
+    gradeQuiz && gradePractice
+      ? "both"
+      : gradeQuiz
+        ? "quiz"
+        : gradePractice
+          ? "practice"
+          : null;
   const [grade, setGrade] = useState<GradeResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [pending, startGrade] = useTransition();
@@ -118,7 +131,12 @@ export function GradingTool({
           return;
         }
 
-        const res = await gradeFiles({ assignmentId, files: packed.files!, mode });
+        const res = await gradeFiles({
+          assignmentId,
+          files: packed.files!,
+          // `canGrade` đã chặn trường hợp không tick ô nào.
+          mode: mode ?? "practice",
+        });
         if (res.error) picker.setError(res.error);
         else setGrade(res.grade ?? null);
       } catch (err) {
@@ -139,7 +157,11 @@ export function GradingTool({
   }
 
   const canGrade =
-    Boolean(assignmentId) && picker.items.length > 0 && !pending && !picker.reading;
+    Boolean(assignmentId) &&
+    mode !== null &&
+    picker.items.length > 0 &&
+    !pending &&
+    !picker.reading;
 
   return (
     <div className="space-y-4">
@@ -199,12 +221,25 @@ export function GradingTool({
       </div>
 
       <div className="space-y-1.5">
-        <Label>Chấm phần nào</Label>
-        <ModePicker mode={mode} onChange={setMode} />
+        <Label>Chọn phần</Label>
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+          <PartCheckbox
+            label="Trắc nghiệm"
+            checked={gradeQuiz}
+            onChange={setGradeQuiz}
+          />
+          <PartCheckbox
+            label="Thực hành"
+            checked={gradePractice}
+            onChange={setGradePractice}
+          />
+        </div>
         <p className="text-xs text-muted-foreground">
-          {mode === "practice"
-            ? "Chấm code như bình thường — dùng cho hầu hết các buổi."
-            : "Đáp án trắc nghiệm lấy từ chính file đề bài, không cần nhập thêm. Bài làm của em nằm ở file nào cũng được (Word, ảnh chụp giấy, hoặc lẫn trong thư mục code)."}
+          {mode === null
+            ? "Hãy tick ít nhất một phần để chấm."
+            : gradeQuiz
+              ? "Đáp án trắc nghiệm lấy từ chính file đề bài, không cần nhập thêm. Bài làm của em nằm ở file nào cũng được (Word, ảnh chụp giấy, hoặc lẫn trong thư mục code)."
+              : "Chấm code như bình thường — dùng cho hầu hết các buổi."}
         </p>
       </div>
 
@@ -304,42 +339,30 @@ export function GradingTool({
   );
 }
 
-const MODES: { value: GradingMode; label: string }[] = [
-  { value: "practice", label: "Thực hành" },
-  { value: "quiz", label: "Trắc nghiệm" },
-  { value: "both", label: "Cả hai" },
-];
-
-function ModePicker({
-  mode,
+/**
+ * Ô tick một phần cần chấm. Dùng `<input type="checkbox">` trần như chỗ bỏ tick
+ * file ở tab sản phẩm — dự án không có component Checkbox của shadcn, và thêm
+ * một cái chỉ cho hai ô này là không đáng.
+ */
+function PartCheckbox({
+  label,
+  checked,
   onChange,
 }: {
-  mode: GradingMode;
-  onChange: (next: GradingMode) => void;
+  label: string;
+  checked: boolean;
+  onChange: (next: boolean) => void;
 }) {
   return (
-    <div
-      role="radiogroup"
-      aria-label="Chấm phần nào"
-      className="flex gap-1 rounded-lg bg-muted p-1"
-    >
-      {MODES.map((item) => (
-        <button
-          key={item.value}
-          type="button"
-          role="radio"
-          aria-checked={mode === item.value}
-          onClick={() => onChange(item.value)}
-          className={`flex-1 cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-            mode === item.value
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {item.label}
-        </button>
-      ))}
-    </div>
+    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="size-4 shrink-0"
+      />
+      {label}
+    </label>
   );
 }
 
