@@ -658,8 +658,11 @@
       sau khi xóa còn `list()` thì không — nhiều khả năng là gốc của flake
       `e2e-gallery-storage` đã điều tra 2 lượt; và `{ head: true }` nuốt lỗi
       PostgREST nên ca "bảng phải biến mất" viết kiểu đó pass suông cả hai chiều
-- [x] lint + typecheck + 92 unit test + build sạch; E2E 75/78 (3 ca chấm thật
-      chờ lượt Gemini — hạn mức 20/ngày đã cạn, log xác nhận `quota exhausted`)
+- [x] lint + typecheck + 92 unit test + build sạch; **E2E 78/78** (đủ cả 3 ca gọi
+      Gemini thật). Dọc đường đo được: hạn mức Gemini tính theo Google Cloud
+      PROJECT chứ không theo key (`GenerateRequestsPerDayPerProjectPerModel`), và
+      key ở trang Hồ sơ không giúp gì cho E2E vì bộ test luôn tạo tài khoản mới
+- [x] Không sửa `src/` (trừ `test-user-prefixes.*`), không migration → KHÔNG deploy
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

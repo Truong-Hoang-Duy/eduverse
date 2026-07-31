@@ -8,15 +8,17 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-31, bởi: Claude)
 
-**Đang làm:** Đợt 41 (`feature/e2e-action-harness`) — CODE XONG, cổng kiểm tra
-sạch, **CHƯA merge, CHƯA deploy**. Đây là đợt CHỈ ĐỘNG TỚI TEST + tài liệu:
-không sửa `src/` (trừ `test-user-prefixes.json/.test.ts`), **không có migration**,
-không đổi hành vi production.
+**Đang làm:** KHÔNG có task dở. Đợt 41 (`feature/e2e-action-harness`) đã xong và
+merge vào `develop`; **78/78 E2E xanh** cùng lint + typecheck + 92 unit test +
+build. Đây là đợt CHỈ ĐỘNG TỚI TEST + tài liệu: không sửa `src/` (trừ
+`test-user-prefixes.json/.test.ts`), **không có migration**, không đổi hành vi
+production → **KHÔNG cần deploy**.
 
-**Việc còn lại của đợt này:** 3 ca "chấm thật" trong `grading.e2e.ts` chưa xác
-nhận được vì **hết lượt Gemini hôm nay** (log ai-service nói `quota exhausted`,
-`quotaValue: 20`). Chạy lại `pnpm test:e2e` khi có lượt (hôm sau, hoặc đặt
-`GEMINI_API_KEY` còn lượt trong `ai-service/.env`) rồi mới merge.
+⚠️ **Hạn mức Gemini tính theo GOOGLE CLOUD PROJECT, không theo key** — log ghi
+`quotaId: GenerateRequestsPerDayPerProjectPerModel-FreeTier`. Tạo key mới trong
+CÙNG project thì vẫn chung 20 lượt/ngày đã cạn; phải là key của project KHÁC.
+Và key ở trang Hồ sơ (`user_secrets`) KHÔNG giúp gì cho E2E: bộ test tự tạo tài
+khoản mới nên luôn rơi về `GEMINI_API_KEY` trong `ai-service/.env`.
 
 **`main` = `origin/main` = `b51e818`** — bản đang chạy production, KHÔNG đổi.
 **`develop` = `origin/develop`** = main + vài commit docs ghi hash (CỐ Ý không
@@ -56,8 +58,8 @@ E2E chạy trong `web/` trên DB THẬT (tự tạo, tự dọn), chia **HAI LO�
 
 **A. `pnpm test:e2e`** — gọi THẲNG thân Server Action (`web/e2e/*.e2e.ts`).
 Đổi chữ ký hàm là `pnpm typecheck` đỏ, đổi hành vi là bộ này đỏ. Không mock
-Supabase: session thật trong `CookieJar` nên RLS còn hiệu lực. **75/78 xanh**
-(3 ca "chấm thật" chờ lượt Gemini).
+Supabase: session thật trong `CookieJar` nên RLS còn hiệu lực. **78/78 xanh**
+(2026-07-31, có cả 3 ca gọi Gemini thật).
 
 | Bộ | Test | Ghi chú |
 |---|---|---|
@@ -140,7 +142,7 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-07-31 — Đợt 41: trả 2 món nợ E2E (CHƯA merge)
+### 2026-07-31 — Đợt 41: trả 2 món nợ E2E (đã merge vào develop, không cần deploy)
 Dựng bộ E2E **gọi thẳng thân Server Action** (`pnpm test:e2e`, config riêng, không
 thêm dependency): stub `next/headers` bằng `CookieJar` giữ session THẬT nên RLS
 còn nguyên hiệu lực — không mock Supabase. Phủ trang vận hành `/teacher/admin`
