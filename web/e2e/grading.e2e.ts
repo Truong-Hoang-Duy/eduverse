@@ -70,6 +70,34 @@ let assignmentId: string;
 let brokenAssignmentId: string;
 /** Đề không có file đính kèm nào (`spec_file_path` null). */
 let filelessAssignmentId: string;
+/** Đề buổi 5/9/14: có trắc nghiệm KÈM ĐÁP ÁN in trong đề + phần thực hành. */
+let quizAssignmentId: string;
+
+/** Đáp án đúng: 1-C, 2-B, 3-C — in thẳng trong đề để AI đối chiếu. */
+const QUIZ_SPEC = [
+  "# Đề buổi 4: Lý thuyết + Thực hành",
+  "",
+  "## Phần 1 — Trắc nghiệm (3 câu)",
+  "Câu 1: Từ khóa nào dùng để khai báo hằng số trong JavaScript?",
+  "A. var    B. let    C. const    D. function",
+  "Câu 2: Kết quả của phép 2 + \"2\" trong JavaScript là gì?",
+  "A. 4    B. \"22\"    C. báo lỗi    D. undefined",
+  "Câu 3: Vòng lặp nào chắc chắn chạy ít nhất một lần?",
+  "A. for    B. while    C. do...while    D. forEach",
+  "",
+  "ĐÁP ÁN PHẦN TRẮC NGHIỆM: 1-C, 2-B, 3-C",
+  "",
+  "## Phần 2 — Thực hành",
+  "Khai báo a=5, b=7, tính tổng và in ra màn hình dạng `Tong: 12`.",
+].join("\n");
+
+/** Em chọn 1-C (đúng), 2-A (SAI, đúng là B), 3-C (đúng) → 2/3. */
+const QUIZ_ANSWERS = [
+  "Phần trắc nghiệm:",
+  "Câu 1: C",
+  "Câu 2: A",
+  "Câu 3: C",
+].join("\n");
 
 function textFile(name: string, content: string, mimeType = "text/javascript"): GradeInputFile {
   const bytes = Buffer.from(content, "utf8");
@@ -119,11 +147,20 @@ beforeAll(async () => {
   if (uploadErr) throw new Error(`Upload đề: ${uploadErr.message}`);
   trackFile(specPath);
 
+  // Đề buổi 4: có trắc nghiệm kèm đáp án in trong đề.
+  const quizPath = `${courseId}/de-buoi-4.md`;
+  const { error: quizUploadErr } = await teacher.storage
+    .from(SPEC_BUCKET)
+    .upload(quizPath, new Blob([QUIZ_SPEC], { type: "text/markdown" }));
+  if (quizUploadErr) throw new Error(`Upload đề trắc nghiệm: ${quizUploadErr.message}`);
+  trackFile(quizPath);
+
   const rows = [
     { session_number: 1, title: "Tinh tong hai so", spec_file_path: specPath },
     // Trỏ tới file KHÔNG tồn tại — ai-service phải trả 404 chứ không sập.
     { session_number: 2, title: "De hong", spec_file_path: `${courseId}/khong-co-that.md` },
     { session_number: 3, title: "De chua co file", spec_file_path: null },
+    { session_number: 4, title: "Ly thuyet va thuc hanh", spec_file_path: quizPath },
   ];
   const { data: created, error: assignErr } = await teacher
     .from("assignments")
@@ -135,6 +172,7 @@ beforeAll(async () => {
   assignmentId = bySession.get(1)!;
   brokenAssignmentId = bySession.get(2)!;
   filelessAssignmentId = bySession.get(3)!;
+  quizAssignmentId = bySession.get(4)!;
 });
 
 afterAll(cleanupAll);
@@ -272,16 +310,19 @@ describe("gradeFiles — chấm thật bằng Gemini (3 lượt)", () => {
     );
     expect(error, "đỏ ở đây thì NGHI GEMINI TRƯỚC — đọc log ai-service").toBeUndefined();
     expect(Number.isInteger(grade!.score)).toBe(true);
-    expect(grade!.score).toBeGreaterThanOrEqual(0);
-    expect(grade!.score).toBeLessThanOrEqual(100);
+    expect(grade!.score!).toBeGreaterThanOrEqual(0);
+    expect(grade!.score!).toBeLessThanOrEqual(100);
     expect(grade!.bullets.length).toBeGreaterThan(0);
+
+    // Mặc định là chấm THỰC HÀNH — không được lòi ra bảng trắc nghiệm bịa.
+    expect(grade!.quiz, "chế độ mặc định không có phần trắc nghiệm").toBeNull();
 
     // Nhận xét phải NGẮN và không tự thêm ký tự đầu dòng (UI tự thêm bullet).
     for (const bullet of grade!.bullets) {
       expect(bullet.length).toBeLessThan(300);
       expect(/^\s*[-•*]/.test(bullet)).toBe(false);
     }
-    goodScore = grade!.score;
+    goodScore = grade!.score!;
   });
 
   it("should read a Word .docx submission", async () => {
@@ -312,6 +353,37 @@ describe("gradeFiles — chấm thật bằng Gemini (3 lượt)", () => {
     );
     expect(error, "đỏ ở đây thì NGHI GEMINI TRƯỚC — đọc log ai-service").toBeUndefined();
     expect(grade!.score, `tốt=${goodScore} vs kém=${grade!.score}`).toBeLessThan(goodScore);
+  });
+});
+
+describe("gradeFiles — chấm trắc nghiệm bằng đáp án in trong đề (1 lượt)", () => {
+  it("should mark each question against the key printed in the spec", async () => {
+    // Ca đáng giá nhất của tính năng: đáp án nằm trong ĐỀ (1-C, 2-B, 3-C), em
+    // chọn 1-C, 2-A, 3-C. Chấm đúng nghĩa là AI đã ĐỌC đáp án của giáo viên chứ
+    // không tự suy ra theo hiểu biết của nó.
+    const { grade, error } = await runAs(gv, () =>
+      gradeFiles({
+        assignmentId: quizAssignmentId,
+        mode: "both",
+        files: [
+          textFile("dap-an.txt", QUIZ_ANSWERS, "text/plain"),
+          textFile("bai-lam.js", GOOD_ANSWER),
+        ],
+      })
+    );
+    expect(error, "đỏ ở đây thì NGHI GEMINI TRƯỚC — đọc log ai-service").toBeUndefined();
+
+    const quiz = grade!.quiz!;
+    expect(quiz.tong_so).toBe(3);
+    expect(quiz.so_dung).toBe(2);
+
+    const wrong = quiz.cau_hoi.filter((c) => !c.dung);
+    expect(wrong.map((c) => c.cau), "chỉ câu 2 sai").toEqual([2]);
+    expect(wrong[0].dap_an_dung.toUpperCase()).toContain("B");
+
+    // Chế độ "both" phải có ĐỦ cả hai phần, và điểm thực hành KHÔNG bị trộn.
+    expect(grade!.score).not.toBeNull();
+    expect(grade!.bullets.length).toBeGreaterThan(0);
   });
 });
 

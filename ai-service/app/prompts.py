@@ -273,7 +273,17 @@ def build_grading_prompt(
     course_name: str,
     assignment_title: str,
     instructions: str | None,
+    mode: str = "practice",
 ) -> str:
+    """Chấm bài tập. `mode` = practice | quiz | both.
+
+    Buổi 5/9 (lâu lâu 14) có cả lý thuyết trắc nghiệm lẫn thực hành. Đáp án
+    trắc nghiệm IN SẴN TRONG ĐỀ BÀI nên không cần bảng đáp án riêng — nhưng phải
+    nói rõ cho model biết, nếu không nó sẽ tự nghĩ ra đáp án.
+    """
+    grade_quiz = mode in ("quiz", "both")
+    grade_practice = mode in ("practice", "both")
+
     parts = [
         SYSTEM_ROLE,
         "Nhiệm vụ: CHẤM BÀI TẬP LẬP TRÌNH. File đầu tiên đính kèm là ĐỀ BÀI, "
@@ -283,20 +293,64 @@ def build_grading_prompt(
     ]
     if instructions:
         parts.append(f"Hướng dẫn chấm của giáo viên (ưu tiên tuân theo): {instructions}")
+
+    if grade_quiz:
+        parts.append(
+            "PHẦN TRẮC NGHIỆM — **ĐÁP ÁN ĐÚNG ĐÃ IN SẴN TRONG ĐỀ BÀI**. Hãy tìm "
+            "bảng đáp án đó trong đề và dùng CHÍNH NÓ để chấm. TUYỆT ĐỐI KHÔNG tự "
+            "suy ra đáp án theo hiểu biết của mình: đề của giáo viên là chuẩn duy nhất."
+        )
+        parts.append(
+            "Bài làm trắc nghiệm của em có thể nằm ở BẤT KỲ file đính kèm nào: một "
+            "file Word/text ghi đáp án, một ẢNH CHỤP bài làm trên giấy, hoặc một "
+            "file nằm lẫn trong thư mục code của phần thực hành. Hãy tìm khắp các "
+            "file trước khi kết luận."
+        )
+        parts.append(
+            "Với MỖI câu: số thứ tự câu, em chọn đáp án nào, đúng hay sai, đáp án "
+            "đúng là gì, và nếu SAI thì thêm MỘT câu ngắn nói vì sao sai (nhắc lại "
+            "kiến thức cần xem lại, đừng chỉ nói 'sai'). Câu em bỏ trống thì "
+            "`em_chon` để rỗng và tính là sai."
+        )
+        parts.append(
+            "🔴 Nếu KHÔNG tìm thấy bài làm trắc nghiệm của em trong các file đính "
+            "kèm, hãy trả `tong_so: 0` và `cau_hoi: []`. TUYỆT ĐỐI KHÔNG bịa ra câu "
+            "hỏi hay đáp án — chấm sai còn tệ hơn không chấm."
+        )
+
+    if grade_practice:
+        parts.append(
+            "PHẦN THỰC HÀNH — cách chấm: (1) đọc kỹ đề và liệt kê các yêu cầu; "
+            "(2) đối chiếu bài làm với từng yêu cầu; (3) cho điểm trên thang 100, "
+            "cân nhắc: đúng yêu cầu đề (quan trọng nhất), chất lượng code, sự sáng "
+            "tạo. Chấm khắt khe, công bằng."
+        )
+        parts.append(
+            "Nhận xét thực hành phải NGẮN GỌN, mỗi ý một gạch đầu dòng riêng (3-6 ý). "
+            "Mỗi ý tối đa 1-2 câu, đi thẳng vào việc: làm được gì, sai/thiếu chỗ nào, "
+            "sửa thế nào. KHÔNG viết lời chào, KHÔNG nhắc tên học viên, KHÔNG viết "
+            "đoạn văn dài. Không tự thêm ký tự '-' hay '•' ở đầu mỗi ý (hệ thống tự thêm)."
+        )
+        if grade_quiz:
+            parts.append(
+                "Điểm thực hành CHỈ tính phần thực hành — KHÔNG cộng/trừ theo số câu "
+                "trắc nghiệm đúng. Hai phần được chấm và hiển thị tách bạch."
+            )
+
+    # Luôn đòi đủ 3 khóa: model hay bỏ trống khóa không dùng rồi làm hỏng JSON.
+    # Khóa thừa sẽ bị chính route xóa theo `mode` (xem `_keep_requested_parts`).
     parts.append(
-        "Cách chấm: (1) đọc kỹ đề và liệt kê các yêu cầu; (2) đối chiếu bài làm với "
-        "từng yêu cầu; (3) cho điểm trên thang 100, cân nhắc: đúng yêu cầu đề "
-        "(quan trọng nhất), chất lượng code, sự sáng tạo. Chấm khắt khe, công bằng."
+        'Trả về JSON: {"score": <0-100, điểm THỰC HÀNH>, '
+        '"bullets": ["<ý nhận xét thực hành>", ...], '
+        '"quiz": {"tong_so": <số câu trắc nghiệm>, "so_dung": <số câu đúng>, '
+        '"cau_hoi": [{"cau": <số>, "dung": <true|false>, "em_chon": "<A/B/C/D>", '
+        '"dap_an_dung": "<A/B/C/D>", "giai_thich": "<1 câu, chỉ khi sai>"}]}}'
     )
-    parts.append(
-        "Nhận xét phải NGẮN GỌN, mỗi ý một gạch đầu dòng riêng (3-6 ý). Mỗi ý tối đa "
-        "1-2 câu, đi thẳng vào việc: làm được gì, sai/thiếu chỗ nào, sửa thế nào. "
-        "KHÔNG viết lời chào, KHÔNG nhắc tên học viên, KHÔNG viết đoạn văn dài. "
-        "Không tự thêm ký tự '-' hay '•' ở đầu mỗi ý (hệ thống tự thêm)."
-    )
-    parts.append(
-        'Trả về JSON: {"score": <0-100>, "bullets": ["<ý 1>", "<ý 2>", ...]}'
-    )
+    if not grade_quiz:
+        parts.append('Bài này KHÔNG có trắc nghiệm: trả "quiz": {"tong_so": 0, "so_dung": 0, "cau_hoi": []}.')
+    if not grade_practice:
+        parts.append('Bài này CHỈ chấm trắc nghiệm: trả "score": 0 và "bullets": [].')
+
     return "\n".join(parts)
 
 

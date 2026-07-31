@@ -63,12 +63,38 @@ Input:
 **Đề bài** tải từ Storage (thứ duy nhất được lưu). **Bài làm gửi INLINE base64**
 — không qua Storage, không lưu ở đâu. Không có `student_name`.
 
+Thêm `"mode": "practice" | "quiz" | "both"` (mặc định `practice`) — buổi 5/9
+(lâu lâu 14) có cả lý thuyết trắc nghiệm lẫn thực hành.
+
 Output:
 ```json
-{ "score": 85, "bullets": ["ý ngắn 1", "ý ngắn 2", "..."] }
+{
+  "score": 85,
+  "bullets": ["ý ngắn 1", "ý ngắn 2"],
+  "quiz": {
+    "tong_so": 3, "so_dung": 2,
+    "cau_hoi": [
+      {"cau": 1, "dung": true,  "em_chon": "C", "dap_an_dung": "C", "giai_thich": ""},
+      {"cau": 2, "dung": false, "em_chon": "A", "dap_an_dung": "B", "giai_thich": "Xem lại phép nối chuỗi."}
+    ]
+  }
+}
 ```
-Điểm hiện ở ô riêng trên UI; `bullets` là 3-6 ý ngắn (mỗi ý 1-2 câu, không tự
-thêm ký tự `-`/`•` — UI tự thêm) để giáo viên copy.
+`score`/`bullets` là phần THỰC HÀNH (`score` null khi `mode=quiz`); `quiz` null
+khi `mode=practice`. **Hai phần chấm tách bạch, KHÔNG quy ra một điểm gộp** —
+user chốt 2026-07-31: đúng hết trắc nghiệm mà code sai thì điểm gộp che mất vấn đề.
+
+⚠️ **`_keep_requested_parts()` xóa khối không thuộc `mode`** — schema buộc model
+trả đủ 3 khóa (bỏ trống khóa hay làm hỏng JSON), nhưng CHẾ ĐỘ do giáo viên chọn
+chứ không phải model đoán. Chấm "chỉ thực hành" mà lòi ra bảng trắc nghiệm bịa là
+sai nghiêm trọng — GV sẽ gửi thẳng cho em. Hàm này cũng **đếm lại `so_dung` từ
+danh sách câu** vì model đếm không phải lúc nào cũng khớp.
+
+⚠️ **Đáp án trắc nghiệm IN SẴN TRONG ĐỀ BÀI** — prompt bắt model tìm bảng đáp án
+đó và dùng chính nó, CẤM tự suy ra theo hiểu biết riêng (đề của giáo viên là chuẩn
+duy nhất). Bài làm của em có thể nằm ở bất kỳ file nào: Word/text, **ảnh chụp bài
+trên giấy**, hoặc lẫn trong thư mục code của phần thực hành. Không tìm thấy thì
+trả `tong_so: 0`, `cau_hoi: []` — **thà báo không thấy còn hơn bịa**.
 
 Lỗi: file đề không tồn tại → 404; thiếu `files` → 422; base64 hỏng → 400.
 

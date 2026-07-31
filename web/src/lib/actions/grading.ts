@@ -230,9 +230,36 @@ export interface GradeInputFile {
   size: number;
 }
 
+/** Buổi 5/9 (lâu lâu 14) có cả lý thuyết trắc nghiệm lẫn thực hành. */
+export type GradingMode = "quiz" | "practice" | "both";
+
+export interface QuizAnswer {
+  cau: number;
+  dung: boolean;
+  /** Rỗng khi em bỏ trống câu đó. */
+  em_chon: string;
+  dap_an_dung: string;
+  /** Một câu ngắn vì sao sai — chỉ có ở câu sai. */
+  giai_thich: string;
+}
+
+export interface QuizResult {
+  tong_so: number;
+  so_dung: number;
+  cau_hoi: QuizAnswer[];
+}
+
+/**
+ * Hai phần chấm TÁCH BẠCH (user chốt 2026-07-31): đúng hết trắc nghiệm mà code
+ * sai thì một điểm gộp sẽ che mất vấn đề.
+ *
+ * `score`/`bullets` là phần THỰC HÀNH — null/rỗng khi chỉ chấm trắc nghiệm.
+ * `quiz` null khi chỉ chấm thực hành. ai-service tự dọn theo `mode` GV chọn.
+ */
 export interface GradeResult {
-  score: number;
+  score: number | null;
   bullets: string[];
+  quiz: QuizResult | null;
 }
 
 /**
@@ -281,6 +308,8 @@ export async function extractZipForGrading(input: { zipB64: string }): Promise<{
 export async function gradeFiles(input: {
   assignmentId: string;
   files: GradeInputFile[];
+  /** Mặc định "practice" — giữ nguyên hành vi cho mọi lời gọi cũ. */
+  mode?: GradingMode;
 }): Promise<{ grade?: GradeResult; error?: string }> {
   const supabase = await createClient();
   const {
@@ -331,6 +360,7 @@ export async function gradeFiles(input: {
         (assignment.courses as unknown as { name: string } | null)?.name ?? "",
       assignment_title: assignment.title,
       instructions: assignment.instructions,
+      mode: input.mode ?? "practice",
     });
     return { grade };
   } catch (err) {
