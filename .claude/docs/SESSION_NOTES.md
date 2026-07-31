@@ -8,16 +8,13 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-30, bởi: Claude)
 
-**Đang làm:** Đợt 33 (bịt stored XSS ở link người dùng dán) đã code + merge
-develop — **chờ user dán migration `20260731010000`** rồi chạy lại
-`e2e-drive-link` (kỳ vọng 14/14; chưa dán thì 10/14).
-
-**Trước đó:** KHÔNG có task dở. Đợt 27→31 đã deploy, user xác nhận
+**Đang làm:** KHÔNG có task dở. Đợt 33 (bịt stored XSS) đã dán migration + deploy;
+`e2e-drive-link` 14/14 với constraint áp thật. Đợt 27→31 đã deploy, user xác nhận
 2026-07-30 "đã deploy tất cả". **CẢ 3 migration của phiên này ĐÃ áp** — đã đo
 lại trên DB thật: `projects.drive_url` báo "does not exist" (drop xong),
 `student_drive_links` có dữ liệu thật.
 
-**`main` = `origin/main` = `6f35c3d`** — production (Đợt 27-32 + trả nợ kỹ thuật).
+**`main` = `origin/main` = `f1bdd24`** — production (Đợt 27-33).
 **`develop` = `origin/develop`** = main + 1 commit docs ghi hash
 (CỐ Ý không merge sang `main`: merge sẽ đẻ hash mới làm ghi chú sai lại — vòng
 lặp đã dính 2026-07-21). Lệch vài commit docs là BÌNH THƯỜNG.
