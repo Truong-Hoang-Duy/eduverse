@@ -152,8 +152,27 @@
 - **Kéo thả file KHÔNG chịu thuộc tính `accept`** — phải tự kiểm bằng
   `unsupportedSubmissionReason` (`file-check.ts`, nguồn DUY NHẤT cả cho
   `SUBMISSION_ACCEPT`). Chủ trương: đuôi code mở THOẢI MÁI (ai-service decode ra
-  text), chỉ chặn nén/exe/media/thư mục. Thả nhiều lượt thì CỘNG DỒN (chống
-  trùng theo `name:size:lastModified`), không ghi đè.
+  text), chỉ chặn nén/exe/media/thư mục.
+- **Nạp file ở tab bài tập: cộng dồn khi CHƯA chấm, thay thế khi ĐÃ chấm**
+  (user chốt 2026-07-31, thay cho luật "luôn cộng dồn" trước đó). Chưa có kết quả
+  thì thả nhiều lượt vẫn dồn lại (chống trùng theo `name:size:lastModified`) để
+  thêm file quên cho CÙNG một em; đã có điểm trên màn hình mà nạp tiếp thì gần
+  như chắc chắn là sang em khác → xóa sạch file cũ + kết quả + số "đã bỏ qua",
+  và thông báo nói rõ "Đã bỏ bài trước". Lý do đổi: giữ file của hai em trong
+  cùng một lượt chấm là chấm sai mà GV không nhận ra.
+  Tab **sản phẩm cuối khóa** vốn đã luôn THAY THẾ (`applyResult` gán thẳng) —
+  không đổi gì, đừng "sửa cho nhất quán" theo chiều ngược lại.
+- **Nav trên điện thoại xuống hàng riêng khi có >2 mục** (2026-07-31): 4 mục
+  tiếng Việt của giáo viên (~214px chữ) cộng logo + nút giao diện + avatar không
+  vừa một hàng ~360px, "Vận hành" đè lên nút đổi giao diện. Học viên chỉ có 1
+  mục nên GIỮ cùng hàng — đẩy xuống là phí một dòng của màn hình nhỏ. Pill dùng
+  `px-2.5` ở mobile, `sm:px-3` trở lên; nav có `overflow-x-auto` làm lưới an
+  toàn cho máy hẹp hơn 360px. Từ `sm:` trở lên hiển thị không đổi.
+- **Nút "Xóa hết" trong 2 tab chấm bài KHÔNG hỏi `ConfirmDialog`** (2026-07-31)
+  — ngoại lệ có chủ ý của luật "mọi hành động xóa dùng ConfirmDialog": danh sách
+  file chưa lưu ở đâu cả, bấm nhầm thì chọn lại là xong. Đổi lại phải NHÌN RÕ
+  (`Button variant="destructive"` kèm số file) vì đây là lối thoát khi GV lỡ
+  chọn cả thư mục hàng chục file.
 
 - **Chấm sản phẩm cuối khóa (Đợt 28) — KHÔNG đề bài, KHÔNG điểm số** (user chốt
   2026-07-30). `PROJECT_REVIEW_SCHEMA` cố ý không có `score`, prompt cấm nêu
