@@ -765,7 +765,10 @@
       nhận xét trước đây chỉ có probe RLS. Canh cả "vắng xóa sạch nhận xét cũ"
       (nếu không em lọt vào tin Zalo với nhận xét của buổi không học)
 - [x] 7 pytest mới → 57; lint + typecheck + 136 unit test + build sạch
-- [ ] User nghiệm thu bằng mắt + deploy (Vercel **và Render** — ai-service ĐỔI)
+- [x] 🔴 Lỗi khi bấm vắng: React 19 chỉ cho gọi thẳng hàm của `useActionState`
+      TRONG một transition → bọc `startTransition`. **E2E không thể bắt được** vì
+      nó gọi thẳng thân Server Action, không đi qua lớp React bọc quanh
+- [x] Deploy `main` = `38aebbd` (Vercel **và Render** — ai-service ĐỔI)
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

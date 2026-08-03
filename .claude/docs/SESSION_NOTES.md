@@ -6,13 +6,18 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-07-31, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-08-03, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 41→46 đã merge, deploy và **user xác nhận
-chạy tốt trên production** (cả Vercel lẫn Render).
+**Đang làm:** KHÔNG có task dở. Đợt 41→47 đã merge và deploy.
 
-**`main` = `origin/main` = `76c7106`** — bản đang chạy production.
-**`develop` = `origin/develop` = `c2005f9`** = main + vài commit docs ghi hash
+**`main` = `origin/main` = `38aebbd`** — vừa đẩy lên production (Đợt 47).
+⚠️ **Đợt 47 sửa `ai-service/` → Render PHẢI deploy lại.** `/health` phải trả
+**`38aebbd`**; còn `76c7106` nghĩa là Render chưa build xong, lúc đó "Gợi ý nội
+dung buổi học" sẽ lỗi vì hợp đồng vừa đổi (`content` chuỗi → `bullets` mảng).
+⚠️ **Phần gợi ý gạch đầu dòng user CHƯA nhìn tận mắt** — hết lượt Gemini đúng lúc
+nghiệm thu. Đã xanh ở E2E gọi Gemini thật, nhưng nên xem lại trên production.
+
+**`develop` = `origin/develop`** = main + vài commit docs ghi hash
 (CỐ Ý không merge ngược sang `main`: merge đẻ hash mới làm ghi chú sai lại —
 vòng lặp đã dính 2026-07-21). Chỉ còn `main` + `develop`, nhánh feature đã xóa.
 
@@ -143,6 +148,15 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
   (Node resolve package theo vị trí script).
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
+
+### 2026-08-03 — Đợt 47: đánh vắng tự lưu + gợi ý theo gạch đầu dòng (`38aebbd`)
+Tick "Vắng" giờ LƯU LUÔN. Dò lại thì luật `isHandled` vốn ĐÃ đúng từ Đợt 19 —
+hỏng ở THAO TÁC: tick xong form ẩn sạch nên rất dễ quên bấm Lưu. Gợi ý nội dung
+buổi học đổi sang gạch đầu dòng (`{content}` → `{bullets}`); user BỎ ý "mở rộng
+kiến thức" sau khi biết `sessions.content` chảy vào nhận xét gửi phụ huynh.
+Thêm `reviews.e2e.ts` (10 ca) — lấp một phần khoảng trống "nhận xét chỉ có probe
+RLS". **Bài học:** E2E gọi thẳng thân action nên KHÔNG bắt được lỗi ở lớp React
+bọc quanh (thiếu `startTransition` → đỏ ngay khi bấm, mà 10/10 E2E vẫn xanh).
 
 ### 2026-07-31 — Đợt 41→46 (một phiên, TẤT CẢ đã production `76c7106`)
 Chi tiết từng đợt ở ROADMAP.md, quyết định ở DECISIONS.md. **KHÔNG migration nào.**
