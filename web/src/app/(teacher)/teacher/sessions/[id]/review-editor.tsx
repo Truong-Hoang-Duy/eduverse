@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
+import {
+  startTransition,
+  useActionState,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { MultiSelect } from "@/components/multi-select";
@@ -253,7 +259,11 @@ export function ReviewEditor({
 
     const data = new FormData(form);
     data.set("is_absent", String(next));
-    formAction(data);
+    // PHẢI bọc trong transition: React 19 chỉ cho gọi thẳng hàm của
+    // `useActionState` bên trong một transition (ngoài ra thì chỉ được truyền
+    // qua prop `action`). Thiếu chỗ này là lỗi đỏ ngay khi bấm, và `pending`
+    // cũng không cập nhật đúng.
+    startTransition(() => formAction(data));
   }
 
   async function handleCopyComment() {
