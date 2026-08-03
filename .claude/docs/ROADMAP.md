@@ -750,6 +750,21 @@
       11 pytest mới → 50; lint/typecheck/build sạch
 - [x] **E2E chấm trắc nghiệm THẬT bằng Gemini đã XANH**: đề in đáp án 1-C/2-B/3-C,
       em chọn 1-C/2-A/3-C → AI bắt đúng câu 2 sai và nêu đáp án đúng là B
+- [x] Đổi cụm 3 nút thành 2 Ô TICK độc lập + tiêu đề "Chọn phần" (user yêu cầu)
+- [x] User nghiệm thu bằng mắt; deploy `main` = `76c7106` (Vercel **và Render** — ai-service ĐỔI)
+
+### Đợt 47 (`feature/absent-autosave-and-bullet-suggestions`) — 2 cải thiện user báo
+- [x] **Đánh vắng**: tick là LƯU LUÔN (trước phải bấm thêm nút Lưu, mà tick xong
+      form ẩn hết nên rất dễ quên). Bỏ tick cũng lưu ngay; ẩn nút Lưu khi vắng.
+      Dò lại thì luật `isHandled` vốn ĐÃ đúng từ Đợt 19 — hỏng ở thao tác thôi
+- [x] **Gợi ý nội dung buổi học**: đổi từ 1 đoạn văn sang GẠCH ĐẦU DÒNG (3-6 ý).
+      `{content: str}` → `{bullets: [str]}`; web ghép "- " nên cột DB không đổi
+- [x] **KHÔNG mở rộng kiến thức** — user bỏ yêu cầu này sau khi biết
+      `sessions.content` chảy vào nhận xét gửi phụ huynh; prompt cấm thẳng
+- [x] **Bộ E2E mới `reviews.e2e.ts`** (10 ca) — lấp một phần khoảng trống đã ghi:
+      nhận xét trước đây chỉ có probe RLS. Canh cả "vắng xóa sạch nhận xét cũ"
+      (nếu không em lọt vào tin Zalo với nhận xét của buổi không học)
+- [x] 7 pytest mới → 57; lint + typecheck + 136 unit test + build sạch
 - [ ] User nghiệm thu bằng mắt + deploy (Vercel **và Render** — ai-service ĐỔI)
 
 ## Ý tưởng còn để ngỏ (chưa làm)

@@ -260,12 +260,21 @@ def build_session_content_prompt(
         )
     parts.append(f"Ghi chú thô của giáo viên cho buổi này: {draft_text}")
     parts.append(
-        "Viết lại thành 1 đoạn ngắn gọn (2-4 câu), nêu rõ kiến thức/khái niệm "
-        "chính sẽ dạy và bài tập (nếu ghi chú có nhắc). Văn phong súc tích như "
-        "ghi chú giáo án, không chào hỏi, không diễn giải dài dòng, không bịa "
-        "thêm nội dung ghi chú không đề cập."
+        "Viết lại thành DANH SÁCH GẠCH ĐẦU DÒNG (3-6 ý), mỗi ý MỘT việc sẽ dạy "
+        "hoặc một bài tập. Mỗi ý tối đa 1 câu ngắn, đi thẳng vào trọng tâm — văn "
+        "phong súc tích như ghi chú giáo án. Sắp theo thứ tự dạy trong buổi."
     )
-    parts.append('Trả về JSON: {"content": "<nội dung buổi học>"}')
+    parts.append(
+        "🔴 CHỈ viết những gì ghi chú của giáo viên đã nêu. TUYỆT ĐỐI KHÔNG tự "
+        "thêm kiến thức/chủ đề mới, kể cả khi thấy liên quan hoặc nên dạy kèm. "
+        "Nội dung này được dùng làm ngữ cảnh để viết nhận xét gửi PHỤ HUYNH — "
+        "thêm thứ chưa dạy vào đây là báo sai cho phụ huynh."
+    )
+    parts.append(
+        "KHÔNG viết lời chào, KHÔNG nhắc tên học viên. Không tự thêm ký tự '-' "
+        "hay '•' ở đầu mỗi ý (hệ thống tự thêm)."
+    )
+    parts.append('Trả về JSON: {"bullets": ["<ý 1>", "<ý 2>", ...]}')
     return "\n".join(parts)
 
 
