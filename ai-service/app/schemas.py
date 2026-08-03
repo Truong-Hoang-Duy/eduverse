@@ -92,7 +92,14 @@ class SuggestSessionContentRequest(AiRequest):
 
 
 class SuggestSessionContentResponse(BaseModel):
-    content: str
+    """Gạch đầu dòng thay vì một đoạn văn (user chốt 2026-08-03).
+
+    Trả MẢNG chứ không phải chuỗi đã ghép sẵn: phía web tự thêm ký tự đầu dòng
+    nên định dạng thống nhất với các endpoint khác, và model không thể trả về
+    một đoạn văn dài chỉ *trông giống* gạch đầu dòng.
+    """
+
+    bullets: list[str] = Field(min_length=1)
 
 
 # ---------- /suggest-features ----------

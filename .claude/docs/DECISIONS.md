@@ -162,6 +162,20 @@
   cùng một lượt chấm là chấm sai mà GV không nhận ra.
   Tab **sản phẩm cuối khóa** vốn đã luôn THAY THẾ (`applyResult` gán thẳng) —
   không đổi gì, đừng "sửa cho nhất quán" theo chiều ngược lại.
+- **Tick "Vắng mặt" là LƯU LUÔN, không đợi bấm nút Lưu** (user chốt 2026-08-03).
+  Bỏ tick cũng lưu ngay để hai chiều đối xứng; nút Lưu bị ẩn khi đang vắng vì
+  không còn việc gì cho nó. Lý do: tick xong form ẩn sạch phần nhận xét, trông
+  như đã xong nên rất dễ bỏ qua nút Lưu — em ở lại trong bộ lọc "Chưa hoàn
+  thành" mà GV không hiểu vì sao. Bản thân luật `isHandled = isReviewed HOẶC
+  is_absent` vốn ĐÃ đúng từ Đợt 19; cái hỏng chỉ là thao tác.
+- **Gợi ý nội dung buổi học trả GẠCH ĐẦU DÒNG, và TUYỆT ĐỐI không tự thêm kiến
+  thức** (user chốt 2026-08-03). `/suggest-session-content` đổi từ
+  `{content: str}` sang `{bullets: [str]}`; web ghép `"- "` nên `sessions.content`
+  vẫn là text, cột DB và các prompt đọc nó không đổi.
+  ⚠️ User ban đầu muốn AI "mở rộng thêm chủ đề liên quan" nhưng **đã BỎ** sau khi
+  biết `sessions.content` là ngữ cảnh để viết nhận xét gửi PHỤ HUYNH
+  (`build_review_prompt`, `build_zalo_summary_prompt`) — thêm thứ chưa dạy vào
+  đây là báo sai cho phụ huynh. Đừng đề xuất lại.
 - **Chấm bài buổi có LÝ THUYẾT + THỰC HÀNH — 3 chế độ, chọn mỗi lần chấm**
   (user chốt 2026-07-31). Buổi 5/9, lâu lâu 14. Chọn ở UI chứ KHÔNG lưu cột vào
   `assignments` — khỏi migration, và cùng một đề vẫn chấm riêng từng phần được.

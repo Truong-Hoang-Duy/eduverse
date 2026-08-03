@@ -97,11 +97,20 @@ def suggest_session_content(
         prompt,
         response_schema={
             "type": "object",
-            "properties": {"content": {"type": "string"}},
-            "required": ["content"],
+            "properties": {
+                "bullets": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["bullets"],
         },
         api_key=body.api_key,
     )
+    # Model thỉnh thoảng vẫn tự thêm "-"/"•" dù prompt cấm; cắt ở đây để phía web
+    # khỏi ra "- - Ôn vòng lặp".
+    data["bullets"] = [
+        line.lstrip("-•* \t").strip()
+        for line in data.get("bullets", [])
+        if line.strip()
+    ]
     return SuggestSessionContentResponse(**data)
 
 

@@ -1,6 +1,12 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import {
+  startTransition,
+  useActionState,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { MultiSelect } from "@/components/multi-select";
@@ -116,6 +122,7 @@ export function ReviewEditor({
     existing?.academic_level ?? ""
   );
   const [isAbsent, setIsAbsent] = useState(existing?.is_absent ?? false);
+  const formRef = useRef<HTMLFormElement>(null);
   const [aiError, setAiError] = useState("");
   const [aiPending, startAi] = useTransition();
   const [copied, setCopied] = useState(false);
@@ -234,6 +241,31 @@ export function ReviewEditor({
     });
   }
 
+  /**
+   * Tick "Vắng" là LƯU LUÔN, không đợi bấm nút Lưu (user chốt 2026-08-03).
+   *
+   * Vì sao: tick xong thì form ẩn sạch phần nhận xét, trông như đã xong việc nên
+   * rất dễ bỏ qua nút Lưu — em ở lại trong bộ lọc "Chưa hoàn thành" mà GV không
+   * hiểu vì sao. Bỏ tick cũng lưu lại ngay, để hai chiều đối xứng.
+   *
+   * Dựng FormData từ CHÍNH form (không tự ghép tay) để mọi thứ GV đang chọn dở
+   * đi theo, rồi ghi đè `is_absent` — state React cập nhật bất đồng bộ nên input
+   * ẩn chưa kịp mang giá trị mới.
+   */
+  function toggleAbsent(next: boolean) {
+    setIsAbsent(next);
+    const form = formRef.current;
+    if (!form) return;
+
+    const data = new FormData(form);
+    data.set("is_absent", String(next));
+    // PHẢI bọc trong transition: React 19 chỉ cho gọi thẳng hàm của
+    // `useActionState` bên trong một transition (ngoài ra thì chỉ được truyền
+    // qua prop `action`). Thiếu chỗ này là lỗi đỏ ngay khi bấm, và `pending`
+    // cũng không cập nhật đúng.
+    startTransition(() => formAction(data));
+  }
+
   async function handleCopyComment() {
     await navigator.clipboard.writeText(comment);
     setCopied(true);
@@ -264,7 +296,7 @@ export function ReviewEditor({
         </span>
       </summary>
 
-      <form action={formAction} className="space-y-4 border-t p-4">
+      <form ref={formRef} action={formAction} className="space-y-4 border-t p-4">
         <input type="hidden" name="session_id" value={sessionId} />
         <input type="hidden" name="student_id" value={studentId} />
         <input type="hidden" name="is_absent" value={String(isAbsent)} />
@@ -276,7 +308,8 @@ export function ReviewEditor({
           <input
             type="checkbox"
             checked={isAbsent}
-            onChange={(e) => setIsAbsent(e.target.checked)}
+            onChange={(e) => toggleAbsent(e.target.checked)}
+            disabled={pending}
             className="size-4"
           />
           🚫 Vắng mặt buổi này (không cần nhận xét)
@@ -284,8 +317,9 @@ export function ReviewEditor({
 
         {isAbsent && (
           <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-            Em vắng buổi này — bấm &quot;Lưu&quot; để đánh dấu. Em sẽ được bỏ qua
-            khi tổng hợp tin Zalo cho phụ huynh.
+            Đã đánh dấu vắng và LƯU luôn — em được tính là xử lý xong, không còn
+            trong bộ lọc &quot;Chưa hoàn thành&quot;, và được bỏ qua khi tổng hợp
+            tin Zalo cho phụ huynh. Bỏ tick nếu đánh nhầm.
           </p>
         )}
 
@@ -456,14 +490,14 @@ export function ReviewEditor({
         </>
         )}
 
+        {/* Đánh vắng đã tự lưu lúc tick nên không còn gì để bấm — giấu nút đi
+            thay vì để một nút không có việc gì làm. */}
         <div className="flex items-center gap-3">
-          <Button type="submit" size="sm" disabled={pending}>
-            {pending
-              ? "Đang lưu..."
-              : isAbsent
-                ? "Lưu (đánh dấu vắng)"
-                : "Lưu nhận xét"}
-          </Button>
+          {!isAbsent && (
+            <Button type="submit" size="sm" disabled={pending}>
+              {pending ? "Đang lưu..." : "Lưu nhận xét"}
+            </Button>
+          )}
           <FormMessage result={state} />
         </div>
       </form>
