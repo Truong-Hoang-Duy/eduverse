@@ -12,5 +12,16 @@
     "src/lib/test-user-prefixes.test.ts tự đối chiếu danh sách này với",
     "các bộ test và fail nếu lệch — đừng xóa test đó."
   ],
-  "prefixes": ["ao.", "dl.", "e2e.", "e2f.", "e3g.", "e4.", "ea.", "ek.", "ga."]
+  "prefixes": [
+    "ao.",
+    "dl.",
+    "e2e.",
+    "e2f.",
+    "e3g.",
+    "e4.",
+    "ea.",
+    "ek.",
+    "ga.",
+    "rv."
+  ]
 }

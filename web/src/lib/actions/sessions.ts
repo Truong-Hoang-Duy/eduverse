@@ -96,15 +96,21 @@ export async function suggestSessionContent(input: {
     .map((s) => ({ session_number: s.session_number, content: s.content }));
 
   try {
-    const data = await callAiService<{ content: string }>("/suggest-session-content", {
-      api_key: await getMyApiKey(),
-      course_name: session.classes?.courses?.name ?? "",
-      class_code: session.classes?.class_code ?? "",
-      session_number: session.session_number,
-      draft_text: input.draftText,
-      prior_sessions: priorSessions,
-    });
-    return { content: data.content };
+    const data = await callAiService<{ bullets: string[] }>(
+      "/suggest-session-content",
+      {
+        api_key: await getMyApiKey(),
+        course_name: session.classes?.courses?.name ?? "",
+        class_code: session.classes?.class_code ?? "",
+        session_number: session.session_number,
+        draft_text: input.draftText,
+        prior_sessions: priorSessions,
+      }
+    );
+    // Ghép ở ĐÂY chứ không để ai-service trả chuỗi sẵn: ký tự đầu dòng do web
+    // quyết định (thống nhất với chỗ khác), và `sessions.content` vẫn là text
+    // nên cột DB lẫn các prompt đọc nó không phải đổi gì.
+    return { content: data.bullets.map((line) => `- ${line}`).join("\n") };
   } catch (err) {
     if (err instanceof AiServiceError) {
       return { error: err.message };
