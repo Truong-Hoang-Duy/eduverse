@@ -52,15 +52,19 @@ xuyên khóa; API key Gemini riêng có công tắc; trang vận hành `/teacher
 ## ✅ Cổng kiểm tra & E2E
 
 `web/`: **lint + typecheck + `pnpm test` (136 unit test) + build**.
-`ai-service/`: **`.venv/Scripts/python -m pytest`** (50 test).
+`ai-service/`: **`.venv/Scripts/python -m pytest`** (57 test).
 
 E2E chạy trong `web/` trên DB THẬT (tự tạo, tự dọn), chia **HAI LOẠI** từ Đợt 41:
 
 **A. `pnpm test:e2e`** — gọi THẲNG thân Server Action (`web/e2e/*.e2e.ts`).
 Đổi chữ ký hàm là `pnpm typecheck` đỏ, đổi hành vi là bộ này đỏ. Không mock
-Supabase: session thật trong `CookieJar` nên RLS còn hiệu lực. **88 ca**; mọi ca
+Supabase: session thật trong `CookieJar` nên RLS còn hiệu lực. **98 ca**; mọi ca
 đã quan sát thấy xanh, nhưng hiếm khi xanh HẾT trong một lần chạy vì hạn mức
 Gemini (xem cảnh báo dưới).
+
+🔴 **Bộ này KHÔNG phủ lớp React bọc quanh action** — nó gọi thẳng thân hàm. Đợt 47
+dính đúng khe đó: thiếu `startTransition` làm hộp lỗi đỏ hiện ngay khi bấm, mà
+10/10 ca E2E vẫn xanh. **E2E xanh ≠ UI chạy được**, vẫn phải bấm thử.
 
 | Bộ | Test | Ghi chú |
 |---|---|---|
@@ -68,6 +72,7 @@ Gemini (xem cảnh báo dưới).
 | `signup-login.e2e.ts` | 22 | signup/login/logout + createCourse/createClass |
 | `assignments-storage.e2e.ts` | 19 | createAssignment (có ca **rollback file**), deleteCourse |
 | `grading.e2e.ts` | 26 | **cần ai-service**; chấm bài + hỏi bài + trắc nghiệm. Tiêu 6 lượt Gemini, các ca khác miễn phí |
+| `reviews.e2e.ts` | 10 | nhận xét theo buổi + **đánh vắng**; 1 ca gợi ý nội dung cần ai-service |
 
 **B. `node --env-file=.env.local scripts/<script>`** — probe RLS gọi REST trần,
 CỐ Ý bỏ qua code app để giả lập kẻ tấn công. **ĐỪNG chuyển sang gọi action.**
@@ -97,7 +102,7 @@ GenerateRequestsPerDayPerProjectPerModel-FreeTier`) — tạo key mới trong C�
 project thì vẫn chung 20 lượt đã cạn, phải là key của project KHÁC. Và key ở
 trang Hồ sơ (`user_secrets`) KHÔNG giúp gì cho E2E: bộ test tự tạo tài khoản mới
 nên luôn rơi về `GEMINI_API_KEY` trong `ai-service/.env`.
-Muốn chạy đủ 88 ca thì chạy `grading.e2e.ts` riêng, 3 bộ kia miễn phí hoàn toàn.
+Muốn chạy đủ 98 ca thì chạy `grading.e2e.ts` riêng, 3 bộ kia gần như miễn phí.
 
 Công cụ chẩn đoán: `/health` của ai-service (commit đang chạy),
 `scripts/check-integrity.mjs`, `scripts/check-user.mjs <username>`,
@@ -117,10 +122,11 @@ ngược một quyết định cũ**; thêm quyết định mới cũng ghi vào
 - 🟡 **`buildOpsReport` đếm dòng bằng `{ head: true }`**, mà cách gọi đó NUỐT lỗi
   PostgREST (xem DECISIONS.md) → bảng bị drop sẽ hiện `0` thay vì báo lỗi. Nhỏ,
   biết để đó.
-- 🟡 **Các bộ E2E gọi action mới chưa phủ hết action** — mới có admin, auth,
-  khóa/lớp, đề bài, chấm bài. Nhận xét (`reviews`, `zalo`), sản phẩm
-  (`projects`), API key, mật khẩu vẫn chỉ có probe RLS. Thêm bộ mới thì theo mẫu
-  `web/e2e/_harness.ts` và nhớ khai tiền tố vào `test-user-prefixes.json`.
+- 🟡 **Các bộ E2E gọi action mới chưa phủ hết action** — đã có admin, auth,
+  khóa/lớp, đề bài, chấm bài, nhận xét theo buổi + gợi ý nội dung. Còn thiếu:
+  tin Zalo, sản phẩm (`projects`), API key, mật khẩu — mới chỉ có probe RLS.
+  Thêm bộ mới thì theo mẫu `web/e2e/_harness.ts` và nhớ khai tiền tố vào
+  `test-user-prefixes.json` (`pnpm test` đỏ ngay nếu quên).
 
 ### Đã trả xong (Đợt 41) — đừng mở lại
 - ✅ ~~E2E chỉ mô phỏng logic server action~~ — 3 chỗ chép lại logic đã chuyển
@@ -158,55 +164,35 @@ Thêm `reviews.e2e.ts` (10 ca) — lấp một phần khoảng trống "nhận x
 RLS". **Bài học:** E2E gọi thẳng thân action nên KHÔNG bắt được lỗi ở lớp React
 bọc quanh (thiếu `startTransition` → đỏ ngay khi bấm, mà 10/10 E2E vẫn xanh).
 
-### 2026-07-31 — Đợt 41→46 (một phiên, TẤT CẢ đã production `76c7106`)
-Chi tiết từng đợt ở ROADMAP.md, quyết định ở DECISIONS.md. **KHÔNG migration nào.**
+### 2026-07-31 — Đợt 41→46 (một phiên, production `76c7106`) — nén, chi tiết ở ROADMAP.md
+Dựng bộ E2E **gọi thẳng thân Server Action** (`pnpm test:e2e`, không thêm dep) và
+phủ `/teacher/admin`. Thêm tab **"Hỏi bài"** và **chấm buổi có trắc nghiệm**. Sửa
+nav mobile đè nhau, nút "Xóa hết" quá chìm, và 🔴 **nộp `.zip` LUÔN báo "không tìm
+thấy file nào"** (`.zip` nằm trong `BINARY_EXTENSIONS` nên bị lọc trước khi kịp
+mở — chọn .zip qua hộp thoại chưa bao giờ chạy). Gộp phần nhận file của 3 tab:
+1635 → 830 dòng.
 
-**Hạ tầng test (41):** dựng bộ E2E **gọi thẳng thân Server Action**
-(`pnpm test:e2e`, config riêng, không thêm dependency): stub `next/headers` bằng
-`CookieJar` giữ session THẬT nên **RLS còn nguyên hiệu lực** — không mock
-Supabase. Phủ `/teacher/admin` (21 ca; khu chạy service-role nên không có RLS
-đỡ), chuyển 3 chỗ E2E đang chép lại logic action sang gọi thật. 7 script probe
-RLS giữ nguyên vì chúng CỐ Ý gọi REST trần để giả lập kẻ tấn công.
-
-**Tính năng (43, 46):** tab **"Hỏi bài"** — GV nạp đề (+ code/ảnh của em nếu có)
-→ AI trả gợi ý ĐƠN GIẢN để Copy dán cho em; chỗ DUY NHẤT văn bản AI được HỌC
-VIÊN đọc tận mắt nên có `STUDENT_HELP_RULE` riêng. **Chấm buổi có trắc nghiệm**
-(buổi 5/9, lâu lâu 14): đáp án lấy từ chính đề bài, 2 ô tick "Chọn phần", **hai
-điểm TÁCH BẠCH**, câu sai nêu thẳng đáp án đúng.
-
-**Sửa lỗi (42, 45):** nav giáo viên đè nhau trên điện thoại; nút "Xóa hết" quá
-chìm; nạp file sau khi đã chấm giữ lại bài em trước (trộn bài hai em); 🔴 **nộp
-`.zip` LUÔN báo "không tìm thấy file nào"** — `.zip` nằm trong
-`BINARY_EXTENSIONS` nên chính file nén bị lọc trước khi kịp mở; chọn .zip qua
-hộp thoại chưa bao giờ chạy ở cả 3 tab.
-
-**Chất lượng (44):** 3 tab chấm bài có 3 logic nhận file → gộp thành 1 hook + 2
-component, **1635 → 830 dòng**. Giữ tham số hóa 4 khác biệt nghiệp vụ.
-
-**Bài học của phiên — cùng một hình dạng, lặp 4 lần:**
-- **Thông báo lỗi sai chỗ thì dẫn người ta đi sai hướng.** Hai lần user báo lỗi
-  kèm chẩn đoán, cả hai lần chẩn đoán SAI nhưng rất hợp lý vì câu thông báo nói
-  về sai tầng. Từ đó: sửa lỗi thì sửa luôn câu đã gây hiểu nhầm.
-- **Đừng tin model giữ đúng thứ đã biết chắc từ ĐẦU VÀO.** Gemini 2 lần không
-  tuân prompt (tự viết `dang_o_dau`, đếm sai `so_dung`) → ép ở server.
-- **Đo trước khi tin.** `{ head: true }` NUỐT lỗi PostgREST (thử tên bảng bịa vẫn
-  `error: null`); `download()` trả bản cũ sau khi xóa còn `list()` thì không;
-  hạn mức Gemini tính theo PROJECT chứ không theo key.
+**Bài học — cùng một hình dạng, lặp nhiều lần:**
+- **Thông báo lỗi sai chỗ thì dẫn người ta đi sai hướng.** 2 lần user báo lỗi kèm
+  chẩn đoán, cả 2 lần chẩn đoán SAI nhưng rất hợp lý vì câu thông báo nói sai
+  tầng → sửa lỗi thì sửa luôn câu đã gây hiểu nhầm.
+- **Đừng tin model giữ đúng thứ đã biết chắc từ ĐẦU VÀO** — Gemini 2 lần không
+  tuân prompt, phải ép ở server.
+- **Đo trước khi tin:** `{ head: true }` NUỐT lỗi PostgREST; `download()` trả bản
+  cũ sau khi xóa còn `list()` thì không; hạn mức Gemini tính theo PROJECT.
 
 ### 2026-07-30 — Đợt 26→40 (production `b51e818`) — nén, chi tiết ở ROADMAP.md
-7 migration, đều đã áp. Tab "Sản phẩm cuối khóa"; chấm bài đọc Word .docx; nạp
-bài bằng thư mục và .zip; khu học viên chia THEO LỚP + link Drive nộp bài.
+7 migration. Tab "Sản phẩm cuối khóa"; chấm bài đọc Word .docx; nạp bài bằng thư
+mục và .zip; khu học viên chia THEO LỚP + link Drive.
 
 **🔴 Bảo mật (33→37) — 4 lỗ, CÙNG MỘT GỐC "ràng buộc đặt sai tầng":** stored XSS
-ở link người dùng dán · vượt mọi giới hạn nhập liệu · **HV tự nâng role thành
-teacher** (chuỗi dẫn tới đặt lại mật khẩu HV bất kỳ) · **HV tự ghi danh vào lớp
-khác** rồi đọc sản phẩm + link Drive riêng. Cả 4 đều XANH mọi cổng kiểm tra lúc
-còn tồn tại — tìm ra bằng **probe giả lập kẻ tấn công gọi REST trực tiếp**, bỏ
-qua code app. Mỗi lỗ: probe kiểm chứng TRƯỚC khi sửa, đo dữ liệu thật TRƯỚC khi
-thêm constraint.
+· vượt mọi giới hạn nhập liệu · **HV tự nâng role thành teacher** (dẫn tới đặt
+lại mật khẩu HV bất kỳ) · **HV tự ghi danh vào lớp khác** rồi đọc dữ liệu riêng.
+Cả 4 đều XANH mọi cổng kiểm tra lúc còn tồn tại — tìm ra bằng **probe giả lập kẻ
+tấn công gọi REST trực tiếp**, bỏ qua code app.
 
-**Bài học:** 3 lần test tôi viết đỏ mà CODE ĐÚNG (kỳ vọng sai); 1 lần test **pass
-suông** vì nạn nhân chưa có dữ liệu gì để mất; phát hiện hạn mức Gemini thật là
-**20 lượt/ngày** (4 chỗ trong code ghi 1.500 — đừng chép số của bên thứ 3).
+**Bài học:** test viết đỏ mà CODE ĐÚNG (kỳ vọng sai) 3 lần; 1 test **pass suông**
+vì nạn nhân chưa có dữ liệu gì để mất; hạn mức Gemini thật là **20 lượt/ngày**
+(4 chỗ trong code ghi 1.500 — đừng chép số của bên thứ 3).
 
-> Phiên cũ hơn (Đợt 1→25, 2026-07-11 → 27): xem ROADMAP.md.
+> Phiên cũ hơn (Đợt 1→25): xem ROADMAP.md.
