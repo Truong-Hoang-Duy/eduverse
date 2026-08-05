@@ -29,7 +29,7 @@ import {
 } from "@/lib/academic-levels";
 import { generateAiReview, saveReview } from "@/lib/actions/reviews";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
-import { addReviewOption } from "@/lib/actions/settings";
+import { addReviewOption, deleteReviewOption } from "@/lib/actions/settings";
 import { SKILL_GROUPS } from "@/lib/skill-groups";
 import type { ActionResult } from "@/lib/types";
 
@@ -193,6 +193,15 @@ export function ReviewEditor({
     fd.set("label", label);
     fd.set("skill_group", skillGroup);
     addReviewOption({}, fd).catch(() => {});
+  }
+
+  // Xóa khỏi danh mục dùng chung (review_options) — KHÔNG đụng tới các lựa
+  // chọn đã tick sẵn trong review này (state `strengths`/`improvements`/
+  // `testProcessNotes` lưu theo NHÃN chữ, độc lập với id của danh mục).
+  function deleteCustomOption(id: string) {
+    const fd = new FormData();
+    fd.set("id", id);
+    deleteReviewOption(fd).catch(() => {});
   }
 
   function addCustomStrength(raw: string) {
@@ -393,6 +402,7 @@ export function ReviewEditor({
               selected={strengths}
               onChange={setStrengths}
               onCreate={addCustomStrength}
+              onDelete={deleteCustomOption}
               placeholder="Chọn hoặc gõ điểm mạnh..."
               emptyText={
                 strengthGroup === "all"
@@ -414,6 +424,7 @@ export function ReviewEditor({
               selected={improvements}
               onChange={setImprovements}
               onCreate={addCustomImprovement}
+              onDelete={deleteCustomOption}
               placeholder="Chọn hoặc gõ điểm cần cải thiện..."
               emptyText={
                 improvementGroup === "all"
@@ -469,6 +480,7 @@ export function ReviewEditor({
                 selected={testProcessNotes}
                 onChange={setTestProcessNotes}
                 onCreate={addCustomTestProcessNote}
+                onDelete={deleteCustomOption}
                 placeholder="Chọn hoặc gõ quan sát về bài kiểm tra..."
                 emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
               />
