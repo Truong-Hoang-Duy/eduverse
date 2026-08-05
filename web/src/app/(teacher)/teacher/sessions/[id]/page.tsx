@@ -28,6 +28,7 @@ interface SessionRow {
   session_number: number;
   title: string | null;
   content: string | null;
+  review_context: string | null;
   session_date: string | null;
   classes: { class_code: string } | null;
 }
@@ -65,7 +66,9 @@ export default async function SessionDetailPage({
 
   const { data: sessionData } = await supabase
     .from("sessions")
-    .select("id, class_id, session_number, title, content, session_date, classes(class_code)")
+    .select(
+      "id, class_id, session_number, title, content, review_context, session_date, classes(class_code)"
+    )
     .eq("id", id)
     .single();
 
@@ -90,7 +93,7 @@ export default async function SessionDetailPage({
     supabase
       .from("student_reviews")
       .select(
-        "student_id, strengths, improvements, advice, ai_generated_comment, academic_level, is_absent"
+        "student_id, strengths, improvements, ai_generated_comment, academic_level, is_absent"
       )
       .eq("session_id", session.id),
     supabase
@@ -215,6 +218,7 @@ export default async function SessionDetailPage({
               sessionId={session.id}
               sessionTitle={sessionTitle}
               sessionContent={session.content ?? ""}
+              sessionContext={session.review_context ?? ""}
               students={students}
               options={options}
               reviewByStudentId={reviewByStudentId}

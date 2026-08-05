@@ -439,3 +439,11 @@
   Cân nhắc đã chốt: `/health` để CÔNG KHAI (không đòi key) vì Render dùng làm
   healthCheckPath và GV cần mở thẳng trên trình duyệt; SHA của repo private không
   phải bí mật.
+- **"Lời khuyên" per-student → "Bối cảnh buổi học" cấp BUỔI** (2026-08-05,
+  migration `20260805000000`). Cột `student_reviews.advice` đã DROP hẳn (không
+  chỉ ngừng ghi) — GV không còn gõ lại bối cảnh cho từng em, thay bằng MỘT ô
+  `sessions.review_context` gõ 1 lần/buổi (VD: "hôm nay kiểm tra 15 phút"),
+  dùng chung khi AI viết nhận xét mọi học viên trong buổi. **Tách bạch với
+  `sessions.content`**: `content` = kiến thức đã dạy, CÓ đi vào tin Zalo gửi
+  phụ huynh; `review_context` = bối cảnh buổi, CHỈ AI đọc, KHÔNG hiện cho phụ
+  huynh — đừng gộp hai cột này lại dù nghe tương tự.

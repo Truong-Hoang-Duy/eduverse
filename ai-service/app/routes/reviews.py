@@ -24,7 +24,7 @@ def generate_review(body: GenerateReviewRequest) -> GenerateReviewResponse:
         session_content=body.session_content,
         strengths=body.strengths,
         improvements=body.improvements,
-        advice_hint=body.advice_hint,
+        session_context=body.session_context,
         previous_comment=body.previous_comment,
         prior_comments=body.prior_comments,
         academic_level=body.academic_level,
@@ -47,7 +47,6 @@ def generate_student_summary(body: StudentSummaryRequest) -> StudentSummaryRespo
         f"- Buổi {r.session_number} ({r.session_title or 'chưa có tiêu đề'}): "
         f"mạnh [{', '.join(r.strengths) or 'chưa ghi'}]; "
         f"cần cải thiện [{', '.join(r.improvements) or 'chưa ghi'}]"
-        + (f"; lời khuyên: {r.advice}" if r.advice else "")
         + (f"; nhận xét: {r.comment}" if r.comment else "")
         for r in body.reviews
     ) or "(chưa có nhận xét buổi nào)"

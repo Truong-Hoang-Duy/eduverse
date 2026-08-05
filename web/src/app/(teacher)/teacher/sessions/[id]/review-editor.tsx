@@ -86,6 +86,7 @@ export function ReviewEditor({
   sessionId,
   sessionTitle,
   sessionContent,
+  sessionContext,
   studentId,
   studentName,
   options,
@@ -97,6 +98,9 @@ export function ReviewEditor({
   sessionId: string;
   sessionTitle: string;
   sessionContent: string;
+  /** Bối cảnh buổi học GV gõ 1 lần (VD: hôm nay kiểm tra) — dùng chung cho
+   *  mọi học viên, chỉ để AI tham khảo khi viết nhận xét. */
+  sessionContext: string;
   studentId: string;
   studentName: string;
   options: ReviewOptionItem[];
@@ -116,7 +120,6 @@ export function ReviewEditor({
   const [improvements, setImprovements] = useState<string[]>(
     existing?.improvements ?? []
   );
-  const [advice, setAdvice] = useState(existing?.advice ?? "");
   const [comment, setComment] = useState(existing?.ai_generated_comment ?? "");
   const [academicLevel, setAcademicLevel] = useState(
     existing?.academic_level ?? ""
@@ -228,7 +231,7 @@ export function ReviewEditor({
         sessionContent,
         strengths,
         improvements,
-        adviceHint: advice || undefined,
+        sessionContext: sessionContext || undefined,
         previousComment: existing?.ai_generated_comment ?? undefined,
         priorComments,
         academicLevel: academicLevelLabel(academicLevel) ?? undefined,
@@ -436,18 +439,6 @@ export function ReviewEditor({
             AI dựa vào mức này để viết nhận xét vừa trình độ của em — không nêu
             thẳng xếp loại cho phụ huynh.
           </p>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor={`advice-${studentId}`}>Lời khuyên (tùy chọn)</Label>
-          <Textarea
-            id={`advice-${studentId}`}
-            name="advice"
-            rows={2}
-            value={advice}
-            onChange={(e) => setAdvice(e.target.value)}
-            placeholder="Gợi ý thêm cho AI hoặc lời khuyên riêng của bạn..."
-          />
         </div>
 
         <div className="space-y-1.5">

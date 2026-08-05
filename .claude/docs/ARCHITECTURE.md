@@ -84,6 +84,9 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
   mọi lớp. RLS: chính chủ toàn quyền; GV của lớp em học + **bạn cùng lớp** chỉ
   SELECT; ngoài lớp không thấy gì. Đặt bảng riêng vì `profiles` bị bạn cùng lớp đọc
   được — cùng lý do đã tách `user_secrets`.
+- **Đánh vắng:** tick là LƯU LUÔN (không đợi nút Lưu). `isHandled = đã nhận xét
+  HOẶC vắng` → em rời bộ lọc "Chưa hoàn thành" và bị loại khỏi tin Zalo. Lưu vắng
+  XÓA SẠCH nhận xét cũ của buổi đó.
 - **AI nhận xét:** GV tick điểm mạnh/cải thiện → Server Action gửi ngữ cảnh buổi học
   → ai-service `/generate-review` → GV sửa → lưu `student_reviews`.
 - **Hồ sơ HV xuyên khóa:** bấm tên HV trong lớp → timeline nhận xét gốc từng buổi
@@ -117,6 +120,10 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
   session THẬT nên RLS còn hiệu lực, không mock Supabase. Còn `scripts/e2e-*.mjs`
   gọi REST trần để **giả lập kẻ tấn công**, CỐ Ý bỏ qua code app — đừng chuyển
   chúng sang gọi action.
+  🔴 Cả hai loại đều **không phủ lớp React bọc quanh action**. Đợt 47 dính đúng
+  khe đó: thiếu `startTransition` khi gọi thẳng hàm của `useActionState` làm lỗi
+  đỏ hiện ngay khi bấm, trong khi 10/10 ca E2E vẫn xanh. **E2E xanh ≠ UI chạy
+  được** — thay đổi có đụng UI thì vẫn phải bấm thử.
 
 ## Điểm dễ nhầm (gotchas)
 

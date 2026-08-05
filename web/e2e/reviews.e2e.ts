@@ -47,7 +47,7 @@ function form(fields: Record<string, string | string[]>): FormData {
 async function reviewRow(): Promise<ExistingReview | null> {
   const { data } = await admin()
     .from("student_reviews")
-    .select("strengths, improvements, advice, ai_generated_comment, academic_level, is_absent")
+    .select("strengths, improvements, ai_generated_comment, academic_level, is_absent")
     .eq("session_id", sessionId)
     .eq("student_id", student.id)
     .maybeSingle();
@@ -119,7 +119,6 @@ describe("saveReview — nhận xét bình thường", () => {
           student_id: student.id,
           strengths: ["Tư duy tốt", "Chăm phát biểu"],
           improvements: ["Cần cẩn thận hơn"],
-          advice: "Nên luyện thêm vòng lặp",
           academic_level: "gioi",
           is_absent: "false",
         })
@@ -160,7 +159,6 @@ describe("saveReview — đánh vắng", () => {
 
     expect(row?.strengths).toEqual([]);
     expect(row?.improvements).toEqual([]);
-    expect(row?.advice).toBeNull();
     expect(row?.ai_generated_comment).toBeNull();
     expect(row?.academic_level).toBeNull();
   });
