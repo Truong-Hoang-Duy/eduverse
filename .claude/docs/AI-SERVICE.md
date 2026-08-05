@@ -23,11 +23,19 @@
 ## Endpoints
 
 ### POST /generate-review — nhận xét học viên theo buổi
-Input: `{student_name, session_title, session_content, strengths[], improvements[], session_context?, previous_comment?, prior_comments[], academic_level?}`
+Input: `{student_name, session_title, session_content, strengths[], improvements[], session_context?, is_periodic_test?, test_process_notes[], previous_comment?, prior_comments[], academic_level?}`
 `session_context` = bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay
 kiểm tra) — thay cho `advice_hint` per-student cũ (gỡ 2026-08-05).
+`is_periodic_test` = buổi có kiểm tra định kỳ (GV tự đánh dấu ở `SessionForm`,
+KHÔNG cứng theo số buổi — buổi 14 tùy lớp có thể là thuyết trình thay vì kiểm
+tra). Bật thì `comment` tách 2 phần gạch đầu dòng (quá trình học tập / kết quả
+kiểm tra) thay vì đoạn văn 3-5 câu. `test_process_notes[]` = quan sát của GV về
+quá trình làm bài (chọn từ danh mục `review_options` category `test_process`)
+— CHỈ dùng cho phần 2, KHÔNG lưu DB (chọn lại mỗi lần tạo nhận xét). Thêm
+2026-08-05.
 Output: `{comment: string}` — đoạn nhận xét tiếng Việt 3–5 câu, giọng khích lệ,
-nêu điểm mạnh trước, điểm cần cải thiện sau, chốt bằng lời khuyên cụ thể.
+nêu điểm mạnh trước, điểm cần cải thiện sau, chốt bằng lời khuyên cụ thể (buổi
+thường); tách 2 phần gạch đầu dòng khi `is_periodic_test`.
 `academic_level` là NHÃN tiếng Việt (Giỏi/Khá/Trung bình/Cần cố gắng) — CHỈ để
 AI chỉnh độ sâu/giọng cho vừa trình độ, prompt cấm nêu thẳng xếp loại cho phụ
 huynh (user chốt 2026-07-27). Web gửi nhãn qua `academicLevelLabel()`, không gửi

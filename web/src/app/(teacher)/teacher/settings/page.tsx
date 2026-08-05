@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ComboManager } from "./combo-manager";
 import { OptionManager } from "./option-manager";
 import { TemplateManager } from "./template-manager";
+import { TestProcessManager } from "./test-process-manager";
 
 export const metadata = { title: "Cài đặt — Eduverse" };
 
@@ -70,6 +71,15 @@ export default async function SettingsPage() {
         description="Các lựa chọn hiện ra khi nhận xét học viên trong từng buổi học"
       >
         <OptionManager options={options ?? []} />
+      </SettingsSection>
+
+      <SettingsSection
+        title="Quá trình làm bài kiểm tra"
+        description="Lựa chọn hiện ở buổi có đánh dấu &quot;kiểm tra định kỳ&quot; — cạnh ô xếp loại học lực"
+      >
+        <TestProcessManager
+          options={(options ?? []).filter((o) => o.category === "test_process")}
+        />
       </SettingsSection>
 
       <SettingsSection

@@ -158,6 +158,12 @@ export interface GenerateReviewInput {
   /** Bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay kiểm tra) — chỉ để
    *  AI tham khảo, không phải nội dung nhận xét. */
   sessionContext?: string;
+  /** Buổi có kiểm tra định kỳ — tách nhận xét AI thành 2 phần (học tập / kiểm
+   *  tra) thay vì viết chung một đoạn. */
+  isPeriodicTest?: boolean;
+  /** Quan sát của GV về quá trình làm bài kiểm tra của em — chỉ gửi khi
+   *  `isPeriodicTest`, KHÔNG lưu lại (chọn lại mỗi lần tạo nhận xét). */
+  testProcessNotes?: string[];
   previousComment?: string;
   /** Nhận xét (đã lưu) của các buổi TRƯỚC của cùng học viên — giúp AI đổi
    *  cách diễn đạt, tránh lặp lời văn giữa các buổi. */
@@ -189,6 +195,8 @@ export async function generateAiReview(
       strengths: input.strengths,
       improvements: input.improvements,
       session_context: input.sessionContext || null,
+      is_periodic_test: input.isPeriodicTest ?? false,
+      test_process_notes: input.testProcessNotes ?? [],
       previous_comment: input.previousComment || null,
       prior_comments: input.priorComments ?? [],
       academic_level: input.academicLevel || null,

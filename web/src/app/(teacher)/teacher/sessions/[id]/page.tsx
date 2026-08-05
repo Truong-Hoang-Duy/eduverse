@@ -29,6 +29,7 @@ interface SessionRow {
   title: string | null;
   content: string | null;
   review_context: string | null;
+  is_periodic_test: boolean;
   session_date: string | null;
   classes: { class_code: string } | null;
 }
@@ -67,7 +68,7 @@ export default async function SessionDetailPage({
   const { data: sessionData } = await supabase
     .from("sessions")
     .select(
-      "id, class_id, session_number, title, content, review_context, session_date, classes(class_code)"
+      "id, class_id, session_number, title, content, review_context, is_periodic_test, session_date, classes(class_code)"
     )
     .eq("id", id)
     .single();
@@ -219,6 +220,7 @@ export default async function SessionDetailPage({
               sessionTitle={sessionTitle}
               sessionContent={session.content ?? ""}
               sessionContext={session.review_context ?? ""}
+              isPeriodicTest={session.is_periodic_test}
               students={students}
               options={options}
               reviewByStudentId={reviewByStudentId}
