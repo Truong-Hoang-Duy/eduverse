@@ -2,6 +2,15 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -14,12 +23,19 @@ import {
  *
  *  `onCreate` (tùy chọn): cho gõ câu MỚI ngay trong ô tìm kiếm — không khớp
  *  mục nào thì hiện dòng "➕ Thêm ..." (hoặc nhấn Enter). Gọn hơn một ô nhập
- *  riêng nằm bên dưới (yêu cầu user 2026-07-27). */
+ *  riêng nằm bên dưới (yêu cầu user 2026-07-27).
+ *
+ *  `onDelete` (tùy chọn): thêm dấu ✕ trên từng mục để xóa khỏi DANH MỤC dùng
+ *  chung (khác dấu ✕ trên badge đã chọn — cái đó chỉ bỏ chọn). Hộp xác nhận
+ *  dựng NGOÀI `DropdownMenu` (không lồng `ConfirmDialog` vào bên trong) vì
+ *  Radix DropdownMenu tự đóng + unmount nội dung khi phát hiện tương tác ở
+ *  ngoài nó — lồng Dialog vào trong sẽ bị đóng theo trước khi kịp xác nhận. */
 export function MultiSelect({
   options,
   selected,
   onChange,
   onCreate,
+  onDelete,
   placeholder = "Chọn...",
   emptyText,
 }: {
@@ -27,10 +43,14 @@ export function MultiSelect({
   selected: string[];
   onChange: (next: string[]) => void;
   onCreate?: (label: string) => void;
+  onDelete?: (id: string) => void;
   placeholder?: string;
   emptyText?: string;
 }) {
   const [search, setSearch] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<
+    { id: string; label: string } | null
+  >(null);
   const query = search.trim();
   const filteredOptions = options.filter((opt) =>
     opt.label.toLowerCase().includes(query.toLowerCase())
@@ -120,7 +140,22 @@ export function MultiSelect({
                 onSelect={(e) => e.preventDefault()}
                 onCheckedChange={() => toggle(opt.label)}
               >
-                {opt.label}
+                <span className="min-w-0 flex-1 truncate">{opt.label}</span>
+                {onDelete && (
+                  <button
+                    type="button"
+                    aria-label={`Xóa "${opt.label}" khỏi danh mục`}
+                    // Không để việc bấm ✕ lan lên thành tick/bỏ tick mục.
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setPendingDelete({ id: opt.id, label: opt.label });
+                    }}
+                    className="ml-1 shrink-0 rounded-sm p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                  >
+                    ✕
+                  </button>
+                )}
               </DropdownMenuCheckboxItem>
             ))
           )}
@@ -155,6 +190,41 @@ export function MultiSelect({
           </button>
         </div>
       )}
+
+      {/* Dựng NGOÀI DropdownMenu, xem ghi chú `onDelete` ở đầu file. */}
+      <Dialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Xóa lựa chọn này?</DialogTitle>
+            <DialogDescription>
+              &quot;{pendingDelete?.label}&quot; sẽ không còn hiện trong danh
+              mục này nữa. Các lựa chọn đã tick trước đó không bị ảnh hưởng.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPendingDelete(null)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (pendingDelete) onDelete?.(pendingDelete.id);
+                setPendingDelete(null);
+              }}
+            >
+              Xóa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
