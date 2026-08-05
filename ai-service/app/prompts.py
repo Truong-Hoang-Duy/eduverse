@@ -44,12 +44,37 @@ def build_review_prompt(
     previous_comment: str | None,
     prior_comments: list[str] | None = None,
     academic_level: str | None = None,
+    is_periodic_test: bool = False,
+    test_process_notes: list[str] | None = None,
 ) -> str:
+    """`is_periodic_test`: buổi có kiểm tra định kỳ (GV tự đánh dấu — KHÔNG cứng
+    theo số buổi, vì buổi 14 tùy lớp có thể là thuyết trình thay vì kiểm tra;
+    yêu cầu user 2026-08-05). Khi bật: nhận xét TÁCH RÕ 2 phần, gạch đầu dòng,
+    KHÔNG viết chung một đoạn — khác hẳn nhận xét buổi thường (3-5 câu liền)."""
+    if is_periodic_test:
+        instruction = (
+            "Buổi này có KIỂM TRA ĐỊNH KỲ. Hãy viết nhận xét thành HAI PHẦN "
+            "TÁCH BIỆT RÕ RÀNG, mỗi phần có tiêu đề ngắn rồi tới các gạch đầu "
+            "dòng (3-5 ý mỗi phần) — TUYỆT ĐỐI KHÔNG viết chung thành một đoạn "
+            "văn:\n"
+            "1. Quá trình học tập: dựa vào điểm mạnh/điểm cần cải thiện giáo "
+            "viên đã chọn cho buổi này.\n"
+            "2. Kết quả kiểm tra định kỳ: dựa vào quan sát của giáo viên về "
+            "quá trình làm bài (nếu có) — nếu KHÔNG có quan sát nào thì chỉ "
+            "nhận xét ngắn gọn dựa trên những gì đã biết, đừng bịa thêm chi "
+            "tiết cụ thể (điểm số, số câu đúng...).\n"
+            "Mỗi gạch đầu dòng bắt đầu bằng ký tự '- '. Không tự thêm lời chào."
+        )
+    else:
+        instruction = (
+            "Hãy viết nhận xét 3-5 câu cho một học viên sau buổi học, theo thứ "
+            "tự: điểm mạnh trước, điểm cần cải thiện sau, chốt bằng một lời "
+            "khuyên cụ thể."
+        )
     parts = [
         SYSTEM_ROLE,
         TONE_RULE,
-        "Hãy viết nhận xét 3-5 câu cho một học viên sau buổi học, theo thứ tự: "
-        "điểm mạnh trước, điểm cần cải thiện sau, chốt bằng một lời khuyên cụ thể.",
+        instruction,
         f"Học viên: {student_name}",
         f"Buổi học: {session_title}",
     ]
@@ -74,6 +99,12 @@ def build_review_prompt(
         parts.append(
             f"Bối cảnh buổi học do giáo viên ghi (VD: có kiểm tra, ôn tập...), "
             f"dùng chung cho cả buổi: {session_context}"
+        )
+    if is_periodic_test and test_process_notes:
+        parts.append(
+            "Quan sát của giáo viên về quá trình làm bài kiểm tra của em: "
+            f"{', '.join(test_process_notes)} — dùng cho PHẦN 2 (kết quả kiểm "
+            "tra định kỳ)."
         )
     if previous_comment:
         parts.append(

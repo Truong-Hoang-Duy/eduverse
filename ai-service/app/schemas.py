@@ -22,6 +22,12 @@ class GenerateReviewRequest(AiRequest):
     # Bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay kiểm tra) — CHỈ để
     # AI tham khảo, không phải nội dung nhận xét.
     session_context: str | None = None
+    # Buổi có kiểm tra định kỳ — tách nhận xét thành 2 phần (học tập / kiểm
+    # tra) thay vì một đoạn văn. Xem prompts.py.
+    is_periodic_test: bool = False
+    # Quan sát của GV về quá trình làm bài kiểm tra — CHỈ dùng khi
+    # is_periodic_test, KHÔNG lưu ở DB (chọn lại mỗi lần tạo nhận xét).
+    test_process_notes: list[str] = []
     previous_comment: str | None = None
     prior_comments: list[str] = []
     # Nhãn tiếng Việt của mức xếp loại học lực (Giỏi/Khá/...) — CHỈ để điều

@@ -15,6 +15,7 @@ export async function updateSession(
   const title = String(formData.get("title") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
   const reviewContext = String(formData.get("review_context") ?? "").trim();
+  const isPeriodicTest = formData.get("is_periodic_test") === "true";
   const sessionDate = String(formData.get("session_date") ?? "").trim();
 
   if (!id) {
@@ -28,6 +29,7 @@ export async function updateSession(
       title: title || null,
       content: content || null,
       review_context: reviewContext || null,
+      is_periodic_test: isPeriodicTest,
       session_date: sessionDate || null,
     })
     .eq("id", id);

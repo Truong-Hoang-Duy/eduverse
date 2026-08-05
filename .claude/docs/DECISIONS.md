@@ -447,3 +447,16 @@
   `sessions.content`**: `content` = kiến thức đã dạy, CÓ đi vào tin Zalo gửi
   phụ huynh; `review_context` = bối cảnh buổi, CHỈ AI đọc, KHÔNG hiện cho phụ
   huynh — đừng gộp hai cột này lại dù nghe tương tự.
+- **Buổi kiểm tra định kỳ (5/9, đôi khi 14) = GV TỰ ĐÁNH DẤU, KHÔNG cứng theo
+  số buổi** (2026-08-05, migration `20260805010000`, cột `sessions.is_periodic_test`).
+  Lý do: buổi 14 tùy lớp có thể là thuyết trình/báo cáo sản phẩm THAY VÌ kiểm
+  tra — user chỉ rõ khi được hỏi có nên hardcode session_number hay không. Bật
+  cờ này thì `build_review_prompt` (ai-service) tách nhận xét AI thành 2 phần
+  gạch đầu dòng (quá trình học tập / kết quả kiểm tra) thay vì đoạn văn 3-5
+  câu thường lệ — xem AI-SERVICE.md.
+- **"Quá trình làm bài kiểm tra" (per-student, chỉ hiện khi `is_periodic_test`)
+  là multi-select mở rộng như điểm mạnh/cải thiện, NHƯNG KHÔNG lưu lựa chọn đã
+  tick vào DB** (chỉ dùng để feed prompt AI, mất khi tải lại trang) — khác với
+  bản thân DANH MỤC lựa chọn (`review_options` category `test_process`), cái
+  đó CÓ lưu/tái dùng được như strength/improvement. Đừng nhầm hai khái niệm:
+  danh mục persist, lựa chọn-cho-1-lần-nhận-xét thì không.

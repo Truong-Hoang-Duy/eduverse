@@ -400,6 +400,7 @@ export type Database = {
           class_id: string
           content: string | null
           id: string
+          is_periodic_test: boolean
           review_context: string | null
           session_date: string | null
           session_number: number
@@ -409,6 +410,7 @@ export type Database = {
           class_id: string
           content?: string | null
           id?: string
+          is_periodic_test?: boolean
           review_context?: string | null
           session_date?: string | null
           session_number: number
@@ -418,6 +420,7 @@ export type Database = {
           class_id?: string
           content?: string | null
           id?: string
+          is_periodic_test?: boolean
           review_context?: string | null
           session_date?: string | null
           session_number?: number

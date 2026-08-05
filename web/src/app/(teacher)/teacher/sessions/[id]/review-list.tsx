@@ -42,6 +42,7 @@ export function ReviewList({
   sessionTitle,
   sessionContent,
   sessionContext,
+  isPeriodicTest,
   students,
   options,
   reviewByStudentId,
@@ -55,6 +56,9 @@ export function ReviewList({
   /** Bối cảnh buổi học GV gõ 1 lần (VD: hôm nay kiểm tra) — chỉ để AI tham
    *  khảo khi viết nhận xét, dùng chung cho mọi học viên trong buổi. */
   sessionContext: string;
+  /** Buổi có kiểm tra định kỳ — bật thì nhận xét AI tách 2 phần (học tập /
+   *  kiểm tra) và hiện thêm ô chọn "quá trình làm bài" cạnh xếp loại. */
+  isPeriodicTest: boolean;
   students: StudentForReview[];
   options: ReviewOptionItem[];
   reviewByStudentId: Map<string, ExistingReview>;
@@ -143,6 +147,7 @@ export function ReviewList({
             sessionTitle={sessionTitle}
             sessionContent={sessionContent}
             sessionContext={sessionContext}
+            isPeriodicTest={isPeriodicTest}
             studentId={student.id}
             studentName={student.full_name}
             options={options}
