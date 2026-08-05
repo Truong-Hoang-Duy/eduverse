@@ -41,6 +41,7 @@ export function ReviewList({
   sessionId,
   sessionTitle,
   sessionContent,
+  sessionContext,
   students,
   options,
   reviewByStudentId,
@@ -51,6 +52,9 @@ export function ReviewList({
   sessionId: string;
   sessionTitle: string;
   sessionContent: string;
+  /** Bối cảnh buổi học GV gõ 1 lần (VD: hôm nay kiểm tra) — chỉ để AI tham
+   *  khảo khi viết nhận xét, dùng chung cho mọi học viên trong buổi. */
+  sessionContext: string;
   students: StudentForReview[];
   options: ReviewOptionItem[];
   reviewByStudentId: Map<string, ExistingReview>;
@@ -138,6 +142,7 @@ export function ReviewList({
             sessionId={sessionId}
             sessionTitle={sessionTitle}
             sessionContent={sessionContent}
+            sessionContext={sessionContext}
             studentId={student.id}
             studentName={student.full_name}
             options={options}

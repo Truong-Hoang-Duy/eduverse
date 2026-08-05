@@ -6,7 +6,6 @@
 export interface ExistingReview {
   strengths: string[];
   improvements: string[];
-  advice: string | null;
   ai_generated_comment: string | null;
   academic_level: string | null;
   is_absent: boolean;

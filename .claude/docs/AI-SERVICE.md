@@ -23,7 +23,9 @@
 ## Endpoints
 
 ### POST /generate-review — nhận xét học viên theo buổi
-Input: `{student_name, session_title, session_content, strengths[], improvements[], advice_hint?, previous_comment?, prior_comments[], academic_level?}`
+Input: `{student_name, session_title, session_content, strengths[], improvements[], session_context?, previous_comment?, prior_comments[], academic_level?}`
+`session_context` = bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay
+kiểm tra) — thay cho `advice_hint` per-student cũ (gỡ 2026-08-05).
 Output: `{comment: string}` — đoạn nhận xét tiếng Việt 3–5 câu, giọng khích lệ,
 nêu điểm mạnh trước, điểm cần cải thiện sau, chốt bằng lời khuyên cụ thể.
 `academic_level` là NHÃN tiếng Việt (Giỏi/Khá/Trung bình/Cần cố gắng) — CHỈ để
@@ -39,7 +41,7 @@ Zalo. `{tom_tat}` có cấu trúc 2 phần cố định — xem AI-SERVICE.md ph
 tắc prompt" bên dưới.
 
 ### POST /generate-student-summary — nhận xét TỔNG HỢP 1 học viên
-Input: `{student_name, class_code, course_name, reviews: [{session_number, session_title, strengths[], improvements[], advice?, comment?}]}`
+Input: `{student_name, class_code, course_name, reviews: [{session_number, session_title, strengths[], improvements[], comment?}]}`
 — toàn bộ nhận xét các buổi đã học của em đó trong lớp.
 Output: `{qua_trinh_hoc, diem_manh, diem_yeu, dinh_huong, kho_khan}` — 5 mục,
 mỗi mục 2-4 câu; UI ghép thành văn bản copy gửi riêng phụ huynh.

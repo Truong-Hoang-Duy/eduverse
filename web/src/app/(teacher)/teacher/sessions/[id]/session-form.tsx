@@ -17,6 +17,7 @@ export interface SessionData {
   session_number: number;
   title: string | null;
   content: string | null;
+  review_context: string | null;
   session_date: string | null;
 }
 
@@ -26,6 +27,9 @@ export function SessionForm({ session }: { session: SessionData }) {
     {}
   );
   const [content, setContent] = useState(session.content ?? "");
+  const [reviewContext, setReviewContext] = useState(
+    session.review_context ?? ""
+  );
 
   return (
     <form action={formAction} className="space-y-3">
@@ -66,6 +70,21 @@ export function SessionForm({ session }: { session: SessionData }) {
         <p className="text-xs text-muted-foreground">
           Nội dung này là ngữ cảnh để AI viết nhận xét học viên và tin Zalo — càng
           cụ thể nhận xét càng hay.
+        </p>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="review_context">Bối cảnh buổi học (tùy chọn)</Label>
+        <Textarea
+          id="review_context"
+          name="review_context"
+          rows={2}
+          value={reviewContext}
+          onChange={(e) => setReviewContext(e.target.value)}
+          placeholder="VD: Buổi này có bài kiểm tra 15 phút đầu giờ, các em còn lại ôn tập vòng lặp..."
+        />
+        <p className="text-xs text-muted-foreground">
+          Mô tả bối cảnh lớp học/việc học viên sẽ làm buổi này — CHỈ để AI tham
+          khảo khi viết nhận xét từng em bên dưới, không hiện cho phụ huynh.
         </p>
       </div>
       <div className="flex items-center gap-3">

@@ -13,7 +13,6 @@ import { isHandled, isReviewed, type ExistingReview } from "./review-status";
 const base: ExistingReview = {
   strengths: [],
   improvements: [],
-  advice: null,
   ai_generated_comment: null,
   academic_level: null,
   is_absent: false,
@@ -34,9 +33,8 @@ describe("isReviewed", () => {
     expect(isReviewed({ ...base, ai_generated_comment: "Em tiến bộ." })).toBe(true);
   });
 
-  it("should NOT count advice or level alone as reviewed", () => {
-    // Lời khuyên/xếp loại chỉ là ngữ cảnh cho AI — chưa phải nhận xét gửi phụ huynh.
-    expect(isReviewed({ ...base, advice: "Nên luyện thêm vòng lặp" })).toBe(false);
+  it("should NOT count level alone as reviewed", () => {
+    // Xếp loại chỉ là ngữ cảnh cho AI — chưa phải nhận xét gửi phụ huynh.
     expect(isReviewed({ ...base, academic_level: "gioi" })).toBe(false);
   });
 
