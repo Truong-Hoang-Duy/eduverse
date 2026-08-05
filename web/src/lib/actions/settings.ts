@@ -6,7 +6,7 @@ import { SKILL_GROUPS, type SkillGroup } from "@/lib/skill-groups";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
-const VALID_CATEGORIES = ["strength", "improvement"] as const;
+const VALID_CATEGORIES = ["strength", "improvement", "test_process"] as const;
 
 function asSkillGroup(value: string): SkillGroup {
   return SKILL_GROUPS.some((g) => g.value === value)
@@ -313,6 +313,45 @@ const DEFAULT_IMPROVEMENTS: [string, SkillGroup][] = [
   ["Cần luyện cách trình bày mạch lạc, có trình tự", "presentation"],
   ["Nên luyện tập trước gương để tự tin hơn", "presentation"],
 ];
+
+// Danh mục "quá trình làm bài" cho buổi có kiểm tra định kỳ (thêm 2026-08-05)
+// — KHÔNG theo skill_group (mọi dòng để "other"), vì đây không phải một kỹ
+// năng mà là quan sát về cách em làm bài kiểm tra hôm đó.
+const DEFAULT_TEST_PROCESS: string[] = [
+  "Làm bài nghiêm túc, tập trung",
+  "Hoàn thành đúng trong thời gian quy định",
+  "Làm bài cẩn thận, ít tẩy xóa/sửa lại",
+  "Đọc kỹ đề trước khi làm",
+  "Hoàn thành sớm, còn dư nhiều thời gian",
+  "Tự tin, bình tĩnh khi làm bài",
+  "Làm chưa hết giờ đã nộp",
+  "Cần nhắc nhở tập trung trong lúc làm bài",
+  "Trao đổi bài với bạn trong lúc kiểm tra",
+  "Còn bỏ dở một số câu chưa làm",
+  "Căng thẳng, hồi hộp khi làm bài",
+  "Xin làm bù/bổ sung sau khi hết giờ",
+];
+
+/** Thêm nhanh bộ lựa chọn "quá trình làm bài kiểm tra" mặc định. Tách riêng
+ *  khỏi `seedDefaultOptions` (strength/improvement) vì giáo viên cũ đã seed
+ *  2 danh mục kia rồi thì nút đó không hiện lại nữa — category này cần nút
+ *  riêng, gate theo chính nó rỗng hay không. */
+export async function seedDefaultTestProcessOptions(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const rows = DEFAULT_TEST_PROCESS.map((label) => ({
+    teacher_id: user.id,
+    category: "test_process",
+    label,
+    skill_group: "other",
+  }));
+  await supabase.from("review_options").insert(rows);
+  revalidatePath("/teacher/settings");
+}
 
 /** Thêm nhanh bộ lựa chọn mặc định cho giáo viên mới. */
 export async function seedDefaultOptions(): Promise<void> {

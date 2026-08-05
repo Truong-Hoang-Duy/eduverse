@@ -18,6 +18,7 @@ export interface SessionData {
   title: string | null;
   content: string | null;
   review_context: string | null;
+  is_periodic_test: boolean;
   session_date: string | null;
 }
 
@@ -29,6 +30,9 @@ export function SessionForm({ session }: { session: SessionData }) {
   const [content, setContent] = useState(session.content ?? "");
   const [reviewContext, setReviewContext] = useState(
     session.review_context ?? ""
+  );
+  const [isPeriodicTest, setIsPeriodicTest] = useState(
+    session.is_periodic_test
   );
 
   return (
@@ -85,6 +89,24 @@ export function SessionForm({ session }: { session: SessionData }) {
         <p className="text-xs text-muted-foreground">
           Mô tả bối cảnh lớp học/việc học viên sẽ làm buổi này — CHỈ để AI tham
           khảo khi viết nhận xét từng em bên dưới, không hiện cho phụ huynh.
+        </p>
+      </div>
+      <div className="space-y-1.5">
+        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            name="is_periodic_test"
+            value="true"
+            checked={isPeriodicTest}
+            onChange={(e) => setIsPeriodicTest(e.target.checked)}
+            className="size-4"
+          />
+          📝 Buổi này có kiểm tra định kỳ
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Bật lên thì khi bấm &quot;AI tạo nhận xét&quot; cho từng em, nhận xét
+          sẽ tách rõ 2 phần — quá trình học tập / kết quả kiểm tra — thay vì
+          viết chung một đoạn.
         </p>
       </div>
       <div className="flex items-center gap-3">

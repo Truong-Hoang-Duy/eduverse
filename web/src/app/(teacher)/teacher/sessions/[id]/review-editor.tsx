@@ -87,6 +87,7 @@ export function ReviewEditor({
   sessionTitle,
   sessionContent,
   sessionContext,
+  isPeriodicTest,
   studentId,
   studentName,
   options,
@@ -101,6 +102,9 @@ export function ReviewEditor({
   /** Bối cảnh buổi học GV gõ 1 lần (VD: hôm nay kiểm tra) — dùng chung cho
    *  mọi học viên, chỉ để AI tham khảo khi viết nhận xét. */
   sessionContext: string;
+  /** Buổi có kiểm tra định kỳ — bật ô "quá trình làm bài" + tách nhận xét AI
+   *  thành 2 phần (học tập / kiểm tra). */
+  isPeriodicTest: boolean;
   studentId: string;
   studentName: string;
   options: ReviewOptionItem[];
@@ -125,6 +129,9 @@ export function ReviewEditor({
     existing?.academic_level ?? ""
   );
   const [isAbsent, setIsAbsent] = useState(existing?.is_absent ?? false);
+  // KHÔNG lưu vào student_reviews (user chốt 2026-08-05) — chỉ dùng ngay khi
+  // bấm "AI tạo nhận xét", mất khi tải lại trang, giống session_context cũ.
+  const [testProcessNotes, setTestProcessNotes] = useState<string[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
   const [aiError, setAiError] = useState("");
   const [aiPending, startAi] = useTransition();
@@ -173,7 +180,7 @@ export function ReviewEditor({
   // danh mục dùng chung (review_options) để lần sau chọn lại được. Không còn ô
   // nhập riêng bên dưới (user 2026-07-27 thấy để dưới khó nhìn).
   function persistCustomOption(
-    category: "strength" | "improvement",
+    category: "strength" | "improvement" | "test_process",
     label: string,
     skillGroup: string
   ) {
@@ -220,6 +227,16 @@ export function ReviewEditor({
       o.category === "improvement" &&
       (improvementGroup === "all" || o.skill_group === improvementGroup)
   );
+  const testProcessOptions = options.filter((o) => o.category === "test_process");
+
+  function addCustomTestProcessNote(raw: string) {
+    const value = raw.trim();
+    if (!value) return;
+    setTestProcessNotes((prev) =>
+      prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
+    );
+    persistCustomOption("test_process", value, "other");
+  }
 
   function handleGenerate() {
     setAiError("");
@@ -232,6 +249,8 @@ export function ReviewEditor({
         strengths,
         improvements,
         sessionContext: sessionContext || undefined,
+        isPeriodicTest,
+        testProcessNotes: isPeriodicTest ? testProcessNotes : undefined,
         previousComment: existing?.ai_generated_comment ?? undefined,
         priorComments,
         academicLevel: academicLevelLabel(academicLevel) ?? undefined,
@@ -409,36 +428,56 @@ export function ReviewEditor({
           xét, vừa lưu vào danh mục (nhóm đang lọc, hoặc &quot;Khác&quot;).
         </p>
 
-        <div className="space-y-1.5">
-          <Label htmlFor={`level-${studentId}`}>
-            Xếp loại học lực (tùy chọn)
-          </Label>
-          <Select
-            value={academicLevel}
-            onValueChange={(v) =>
-              setAcademicLevel(v === "none" ? "" : v)
-            }
-          >
-            <SelectTrigger
-              id={`level-${studentId}`}
-              size="sm"
-              className="w-[200px]"
+        <div className={isPeriodicTest ? "grid gap-4 sm:grid-cols-2" : undefined}>
+          <div className="space-y-1.5">
+            <Label htmlFor={`level-${studentId}`}>
+              Xếp loại học lực (tùy chọn)
+            </Label>
+            <Select
+              value={academicLevel}
+              onValueChange={(v) =>
+                setAcademicLevel(v === "none" ? "" : v)
+              }
             >
-              <SelectValue placeholder="Chưa chọn" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Chưa chọn</SelectItem>
-              {ACADEMIC_LEVELS.map((l) => (
-                <SelectItem key={l.value} value={l.value}>
-                  {l.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            AI dựa vào mức này để viết nhận xét vừa trình độ của em — không nêu
-            thẳng xếp loại cho phụ huynh.
-          </p>
+              <SelectTrigger
+                id={`level-${studentId}`}
+                size="sm"
+                className="w-[200px]"
+              >
+                <SelectValue placeholder="Chưa chọn" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Chưa chọn</SelectItem>
+                {ACADEMIC_LEVELS.map((l) => (
+                  <SelectItem key={l.value} value={l.value}>
+                    {l.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              AI dựa vào mức này để viết nhận xét vừa trình độ của em — không
+              nêu thẳng xếp loại cho phụ huynh.
+            </p>
+          </div>
+
+          {isPeriodicTest && (
+            <div className="space-y-1.5">
+              <Label>📝 Quá trình làm bài kiểm tra</Label>
+              <MultiSelect
+                options={testProcessOptions}
+                selected={testProcessNotes}
+                onChange={setTestProcessNotes}
+                onCreate={addCustomTestProcessNote}
+                placeholder="Chọn hoặc gõ quan sát về bài kiểm tra..."
+                emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+              />
+              <p className="text-xs text-muted-foreground">
+                Chỉ để AI tham khảo khi viết phần &quot;kết quả kiểm tra định
+                kỳ&quot; — không lưu lại, gõ lại nếu tải lại trang.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-1.5">
