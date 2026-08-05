@@ -21,7 +21,6 @@ interface ReviewRow {
   session_id: string;
   strengths: string[];
   improvements: string[];
-  advice: string | null;
   ai_generated_comment: string | null;
   sessions: {
     session_number: number;
@@ -67,7 +66,7 @@ export default async function StudentProfilePage({
     supabase
       .from("student_reviews")
       .select(
-        "session_id, strengths, improvements, advice, ai_generated_comment, sessions!inner(session_number, title, session_date, class_id)"
+        "session_id, strengths, improvements, ai_generated_comment, sessions!inner(session_number, title, session_date, class_id)"
       )
       .eq("student_id", studentId)
       .eq("sessions.class_id", id),
@@ -163,7 +162,7 @@ export default async function StudentProfilePage({
             🗒️ Nhận xét từng buổi ({reviews.length})
           </CardTitle>
           <CardDescription>
-            Điểm mạnh, điểm cần cải thiện và lời khuyên đã ghi cho từng buổi.
+            Điểm mạnh, điểm cần cải thiện đã ghi cho từng buổi.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -219,13 +218,6 @@ export default async function StudentProfilePage({
                         </span>
                       ))}
                     </div>
-                  )}
-
-                  {r.advice && (
-                    <p className="mt-2 text-sm">
-                      <span className="font-medium">Lời khuyên: </span>
-                      <span className="text-muted-foreground">{r.advice}</span>
-                    </p>
                   )}
 
                   {r.ai_generated_comment && (

@@ -30,14 +30,13 @@ export async function saveReview(
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
-  // Vắng mặt = không nhận xét: xóa sạch điểm mạnh/cải thiện/lời khuyên/mức xếp
-  // loại để dữ liệu buổi trước (nếu đổi từ có mặt sang vắng) không dính lại và
-  // không lọt vào tin Zalo tổng hợp.
+  // Vắng mặt = không nhận xét: xóa sạch điểm mạnh/cải thiện/mức xếp loại để dữ
+  // liệu buổi trước (nếu đổi từ có mặt sang vắng) không dính lại và không lọt
+  // vào tin Zalo tổng hợp.
   const strengths = isAbsent ? [] : formData.getAll("strengths").map(String);
   const improvements = isAbsent
     ? []
     : formData.getAll("improvements").map(String);
-  const advice = isAbsent ? "" : String(formData.get("advice") ?? "").trim();
   const aiComment = isAbsent
     ? ""
     : String(formData.get("ai_comment") ?? "").trim();
@@ -48,7 +47,6 @@ export async function saveReview(
       student_id: studentId,
       strengths,
       improvements,
-      advice: advice || null,
       ai_generated_comment: aiComment || null,
       academic_level: isAbsent ? null : academicLevel,
       is_absent: isAbsent,
@@ -75,7 +73,6 @@ export interface StudentSummary {
 interface SummaryReviewRow {
   strengths: string[];
   improvements: string[];
-  advice: string | null;
   ai_generated_comment: string | null;
   sessions: { session_number: number; title: string | null } | null;
 }
@@ -108,7 +105,7 @@ export async function generateStudentSummary(input: {
       supabase
         .from("student_reviews")
         .select(
-          "strengths, improvements, advice, ai_generated_comment, sessions!inner(session_number, title, class_id)"
+          "strengths, improvements, ai_generated_comment, sessions!inner(session_number, title, class_id)"
         )
         .eq("student_id", input.studentId)
         .eq("sessions.class_id", input.classId),
@@ -138,7 +135,6 @@ export async function generateStudentSummary(input: {
             session_title: r.sessions?.title ?? "",
             strengths: r.strengths,
             improvements: r.improvements,
-            advice: r.advice,
             comment: r.ai_generated_comment,
           }))
           .sort((a, b) => a.session_number - b.session_number),
@@ -159,7 +155,9 @@ export interface GenerateReviewInput {
   sessionContent: string;
   strengths: string[];
   improvements: string[];
-  adviceHint?: string;
+  /** Bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay kiểm tra) — chỉ để
+   *  AI tham khảo, không phải nội dung nhận xét. */
+  sessionContext?: string;
   previousComment?: string;
   /** Nhận xét (đã lưu) của các buổi TRƯỚC của cùng học viên — giúp AI đổi
    *  cách diễn đạt, tránh lặp lời văn giữa các buổi. */
@@ -190,7 +188,7 @@ export async function generateAiReview(
       session_content: input.sessionContent,
       strengths: input.strengths,
       improvements: input.improvements,
-      advice_hint: input.adviceHint || null,
+      session_context: input.sessionContext || null,
       previous_comment: input.previousComment || null,
       prior_comments: input.priorComments ?? [],
       academic_level: input.academicLevel || null,

@@ -19,7 +19,9 @@ class GenerateReviewRequest(AiRequest):
     session_content: str = ""
     strengths: list[str] = []
     improvements: list[str] = []
-    advice_hint: str | None = None
+    # Bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay kiểm tra) — CHỈ để
+    # AI tham khảo, không phải nội dung nhận xét.
+    session_context: str | None = None
     previous_comment: str | None = None
     prior_comments: list[str] = []
     # Nhãn tiếng Việt của mức xếp loại học lực (Giỏi/Khá/...) — CHỈ để điều
@@ -58,7 +60,6 @@ class SessionReviewItem(BaseModel):
     session_title: str = ""
     strengths: list[str] = []
     improvements: list[str] = []
-    advice: str | None = None
     comment: str | None = None
 
 

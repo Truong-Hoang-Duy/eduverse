@@ -400,6 +400,7 @@ export type Database = {
           class_id: string
           content: string | null
           id: string
+          review_context: string | null
           session_date: string | null
           session_number: number
           title: string | null
@@ -408,6 +409,7 @@ export type Database = {
           class_id: string
           content?: string | null
           id?: string
+          review_context?: string | null
           session_date?: string | null
           session_number: number
           title?: string | null
@@ -416,6 +418,7 @@ export type Database = {
           class_id?: string
           content?: string | null
           id?: string
+          review_context?: string | null
           session_date?: string | null
           session_number?: number
           title?: string | null
@@ -433,7 +436,6 @@ export type Database = {
       student_reviews: {
         Row: {
           academic_level: string | null
-          advice: string | null
           ai_generated_comment: string | null
           created_at: string
           created_by: string
@@ -446,7 +448,6 @@ export type Database = {
         }
         Insert: {
           academic_level?: string | null
-          advice?: string | null
           ai_generated_comment?: string | null
           created_at?: string
           created_by: string
@@ -459,7 +460,6 @@ export type Database = {
         }
         Update: {
           academic_level?: string | null
-          advice?: string | null
           ai_generated_comment?: string | null
           created_at?: string
           created_by?: string

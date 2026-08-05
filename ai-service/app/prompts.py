@@ -40,7 +40,7 @@ def build_review_prompt(
     session_content: str,
     strengths: list[str],
     improvements: list[str],
-    advice_hint: str | None,
+    session_context: str | None,
     previous_comment: str | None,
     prior_comments: list[str] | None = None,
     academic_level: str | None = None,
@@ -70,8 +70,11 @@ def build_review_prompt(
         parts.append(f"Điểm mạnh giáo viên đã chọn: {', '.join(strengths)}")
     if improvements:
         parts.append(f"Điểm cần cải thiện đã chọn: {', '.join(improvements)}")
-    if advice_hint:
-        parts.append(f"Gợi ý lời khuyên từ giáo viên: {advice_hint}")
+    if session_context:
+        parts.append(
+            f"Bối cảnh buổi học do giáo viên ghi (VD: có kiểm tra, ôn tập...), "
+            f"dùng chung cho cả buổi: {session_context}"
+        )
     if previous_comment:
         parts.append(
             f"Bản nháp bạn đã viết trước đó cho ĐÚNG buổi này (giáo viên bấm tạo "
