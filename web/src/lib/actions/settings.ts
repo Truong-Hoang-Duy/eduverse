@@ -47,6 +47,10 @@ export async function addReviewOption(
   }
 
   revalidatePath("/teacher/settings");
+  // Danh mục cũng hiện trong ô chọn nhận xét theo buổi (review-editor) — mục
+  // vừa thêm ở đó không cần refresh (đã tự chọn sẵn), nhưng GIỮ đồng bộ với
+  // deleteReviewOption bên dưới cho nhất quán.
+  revalidatePath("/teacher/sessions/[id]", "page");
   return { success: "Đã thêm." };
 }
 
@@ -57,6 +61,10 @@ export async function deleteReviewOption(formData: FormData): Promise<void> {
   const supabase = await createClient();
   await supabase.from("review_options").delete().eq("id", id);
   revalidatePath("/teacher/settings");
+  // Xóa được gọi cả từ ô chọn trong trang buổi học (MultiSelect onDelete) —
+  // không revalidate thì mục vừa xóa vẫn hiện trong danh sách cho tới khi
+  // tải lại trang thủ công.
+  revalidatePath("/teacher/sessions/[id]", "page");
 }
 
 // Bộ mặc định: 6+6 (GĐ2) → 15+13 (Đợt 15) → 33+26 (Đợt 16: +6 nhóm) →
