@@ -460,3 +460,18 @@
   bản thân DANH MỤC lựa chọn (`review_options` category `test_process`), cái
   đó CÓ lưu/tái dùng được như strength/improvement. Đừng nhầm hai khái niệm:
   danh mục persist, lựa chọn-cho-1-lần-nhận-xét thì không.
+- **Xóa mục khỏi danh mục (`review_options`) NGAY TRONG `MultiSelect`** (thêm
+  dấu ✕ trên từng mục, 2026-08-05) — trước đó chỉ xóa được ở trang Cài đặt.
+  Hộp xác nhận dựng NGOÀI `DropdownMenu` (sibling, không phải con) vì Radix tự
+  đóng + unmount nội dung dropdown khi phát hiện tương tác ở ngoài nó — lồng
+  `ConfirmDialog` (vốn tự quản `open` qua `DialogTrigger`) vào bên trong sẽ bị
+  đóng theo trước khi kịp bấm Xác nhận. Xem ghi chú đầu file `multi-select.tsx`.
+  `addReviewOption`/`deleteReviewOption` revalidate CẢ `/teacher/sessions/[id]`
+  (dạng "page" — mọi id) chứ không chỉ `/teacher/settings`, vì giờ được gọi từ
+  cả trang buổi học.
+- **Thẻ nhận xét từng HV gọn lại: combo/copy nhanh + xếp loại học lực + quá
+  trình làm bài kiểm tra gộp vào 1 accordion phụ "⚙️ Tùy chọn thêm"** (thêm
+  2026-08-05, user chọn hướng này thay vì chỉ siết spacing hoặc gộp cột). Mặc
+  định ĐÓNG, trừ khi đã có `academic_level` từ trước thì mở sẵn (để GV không
+  mất dấu thứ đã chọn). Phần chính (điểm mạnh/cải thiện + nhận xét AI) LUÔN
+  hiện, không gộp vào accordion.
