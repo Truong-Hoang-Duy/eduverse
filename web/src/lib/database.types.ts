@@ -336,6 +336,7 @@ export type Database = {
           name: string
           strengths: string[]
           teacher_id: string
+          type: string
         }
         Insert: {
           created_at?: string
@@ -344,6 +345,7 @@ export type Database = {
           name: string
           strengths?: string[]
           teacher_id: string
+          type: string
         }
         Update: {
           created_at?: string
@@ -352,6 +354,7 @@ export type Database = {
           name?: string
           strengths?: string[]
           teacher_id?: string
+          type?: string
         }
         Relationships: [
           {
