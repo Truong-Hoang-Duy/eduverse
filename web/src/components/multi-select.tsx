@@ -96,7 +96,11 @@ export function MultiSelect({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="start"
-          className="max-h-72 w-(--radix-dropdown-menu-trigger-width) overflow-y-auto"
+          // KHÔNG khớp width theo trigger (--radix-dropdown-menu-trigger-width)
+          // nữa: từ khi 3 ô chung 1 dòng, trigger hẹp lại làm nhãn dài bị cắt
+          // (user phản ánh 2026-08-05). min-w cố định + wrap chữ ở item bên
+          // dưới thay vì cắt "...".
+          className="max-h-72 w-max min-w-(--radix-dropdown-menu-trigger-width) max-w-[min(24rem,90vw)] overflow-y-auto"
         >
           <div className="p-1 pb-0">
             <Input
@@ -140,7 +144,9 @@ export function MultiSelect({
                 onSelect={(e) => e.preventDefault()}
                 onCheckedChange={() => toggle(opt.label)}
               >
-                <span className="min-w-0 flex-1 truncate">{opt.label}</span>
+                <span className="min-w-0 flex-1 break-words whitespace-normal">
+                  {opt.label}
+                </span>
                 {onDelete && (
                   <button
                     type="button"
