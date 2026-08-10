@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getMyApiKey } from "@/lib/actions/api-key";
+import { applyReviewsFromSession } from "@/lib/actions/reviews";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
@@ -17,6 +18,10 @@ export async function updateSession(
   const reviewContext = String(formData.get("review_context") ?? "").trim();
   const isPeriodicTest = formData.get("is_periodic_test") === "true";
   const sessionDate = String(formData.get("session_date") ?? "").trim();
+  // Rỗng = GV không chọn áp nhận xét từ buổi nào (mặc định).
+  const copyFromSessionId = String(
+    formData.get("copy_from_session_id") ?? ""
+  ).trim();
 
   if (!id) {
     return { error: "Thiếu thông tin buổi học." };
@@ -38,6 +43,32 @@ export async function updateSession(
   }
 
   revalidatePath(`/teacher/sessions/${id}`);
+
+  // GV chọn "áp nhận xét giống buổi..." thì nút Lưu làm luôn cả việc đó (user
+  // chốt 2026-08-06: một nút, không tách ra). Nội dung buổi ĐÃ lưu ở trên rồi
+  // nên phần này hỏng cũng không kéo theo — chỉ báo lỗi riêng.
+  if (copyFromSessionId) {
+    const result = await applyReviewsFromSession({
+      sessionId: id,
+      sourceSessionId: copyFromSessionId,
+    });
+    if (result.error) {
+      return { error: `Đã lưu nội dung, nhưng không áp được nhận xét: ${result.error}` };
+    }
+    const parts = [
+      `Đã lưu nội dung và áp nhận xét cho ${result.applied} em`,
+      `AI viết được ${result.generated} em`,
+    ];
+    if (result.aiFailed > 0) {
+      // Gần như luôn là hết lượt Gemini (20 lượt/NGÀY, tính theo Google Cloud
+      // project) — nói rõ việc cần làm thay vì để GV tưởng hỏng.
+      parts.push(
+        `${result.aiFailed} em chưa có nhận xét (thường do hết lượt Gemini) — đổi key ở trang Hồ sơ rồi bấm "AI tạo nhận xét" ở từng em`
+      );
+    }
+    return { success: `${parts.join(". ")}.` };
+  }
+
   return { success: "Đã lưu nội dung buổi học." };
 }
 

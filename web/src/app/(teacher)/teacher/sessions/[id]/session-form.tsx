@@ -1,11 +1,18 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { updateSession } from "@/lib/actions/sessions";
 import type { ActionResult } from "@/lib/types";
@@ -34,7 +41,21 @@ export interface SessionData {
   session_date: string | null;
 }
 
-export function SessionForm({ session }: { session: SessionData }) {
+/** Một buổi TRƯỚC có thể áp tích chọn sang cả lớp (chỉ buổi đã nhận xét). */
+export interface CopyFromSession {
+  id: string;
+  sessionNumber: number;
+  /** Số em có tích chọn ở buổi đó — cho GV biết áp sang được bao nhiêu. */
+  students: number;
+}
+
+export function SessionForm({
+  session,
+  copyFromSessions = [],
+}: {
+  session: SessionData;
+  copyFromSessions?: CopyFromSession[];
+}) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     updateSession,
     {}
@@ -46,6 +67,12 @@ export function SessionForm({ session }: { session: SessionData }) {
   const [isPeriodicTest, setIsPeriodicTest] = useState(
     session.is_periodic_test
   );
+  // "" = không áp nhận xét từ buổi nào. Reset sau mỗi lần lưu để bấm Lưu lần
+  // sau (VD sửa lại nội dung) không vô tình áp lại lần nữa.
+  const [copyFrom, setCopyFrom] = useState("");
+  useEffect(() => {
+    if (state.success) setCopyFrom("");
+  }, [state]);
 
   return (
     <form action={formAction} className="space-y-3">
@@ -121,9 +148,48 @@ export function SessionForm({ session }: { session: SessionData }) {
           viết chung một đoạn.
         </p>
       </div>
+      {copyFromSessions.length > 0 && (
+        <div className="space-y-1.5 rounded-lg border border-dashed p-3">
+          <Label htmlFor="copy_from_session_id">
+            Áp nhận xét giống buổi trước cho CẢ LỚP (tùy chọn)
+          </Label>
+          <input
+            type="hidden"
+            name="copy_from_session_id"
+            value={copyFrom}
+          />
+          <Select
+            value={copyFrom || "none"}
+            onValueChange={(v) => setCopyFrom(v === "none" ? "" : v)}
+          >
+            <SelectTrigger id="copy_from_session_id" size="sm" className="w-[280px]">
+              <SelectValue placeholder="Không áp" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Không áp</SelectItem>
+              {copyFromSessions.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  Buổi {s.sessionNumber} ({s.students} em đã nhận xét)
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Bấm &quot;Lưu nội dung&quot; sẽ GỘP điểm mạnh / cần cải thiện / xếp
+            loại của buổi đó vào mọi em ở buổi này (không xóa thứ đã tích), rồi
+            gọi AI viết nhận xét cho từng em. Bỏ qua em đã đánh vắng và em đã có
+            sẵn nhận xét. ⚠️ Mỗi em tốn 1 lượt Gemini — hết lượt thì em đó để
+            trống, đổi key rồi bấm &quot;AI tạo nhận xét&quot; ở từng em.
+          </p>
+        </div>
+      )}
       <div className="flex items-center gap-3">
         <Button type="submit" size="sm" disabled={pending}>
-          {pending ? "Đang lưu..." : "Lưu nội dung"}
+          {pending
+            ? copyFrom
+              ? "Đang lưu + gọi AI..."
+              : "Đang lưu..."
+            : "Lưu nội dung"}
         </Button>
         <FormMessage result={state} />
       </div>
