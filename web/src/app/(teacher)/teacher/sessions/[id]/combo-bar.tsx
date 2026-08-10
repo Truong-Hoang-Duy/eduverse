@@ -1,20 +1,16 @@
 "use client";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
 
 /**
- * Thanh áp "bộ combo" cho một ô nhận xét: chọn 1 bộ lưu sẵn → GỘP cả bộ điểm
- * mạnh/cải thiện vào lựa chọn hiện tại (không ghi đè).
+ * Hàng nút áp "bộ combo" cho một ô nhận xét: bấm 1 bộ lưu sẵn → GỘP cả bộ
+ * điểm mạnh/cải thiện vào lựa chọn hiện tại (không ghi đè).
  *
  * Việc TẠO/XÓA bộ nằm ở trang Cài đặt (combo-manager), KHÔNG ở đây — ở mỗi học
- * viên chỉ chọn áp cho nhanh (yêu cầu user 2026-07-27).
+ * viên chỉ chọn áp cho nhanh (yêu cầu user 2026-07-27). Hiện dạng nút thay vì
+ * dropdown Select (yêu cầu user 2026-08-05) — bấm thẳng, không cần mở ra
+ * trước; chỉ hiện tên bộ, không kèm số lượng (3+2) dưới mỗi nút.
  */
 export function ComboBar({
   combos,
@@ -25,27 +21,20 @@ export function ComboBar({
 }) {
   if (combos.length === 0) return null;
 
-  function applyById(id: string) {
-    const combo = combos.find((c) => c.id === id);
-    if (combo) onApply(combo.strengths, combo.improvements);
-  }
-
   return (
-    <Select value="" onValueChange={applyById}>
-      <SelectTrigger
-        size="sm"
-        className="h-7 w-[190px] text-xs"
-        aria-label="Áp dụng bộ combo lưu sẵn"
-      >
-        <SelectValue placeholder="⚡ Áp dụng bộ combo..." />
-      </SelectTrigger>
-      <SelectContent>
-        {combos.map((c) => (
-          <SelectItem key={c.id} value={c.id}>
-            {c.name} ({c.strengths.length}+{c.improvements.length})
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex flex-wrap gap-1.5">
+      {combos.map((c) => (
+        <Button
+          key={c.id}
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs"
+          onClick={() => onApply(c.strengths, c.improvements)}
+        >
+          ⚡ {c.name}
+        </Button>
+      ))}
+    </div>
   );
 }

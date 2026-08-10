@@ -12,6 +12,18 @@ import type { ActionResult } from "@/lib/types";
 
 import { SessionContentSuggestDialog } from "./session-content-suggest-dialog";
 
+/** Buổi mới chưa có ngày học thường là buổi ĐÃ dạy hôm qua (GV hay điền nhận
+ *  xét sau buổi một ngày) — điền sẵn hôm nay trừ 1 để đỡ phải gõ tay mỗi lần,
+ *  vẫn sửa được bình thường (yêu cầu user 2026-08-05). */
+function yesterdayIso(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export interface SessionData {
   id: string;
   session_number: number;
@@ -54,7 +66,7 @@ export function SessionForm({ session }: { session: SessionData }) {
             id="session_date"
             name="session_date"
             type="date"
-            defaultValue={session.session_date ?? ""}
+            defaultValue={session.session_date ?? yesterdayIso()}
           />
         </div>
       </div>

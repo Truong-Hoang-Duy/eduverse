@@ -378,7 +378,7 @@ export function ReviewEditor({
               ▼
             </span>
           </summary>
-          <div className="space-y-4 border-t p-3">
+          <div className="space-y-3 border-t p-3">
             {/* Nhận xét nhanh: áp bộ combo lưu sẵn + copy từ bạn/buổi trước. */}
             <div className="flex flex-wrap items-center gap-2">
               <ComboBar combos={combos ?? []} onApply={applyCombo} />
