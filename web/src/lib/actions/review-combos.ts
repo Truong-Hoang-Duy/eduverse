@@ -2,15 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 
-import type { SkillGroup } from "@/lib/skill-groups";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
+
+export type ReviewComboType = "strength" | "improvement";
 
 export interface ReviewCombo {
   id: string;
   name: string;
+  type: ReviewComboType;
   strengths: string[];
   improvements: string[];
+}
+
+function asComboType(value: string): ReviewComboType | null {
+  return value === "strength" || value === "improvement" ? value : null;
 }
 
 /** Bộ combo lưu sẵn của GV đang đăng nhập (RLS `review_combos_teacher_all` đã
@@ -24,7 +30,7 @@ export async function listMyCombos(): Promise<ReviewCombo[]> {
 
   const { data } = await supabase
     .from("review_combos")
-    .select("id, name, strengths, improvements")
+    .select("id, name, type, strengths, improvements")
     .eq("teacher_id", user.id)
     .order("created_at");
   return (data ?? []) as ReviewCombo[];
@@ -35,17 +41,30 @@ export async function createReviewCombo(
   formData: FormData
 ): Promise<ActionResult> {
   const name = String(formData.get("name") ?? "").trim();
-  const strengths = formData.getAll("strengths").map(String);
-  const improvements = formData.getAll("improvements").map(String);
+  const type = asComboType(String(formData.get("type") ?? ""));
+  // Bộ CHỈ một loại (yêu cầu user 2026-08-06) — chỉ đọc mảng khớp `type`, mảng
+  // còn lại (nếu form lỡ gửi kèm) bị bỏ qua hẳn, không lưu lẫn vào.
+  const labels =
+    type === "strength"
+      ? formData.getAll("strengths").map(String)
+      : formData.getAll("improvements").map(String);
 
+  if (!type) {
+    return { error: "Chọn bộ này là Tích cực hay Cải thiện." };
+  }
   if (!name) {
     return { error: "Đặt tên cho bộ combo." };
   }
   if (name.length > 60) {
     return { error: "Tên bộ combo tối đa 60 ký tự." };
   }
-  if (strengths.length === 0 && improvements.length === 0) {
-    return { error: "Chọn ít nhất một điểm mạnh hoặc cần cải thiện rồi mới lưu bộ." };
+  if (labels.length === 0) {
+    return {
+      error:
+        type === "strength"
+          ? "Chọn ít nhất một điểm mạnh rồi mới lưu bộ."
+          : "Chọn ít nhất một điểm cần cải thiện rồi mới lưu bộ.",
+    };
   }
 
   const supabase = await createClient();
@@ -56,9 +75,13 @@ export async function createReviewCombo(
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
-  const { error } = await supabase
-    .from("review_combos")
-    .insert({ teacher_id: user.id, name, strengths, improvements });
+  const { error } = await supabase.from("review_combos").insert({
+    teacher_id: user.id,
+    name,
+    type,
+    strengths: type === "strength" ? labels : [],
+    improvements: type === "improvement" ? labels : [],
+  });
   if (error) {
     return { error: `Không lưu được bộ: ${error.message}` };
   }
@@ -68,6 +91,66 @@ export async function createReviewCombo(
   revalidatePath("/teacher/settings");
   revalidatePath("/teacher/sessions/[id]", "page");
   return { success: `Đã lưu bộ "${name}".` };
+}
+
+export async function updateReviewCombo(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const type = asComboType(String(formData.get("type") ?? ""));
+  // Loại KHÔNG đổi được lúc sửa (xem combo-manager.tsx) — vẫn đọc lại từ form
+  // ẩn để validate/insert đúng cột như lúc tạo.
+  const labels =
+    type === "strength"
+      ? formData.getAll("strengths").map(String)
+      : formData.getAll("improvements").map(String);
+
+  if (!id || !type) {
+    return { error: "Thiếu thông tin bộ combo." };
+  }
+  if (!name) {
+    return { error: "Đặt tên cho bộ combo." };
+  }
+  if (name.length > 60) {
+    return { error: "Tên bộ combo tối đa 60 ký tự." };
+  }
+  if (labels.length === 0) {
+    return {
+      error:
+        type === "strength"
+          ? "Chọn ít nhất một điểm mạnh rồi mới lưu bộ."
+          : "Chọn ít nhất một điểm cần cải thiện rồi mới lưu bộ.",
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  // RLS (`review_combos_teacher_all`) đã chặn sửa bộ của người khác — filter
+  // thêm teacher_id chỉ để chắc chắn không update nhầm row nào ngoài của mình.
+  const { error } = await supabase
+    .from("review_combos")
+    .update({
+      name,
+      strengths: type === "strength" ? labels : [],
+      improvements: type === "improvement" ? labels : [],
+    })
+    .eq("id", id)
+    .eq("teacher_id", user.id);
+  if (error) {
+    return { error: `Không lưu được bộ: ${error.message}` };
+  }
+
+  revalidatePath("/teacher/settings");
+  revalidatePath("/teacher/sessions/[id]", "page");
+  return { success: `Đã cập nhật bộ "${name}".` };
 }
 
 export async function deleteReviewCombo(formData: FormData): Promise<void> {
@@ -81,129 +164,4 @@ export async function deleteReviewCombo(formData: FormData): Promise<void> {
   // buổi học động nên dùng mẫu "[id]" + "page" để mọi buổi cập nhật.
   revalidatePath("/teacher/settings");
   revalidatePath("/teacher/sessions/[id]", "page");
-}
-
-/**
- * Bộ mẫu dựng theo "chân dung học viên" hay gặp. Mỗi mẫu rút điểm mạnh/cải
- * thiện từ vài NHÓM KỸ NĂNG — lúc seed lấy chính nhãn trong danh mục của GV nên
- * áp xong khớp catalog. Bỏ nhóm `presentation` (tùy buổi mới dùng) và `other`.
- * Trải rộng để "tận dụng hết" 10 nhóm còn lại (yêu cầu user 2026-07-27).
- */
-const COMBO_TEMPLATES: {
-  name: string;
-  strengthGroups: SkillGroup[];
-  improvementGroups: SkillGroup[];
-}[] = [
-  { name: "Học tốt toàn diện", strengthGroups: ["thinking", "coding", "self_study"], improvementGroups: ["discipline"] },
-  { name: "Tư duy tốt, cần cẩn thận", strengthGroups: ["thinking", "creativity"], improvementGroups: ["coding", "discipline"] },
-  { name: "Chăm chỉ, nề nếp tốt", strengthGroups: ["attitude", "discipline"], improvementGroups: ["coding", "thinking"] },
-  { name: "Giỏi code, ít hợp tác", strengthGroups: ["coding", "computer_skills"], improvementGroups: ["collaboration", "questioning"] },
-  { name: "Sáng tạo, cần nền tảng", strengthGroups: ["creativity", "ai_usage"], improvementGroups: ["coding", "thinking"] },
-  { name: "Chủ động hỏi, cần luyện thêm", strengthGroups: ["questioning", "attitude"], improvementGroups: ["self_study", "coding"] },
-  { name: "Hợp tác tốt, cần tự tin hỏi", strengthGroups: ["collaboration", "attitude"], improvementGroups: ["questioning", "thinking"] },
-  { name: "Thạo máy & AI, cần tư duy", strengthGroups: ["computer_skills", "ai_usage"], improvementGroups: ["thinking", "coding"] },
-  { name: "Chăm nhưng còn chậm", strengthGroups: ["attitude", "discipline"], improvementGroups: ["coding", "computer_skills"] },
-  { name: "Tự học tốt, cần hợp tác", strengthGroups: ["self_study", "thinking"], improvementGroups: ["collaboration", "discipline"] },
-  { name: "Cần kèm thêm nền tảng", strengthGroups: ["attitude"], improvementGroups: ["coding", "thinking", "self_study"] },
-  // Nhóm "chân dung pha trộn": yếu/trung bình mặt này nhưng có điểm mạnh mặt
-  // khác (yêu cầu user 2026-07-27 — đa dạng hơn, VD kiến thức yếu mà thao tác ổn).
-  { name: "Thao tác tốt, kiến thức còn yếu", strengthGroups: ["computer_skills", "attitude"], improvementGroups: ["thinking", "coding"] },
-  { name: "Chăm chỉ nhưng tiếp thu chậm", strengthGroups: ["attitude", "discipline"], improvementGroups: ["thinking", "self_study"] },
-  { name: "Nhiệt tình nhưng thiếu tập trung", strengthGroups: ["collaboration", "attitude"], improvementGroups: ["discipline", "coding"] },
-  { name: "Nhanh nhưng ẩu", strengthGroups: ["thinking", "coding"], improvementGroups: ["discipline", "attitude"] },
-  { name: "Có năng khiếu, chưa chăm", strengthGroups: ["thinking", "creativity"], improvementGroups: ["discipline", "self_study"] },
-  { name: "Ngoan, cần mạnh dạn hơn", strengthGroups: ["discipline", "attitude"], improvementGroups: ["questioning", "collaboration"] },
-  { name: "Biết dùng AI, lệ thuộc công cụ", strengthGroups: ["ai_usage", "computer_skills"], improvementGroups: ["thinking", "self_study"] },
-  { name: "Giao tiếp tốt, kiến thức trung bình", strengthGroups: ["collaboration", "questioning"], improvementGroups: ["coding", "thinking"] },
-  { name: "Cẩn thận, cần nhanh nhẹn hơn", strengthGroups: ["discipline", "coding"], improvementGroups: ["computer_skills", "thinking"] },
-  { name: "Sáng tạo nhưng làm dở dang", strengthGroups: ["creativity", "ai_usage"], improvementGroups: ["discipline", "coding"] },
-  { name: "Tiến bộ rõ, cần ổn định", strengthGroups: ["attitude", "self_study"], improvementGroups: ["discipline", "coding"] },
-];
-
-/** Số nhãn tối đa lấy từ mỗi nhóm cho một bộ — giữ bộ đủ ý mà không quá dài. */
-const MAX_LABELS_PER_GROUP = 2;
-
-/**
- * Thêm nhanh loạt bộ mẫu (nút ở trang Cài đặt). Rút nhãn từ CHÍNH danh mục của
- * GV theo nhóm kỹ năng; bỏ qua bộ trùng tên (bấm nhiều lần không nhân đôi) và
- * bộ rỗng (nhóm tham chiếu chưa có nhãn nào).
- */
-export async function seedDefaultCombos(): Promise<ActionResult> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Phiên đăng nhập hết hạn." };
-  }
-
-  const [{ data: options }, { data: existing }] = await Promise.all([
-    supabase
-      .from("review_options")
-      .select("category, label, skill_group")
-      .eq("teacher_id", user.id)
-      .order("label"),
-    supabase.from("review_combos").select("name").eq("teacher_id", user.id),
-  ]);
-
-  if (!options || options.length === 0) {
-    return {
-      error:
-        "Chưa có danh mục nhận xét — bấm “Thêm nhanh bộ lựa chọn mặc định” ở khối trên trước rồi mới tạo bộ mẫu.",
-    };
-  }
-
-  // Gom nhãn theo "category:skill_group" để mỗi mẫu rút ra nhanh.
-  const byKey = new Map<string, string[]>();
-  for (const opt of options) {
-    const key = `${opt.category}:${opt.skill_group}`;
-    (byKey.get(key) ?? byKey.set(key, []).get(key)!).push(opt.label);
-  }
-  const pick = (category: "strength" | "improvement", groups: SkillGroup[]) => {
-    const seen = new Set<string>();
-    const result: string[] = [];
-    for (const group of groups) {
-      for (const label of (byKey.get(`${category}:${group}`) ?? []).slice(
-        0,
-        MAX_LABELS_PER_GROUP
-      )) {
-        if (!seen.has(label.toLowerCase())) {
-          seen.add(label.toLowerCase());
-          result.push(label);
-        }
-      }
-    }
-    return result;
-  };
-
-  const existingNames = new Set(
-    (existing ?? []).map((c) => c.name.toLowerCase())
-  );
-
-  const rows = COMBO_TEMPLATES.filter(
-    (t) => !existingNames.has(t.name.toLowerCase())
-  )
-    .map((t) => ({
-      teacher_id: user.id,
-      name: t.name,
-      strengths: pick("strength", t.strengthGroups),
-      improvements: pick("improvement", t.improvementGroups),
-    }))
-    .filter((r) => r.strengths.length > 0 || r.improvements.length > 0);
-
-  if (rows.length === 0) {
-    return {
-      success:
-        "Không có bộ mẫu mới để thêm (có thể đã thêm trước đó, hoặc danh mục chưa đủ nhãn).",
-    };
-  }
-
-  const { error } = await supabase.from("review_combos").insert(rows);
-  if (error) {
-    return { error: `Không thêm được bộ mẫu: ${error.message}` };
-  }
-
-  revalidatePath("/teacher/settings");
-  revalidatePath("/teacher/sessions/[id]", "page");
-  return { success: `Đã thêm ${rows.length} bộ mẫu — xem và chỉnh bên dưới.` };
 }

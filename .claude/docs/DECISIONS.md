@@ -469,9 +469,21 @@
   `addReviewOption`/`deleteReviewOption` revalidate CẢ `/teacher/sessions/[id]`
   (dạng "page" — mọi id) chứ không chỉ `/teacher/settings`, vì giờ được gọi từ
   cả trang buổi học.
-- **Thẻ nhận xét từng HV gọn lại: combo/copy nhanh + xếp loại học lực + quá
-  trình làm bài kiểm tra gộp vào 1 accordion phụ "⚙️ Tùy chọn thêm"** (thêm
-  2026-08-05, user chọn hướng này thay vì chỉ siết spacing hoặc gộp cột). Mặc
-  định ĐÓNG, trừ khi đã có `academic_level` từ trước thì mở sẵn (để GV không
-  mất dấu thứ đã chọn). Phần chính (điểm mạnh/cải thiện + nhận xét AI) LUÔN
-  hiện, không gộp vào accordion.
+- **Bộ combo nhận xét CHỈ MỘT LOẠI mỗi bộ** (2026-08-06, migration
+  `20260806000000`, cột `review_combos.type` CHECK `strength|improvement`) —
+  trước đó một bộ có thể pha trộn cả điểm mạnh lẫn cần cải thiện. `type` CỐ
+  ĐỊNH từ lúc tạo, không đổi được lúc sửa (sửa chỉ đổi tên + nhãn CÙNG loại).
+  Trang Cài đặt chia 2 CỘT theo loại; combo-bar (áp ở từng HV) chia 2
+  `SelectGroup`. **Migration XÓA SẠCH `review_combos` cũ** (kể cả bộ do nút
+  "Thêm nhanh bộ mẫu" tạo) vì không tách tự động được bộ đã pha trộn — user
+  chốt vậy khi được hỏi, TỰ TẠO LẠI. Nút "⚡ Thêm nhanh bộ mẫu" + toàn bộ
+  `COMBO_TEMPLATES`/`seedDefaultCombos` đã GỠ HẲN khỏi code (không còn seed
+  mẫu dựng sẵn) — đừng hồi sinh trừ khi user yêu cầu lại.
+- **Thẻ nhận xét từng HV: combo/copy/xếp loại/quá trình làm bài LUÔN hiện
+  thẳng, KHÔNG giấu trong accordion phụ** (chốt cuối 2026-08-05). Đã thử
+  accordion "⚙️ Tùy chọn thêm" trước đó rồi BỎ NGAY vì combo là thao tác dùng
+  thường xuyên, giấu sau 1 click làm chậm thao tác — đừng làm lại. Gọn bằng
+  cách gộp combo+copy+xếp loại thành 1 dòng (xếp loại bỏ label, dùng
+  placeholder) và điểm mạnh+cải thiện+quá trình làm bài thành 1 dòng khác (2
+  hoặc 3 cột tùy `isPeriodicTest`), không phải bằng cách ẩn đi. Combo riêng
+  GOM thành 1 dropdown (không phải hàng nút rời) vì GV có thể có hàng chục bộ.
