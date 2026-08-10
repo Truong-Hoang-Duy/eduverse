@@ -40,6 +40,9 @@ function ComboItem({
     {}
   );
   const [editing, setEditing] = useState(false);
+  // Đóng mặc định — bộ nhiều nhãn (VD chọn cả chục điểm mạnh) mở sẵn ra sẽ dài
+  // dòng, chiếm hết màn hình (user phản ánh 2026-08-06). Bấm tên mới xổ ra.
+  const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState(combo.name);
   const initialLabels =
     combo.type === "strength" ? combo.strengths : combo.improvements;
@@ -60,22 +63,26 @@ function ComboItem({
 
   if (!editing) {
     return (
-      <li className="rounded-lg border p-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1.5">
-            <p className="font-medium">{combo.name}</p>
-            <div className="flex flex-wrap gap-1">
-              {initialLabels.map((s) => (
-                <Badge
-                  key={s}
-                  variant={combo.type === "strength" ? "secondary" : "outline"}
-                  className="rounded-md font-normal"
-                >
-                  {s}
-                </Badge>
-              ))}
-            </div>
-          </div>
+      <li className="rounded-lg border">
+        <div className="flex items-center justify-between gap-2 p-3">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+          >
+            <span className="truncate font-medium">{combo.name}</span>
+            <Badge
+              variant="secondary"
+              className="shrink-0 rounded-md text-xs font-normal"
+            >
+              {initialLabels.length}
+            </Badge>
+            <span
+              className={`ml-auto shrink-0 text-xs text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}
+            >
+              ▼
+            </span>
+          </button>
           <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
@@ -103,6 +110,19 @@ function ComboItem({
             />
           </div>
         </div>
+        {expanded && (
+          <div className="flex max-h-40 flex-wrap gap-1 overflow-y-auto border-t p-3">
+            {initialLabels.map((s) => (
+              <Badge
+                key={s}
+                variant={combo.type === "strength" ? "secondary" : "outline"}
+                className="rounded-md font-normal"
+              >
+                {s}
+              </Badge>
+            ))}
+          </div>
+        )}
       </li>
     );
   }
