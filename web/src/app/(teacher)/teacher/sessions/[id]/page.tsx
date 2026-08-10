@@ -48,8 +48,15 @@ interface PriorReviewRow {
   strengths: string[];
   improvements: string[];
   is_absent: boolean;
-  sessions: { session_number: number } | null;
+  sessions: { id: string; session_number: number } | null;
 }
+
+/**
+ * Server Action của trang này có thể gọi Gemini cho CẢ LỚP một lượt ("áp nhận
+ * xét giống buổi trước"), mà ai-service nằm trên Render free — cold start
+ * 30–60s. Mặc định của Vercel không đủ cho ca xấu nhất đó.
+ */
+export const maxDuration = 60;
 
 /** Buổi trước gần nhất tối đa 3 buổi để AI tránh lặp lời văn giữa các buổi. */
 const MAX_PRIOR_COMMENTS = 3;
@@ -114,7 +121,7 @@ export default async function SessionDetailPage({
     supabase
       .from("student_reviews")
       .select(
-        "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(session_number, class_id)"
+        "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, class_id)"
       )
       .eq("sessions.class_id", session.class_id)
       .lt("sessions.session_number", session.session_number),
@@ -168,6 +175,28 @@ export default async function SessionDetailPage({
     priorSelectionsByStudentId.set(studentId, selections);
   }
 
+  // Buổi trước có thể ÁP SANG cả lớp: chỉ buổi đã tích chọn cho ít nhất 1 em
+  // (bỏ buổi vắng/trống) — buổi rỗng có hiện cũng không áp được gì.
+  const copySourceCounts = new Map<
+    string,
+    { sessionNumber: number; students: number }
+  >();
+  for (const row of priorReviews) {
+    if (row.is_absent) continue;
+    if (row.strengths.length === 0 && row.improvements.length === 0) continue;
+    const sessionRow = row.sessions;
+    if (!sessionRow) continue;
+    const bucket = copySourceCounts.get(sessionRow.id) ?? {
+      sessionNumber: sessionRow.session_number,
+      students: 0,
+    };
+    bucket.students += 1;
+    copySourceCounts.set(sessionRow.id, bucket);
+  }
+  const copyFromSessions = [...copySourceCounts.entries()]
+    .map(([id, v]) => ({ id, ...v }))
+    .sort((a, b) => b.sessionNumber - a.sessionNumber);
+
   return (
     <div className="space-y-6">
       <div>
@@ -186,7 +215,7 @@ export default async function SessionDetailPage({
           <CardTitle className="text-base">Nội dung buổi học</CardTitle>
         </CardHeader>
         <CardContent>
-          <SessionForm session={session} />
+          <SessionForm session={session} copyFromSessions={copyFromSessions} />
         </CardContent>
       </Card>
 
