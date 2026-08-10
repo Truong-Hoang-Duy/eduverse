@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { updateSession } from "@/lib/actions/sessions";
 import type { ActionResult } from "@/lib/types";
 
+import { SessionContentReferenceDialog } from "./session-content-reference-dialog";
 import { SessionContentSuggestDialog } from "./session-content-suggest-dialog";
 
 /** Buổi mới chưa có ngày học thường là buổi ĐÃ dạy hôm qua (GV hay điền nhận
@@ -100,7 +101,16 @@ export function SessionForm({
       <div className="space-y-1.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Label htmlFor="content">Nội dung buổi học</Label>
-          <SessionContentSuggestDialog sessionId={session.id} onApply={setContent} />
+          <div className="flex flex-wrap items-center gap-2">
+            <SessionContentReferenceDialog
+              sessionId={session.id}
+              onApply={setContent}
+            />
+            <SessionContentSuggestDialog
+              sessionId={session.id}
+              onApply={setContent}
+            />
+          </div>
         </div>
         <Textarea
           id="content"

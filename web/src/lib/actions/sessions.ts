@@ -72,6 +72,126 @@ export async function updateSession(
   return { success: "Đã lưu nội dung buổi học." };
 }
 
+/** Một buổi đã có nội dung, hiện trong popup tham khảo. */
+export interface SessionContentReference {
+  id: string;
+  sessionNumber: number;
+  title: string | null;
+  sessionDate: string | null;
+  content: string;
+  /** Chỉ có ở nhóm "lớp khác cùng khóa" — lớp này thì thừa. */
+  classCode?: string;
+}
+
+export interface SessionContentReferences {
+  /** Buổi TRƯỚC của chính lớp này, gần nhất lên đầu. */
+  priorInClass: SessionContentReference[];
+  /** CÙNG buổi số ở các lớp khác trong cùng khóa học. */
+  otherClasses: SessionContentReference[];
+  error?: string;
+}
+
+/** Trần số buổi trả về cho popup — lớp dài 100 buổi cũng không đổ hết xuống. */
+const MAX_REFERENCE_SESSIONS = 30;
+
+/**
+ * Nội dung các buổi để GV THAM KHẢO khi soạn buổi hiện tại (yêu cầu user
+ * 2026-08-06) — chỉ ĐỌC, không lưu gì.
+ *
+ * Hai nhóm phục vụ hai câu hỏi khác nhau:
+ * - `priorInClass`: "lớp này đã dạy tới đâu rồi" → viết nối tiếp, không lặp.
+ * - `otherClasses`: "buổi này ở lớp song song mình dạy gì" → giữ đồng đều giữa
+ *   các lớp cùng khóa. CÙNG `session_number`, khác `class_id`.
+ *
+ * RLS `sessions_teacher_all` đã giới hạn theo `is_teacher_of_class` nên chỉ ra
+ * lớp GV này dạy — không lộ lớp của GV khác.
+ */
+export async function listSessionContentReferences(input: {
+  sessionId: string;
+}): Promise<SessionContentReferences> {
+  const empty = { priorInClass: [], otherClasses: [] };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ...empty, error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const { data: sessionData } = await supabase
+    .from("sessions")
+    .select("class_id, session_number, classes(course_id)")
+    .eq("id", input.sessionId)
+    .single();
+  if (!sessionData) {
+    return { ...empty, error: "Không tìm thấy buổi học." };
+  }
+  const current = sessionData as unknown as {
+    class_id: string;
+    session_number: number;
+    classes: { course_id: string } | null;
+  };
+
+  const [{ data: priorData }, { data: otherData }] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select("id, session_number, title, session_date, content")
+      .eq("class_id", current.class_id)
+      .lt("session_number", current.session_number)
+      .not("content", "is", null)
+      .order("session_number", { ascending: false })
+      .limit(MAX_REFERENCE_SESSIONS),
+    current.classes?.course_id
+      ? supabase
+          .from("sessions")
+          .select(
+            "id, session_number, title, session_date, content, classes!inner(class_code, course_id)"
+          )
+          .eq("classes.course_id", current.classes.course_id)
+          .neq("class_id", current.class_id)
+          .eq("session_number", current.session_number)
+          .not("content", "is", null)
+          .limit(MAX_REFERENCE_SESSIONS)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const priorInClass = ((priorData ?? []) as PriorReferenceRow[])
+    .filter((s) => Boolean(s.content?.trim()))
+    .map((s) => ({
+      id: s.id,
+      sessionNumber: s.session_number,
+      title: s.title,
+      sessionDate: s.session_date,
+      content: s.content as string,
+    }));
+
+  const otherClasses = ((otherData ?? []) as unknown as OtherClassReferenceRow[])
+    .filter((s) => Boolean(s.content?.trim()))
+    .map((s) => ({
+      id: s.id,
+      sessionNumber: s.session_number,
+      title: s.title,
+      sessionDate: s.session_date,
+      content: s.content as string,
+      classCode: s.classes?.class_code,
+    }))
+    .sort((a, b) => (a.classCode ?? "").localeCompare(b.classCode ?? ""));
+
+  return { priorInClass, otherClasses };
+}
+
+interface PriorReferenceRow {
+  id: string;
+  session_number: number;
+  title: string | null;
+  session_date: string | null;
+  content: string | null;
+}
+
+interface OtherClassReferenceRow extends PriorReferenceRow {
+  classes: { class_code: string; course_id: string } | null;
+}
+
 /** Buổi trước gần nhất tối đa lấy làm ngữ cảnh cho gợi ý nội dung buổi học. */
 const MAX_PRIOR_SESSIONS = 5;
 
