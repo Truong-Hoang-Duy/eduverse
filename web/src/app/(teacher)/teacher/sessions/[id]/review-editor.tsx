@@ -363,108 +363,65 @@ export function ReviewEditor({
           <input key={s} type="hidden" name="improvements" value={s} />
         ))}
 
-        {/* Combo/copy nhanh + xếp loại + bối cảnh KT — gộp vào 1 accordion phụ
-            để thẻ HV gọn lại, phần chính (điểm mạnh/cải thiện + nhận xét AI)
-            nổi bật hơn (yêu cầu user 2026-08-05). Mở sẵn nếu đã có xếp loại
-            từ trước, để GV không mất dấu thứ đã chọn. */}
-        <details
-          className="group/extra rounded-md border bg-muted/30"
-          open={Boolean(existing?.academic_level)}
-        >
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 text-sm font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">
-            ⚙️ Tùy chọn thêm — combo nhanh, xếp loại học lực
-            {isPeriodicTest ? ", quá trình làm bài" : ""}
-            <span className="text-xs transition-transform group-open/extra:rotate-180">
-              ▼
-            </span>
-          </summary>
-          <div className="space-y-4 border-t p-3">
-            {/* Nhận xét nhanh: áp bộ combo lưu sẵn + copy từ bạn/buổi trước. */}
-            <div className="flex flex-wrap items-center gap-2">
-              <ComboBar combos={combos ?? []} onApply={applyCombo} />
-              {(copySources?.length ?? 0) > 0 && (
-                <Select value="" onValueChange={copyFromSource}>
-                  <SelectTrigger
-                    size="sm"
-                    className="h-7 w-[190px] text-xs"
-                    aria-label="Copy lựa chọn từ bạn khác hoặc buổi trước"
-                  >
-                    <SelectValue placeholder="📋 Copy điểm mạnh/cải thiện từ..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {copyGroups.map(({ group, items }) => (
-                      <SelectGroup key={group}>
-                        <SelectLabel>{group}</SelectLabel>
-                        {items.map((s) => (
-                          <SelectItem key={s.key} value={s.key}>
-                            {s.label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-
-            <div className={isPeriodicTest ? "grid gap-4 sm:grid-cols-2" : undefined}>
-              <div className="space-y-1.5">
-                <Label htmlFor={`level-${studentId}`}>
-                  Xếp loại học lực (tùy chọn)
-                </Label>
-                <Select
-                  value={academicLevel}
-                  onValueChange={(v) =>
-                    setAcademicLevel(v === "none" ? "" : v)
-                  }
-                >
-                  <SelectTrigger
-                    id={`level-${studentId}`}
-                    size="sm"
-                    className="w-[200px]"
-                  >
-                    <SelectValue placeholder="Chưa chọn" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Chưa chọn</SelectItem>
-                    {ACADEMIC_LEVELS.map((l) => (
-                      <SelectItem key={l.value} value={l.value}>
-                        {l.label}
+        {/* Combo/copy/xếp loại — LUÔN hiện trên CÙNG 1 dòng, không giấu trong
+            accordion: đây là thao tác áp nhanh GV dùng thường xuyên (user
+            chốt 2026-08-05). Xếp loại KHÔNG còn label riêng — đặt tên ngay
+            trong placeholder để gọn dòng. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <ComboBar combos={combos ?? []} onApply={applyCombo} />
+          {(copySources?.length ?? 0) > 0 && (
+            <Select value="" onValueChange={copyFromSource}>
+              <SelectTrigger
+                size="sm"
+                className="h-7 w-[190px] text-xs"
+                aria-label="Copy lựa chọn từ bạn khác hoặc buổi trước"
+              >
+                <SelectValue placeholder="📋 Copy điểm mạnh/cải thiện từ..." />
+              </SelectTrigger>
+              <SelectContent>
+                {copyGroups.map(({ group, items }) => (
+                  <SelectGroup key={group}>
+                    <SelectLabel>{group}</SelectLabel>
+                    {items.map((s) => (
+                      <SelectItem key={s.key} value={s.key}>
+                        {s.label}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  AI dựa vào mức này để viết nhận xét vừa trình độ của em —
-                  không nêu thẳng xếp loại cho phụ huynh.
-                </p>
-              </div>
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select
+            value={academicLevel}
+            onValueChange={(v) => setAcademicLevel(v === "none" ? "" : v)}
+          >
+            <SelectTrigger
+              id={`level-${studentId}`}
+              size="sm"
+              className="h-7 w-[190px] text-xs"
+              aria-label="Xếp loại học lực"
+            >
+              <SelectValue placeholder="🏷️ Xếp loại học lực..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Chưa chọn</SelectItem>
+              {ACADEMIC_LEVELS.map((l) => (
+                <SelectItem key={l.value} value={l.value}>
+                  {l.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-              {isPeriodicTest && (
-                <div className="space-y-1.5">
-                  <Label>📝 Quá trình làm bài kiểm tra</Label>
-                  <MultiSelect
-                    options={testProcessOptions}
-                    selected={testProcessNotes}
-                    onChange={setTestProcessNotes}
-                    onCreate={addCustomTestProcessNote}
-                    onDelete={deleteCustomOption}
-                    placeholder="Chọn hoặc gõ quan sát về bài kiểm tra..."
-                    emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Chỉ để AI tham khảo khi viết phần &quot;kết quả kiểm tra
-                    định kỳ&quot; — không lưu lại, gõ lại nếu tải lại trang.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </details>
-
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div
+          className={
+            isPeriodicTest ? "grid gap-4 sm:grid-cols-3" : "grid gap-4 sm:grid-cols-2"
+          }
+        >
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex h-7 items-center justify-between gap-2">
               <p className="text-sm font-medium">💪 Điểm mạnh</p>
               <GroupFilter value={strengthGroup} onChange={setStrengthGroup} />
             </div>
@@ -483,7 +440,7 @@ export function ReviewEditor({
             />
           </div>
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex h-7 items-center justify-between gap-2">
               <p className="text-sm font-medium">🎯 Cần cải thiện</p>
               <GroupFilter
                 value={improvementGroup}
@@ -504,11 +461,23 @@ export function ReviewEditor({
               }
             />
           </div>
+          {isPeriodicTest && (
+            <div className="space-y-1.5">
+              <div className="flex h-7 items-center">
+                <Label>📝 Quá trình làm bài kiểm tra</Label>
+              </div>
+              <MultiSelect
+                options={testProcessOptions}
+                selected={testProcessNotes}
+                onChange={setTestProcessNotes}
+                onCreate={addCustomTestProcessNote}
+                onDelete={deleteCustomOption}
+                placeholder="Chọn hoặc gõ quan sát về bài kiểm tra..."
+                emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+              />
+            </div>
+          )}
         </div>
-        <p className="text-xs text-muted-foreground">
-          💡 Gõ câu mới ngay trong ô chọn rồi Enter — câu đó vừa thêm vào nhận
-          xét, vừa lưu vào danh mục (nhóm đang lọc, hoặc &quot;Khác&quot;).
-        </p>
 
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center justify-between gap-2">

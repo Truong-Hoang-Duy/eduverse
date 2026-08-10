@@ -10,11 +10,15 @@ import {
 import type { ReviewCombo } from "@/lib/actions/review-combos";
 
 /**
- * Thanh áp "bộ combo" cho một ô nhận xét: chọn 1 bộ lưu sẵn → GỘP cả bộ điểm
+ * Áp "bộ combo" cho một ô nhận xét: chọn 1 bộ lưu sẵn → GỘP cả bộ điểm
  * mạnh/cải thiện vào lựa chọn hiện tại (không ghi đè).
  *
  * Việc TẠO/XÓA bộ nằm ở trang Cài đặt (combo-manager), KHÔNG ở đây — ở mỗi học
- * viên chỉ chọn áp cho nhanh (yêu cầu user 2026-07-27).
+ * viên chỉ chọn áp cho nhanh (yêu cầu user 2026-07-27). GOM vào MỘT dropdown
+ * thay vì một hàng nút rời (yêu cầu user 2026-08-05, lần thử trước bung hết
+ * combo thành nút thì tràn 4-5 dòng khi GV có nhiều bộ) — vẫn LUÔN hiện ngay
+ * cạnh phần điểm mạnh/cải thiện, không giấu trong accordion phụ. Chỉ hiện tên
+ * bộ, không kèm số lượng (3+2) như bản cũ.
  */
 export function ComboBar({
   combos,
@@ -42,7 +46,7 @@ export function ComboBar({
       <SelectContent>
         {combos.map((c) => (
           <SelectItem key={c.id} value={c.id}>
-            {c.name} ({c.strengths.length}+{c.improvements.length})
+            {c.name}
           </SelectItem>
         ))}
       </SelectContent>
