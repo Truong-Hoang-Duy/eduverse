@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { isHandled, isReviewed, type ExistingReview } from "./review-status";
+import {
+  isHandled,
+  isReviewed,
+  reviewSignature,
+  type ExistingReview,
+} from "./review-status";
 
 /**
  * Module này tồn tại vì một bug thật: các hàm từng nằm trong `review-editor.tsx`
@@ -59,5 +64,42 @@ describe("isHandled", () => {
 
   it("should be false for an empty row", () => {
     expect(isHandled(base)).toBe(false);
+  });
+});
+
+/**
+ * Chữ ký này chạy `key` của ReviewEditor. Sai một nhánh là ô nhận xét KHÔNG
+ * dựng lại sau khi "áp nhận xét từ buổi trước" ghi hàng loạt — GV thấy báo
+ * thành công mà các ô bên dưới vẫn y nguyên cho tới khi tải lại trang.
+ */
+describe("reviewSignature", () => {
+  it("should stay the same for identical data", () => {
+    expect(reviewSignature({ ...base, strengths: ["Chăm chỉ"] })).toBe(
+      reviewSignature({ ...base, strengths: ["Chăm chỉ"] })
+    );
+  });
+
+  it("should change when any saved field changes", () => {
+    const before = reviewSignature(base);
+
+    expect(reviewSignature({ ...base, strengths: ["Chăm chỉ"] })).not.toBe(before);
+    expect(reviewSignature({ ...base, improvements: ["Cần cẩn thận"] })).not.toBe(before);
+    expect(reviewSignature({ ...base, academic_level: "gioi" })).not.toBe(before);
+    expect(reviewSignature({ ...base, is_absent: true })).not.toBe(before);
+    expect(reviewSignature({ ...base, ai_generated_comment: "Em tiến bộ." })).not.toBe(before);
+  });
+
+  it("should tell an empty row apart from no row at all", () => {
+    // Chưa có dòng nào vs có dòng nhưng trống — hai trạng thái khác nhau.
+    expect(reviewSignature(null)).not.toBe(reviewSignature(base));
+  });
+
+  it("should not collide when labels move between the two lists", () => {
+    // Ghép chuỗi cẩu thả (nối thẳng 2 mảng) sẽ cho cùng chữ ký ở 2 ca này.
+    expect(
+      reviewSignature({ ...base, strengths: ["a", "b"], improvements: [] })
+    ).not.toBe(
+      reviewSignature({ ...base, strengths: ["a"], improvements: ["b"] })
+    );
   });
 });

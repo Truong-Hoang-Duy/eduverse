@@ -20,6 +20,7 @@ import {
   type ExistingReview,
   isHandled,
   type PriorSelection,
+  reviewSignature,
 } from "./review-status";
 
 type StatusFilter = "all" | "done" | "pending";
@@ -142,7 +143,10 @@ export function ReviewList({
       ) : (
         filtered.map((student) => (
           <ReviewEditor
-            key={student.id}
+            // Chữ ký dữ liệu đã lưu nằm trong key — xem `reviewSignature`.
+            key={`${student.id}:${reviewSignature(
+              reviewByStudentId.get(student.id) ?? null
+            )}`}
             sessionId={sessionId}
             sessionTitle={sessionTitle}
             sessionContent={sessionContent}

@@ -36,3 +36,27 @@ export function isReviewed(existing: ExistingReview | null): boolean {
 export function isHandled(existing: ExistingReview | null): boolean {
   return Boolean(existing?.is_absent) || isReviewed(existing);
 }
+
+/**
+ * Chữ ký của dòng nhận xét ĐÃ LƯU — ghép vào `key` của `ReviewEditor` để React
+ * DỰNG LẠI ô đó khi dữ liệu dưới DB đổi.
+ *
+ * Vì sao cần: `ReviewEditor` khởi tạo state bằng `useState(existing?...)`, mà
+ * `useState` chỉ đọc giá trị đầu ĐÚNG MỘT LẦN. Sau khi "áp nhận xét từ buổi
+ * trước" ghi hàng loạt rồi `revalidatePath`, props mới xuống nhưng state cũ vẫn
+ * y nguyên → GV bấm Lưu, thấy báo thành công, mà các ô bên dưới KHÔNG đổi cho
+ * tới khi tải lại trang. Đổi `key` là cách rẻ nhất để ép đọc lại.
+ *
+ * Đổi key CHỈ ảnh hưởng đúng em có dữ liệu đổi — em khác đang sửa dở không mất
+ * (trừ lúc áp hàng loạt, khi đó mọi em đều đổi và mất phần chưa lưu là đúng ý).
+ */
+export function reviewSignature(existing: ExistingReview | null): string {
+  if (!existing) return "empty";
+  return [
+    existing.strengths.join("|"),
+    existing.improvements.join("|"),
+    existing.academic_level ?? "",
+    existing.is_absent ? "1" : "0",
+    existing.ai_generated_comment ?? "",
+  ].join("~");
+}

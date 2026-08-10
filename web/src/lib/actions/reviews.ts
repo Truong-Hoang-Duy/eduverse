@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { isAcademicLevel } from "@/lib/academic-levels";
+import { academicLevelLabel, isAcademicLevel } from "@/lib/academic-levels";
 import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
@@ -60,6 +60,288 @@ export async function saveReview(
 
   revalidatePath(`/teacher/sessions/${sessionId}`);
   return { success: isAbsent ? "Đã đánh dấu vắng mặt." : "Đã lưu nhận xét." };
+}
+
+/** Buổi trước gần nhất lấy làm ngữ cảnh chống lặp lời văn — khớp
+ *  `MAX_PRIOR_COMMENTS` ở `sessions/[id]/page.tsx`. */
+const MAX_PRIOR_COMMENTS = 3;
+
+/** Gộp (union, bỏ trùng không phân biệt hoa/thường). GIỮ thứ tự hiện có trước,
+ *  thứ copy sang nối vào sau — cùng luật với nút copy từng em ở review-editor. */
+function mergeUnique(current: string[], incoming: string[]): string[] {
+  const seen = new Set(current.map((s) => s.toLowerCase()));
+  const merged = [...current];
+  for (const item of incoming) {
+    if (!seen.has(item.toLowerCase())) {
+      seen.add(item.toLowerCase());
+      merged.push(item);
+    }
+  }
+  return merged;
+}
+
+interface ApplyRow {
+  student_id: string;
+  strengths: string[];
+  improvements: string[];
+  academic_level: string | null;
+  ai_generated_comment: string | null;
+  is_absent: boolean;
+}
+
+export interface ApplyFromSessionResult {
+  /** Số em được áp tích chọn (đã lưu DB). */
+  applied: number;
+  /** Số em AI viết được nhận xét. */
+  generated: number;
+  /** Số em AI KHÔNG viết được (thường là hết lượt Gemini) — để trống, GV đổi
+   *  key rồi bấm "AI tạo nhận xét" ở từng em. */
+  aiFailed: number;
+  error?: string;
+}
+
+/**
+ * Áp tích chọn của MỘT buổi trước sang TẤT CẢ học viên của buổi hiện tại, rồi
+ * gọi AI viết nhận xét cho từng em (yêu cầu user 2026-08-06).
+ *
+ * Luật đã chốt:
+ * - GỘP chứ không ghi đè: thứ GV đã tích ở buổi này được giữ, chỉ thêm mục mới
+ *   từ buổi nguồn. `academic_level` chỉ điền khi buổi này CHƯA chọn.
+ * - Chỉ copy điểm mạnh / cần cải thiện / xếp loại. KHÔNG copy câu nhận xét gửi
+ *   phụ huynh của buổi nguồn (nó nói về nội dung buổi đó, dán sang là sai bài).
+ * - Bỏ qua em đã đánh VẮNG ở buổi này, và em vắng/trống tích ở buổi nguồn.
+ *
+ * 🔴 LƯU TÍCH CHỌN TRƯỚC, gọi AI SAU — và mỗi em một lời gọi độc lập
+ * (`allSettled`): hạn mức Gemini free chỉ 20 lượt/NGÀY tính theo Google Cloud
+ * project, lớp đông là chắc chắn hết giữa chừng. Em nào lỗi thì BỎ TRỐNG câu
+ * nhận xét, phần tích chọn vẫn còn nguyên — GV đổi key rồi bấm "AI tạo nhận
+ * xét" ở từng em (user chốt vậy). Đừng đổi sang rollback-toàn-bộ khi 1 em lỗi.
+ */
+export async function applyReviewsFromSession(input: {
+  sessionId: string;
+  sourceSessionId: string;
+}): Promise<ApplyFromSessionResult> {
+  const empty = { applied: 0, generated: 0, aiFailed: 0 };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ...empty, error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const { data: sessionData } = await supabase
+    .from("sessions")
+    .select(
+      "id, class_id, session_number, title, content, review_context, is_periodic_test"
+    )
+    .eq("id", input.sessionId)
+    .single();
+  if (!sessionData) {
+    return { ...empty, error: "Không tìm thấy buổi học." };
+  }
+
+  // Buổi nguồn PHẢI cùng lớp — chặn dán nhận xét từ lớp khác sang (RLS cho GV
+  // đọc mọi buổi mình dạy, nên phải tự kiểm ở đây).
+  const { data: sourceSession } = await supabase
+    .from("sessions")
+    .select("id, class_id, session_number")
+    .eq("id", input.sourceSessionId)
+    .single();
+  if (!sourceSession || sourceSession.class_id !== sessionData.class_id) {
+    return { ...empty, error: "Buổi nguồn không thuộc lớp này." };
+  }
+  if (sourceSession.id === sessionData.id) {
+    return { ...empty, error: "Không thể áp nhận xét từ chính buổi này." };
+  }
+
+  const [
+    { data: enrollments },
+    { data: sourceRows },
+    { data: currentRows },
+    { data: priorRows },
+  ] = await Promise.all([
+    supabase
+      .from("enrollments")
+      .select("profiles(id, full_name)")
+      .eq("class_id", sessionData.class_id)
+      .order("joined_at"),
+    supabase
+      .from("student_reviews")
+      .select("student_id, strengths, improvements, academic_level, ai_generated_comment, is_absent")
+      .eq("session_id", input.sourceSessionId),
+    supabase
+      .from("student_reviews")
+      .select("student_id, strengths, improvements, academic_level, ai_generated_comment, is_absent")
+      .eq("session_id", input.sessionId),
+    // Lời văn các buổi TRƯỚC để AI không lặp cách diễn đạt.
+    supabase
+      .from("student_reviews")
+      .select(
+        "student_id, ai_generated_comment, sessions!inner(session_number, class_id)"
+      )
+      .eq("sessions.class_id", sessionData.class_id)
+      .lt("sessions.session_number", sessionData.session_number)
+      .not("ai_generated_comment", "is", null),
+  ]);
+
+  const students = ((enrollments ?? []) as unknown as {
+    profiles: { id: string; full_name: string } | null;
+  }[])
+    .map((e) => e.profiles)
+    .filter((p): p is { id: string; full_name: string } => p !== null);
+  if (students.length === 0) {
+    return { ...empty, error: "Lớp chưa có học viên nào." };
+  }
+
+  const sourceByStudent = new Map(
+    ((sourceRows ?? []) as ApplyRow[]).map((r) => [r.student_id, r])
+  );
+  const currentByStudent = new Map(
+    ((currentRows ?? []) as ApplyRow[]).map((r) => [r.student_id, r])
+  );
+
+  const priorCommentsByStudent = new Map<string, string[]>();
+  for (const row of (priorRows ?? []) as unknown as {
+    student_id: string;
+    ai_generated_comment: string | null;
+    sessions: { session_number: number } | null;
+  }[]) {
+    const list = priorCommentsByStudent.get(row.student_id) ?? [];
+    list.push(
+      `Buổi ${row.sessions?.session_number}: ${row.ai_generated_comment}`
+    );
+    priorCommentsByStudent.set(row.student_id, list);
+  }
+
+  // --- Bước 1: gộp tích chọn rồi lưu (không đụng Gemini) ---
+  const toUpsert: {
+    session_id: string;
+    student_id: string;
+    strengths: string[];
+    improvements: string[];
+    academic_level: string | null;
+    is_absent: boolean;
+    created_by: string;
+  }[] = [];
+  const applied: {
+    studentId: string;
+    studentName: string;
+    strengths: string[];
+    improvements: string[];
+    academicLevel: string | null;
+    hasComment: boolean;
+  }[] = [];
+
+  for (const student of students) {
+    const current = currentByStudent.get(student.id) ?? null;
+    if (current?.is_absent) continue; // đã đánh vắng buổi này — không nhận xét
+
+    const source = sourceByStudent.get(student.id);
+    if (!source || source.is_absent) continue;
+    if (source.strengths.length === 0 && source.improvements.length === 0) {
+      continue;
+    }
+
+    const strengths = mergeUnique(current?.strengths ?? [], source.strengths);
+    const improvements = mergeUnique(
+      current?.improvements ?? [],
+      source.improvements
+    );
+    // Giữ mức GV đã chọn ở buổi này; chỉ điền khi còn trống.
+    const academicLevel =
+      current?.academic_level ??
+      (source.academic_level && isAcademicLevel(source.academic_level)
+        ? source.academic_level
+        : null);
+
+    toUpsert.push({
+      session_id: input.sessionId,
+      student_id: student.id,
+      strengths,
+      improvements,
+      academic_level: academicLevel,
+      is_absent: false,
+      created_by: user.id,
+    });
+    applied.push({
+      studentId: student.id,
+      studentName: student.full_name,
+      strengths,
+      improvements,
+      academicLevel,
+      hasComment: Boolean(current?.ai_generated_comment),
+    });
+  }
+
+  if (toUpsert.length === 0) {
+    return {
+      ...empty,
+      error: "Buổi nguồn chưa có tích chọn nào để áp sang (hoặc các em đã đánh vắng).",
+    };
+  }
+
+  const { error: upsertError } = await supabase
+    .from("student_reviews")
+    .upsert(toUpsert, { onConflict: "session_id,student_id" });
+  if (upsertError) {
+    return { ...empty, error: `Không lưu được nhận xét: ${upsertError.message}` };
+  }
+
+  // --- Bước 2: gọi AI cho từng em (tích chọn đã an toàn trong DB) ---
+  // Bỏ qua em đã có sẵn câu nhận xét — khỏi phí lượt Gemini khi bấm lại lần 2.
+  const needComment = applied.filter((a) => !a.hasComment);
+  const apiKey = await getMyApiKey();
+  const sessionTitle =
+    sessionData.title ?? `Buổi ${sessionData.session_number}`;
+
+  const results = await Promise.allSettled(
+    needComment.map(async (a) => {
+      const data = await callAiService<{ comment: string }>("/generate-review", {
+        api_key: apiKey,
+        student_name: a.studentName,
+        session_title: sessionTitle,
+        session_content: sessionData.content ?? "",
+        strengths: a.strengths,
+        improvements: a.improvements,
+        session_context: sessionData.review_context || null,
+        is_periodic_test: sessionData.is_periodic_test,
+        test_process_notes: [],
+        previous_comment: null,
+        prior_comments: (priorCommentsByStudent.get(a.studentId) ?? []).slice(
+          -MAX_PRIOR_COMMENTS
+        ),
+        academic_level: academicLevelLabel(a.academicLevel),
+      });
+      return { studentId: a.studentId, comment: data.comment };
+    })
+  );
+
+  const comments = results
+    .filter(
+      (r): r is PromiseFulfilledResult<{ studentId: string; comment: string }> =>
+        r.status === "fulfilled" && Boolean(r.value.comment)
+    )
+    .map((r) => r.value);
+
+  // Ghi từng câu một: `upsert` hàng loạt sẽ ghi đè cả strengths/improvements
+  // vừa lưu ở bước 1 bằng giá trị mặc định của cột nếu thiếu khóa.
+  await Promise.allSettled(
+    comments.map((c) =>
+      supabase
+        .from("student_reviews")
+        .update({ ai_generated_comment: c.comment })
+        .eq("session_id", input.sessionId)
+        .eq("student_id", c.studentId)
+    )
+  );
+
+  revalidatePath(`/teacher/sessions/${input.sessionId}`);
+  return {
+    applied: toUpsert.length,
+    generated: comments.length,
+    aiFailed: needComment.length - comments.length,
+  };
 }
 
 export interface StudentSummary {
