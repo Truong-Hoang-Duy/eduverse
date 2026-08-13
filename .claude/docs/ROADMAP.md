@@ -788,6 +788,17 @@
 - [x] Unit test mới `skill-groups.test.ts` (5 ca); lint + typecheck + 145 unit
       test + build sạch.
 
+### Đợt 56 (`feature/seed-default-combos`) — hồi sinh bộ mẫu combo, tách theo loại
+- [x] **Hồi sinh `seedDefaultCombos`** (gỡ hẳn ở Đợt khi chia `review_combos.type`
+      vì bản cũ trộn cả điểm mạnh lẫn cần cải thiện theo "chân dung học viên")
+      — user yêu cầu lại nhưng ĐỔI THIẾT KẾ cho khớp luật 1-loại/bộ.
+- [x] 32 bộ mẫu, TÁCH SẴN theo loại (16 tích cực + 16 cải thiện —
+      `STRENGTH_COMBO_TEMPLATES`/`IMPROVEMENT_COMBO_TEMPLATES`), mỗi bộ rút
+      nhãn từ 1-3 nhóm kỹ năng CÙNG loại, trải hết 11 nhóm (bỏ `other`).
+- [x] Nút "⚡ Thêm nhanh bộ mẫu" quay lại trang Cài đặt (khối combo), rút nhãn
+      từ chính danh mục của GV; bỏ qua bộ trùng tên và bộ rỗng.
+- [x] Không migration (bảng/cột đã có sẵn từ Đợt tách loại).
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

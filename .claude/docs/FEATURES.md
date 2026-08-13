@@ -159,16 +159,20 @@
 - **Bộ combo nhận xét** ("nhận xét nhanh", user chốt 2026-07-27 — bảng
   `review_combos`): TÁCH RÕ 2 nơi.
   - **Tạo/quản lý ở trang Cài đặt** (`combo-manager.tsx`, khối "Bộ combo nhận
-    xét"): đặt tên bộ (VD "Học tốt, chưa phát biểu") + chọn nhiều điểm mạnh/cần
-    cải thiện từ danh mục qua `MultiSelect`, lưu; xem danh sách + xóa
-    (ConfirmDialog). GV soạn sẵn vài bộ mẫu theo tiêu chuẩn hợp lý.
-  - **Nút "⚡ Thêm nhanh bộ mẫu"** (`seedDefaultCombos`): dựng ~22 bộ theo "chân
-    dung học viên", gồm cả các chân dung PHA TRỘN (yếu/trung bình mặt này nhưng
-    mạnh mặt khác — VD "Thao tác tốt, kiến thức còn yếu", "Nhanh nhưng ẩu",
-    "Biết dùng AI, lệ thuộc công cụ"...). Rút nhãn từ CHÍNH danh mục của GV theo
-    nhóm kỹ năng (trải hết 10 nhóm, BỎ `presentation` vì tùy buổi + `other`).
-    Bỏ qua bộ trùng tên (bấm nhiều lần không nhân đôi) và bộ rỗng. Template ở
-    `review-combos.ts`.
+    xét"): **chia 2 CỘT theo loại** (💪 Tích cực / 🎯 Cải thiện, cột `type`,
+    thêm 2026-08-06) — một bộ CHỈ chứa điểm mạnh HOẶC chỉ chứa điểm cần cải
+    thiện, không pha trộn; đặt tên bộ + chọn nhiều nhãn CÙNG loại qua
+    `MultiSelect`. **Sửa được** (tên + nhãn), loại CỐ ĐỊNH từ lúc tạo. Mỗi thẻ
+    combo **đóng mặc định** (tên + số lượng nhãn), bấm mới xổ ra danh sách
+    nhãn — bộ nhiều nhãn từng đẩy trang dài ra.
+  - **Nút "⚡ Thêm nhanh bộ mẫu"** (`seedDefaultCombos`, hồi sinh có sửa lại
+    2026-08-13 — bản trước gỡ hẳn lúc chia `type` vì không tách tự động được
+    bộ đã pha trộn): dựng **32 bộ mẫu, TÁCH SẴN theo loại** (16 tích cực + 16
+    cải thiện — `STRENGTH_COMBO_TEMPLATES`/`IMPROVEMENT_COMBO_TEMPLATES` trong
+    `review-combos.ts`), mỗi bộ rút nhãn từ 1-3 nhóm kỹ năng CÙNG loại (trải
+    hết 11 nhóm, bỏ `other` vì là catch-all). Rút nhãn từ CHÍNH danh mục của
+    GV nên áp xong khớp catalog; bỏ qua bộ trùng tên (bấm nhiều lần không
+    nhân đôi) và bộ rỗng (nhóm tham chiếu chưa có nhãn nào).
   - **Áp ở mỗi học viên** (`ComboBar` trong `sessions/[id]`): CHỈ 1 combo "⚡ Áp
     dụng bộ combo..." → gộp union cả bộ vào lựa chọn hiện tại. KHÔNG còn nút
     "Lưu bộ"/"Quản lý bộ" tại chỗ (đã bỏ 2026-07-27 — dồn về Cài đặt).
