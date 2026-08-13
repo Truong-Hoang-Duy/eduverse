@@ -770,6 +770,24 @@
       nó gọi thẳng thân Server Action, không đi qua lớp React bọc quanh
 - [x] Deploy `main` = `38aebbd` (Vercel **và Render** — ai-service ĐỔI)
 
+### Đợt 55 (`feature/custom-skill-groups`) — giáo viên tự thêm nhóm kỹ năng
+- [x] **Đảo ngược quyết định cũ** "12 nhóm kỹ năng cố định" (DECISIONS.md) —
+      lý do chốt cũ (chi phí sửa CHECK constraint mỗi lần thêm nhóm, đã tốn
+      công 2 lần: Đợt 15/16) chính là nỗi đau tính năng này giải quyết.
+- [x] Bảng mới `review_skill_groups` (id, teacher_id, label) — RLS theo GV,
+      cùng khuôn `review_combos`. 12 nhóm nền vẫn cố định trong
+      `skill-groups.ts`, KHÔNG đụng dữ liệu review_options cũ.
+- [x] `review_options.skill_group` chấp nhận slug nền HOẶC id nhóm tự thêm —
+      gỡ CHECK constraint cũ, sở hữu validate ở Server Action
+      (`resolveSkillGroup`) vì không diễn tả được union đó bằng CHECK/FK.
+- [x] Cài đặt → "Danh mục nhận xét": khối "Nhóm kỹ năng tự thêm" (thêm/xóa),
+      accordion theo nhóm giờ gồm cả nhóm tự thêm. Trang buổi học: bộ lọc nhóm
+      cũng thấy nhóm tự thêm.
+- [x] Xóa nhóm tự thêm → lựa chọn đang thuộc nhóm chuyển về "📌 Khác" (user
+      chốt 2026-08-12), không chặn xóa, không mất dữ liệu.
+- [x] Unit test mới `skill-groups.test.ts` (5 ca); lint + typecheck + 145 unit
+      test + build sạch.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

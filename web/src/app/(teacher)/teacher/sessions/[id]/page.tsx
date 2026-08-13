@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { listMyCombos } from "@/lib/actions/review-combos";
+import { listMySkillGroups } from "@/lib/actions/skill-groups";
 import { requireProfile } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -92,6 +93,7 @@ export default async function SessionDetailPage({
     { data: templatesData },
     { data: priorReviewsData },
     combos,
+    customGroups,
   ] = await Promise.all([
     supabase
       .from("enrollments")
@@ -126,6 +128,7 @@ export default async function SessionDetailPage({
       .eq("sessions.class_id", session.class_id)
       .lt("sessions.session_number", session.session_number),
     listMyCombos(),
+    listMySkillGroups(),
   ]);
 
   const students = ((enrollments ?? []) as unknown as EnrollmentRow[])
@@ -256,6 +259,7 @@ export default async function SessionDetailPage({
               priorCommentsByStudentId={priorCommentsByStudentId}
               priorSelectionsByStudentId={priorSelectionsByStudentId}
               combos={combos}
+              customGroups={customGroups}
             />
           )}
         </CardContent>

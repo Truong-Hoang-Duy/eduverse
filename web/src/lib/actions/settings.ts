@@ -2,16 +2,31 @@
 
 import { revalidatePath } from "next/cache";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+import type { Database } from "@/lib/database.types";
 import { SKILL_GROUPS, type SkillGroup } from "@/lib/skill-groups";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
 const VALID_CATEGORIES = ["strength", "improvement", "test_process"] as const;
 
-function asSkillGroup(value: string): SkillGroup {
-  return SKILL_GROUPS.some((g) => g.value === value)
-    ? (value as SkillGroup)
-    : "other";
+/** `skill_group` chấp nhận 1 trong 12 giá trị cố định, HOẶC id của một nhóm
+ *  giáo viên tự thêm (`review_skill_groups`, phải THUỘC chính giáo viên này)
+ *  — giá trị lạ/không thuộc về mình rơi về "other". */
+async function resolveSkillGroup(
+  supabase: SupabaseClient<Database>,
+  teacherId: string,
+  value: string
+): Promise<string> {
+  if (SKILL_GROUPS.some((g) => g.value === value)) return value;
+  const { data } = await supabase
+    .from("review_skill_groups")
+    .select("id")
+    .eq("id", value)
+    .eq("teacher_id", teacherId)
+    .maybeSingle();
+  return data ? value : "other";
 }
 
 // ---------- Danh mục nhận xét (review_options) ----------
@@ -22,7 +37,7 @@ export async function addReviewOption(
 ): Promise<ActionResult> {
   const category = String(formData.get("category") ?? "");
   const label = String(formData.get("label") ?? "").trim();
-  const skillGroup = asSkillGroup(String(formData.get("skill_group") ?? ""));
+  const rawSkillGroup = String(formData.get("skill_group") ?? "");
 
   if (!VALID_CATEGORIES.includes(category as (typeof VALID_CATEGORIES)[number])) {
     return { error: "Danh mục không hợp lệ." };
@@ -38,6 +53,8 @@ export async function addReviewOption(
   if (!user) {
     return { error: "Phiên đăng nhập hết hạn." };
   }
+
+  const skillGroup = await resolveSkillGroup(supabase, user.id, rawSkillGroup);
 
   const { error } = await supabase
     .from("review_options")

@@ -12,7 +12,12 @@ import {
   deleteReviewOption,
   seedDefaultOptions,
 } from "@/lib/actions/settings";
-import { SKILL_GROUPS } from "@/lib/skill-groups";
+import { addSkillGroup, deleteSkillGroup } from "@/lib/actions/skill-groups";
+import {
+  mergeSkillGroups,
+  type CustomSkillGroupRow,
+  type SkillGroupOption,
+} from "@/lib/skill-groups";
 import type { ActionResult } from "@/lib/types";
 
 export interface OptionRow {
@@ -35,7 +40,7 @@ function GroupAccordion({
   options,
 }: {
   category: "strength" | "improvement";
-  group: (typeof SKILL_GROUPS)[number];
+  group: SkillGroupOption;
   options: OptionRow[];
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
@@ -109,15 +114,17 @@ function GroupAccordion({
 function OptionColumn({
   category,
   options,
+  groups,
 }: {
   category: "strength" | "improvement";
   options: OptionRow[];
+  groups: SkillGroupOption[];
 }) {
   return (
     <div className="space-y-3">
       <p className="text-sm font-medium">{CATEGORY_LABELS[category]}</p>
       <div className="space-y-2">
-        {SKILL_GROUPS.map((group) => (
+        {groups.map((group) => (
           <GroupAccordion
             key={group.value}
             category={category}
@@ -130,9 +137,67 @@ function OptionColumn({
   );
 }
 
-export function OptionManager({ options }: { options: OptionRow[] }) {
+/** Quản lý nhóm kỹ năng giáo viên TỰ THÊM — 12 nhóm nền không sửa/xóa được ở
+ *  đây (cố định trong `skill-groups.ts`), chỉ nhóm tự thêm mới có nút xóa. */
+function SkillGroupManager({ customGroups }: { customGroups: CustomSkillGroupRow[] }) {
+  const [state, formAction, pending] = useActionState<ActionResult, FormData>(
+    addSkillGroup,
+    {}
+  );
+
+  return (
+    <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+      <p className="text-sm font-medium">Nhóm kỹ năng tự thêm</p>
+      {customGroups.length > 0 && (
+        <ul className="flex flex-wrap gap-2">
+          {customGroups.map((g) => (
+            <li key={g.id}>
+              <ConfirmDialog
+                trigger={
+                  <Badge
+                    variant="secondary"
+                    className="cursor-pointer gap-1.5 rounded-md pr-1.5 text-xs font-normal hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    {g.label}
+                    <span aria-hidden>✕</span>
+                  </Badge>
+                }
+                title="Xóa nhóm kỹ năng này?"
+                description={`"${g.label}" sẽ không còn hiện trong danh sách nhóm. Các lựa chọn đang thuộc nhóm này chuyển về "📌 Khác", không bị mất.`}
+                action={deleteSkillGroup}
+                fields={{ id: g.id }}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+      <form action={formAction} className="flex gap-2">
+        <Input
+          name="label"
+          placeholder="Thêm nhóm kỹ năng mới (VD: 🎨 Thiết kế)..."
+          className="h-8 flex-1"
+        />
+        <Button type="submit" size="sm" variant="outline" disabled={pending}>
+          Thêm nhóm
+        </Button>
+      </form>
+      <FormMessage result={state} />
+    </div>
+  );
+}
+
+export function OptionManager({
+  options,
+  customGroups,
+}: {
+  options: OptionRow[];
+  customGroups: CustomSkillGroupRow[];
+}) {
+  const groups = mergeSkillGroups(customGroups);
+
   return (
     <div className="space-y-4">
+      <SkillGroupManager customGroups={customGroups} />
       {options.length === 0 && (
         <form action={seedDefaultOptions}>
           <Button type="submit" size="sm" variant="secondary">
@@ -147,10 +212,12 @@ export function OptionManager({ options }: { options: OptionRow[] }) {
         <OptionColumn
           category="strength"
           options={options.filter((o) => o.category === "strength")}
+          groups={groups}
         />
         <OptionColumn
           category="improvement"
           options={options.filter((o) => o.category === "improvement")}
+          groups={groups}
         />
       </div>
     </div>

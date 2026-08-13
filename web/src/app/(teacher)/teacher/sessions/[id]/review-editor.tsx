@@ -30,7 +30,11 @@ import {
 import { generateAiReview, saveReview } from "@/lib/actions/reviews";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
 import { addReviewOption, deleteReviewOption } from "@/lib/actions/settings";
-import { SKILL_GROUPS } from "@/lib/skill-groups";
+import {
+  mergeSkillGroups,
+  type CustomSkillGroupRow,
+  type SkillGroupOption,
+} from "@/lib/skill-groups";
 import type { ActionResult } from "@/lib/types";
 
 import { ComboBar } from "./combo-bar";
@@ -47,9 +51,11 @@ export interface ReviewOptionItem {
 function GroupFilter({
   value,
   onChange,
+  groups,
 }: {
   value: string;
   onChange: (v: string) => void;
+  groups: SkillGroupOption[];
 }) {
   return (
     <Select value={value} onValueChange={onChange}>
@@ -62,7 +68,7 @@ function GroupFilter({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">Tất cả nhóm</SelectItem>
-        {SKILL_GROUPS.map((g) => (
+        {groups.map((g) => (
           <SelectItem key={g.value} value={g.value}>
             {g.label}
           </SelectItem>
@@ -95,6 +101,7 @@ export function ReviewEditor({
   priorComments,
   copySources,
   combos,
+  customGroups,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -115,6 +122,8 @@ export function ReviewEditor({
   copySources?: CopySource[];
   /** Bộ combo lưu sẵn của GV — áp cả bộ điểm mạnh/cải thiện 1 chạm. */
   combos?: ReviewCombo[];
+  /** Nhóm kỹ năng GV tự thêm (bên cạnh 12 nhóm nền cố định). */
+  customGroups?: CustomSkillGroupRow[];
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     saveReview,
@@ -175,6 +184,7 @@ export function ReviewEditor({
   // Bộ lọc nhóm kỹ năng của từng combo box — mặc định "all" (không lọc).
   const [strengthGroup, setStrengthGroup] = useState("all");
   const [improvementGroup, setImprovementGroup] = useState("all");
+  const allGroups = mergeSkillGroups(customGroups ?? []);
 
   // Gõ tự do NGAY TRONG ô tick (MultiSelect onCreate): thêm vào review + lưu vào
   // danh mục dùng chung (review_options) để lần sau chọn lại được. Không còn ô
@@ -423,7 +433,11 @@ export function ReviewEditor({
           <div className="space-y-1.5">
             <div className="flex h-7 items-center justify-between gap-2">
               <p className="text-sm font-medium">💪 Điểm mạnh</p>
-              <GroupFilter value={strengthGroup} onChange={setStrengthGroup} />
+              <GroupFilter
+                value={strengthGroup}
+                onChange={setStrengthGroup}
+                groups={allGroups}
+              />
             </div>
             <MultiSelect
               options={strengthOptions}
@@ -445,6 +459,7 @@ export function ReviewEditor({
               <GroupFilter
                 value={improvementGroup}
                 onChange={setImprovementGroup}
+                groups={allGroups}
               />
             </div>
             <MultiSelect
