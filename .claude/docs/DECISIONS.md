@@ -484,9 +484,12 @@
   Trang Cài đặt chia 2 CỘT theo loại; combo-bar (áp ở từng HV) chia 2
   `SelectGroup`. **Migration XÓA SẠCH `review_combos` cũ** (kể cả bộ do nút
   "Thêm nhanh bộ mẫu" tạo) vì không tách tự động được bộ đã pha trộn — user
-  chốt vậy khi được hỏi, TỰ TẠO LẠI. Nút "⚡ Thêm nhanh bộ mẫu" + toàn bộ
-  `COMBO_TEMPLATES`/`seedDefaultCombos` đã GỠ HẲN khỏi code (không còn seed
-  mẫu dựng sẵn) — đừng hồi sinh trừ khi user yêu cầu lại.
+  chốt vậy khi được hỏi, TỰ TẠO LẠI. Nút "⚡ Thêm nhanh bộ mẫu" +
+  `COMBO_TEMPLATES`/`seedDefaultCombos` đã GỠ HẲN khỏi code lúc đó — **hồi
+  sinh lại 2026-08-13** (user yêu cầu), nhưng ĐỔI THIẾT KẾ: 2 danh sách mẫu
+  riêng theo `type` (`STRENGTH_COMBO_TEMPLATES`/`IMPROVEMENT_COMBO_TEMPLATES`
+  trong `review-combos.ts`), mỗi bộ chỉ 1-3 nhóm kỹ năng CÙNG LOẠI, không còn
+  "chân dung" pha trộn 2 loại như bản cũ.
 - **Thẻ nhận xét từng HV: combo/copy/xếp loại/quá trình làm bài LUÔN hiện
   thẳng, KHÔNG giấu trong accordion phụ** (chốt cuối 2026-08-05). Đã thử
   accordion "⚙️ Tùy chọn thêm" trước đó rồi BỎ NGAY vì combo là thao tác dùng
@@ -501,8 +504,9 @@
   sửa chỉ đổi tên + nhãn CÙNG loại. Cài đặt chia 2 CỘT; combo-bar chia 2
   `SelectGroup`. Migration **XÓA SẠCH `review_combos` cũ** (không tách tự
   động được bộ đã pha trộn) — user chốt vậy, TỰ TẠO LẠI. Gỡ hẳn nút "⚡ Thêm
-  nhanh bộ mẫu" + `COMBO_TEMPLATES`/`seedDefaultCombos` — đừng hồi sinh trừ
-  khi user yêu cầu lại.
+  nhanh bộ mẫu" + `COMBO_TEMPLATES`/`seedDefaultCombos` lúc đó — **hồi sinh
+  lại 2026-08-13** với 2 danh sách mẫu tách riêng theo `type` (xem mục ở
+  trên), không còn trộn loại như bản cũ.
 - **"Áp nhận xét từ buổi trước cho CẢ LỚP" GỘP chứ không GHI ĐÈ, và LƯU TÍCH
   CHỌN TRƯỚC — gọi AI SAU, mỗi em một lời gọi độc lập** (2026-08-06,
   `applyReviewsFromSession` trong `reviews.ts`). Lý do: hạn mức Gemini 20
