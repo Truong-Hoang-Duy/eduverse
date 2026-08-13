@@ -13,6 +13,7 @@ import {
   deleteReviewCombo,
   type ReviewCombo,
   type ReviewComboType,
+  seedDefaultCombos,
   updateReviewCombo,
 } from "@/lib/actions/review-combos";
 import type { ActionResult } from "@/lib/types";
@@ -269,6 +270,28 @@ function ComboColumn({
  * thiện, không pha trộn. Ở mỗi học viên GV chỉ CHỌN ÁP một bộ (không tạo/sửa
  * tại chỗ) — xem sessions/[id]/combo-bar.
  */
+/** Thêm nhanh loạt bộ mẫu dựng từ chính danh mục của GV — hồi sinh có sửa lại
+ *  (yêu cầu user 2026-08-13): bản cũ trộn điểm mạnh + cần cải thiện theo
+ *  "chân dung học viên", giờ mỗi bộ mẫu CHỈ MỘT LOẠI (khớp `review_combos.type`). */
+function SeedCombosButton() {
+  const [state, formAction, pending] = useActionState<ActionResult, FormData>(
+    seedDefaultCombos,
+    {}
+  );
+
+  return (
+    <form action={formAction} className="space-y-1.5">
+      <Button type="submit" size="sm" variant="secondary" disabled={pending}>
+        {pending ? "Đang thêm..." : "⚡ Thêm nhanh bộ mẫu"}
+      </Button>
+      <Badge variant="outline" className="ml-2 text-xs">
+        32 bộ (16 tích cực + 16 cải thiện), không trùng bộ đã có
+      </Badge>
+      <FormMessage result={state} />
+    </form>
+  );
+}
+
 export function ComboManager({
   combos,
   options,
@@ -284,17 +307,20 @@ export function ComboManager({
     .map((o) => ({ id: o.id, label: o.label }));
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2">
-      <ComboColumn
-        type="strength"
-        combos={combos.filter((c) => c.type === "strength")}
-        catalogOptions={strengthOptions}
-      />
-      <ComboColumn
-        type="improvement"
-        combos={combos.filter((c) => c.type === "improvement")}
-        catalogOptions={improvementOptions}
-      />
+    <div className="space-y-4">
+      {options.length > 0 && <SeedCombosButton />}
+      <div className="grid gap-6 sm:grid-cols-2">
+        <ComboColumn
+          type="strength"
+          combos={combos.filter((c) => c.type === "strength")}
+          catalogOptions={strengthOptions}
+        />
+        <ComboColumn
+          type="improvement"
+          combos={combos.filter((c) => c.type === "improvement")}
+          catalogOptions={improvementOptions}
+        />
+      </div>
     </div>
   );
 }
