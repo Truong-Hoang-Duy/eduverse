@@ -6,28 +6,38 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-08-12, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-08-13, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Một phiên rất dài (Đợt 48→54) đã merge và deploy hết.
+**Đang làm:** KHÔNG có task dở. Đợt 55 (`feature/custom-skill-groups`) vừa
+merge `develop` → `main` và đẩy production trong phiên này.
 
-**`main` = `origin/main` = `4ed8f96`** — vừa đẩy lên production.
-⚠️ **Có sửa `ai-service/` ở giữa phiên (Đợt 49)** → Render phải deploy lại. Kiểm
-`/health` phải trả `4ed8f96` (hoặc commit mới hơn nếu Render auto-deploy mọi
-push main, kể cả push chỉ đổi `web/`). Các đợt SAU Đợt 49 chỉ đổi `web/`.
+**`main` = `origin/main` = `4ed8f96`** trước khi merge Đợt 55 (xem
+`git log --oneline -1 main` để lấy hash mới nhất — SESSION_NOTES luôn ghi
+chậm hơn merge thật một nhịp, theo đúng nếp cũ của file này).
+⚠️ **Có sửa `ai-service/` ở Đợt 49 (giữa Đợt 48→54)** → Render phải deploy
+lại. Kiểm `/health` phải trả commit mới nhất của `main`. Đợt 55 CHỈ đổi
+`web/` + migration DB, không đụng `ai-service/`.
 
-**3 migration user đã xác nhận CHẠY XONG** (nhưng Claude không tự verify được —
-không query DB trực tiếp):
+🔴 **Migration MỚI `20260812155201_review_skill_groups.sql` CHƯA XÁC NHẬN đã
+dán vào Supabase SQL Editor** — Claude không tự chạy được (mạng chặn cổng
+5432/6543). Tính năng "GV tự thêm nhóm kỹ năng" sẽ KHÔNG hoạt động ở production
+(lỗi thân thiện, không crash trang) cho tới khi dán migration này. An toàn dán
+bất cứ lúc nào (bảng mới + nới lỏng CHECK constraint, không đụng dữ liệu cũ).
+
+**3 migration khác user đã xác nhận CHẠY XONG trước đó** (Claude không tự
+verify được — không query DB trực tiếp):
 `20260805000000_session_review_context_drop_advice.sql`,
 `20260805010000_periodic_test_review_split.sql`,
 `20260806000000_review_combos_single_type.sql` (cái này **XÓA SẠCH** dữ liệu
 `review_combos` cũ của MỌI giáo viên — cố ý, user đã chốt).
 
-⚠️ **CHƯA nghiệm thu bằng mắt trên production**: cả loạt tính năng Đợt 48→54 —
-đặc biệt "áp nhận xét từ buổi trước cho cả lớp" (gọi AI hàng loạt, dễ vỡ nếu
-sai) và "xem buổi khác để tham khảo". Chỉ chạy qua lint/typecheck/test/build,
-KHÔNG có E2E nào phủ các action mới (`applyReviewsFromSession`,
-`listSessionContentReferences`, `updateReviewCombo`, `createReviewCombo` bản
-mới có `type`).
+⚠️ **CHƯA nghiệm thu bằng mắt trên production**: cả loạt tính năng Đợt 48→54
+(đặc biệt "áp nhận xét từ buổi trước cho cả lớp" — gọi AI hàng loạt, dễ vỡ nếu
+sai — và "xem buổi khác để tham khảo") **VÀ Đợt 55** (thêm/xóa nhóm kỹ năng).
+Chỉ chạy qua lint/typecheck/test/build — môi trường này không có trình duyệt
+để tự bấm thử. KHÔNG có E2E nào phủ các action mới: `applyReviewsFromSession`,
+`listSessionContentReferences`, `updateReviewCombo`/`createReviewCombo` (có
+`type`), và Đợt 55 là `addSkillGroup`/`deleteSkillGroup`/`resolveSkillGroup`.
 
 🔴 **File quy tắc git MỚI: `.claude/docs/GIT-WORKFLOW-RULES.md`** (user thêm
 giữa phiên, không nằm trong docs router của CLAUDE.md — chỉ được nạp vì user
@@ -59,21 +69,22 @@ USERNAME; khóa→lớp→buổi + sao chép lớp + **xem nội dung buổi kh�
 khảo** (buổi trước cùng lớp / cùng buổi số ở lớp khác cùng khóa) + **áp nhận
 xét buổi trước cho cả lớp** (gộp tích chọn + gọi AI hàng loạt); nhận xét AI
 theo buổi (bối cảnh buổi học cấp BUỔI, buổi kiểm tra định kỳ tách 2 phần nhận
-xét) + tổng hợp từng HV; **bộ combo nhận xét CHIA 2 LOẠI** (tích cực/cải
-thiện) có sửa được; tin Zalo cả lớp; khu Chấm bài 3 tab; khu học viên theo
-lớp + Drive; gallery + hồ sơ HV xuyên khóa; API key Gemini riêng; trang vận
-hành `/teacher/admin`; 3 màn chiếu TV; `pnpm dev` tự mở trình duyệt.
+xét, **GV tự thêm nhóm kỹ năng riêng** bên cạnh 12 nhóm nền) + tổng hợp từng
+HV; **bộ combo nhận xét CHIA 2 LOẠI** (tích cực/cải thiện) có sửa được; tin
+Zalo cả lớp; khu Chấm bài 3 tab; khu học viên theo lớp + Drive; gallery + hồ
+sơ HV xuyên khóa; API key Gemini riêng; trang vận hành `/teacher/admin`; 3
+màn chiếu TV; `pnpm dev` tự mở trình duyệt.
 
 ## ✅ Cổng kiểm tra & E2E
 
-`web/`: **lint + typecheck + `pnpm test` (140 unit test) + build**.
-`ai-service/`: **`.venv/Scripts/python -m pytest`** (62 test).
+`web/`: **lint + typecheck + `pnpm test` (145 unit test) + build**.
+`ai-service/`: **`.venv/Scripts/python -m pytest`** (62 test — Đợt 55 không đụng ai-service).
 
 E2E chạy trong `web/` trên DB THẬT (tự tạo, tự dọn), chia **HAI LOẠI** (Đợt 41):
 
 **A. `pnpm test:e2e`** — gọi THẲNG thân Server Action (`web/e2e/*.e2e.ts`).
 Đổi chữ ký hàm là `pnpm typecheck` đỏ, đổi hành vi là bộ này đỏ. **98 ca, CHƯA
-thêm ca nào cho các action mới Đợt 48→54** (xem cảnh báo ở trên).
+thêm ca nào cho các action mới Đợt 48→54 lẫn Đợt 55** (xem cảnh báo ở trên).
 
 🔴 **Bộ này KHÔNG phủ lớp React bọc quanh action** — gọi thẳng thân hàm.
 **E2E xanh ≠ UI chạy được**, vẫn phải bấm thử — đã dính lỗi này 1 lần (Đợt 47,
@@ -109,8 +120,11 @@ sạch data cũ, thẻ nhận xét KHÔNG giấu combo trong accordion (đã th�
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
-- 🟡 **E2E chưa phủ action mới Đợt 48→54** — xem bảng trên. Ưu tiên nếu làm:
-  `applyReviewsFromSession` (rủi ro cao nhất, ghi hàng loạt + gọi AI hàng loạt).
+- 🟡 **E2E chưa phủ action mới Đợt 48→54 lẫn Đợt 55** — xem bảng trên. Ưu tiên
+  nếu làm: `applyReviewsFromSession` (rủi ro cao nhất, ghi hàng loạt + gọi AI
+  hàng loạt); Đợt 55 (`addSkillGroup`/`deleteSkillGroup`) rủi ro thấp hơn
+  nhưng cũng chưa có ca nào, kể cả probe RLS xác nhận GV A không xóa/thấy
+  nhóm của GV B.
 - 🟡 Phần RENDER của component không có test — nghiệm thu bằng mắt (có ý thức).
 - 🟡 `buildOpsReport` đếm dòng bằng `{ head: true }` — nuốt lỗi PostgREST (xem
   DECISIONS.md).
@@ -137,6 +151,28 @@ sạch data cũ, thẻ nhận xét KHÔNG giấu combo trong accordion (đã th�
   `web/scripts/`.
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
+
+### 2026-08-13 — Đợt 55 (`feature/custom-skill-groups`) — GV tự thêm nhóm kỹ năng
+**Đảo ngược quyết định cũ** "12 nhóm kỹ năng cố định" (DECISIONS.md) — lý do
+chốt cũ (chi phí sửa CHECK constraint mỗi lần thêm nhóm, đã tốn công 2 lần:
+Đợt 15/16) chính là nỗi đau tính năng này giải quyết. Bảng mới
+`review_skill_groups` (teacher-owned, RLS như `review_combos`) cho nhóm GV tự
+thêm; 12 nhóm nền vẫn cố định trong `skill-groups.ts`, không đụng dữ liệu
+`review_options` cũ. `skill_group` giờ chấp nhận slug nền HOẶC id nhóm tự
+thêm — gỡ CHECK constraint, sở hữu validate ở Server Action
+(`resolveSkillGroup`) vì không diễn tả được union đó bằng CHECK/FK trên một
+cột text. Cài đặt có khối "Nhóm kỹ năng tự thêm" (thêm/xóa); xóa nhóm chuyển
+lựa chọn đang thuộc về "📌 Khác" thay vì chặn xóa hay mất dữ liệu (user chốt).
+
+**Đồng thời gộp nốt nhánh `docs/handoff-2026-08-12`** — bàn giao phiên Đợt
+48→54 đã viết xong và PUSH cuối phiên trước nhưng CHƯA merge vào
+`develop`/`main` (bị bỏ sót); merge sạch, không xung đột.
+
+**Bài học:** đầu phiên đọc `git branch --show-current` thấy đang đứng ở nhánh
+docs lạ (không phải `main`/`develop`/`feature/*`) — dấu hiệu có bàn giao dở từ
+phiên trước, nên gộp trước khi bắt đầu việc mới để không viết đè/làm mất lịch
+sử đã ghi. Migration mới (`20260812155201`) vẫn cần user tự dán vào Supabase
+SQL Editor — Claude không tự chạy được.
 
 ### 2026-08-12 — Đợt 48→54 (một phiên rất dài, production `4ed8f96`)
 **Nhận xét học viên, đổi liên tục theo phản hồi trực tiếp trên UI:**
