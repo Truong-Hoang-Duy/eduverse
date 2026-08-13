@@ -105,13 +105,22 @@
 - Trang nhận xét theo buổi cho từng học viên: tick **điểm mạnh** / **điểm cần cải
   thiện** từ danh mục `review_options` (GV tự quản lý danh mục này) + ô lời khuyên.
 - **Bộ lọc nhóm kỹ năng** trên mỗi combo box (điểm mạnh / cần cải thiện): 12
-  nhóm — 🧠 Tư duy, ✨ Sáng tạo, 💻 Kỹ năng code, 🖥️ Kỹ năng sử dụng máy tính,
-  🤖 Vận dụng AI, ❓ Đặt câu hỏi, 🌱 Thái độ học tập, ⏰ Kỷ luật/Nề nếp, 📚 Tự
-  học/Nghiên cứu thêm, 🤝 Giao tiếp & hợp tác, 🎤 Thuyết trình, 📌 Khác —
+  nhóm NỀN — 🧠 Tư duy, ✨ Sáng tạo, 💻 Kỹ năng code, 🖥️ Kỹ năng sử dụng máy
+  tính, 🤖 Vận dụng AI, ❓ Đặt câu hỏi, 🌱 Thái độ học tập, ⏰ Kỷ luật/Nề nếp,
+  📚 Tự học/Nghiên cứu thêm, 🤝 Giao tiếp & hợp tác, 🎤 Thuyết trình, 📌 Khác —
   **mặc định "Tất cả nhóm"** (không lọc). Chỉ thu hẹp danh sách hiển thị, KHÔNG
   đổi giá trị đã chọn trước đó. Nhóm lưu ở cột `review_options.skill_group`
-  (`web/src/lib/skill-groups.ts` là nguồn danh sách nhóm dùng chung — SKILL_GROUPS
-  export từ đây, mọi UI khác import lại, không tự khai danh sách nhóm riêng).
+  (`web/src/lib/skill-groups.ts` export `SKILL_GROUPS` — 12 nhóm nền, mọi UI
+  import lại, không tự khai danh sách riêng).
+- **Giáo viên tự thêm nhóm kỹ năng riêng** (yêu cầu user 2026-08-12, khối "Nhóm
+  kỹ năng tự thêm" ở đầu "Danh mục nhận xét" trong Cài đặt): gõ tên nhóm (VD
+  "🎨 Thiết kế") → bấm Thêm, nhóm mới hiện ngay thành accordion mới cùng hàng
+  12 nhóm nền, và trong bộ lọc nhóm ở trang buổi học. Nhóm tự thêm hiện dạng
+  badge có nút ✕ — bấm xóa (`ConfirmDialog`) chuyển các lựa chọn đang thuộc
+  nhóm về "📌 Khác", KHÔNG mất lựa chọn. Riêng theo từng giáo viên (bảng
+  `review_skill_groups`, RLS như `review_combos`) — trước đây 12 nhóm là DUY
+  NHẤT và đóng cứng, thêm nhóm phải sửa code + CHECK constraint (đã tốn công 2
+  lần); giờ giáo viên tự làm được, không cần Claude sửa code nữa.
 - **Gõ câu mới NGAY TRONG ô tick** (user 2026-07-27 — bỏ ô nhập riêng bên dưới
   vì khó nhìn): `MultiSelect` có prop `onCreate` — gõ vào ô tìm kiếm, không khớp
   mục nào thì hiện dòng "➕ Thêm ..." (hoặc Enter). Câu mới vừa vào nhận xét vừa

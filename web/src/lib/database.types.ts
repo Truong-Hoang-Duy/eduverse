@@ -398,6 +398,35 @@ export type Database = {
           },
         ]
       }
+      review_skill_groups: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          teacher_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          teacher_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_skill_groups_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
           class_id: string

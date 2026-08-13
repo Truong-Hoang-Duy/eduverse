@@ -27,14 +27,22 @@
   random mới) — cả 3 đừng hồi sinh.
 - **Đổi mật khẩu không cần mật khẩu cũ**: phiên đăng nhập = bằng chứng sở hữu;
   GV reset cho HV qua admin API (action tự kiểm role + enrollment RLS).
-- **Nhóm kỹ năng nhận xét = 12 giá trị cố định**, nguồn DUY NHẤT là
-  `web/src/lib/skill-groups.ts` (SKILL_GROUPS) — sửa/thêm nhóm phải sửa CẢ
-  CHECK constraint (Postgres không cho ALTER CHECK trực tiếp, phải drop+add;
-  xem migration mới nhất để biết constraint hiện hành). Bộ lọc combo box mặc
-  định "Tất cả nhóm" (không đổi lựa chọn đã tick). **Mỗi nhóm ≥10 lựa chọn**
-  là ngưỡng tối thiểu đã đạt (seed 112+112, dữ liệu thật GV 233 câu) — đừng để
-  tụt xuống dưới 10 khi sửa/xóa. Trang Cài đặt hiển thị accordion theo nhóm
-  (form thêm nằm TRONG từng accordion, không cần chọn lại qua Select).
+- **Nhóm kỹ năng nhận xét = 12 giá trị NỀN cố định** trong
+  `web/src/lib/skill-groups.ts` (SKILL_GROUPS) — **KHÔNG còn đóng cứng**: từ
+  `20260812155201` giáo viên tự thêm nhóm riêng qua Cài đặt (bảng
+  `review_skill_groups`, RLS theo GV), không cần sửa code/CHECK constraint nữa
+  (quyết định cũ "12 giá trị cố định" ĐÃ ĐẢO NGƯỢC vì đúng là chi phí sửa
+  CHECK constraint mỗi lần thêm — đã tốn công 2 lần — là lý do user yêu cầu
+  đổi). `review_options.skill_group` giờ chấp nhận 1 trong 12 slug nền HOẶC id
+  của `review_skill_groups`; sở hữu được validate ở Server Action
+  (`resolveSkillGroup`), không phải CHECK/FK vì không thể diễn tả union đó
+  trên một cột text. Xóa nhóm tự thêm → lựa chọn đang thuộc nhóm chuyển về
+  `other`, không chặn xóa (user chốt 2026-08-12, giống nếp xóa mềm chỗ khác).
+  Bộ lọc combo box mặc định "Tất cả nhóm" (không đổi lựa chọn đã tick). **Mỗi
+  nhóm nền ≥10 lựa chọn** là ngưỡng tối thiểu đã đạt (seed 112+112, dữ liệu
+  thật GV 233 câu) — đừng để tụt xuống dưới 10 khi sửa/xóa (không áp cho nhóm
+  tự thêm, đó do GV tự lo). Trang Cài đặt hiển thị accordion theo nhóm (form
+  thêm nằm TRONG từng accordion, không cần chọn lại qua Select).
 - **Tin Zalo `{tom_tat}` CHỈ chứa danh sách kiến thức, KHÔNG kèm câu đánh giá
   nào** (chốt sau 3 lần sửa cùng ngày 2026-07-18 — chi tiết + lý do từng lần ở
   AI-SERVICE.md, đọc kỹ trước khi đổi lại kẻo lặp sai lầm cũ): liệt kê xuống

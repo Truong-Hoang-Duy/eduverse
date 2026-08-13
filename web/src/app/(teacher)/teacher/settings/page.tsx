@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { listMyCombos } from "@/lib/actions/review-combos";
+import { listMySkillGroups } from "@/lib/actions/skill-groups";
 import { requireRole } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,19 +46,21 @@ export default async function SettingsPage() {
   const profile = await requireRole("teacher");
   const supabase = await createClient();
 
-  const [{ data: options }, { data: templates }, combos] = await Promise.all([
-    supabase
-      .from("review_options")
-      .select("id, category, label, skill_group")
-      .eq("teacher_id", profile.id)
-      .order("label"),
-    supabase
-      .from("zalo_templates")
-      .select("id, name, template_text")
-      .eq("teacher_id", profile.id)
-      .order("name"),
-    listMyCombos(),
-  ]);
+  const [{ data: options }, { data: templates }, combos, customGroups] =
+    await Promise.all([
+      supabase
+        .from("review_options")
+        .select("id, category, label, skill_group")
+        .eq("teacher_id", profile.id)
+        .order("label"),
+      supabase
+        .from("zalo_templates")
+        .select("id, name, template_text")
+        .eq("teacher_id", profile.id)
+        .order("name"),
+      listMyCombos(),
+      listMySkillGroups(),
+    ]);
 
   return (
     <div className="space-y-4">
@@ -70,7 +73,7 @@ export default async function SettingsPage() {
         title="Danh mục nhận xét"
         description="Các lựa chọn hiện ra khi nhận xét học viên trong từng buổi học"
       >
-        <OptionManager options={options ?? []} />
+        <OptionManager options={options ?? []} customGroups={customGroups} />
       </SettingsSection>
 
       <SettingsSection
