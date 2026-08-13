@@ -18,18 +18,14 @@ chậm hơn merge thật một nhịp, theo đúng nếp cũ của file này).
 lại. Kiểm `/health` phải trả commit mới nhất của `main`. Đợt 55 CHỈ đổi
 `web/` + migration DB, không đụng `ai-service/`.
 
-🔴 **Migration MỚI `20260812155201_review_skill_groups.sql` CHƯA XÁC NHẬN đã
-dán vào Supabase SQL Editor** — Claude không tự chạy được (mạng chặn cổng
-5432/6543). Tính năng "GV tự thêm nhóm kỹ năng" sẽ KHÔNG hoạt động ở production
-(lỗi thân thiện, không crash trang) cho tới khi dán migration này. An toàn dán
-bất cứ lúc nào (bảng mới + nới lỏng CHECK constraint, không đụng dữ liệu cũ).
-
-**3 migration khác user đã xác nhận CHẠY XONG trước đó** (Claude không tự
-verify được — không query DB trực tiếp):
+**4 migration user đã xác nhận CHẠY XONG** (Claude không tự verify được —
+không query DB trực tiếp):
 `20260805000000_session_review_context_drop_advice.sql`,
 `20260805010000_periodic_test_review_split.sql`,
 `20260806000000_review_combos_single_type.sql` (cái này **XÓA SẠCH** dữ liệu
-`review_combos` cũ của MỌI giáo viên — cố ý, user đã chốt).
+`review_combos` cũ của MỌI giáo viên — cố ý, user đã chốt),
+`20260812155201_review_skill_groups.sql` (user xác nhận 2026-08-13 — tính
+năng "GV tự thêm nhóm kỹ năng" giờ hoạt động được ở production).
 
 ⚠️ **CHƯA nghiệm thu bằng mắt trên production**: cả loạt tính năng Đợt 48→54
 (đặc biệt "áp nhận xét từ buổi trước cho cả lớp" — gọi AI hàng loạt, dễ vỡ nếu
