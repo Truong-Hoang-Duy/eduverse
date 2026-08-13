@@ -88,7 +88,15 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
   HOẶC vắng` → em rời bộ lọc "Chưa hoàn thành" và bị loại khỏi tin Zalo. Lưu vắng
   XÓA SẠCH nhận xét cũ của buổi đó.
 - **AI nhận xét:** GV tick điểm mạnh/cải thiện → Server Action gửi ngữ cảnh buổi học
-  → ai-service `/generate-review` → GV sửa → lưu `student_reviews`.
+  → ai-service `/generate-review` → GV sửa → lưu `student_reviews`. Buổi kiểm
+  tra định kỳ (`sessions.is_periodic_test`, GV tự tick) tách nhận xét 2 phần.
+- **Áp nhận xét buổi trước cho CẢ LỚP** (`applyReviewsFromSession`): GHI tích
+  chọn (gộp, không đè) TRƯỚC rồi mới gọi Gemini cho TỪNG em SONG SONG
+  (`allSettled`) — hạn mức 20 lượt/ngày khiến lớp đông chắc chắn hết giữa
+  chừng, em lỗi để trống câu nhận xét chứ không rollback cả lô. Xem DECISIONS.md.
+- **Xem nội dung buổi khác để tham khảo:** buổi trước cùng lớp + CÙNG buổi số
+  ở lớp khác cùng khóa (`listSessionContentReferences`), chỉ đọc, dùng thẳng
+  RLS `sessions_teacher_all` sẵn có.
 - **Hồ sơ HV xuyên khóa:** bấm tên HV trong lớp → timeline nhận xét gốc từng buổi
   (`student_reviews` + `sessions`) + AI tổng hợp toàn khóa. Chỉ GV của lớp (RLS).
 - **Chấm bài AI (công cụ độc lập, KHÔNG theo lớp) — 3 tab chung nav "Chấm bài":**

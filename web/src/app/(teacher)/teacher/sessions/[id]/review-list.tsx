@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
+import type { CustomSkillGroupRow } from "@/lib/skill-groups";
 
 import {
   type CopySource,
@@ -50,6 +51,7 @@ export function ReviewList({
   priorCommentsByStudentId,
   priorSelectionsByStudentId,
   combos,
+  customGroups,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -69,6 +71,8 @@ export function ReviewList({
   priorSelectionsByStudentId: Map<string, PriorSelection[]>;
   /** Bộ combo lưu sẵn của GV (dùng chung mọi học viên). */
   combos: ReviewCombo[];
+  /** Nhóm kỹ năng GV tự thêm (bên cạnh 12 nhóm nền cố định). */
+  customGroups: CustomSkillGroupRow[];
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
 
@@ -159,6 +163,7 @@ export function ReviewList({
             priorComments={priorCommentsByStudentId.get(student.id) ?? []}
             copySources={copySourcesFor(student.id)}
             combos={combos}
+            customGroups={customGroups}
           />
         ))
       )}

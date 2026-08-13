@@ -27,14 +27,22 @@
   random mới) — cả 3 đừng hồi sinh.
 - **Đổi mật khẩu không cần mật khẩu cũ**: phiên đăng nhập = bằng chứng sở hữu;
   GV reset cho HV qua admin API (action tự kiểm role + enrollment RLS).
-- **Nhóm kỹ năng nhận xét = 12 giá trị cố định**, nguồn DUY NHẤT là
-  `web/src/lib/skill-groups.ts` (SKILL_GROUPS) — sửa/thêm nhóm phải sửa CẢ
-  CHECK constraint (Postgres không cho ALTER CHECK trực tiếp, phải drop+add;
-  xem migration mới nhất để biết constraint hiện hành). Bộ lọc combo box mặc
-  định "Tất cả nhóm" (không đổi lựa chọn đã tick). **Mỗi nhóm ≥10 lựa chọn**
-  là ngưỡng tối thiểu đã đạt (seed 112+112, dữ liệu thật GV 233 câu) — đừng để
-  tụt xuống dưới 10 khi sửa/xóa. Trang Cài đặt hiển thị accordion theo nhóm
-  (form thêm nằm TRONG từng accordion, không cần chọn lại qua Select).
+- **Nhóm kỹ năng nhận xét = 12 giá trị NỀN cố định** trong
+  `web/src/lib/skill-groups.ts` (SKILL_GROUPS) — **KHÔNG còn đóng cứng**: từ
+  `20260812155201` giáo viên tự thêm nhóm riêng qua Cài đặt (bảng
+  `review_skill_groups`, RLS theo GV), không cần sửa code/CHECK constraint nữa
+  (quyết định cũ "12 giá trị cố định" ĐÃ ĐẢO NGƯỢC vì đúng là chi phí sửa
+  CHECK constraint mỗi lần thêm — đã tốn công 2 lần — là lý do user yêu cầu
+  đổi). `review_options.skill_group` giờ chấp nhận 1 trong 12 slug nền HOẶC id
+  của `review_skill_groups`; sở hữu được validate ở Server Action
+  (`resolveSkillGroup`), không phải CHECK/FK vì không thể diễn tả union đó
+  trên một cột text. Xóa nhóm tự thêm → lựa chọn đang thuộc nhóm chuyển về
+  `other`, không chặn xóa (user chốt 2026-08-12, giống nếp xóa mềm chỗ khác).
+  Bộ lọc combo box mặc định "Tất cả nhóm" (không đổi lựa chọn đã tick). **Mỗi
+  nhóm nền ≥10 lựa chọn** là ngưỡng tối thiểu đã đạt (seed 112+112, dữ liệu
+  thật GV 233 câu) — đừng để tụt xuống dưới 10 khi sửa/xóa (không áp cho nhóm
+  tự thêm, đó do GV tự lo). Trang Cài đặt hiển thị accordion theo nhóm (form
+  thêm nằm TRONG từng accordion, không cần chọn lại qua Select).
 - **Tin Zalo `{tom_tat}` CHỈ chứa danh sách kiến thức, KHÔNG kèm câu đánh giá
   nào** (chốt sau 3 lần sửa cùng ngày 2026-07-18 — chi tiết + lý do từng lần ở
   AI-SERVICE.md, đọc kỹ trước khi đổi lại kẻo lặp sai lầm cũ): liệt kê xuống
@@ -487,3 +495,43 @@
   placeholder) và điểm mạnh+cải thiện+quá trình làm bài thành 1 dòng khác (2
   hoặc 3 cột tùy `isPeriodicTest`), không phải bằng cách ẩn đi. Combo riêng
   GOM thành 1 dropdown (không phải hàng nút rời) vì GV có thể có hàng chục bộ.
+- **Bộ combo nhận xét CHỈ MỘT LOẠI mỗi bộ** (2026-08-06, migration
+  `20260806000000`, cột `review_combos.type` CHECK `strength|improvement`) —
+  trước đó pha trộn cả điểm mạnh lẫn cần cải thiện. `type` CỐ ĐỊNH từ lúc tạo,
+  sửa chỉ đổi tên + nhãn CÙNG loại. Cài đặt chia 2 CỘT; combo-bar chia 2
+  `SelectGroup`. Migration **XÓA SẠCH `review_combos` cũ** (không tách tự
+  động được bộ đã pha trộn) — user chốt vậy, TỰ TẠO LẠI. Gỡ hẳn nút "⚡ Thêm
+  nhanh bộ mẫu" + `COMBO_TEMPLATES`/`seedDefaultCombos` — đừng hồi sinh trừ
+  khi user yêu cầu lại.
+- **"Áp nhận xét từ buổi trước cho CẢ LỚP" GỘP chứ không GHI ĐÈ, và LƯU TÍCH
+  CHỌN TRƯỚC — gọi AI SAU, mỗi em một lời gọi độc lập** (2026-08-06,
+  `applyReviewsFromSession` trong `reviews.ts`). Lý do: hạn mức Gemini 20
+  lượt/NGÀY theo Google Cloud PROJECT khiến lớp đông chắc chắn hết lượt giữa
+  chừng — nếu gộp-rồi-gọi-AI trong 1 transaction thì 1 em lỗi kéo rollback cả
+  lớp. Giải pháp: `Promise.allSettled`, em lỗi để TRỐNG câu nhận xét (tích
+  chọn đã an toàn trong DB), GV tự đổi key rồi bấm "AI tạo nhận xét" ở từng
+  em — user chốt thẳng vậy khi được hỏi, ĐỪNG đổi sang rollback-toàn-bộ.
+  Bỏ qua em đã đánh vắng, em vắng/trống tích ở buổi nguồn, và em ĐÃ CÓ nhận
+  xét (khỏi phí lượt khi bấm lại). KHÔNG copy câu nhận xét gửi phụ huynh của
+  buổi nguồn — nó nói nội dung buổi đó, dán sang buổi khác là sai bài học.
+- **`ReviewEditor` cần `reviewSignature()` trong `key` để dựng lại sau ghi
+  hàng loạt** (2026-08-06, `review-status.ts`). `useState(existing)` chỉ đọc
+  giá trị đầu MỘT LẦN — sau khi `applyReviewsFromSession` ghi DB rồi
+  `revalidatePath`, props mới xuống nhưng state cũ y nguyên, GV thấy báo
+  thành công mà ô bên dưới không đổi tới khi F5. Đây là bài học LẶP LẠI: bất
+  kỳ chỗ nào đọc `existing`/props vào `useState` một lần đều có nguy cơ này
+  nếu có đường ghi dữ liệu KHÁC ngoài chính component đó.
+- **"Xem nội dung buổi khác" chỉ lấy CÙNG buổi số ở lớp khác cùng khóa, không
+  lấy cả tiến trình lớp đó** (2026-08-06, `listSessionContentReferences`) —
+  mục đích là so buổi song song ("lớp kia dạy gì buổi này"), không phải xem
+  toàn bộ lớp khác. RLS `sessions_teacher_all` (`is_teacher_of_class`) đã đủ
+  giới hạn đúng phạm vi GV dạy — không cần cột/policy mới.
+- 🔴 **File `.claude/docs/GIT-WORKFLOW-RULES.md` mới (user thêm 2026-08-1x)
+  SIẾT HƠN `.claude/rules/git-workflow.md` cũ, và KHÔNG nằm trong docs router
+  của CLAUDE.md** — chỉ được nạp vì user gõ thẳng `@đường-dẫn`. Đọc file đó
+  ĐẦU MỖI PHIÊN từ giờ. Khác biệt cốt lõi: cấm tự ý commit/push (phải xác
+  nhận RIÊNG từng lần, không phải one-time), cấm tự merge `develop`→`main`,
+  cấm `Co-Authored-By`/attribution trong commit. Phiên áp dụng luật này đã 3
+  LẦN lỡ code thẳng trên `main` (quên checkout sau merge) — vá bằng cách tạo
+  branch từ đúng lúc `main` chưa có commit lạ, không mất gì, nhưng PHẢI
+  `git branch --show-current` trước MỌI lần sửa file, không chỉ đầu phiên.
