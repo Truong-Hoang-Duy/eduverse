@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { isAcademicLevel } from "@/lib/academic-levels";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
@@ -241,6 +242,30 @@ export async function transferStudent(
 
   revalidatePath(`/teacher/classes/${currentClassId}`);
   return { success: "Đã chuyển lớp cho học viên." };
+}
+
+/** Xếp loại học lực giờ tích 1 LẦN cho cả lớp (yêu cầu user 2026-08-28, thay
+ *  vì chọn lại mỗi buổi nhận xét) — lưu ở `enrollments.academic_level`, auto
+ *  save ngay khi đổi Select trong bảng "Danh sách học viên" (cùng tinh thần
+ *  "tick Vắng lưu luôn" đã áp dụng ở review-editor). */
+export async function setEnrollmentAcademicLevel(input: {
+  enrollmentId: string;
+  classId: string;
+  level: string;
+}): Promise<ActionResult> {
+  const level = isAcademicLevel(input.level) ? input.level : null;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("enrollments")
+    .update({ academic_level: level })
+    .eq("id", input.enrollmentId);
+  if (error) {
+    return { error: `Không lưu được xếp loại: ${error.message}` };
+  }
+
+  revalidatePath(`/teacher/classes/${input.classId}`);
+  return { success: "Đã lưu xếp loại học lực." };
 }
 
 export interface StudentSearchResult {

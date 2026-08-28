@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import { ComboManager } from "./combo-manager";
 import { OptionManager } from "./option-manager";
+import { ProjectProgressManager } from "./project-progress-manager";
 import { TemplateManager } from "./template-manager";
 import { TestProcessManager } from "./test-process-manager";
 
@@ -82,6 +83,15 @@ export default async function SettingsPage() {
       >
         <TestProcessManager
           options={(options ?? []).filter((o) => o.category === "test_process")}
+        />
+      </SettingsSection>
+
+      <SettingsSection
+        title="Sản phẩm cuối khóa (SPCK)"
+        description="Lựa chọn hiện ở buổi có đánh dấu &quot;làm sản phẩm cuối khóa&quot; (thường buổi 9-13) — quan sát quá trình làm đồ án của học viên"
+      >
+        <ProjectProgressManager
+          options={(options ?? []).filter((o) => o.category === "project_progress")}
         />
       </SettingsSection>
 

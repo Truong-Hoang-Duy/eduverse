@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { listMyCombos } from "@/lib/actions/review-combos";
-import { listMySkillGroups } from "@/lib/actions/skill-groups";
 import { requireProfile } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,12 +30,14 @@ interface SessionRow {
   content: string | null;
   review_context: string | null;
   is_periodic_test: boolean;
+  is_project_period: boolean;
   session_date: string | null;
   classes: { class_code: string } | null;
 }
 
 interface EnrollmentRow {
   profiles: { id: string; full_name: string } | null;
+  academic_level: string | null;
 }
 
 interface ReviewRow extends ExistingReview {
@@ -76,7 +77,7 @@ export default async function SessionDetailPage({
   const { data: sessionData } = await supabase
     .from("sessions")
     .select(
-      "id, class_id, session_number, title, content, review_context, is_periodic_test, session_date, classes(class_code)"
+      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, session_date, classes(class_code)"
     )
     .eq("id", id)
     .single();
@@ -93,17 +94,16 @@ export default async function SessionDetailPage({
     { data: templatesData },
     { data: priorReviewsData },
     combos,
-    customGroups,
   ] = await Promise.all([
     supabase
       .from("enrollments")
-      .select("profiles(id, full_name)")
+      .select("profiles(id, full_name), academic_level")
       .eq("class_id", session.class_id)
       .order("joined_at"),
     supabase
       .from("student_reviews")
       .select(
-        "student_id, strengths, improvements, ai_generated_comment, academic_level, is_absent"
+        "student_id, strengths, improvements, ai_generated_comment, is_absent"
       )
       .eq("session_id", session.id),
     supabase
@@ -128,12 +128,11 @@ export default async function SessionDetailPage({
       .eq("sessions.class_id", session.class_id)
       .lt("sessions.session_number", session.session_number),
     listMyCombos(),
-    listMySkillGroups(),
   ]);
 
   const students = ((enrollments ?? []) as unknown as EnrollmentRow[])
-    .map((e) => e.profiles)
-    .filter((p): p is NonNullable<EnrollmentRow["profiles"]> => p !== null);
+    .filter((e) => e.profiles !== null)
+    .map((e) => ({ ...e.profiles!, academic_level: e.academic_level }));
   const reviews = (reviewsData ?? []) as ReviewRow[];
   const reviewByStudentId = new Map(reviews.map((r) => [r.student_id, r]));
   const options = optionsData ?? [];
@@ -228,7 +227,7 @@ export default async function SessionDetailPage({
             Nhận xét học viên ({handledCount}/{students.length})
           </CardTitle>
           <CardDescription>
-            Tick điểm mạnh / cần cải thiện rồi bấm &quot;AI tạo nhận xét&quot;.
+            Áp bộ combo điểm mạnh/cần cải thiện rồi bấm &quot;AI tạo nhận xét&quot;.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -239,11 +238,11 @@ export default async function SessionDetailPage({
           )}
           {options.length === 0 && students.length > 0 && (
             <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-              Chưa có danh mục điểm mạnh / cần cải thiện —{" "}
+              Chưa có danh mục nhận xét —{" "}
               <Link href="/teacher/settings" className="text-primary underline">
                 vào Cài đặt để thêm
               </Link>{" "}
-              (có nút thêm nhanh bộ mặc định).
+              rồi tạo bộ combo áp nhanh (có nút thêm nhanh bộ mặc định).
             </p>
           )}
           {students.length > 0 && (
@@ -253,13 +252,13 @@ export default async function SessionDetailPage({
               sessionContent={session.content ?? ""}
               sessionContext={session.review_context ?? ""}
               isPeriodicTest={session.is_periodic_test}
+              isProjectPeriod={session.is_project_period}
               students={students}
               options={options}
               reviewByStudentId={reviewByStudentId}
               priorCommentsByStudentId={priorCommentsByStudentId}
               priorSelectionsByStudentId={priorSelectionsByStudentId}
               combos={combos}
-              customGroups={customGroups}
             />
           )}
         </CardContent>

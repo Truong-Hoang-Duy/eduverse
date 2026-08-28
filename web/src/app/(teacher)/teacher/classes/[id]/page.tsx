@@ -22,6 +22,7 @@ import {
   type ClassOption,
   type StudentRow,
 } from "./students-table";
+import { TransferStudentDialog } from "./transfer-student-dialog";
 
 export default async function ClassDetailPage({
   params,
@@ -86,6 +87,7 @@ export default async function ClassDetailPage({
       fullName: e.profiles!.full_name,
       username: e.profiles!.username,
       driveUrl: driveLinks[e.profiles!.id] ?? null,
+      academicLevel: e.academic_level,
     }));
 
   const allClassRows = (allClasses ?? []) as {
@@ -241,18 +243,22 @@ export default async function ClassDetailPage({
       </CollapsibleCard>
 
       <CollapsibleCard title={`Danh sách học viên (${students.length})`}>
-        <div className="mb-3 flex justify-end">
+        <div className="mb-3 flex flex-wrap justify-end gap-2">
+          <TransferStudentDialog
+            classId={cls.id}
+            students={students.map((s) => ({
+              enrollmentId: s.enrollmentId,
+              fullName: s.fullName,
+            }))}
+            otherClasses={otherClasses}
+          />
           <AddStudentDialog
             classId={cls.id}
             classCode={cls.class_code}
             existingStudentIds={students.map((s) => s.studentId)}
           />
         </div>
-        <StudentsTable
-          classId={cls.id}
-          students={students}
-          otherClasses={otherClasses}
-        />
+        <StudentsTable classId={cls.id} students={students} />
       </CollapsibleCard>
 
       <CollapsibleCard

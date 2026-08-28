@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
-import type { CustomSkillGroupRow } from "@/lib/skill-groups";
 
 import {
   type CopySource,
@@ -35,6 +34,9 @@ const STATUS_LABELS: Record<StatusFilter, string> = {
 export interface StudentForReview {
   id: string;
   full_name: string;
+  /** Xếp loại học lực CỦA LỚP NÀY, tích 1 lần ở bảng "Danh sách học viên" —
+   *  chỉ đọc ở đây, không sửa được trong trang buổi học nữa. */
+  academic_level: string | null;
 }
 
 /** Danh sách nhận xét từng học viên trong buổi + bộ lọc theo trạng thái —
@@ -45,13 +47,13 @@ export function ReviewList({
   sessionContent,
   sessionContext,
   isPeriodicTest,
+  isProjectPeriod,
   students,
   options,
   reviewByStudentId,
   priorCommentsByStudentId,
   priorSelectionsByStudentId,
   combos,
-  customGroups,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -60,8 +62,11 @@ export function ReviewList({
    *  khảo khi viết nhận xét, dùng chung cho mọi học viên trong buổi. */
   sessionContext: string;
   /** Buổi có kiểm tra định kỳ — bật thì nhận xét AI tách 2 phần (học tập /
-   *  kiểm tra) và hiện thêm ô chọn "quá trình làm bài" cạnh xếp loại. */
+   *  kiểm tra) và hiện thêm ô chọn "quá trình làm bài". */
   isPeriodicTest: boolean;
+  /** Buổi có làm sản phẩm cuối khóa (SPCK, thường buổi 9-13) — bật thì hiện ô
+   *  chọn "quan sát quá trình làm SPCK", giống cơ chế `isPeriodicTest`. */
+  isProjectPeriod: boolean;
   students: StudentForReview[];
   options: ReviewOptionItem[];
   reviewByStudentId: Map<string, ExistingReview>;
@@ -71,8 +76,6 @@ export function ReviewList({
   priorSelectionsByStudentId: Map<string, PriorSelection[]>;
   /** Bộ combo lưu sẵn của GV (dùng chung mọi học viên). */
   combos: ReviewCombo[];
-  /** Nhóm kỹ năng GV tự thêm (bên cạnh 12 nhóm nền cố định). */
-  customGroups: CustomSkillGroupRow[];
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
 
@@ -156,14 +159,15 @@ export function ReviewList({
             sessionContent={sessionContent}
             sessionContext={sessionContext}
             isPeriodicTest={isPeriodicTest}
+            isProjectPeriod={isProjectPeriod}
             studentId={student.id}
             studentName={student.full_name}
+            academicLevel={student.academic_level}
             options={options}
             existing={reviewByStudentId.get(student.id) ?? null}
             priorComments={priorCommentsByStudentId.get(student.id) ?? []}
             copySources={copySourcesFor(student.id)}
             combos={combos}
-            customGroups={customGroups}
           />
         ))
       )}

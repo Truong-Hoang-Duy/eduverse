@@ -19,7 +19,6 @@ const base: ExistingReview = {
   strengths: [],
   improvements: [],
   ai_generated_comment: null,
-  academic_level: null,
   is_absent: false,
 };
 
@@ -36,11 +35,6 @@ describe("isReviewed", () => {
     expect(isReviewed({ ...base, strengths: ["Tư duy tốt"] })).toBe(true);
     expect(isReviewed({ ...base, improvements: ["Cần cẩn thận hơn"] })).toBe(true);
     expect(isReviewed({ ...base, ai_generated_comment: "Em tiến bộ." })).toBe(true);
-  });
-
-  it("should NOT count level alone as reviewed", () => {
-    // Xếp loại chỉ là ngữ cảnh cho AI — chưa phải nhận xét gửi phụ huynh.
-    expect(isReviewed({ ...base, academic_level: "gioi" })).toBe(false);
   });
 
   it("should NOT count an absent student as reviewed", () => {
@@ -84,7 +78,6 @@ describe("reviewSignature", () => {
 
     expect(reviewSignature({ ...base, strengths: ["Chăm chỉ"] })).not.toBe(before);
     expect(reviewSignature({ ...base, improvements: ["Cần cẩn thận"] })).not.toBe(before);
-    expect(reviewSignature({ ...base, academic_level: "gioi" })).not.toBe(before);
     expect(reviewSignature({ ...base, is_absent: true })).not.toBe(before);
     expect(reviewSignature({ ...base, ai_generated_comment: "Em tiến bộ." })).not.toBe(before);
   });

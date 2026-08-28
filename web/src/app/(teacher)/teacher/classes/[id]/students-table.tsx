@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useState, useTransition } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { FormMessage } from "@/components/forms/form-message";
+import { DriveLinkChip } from "@/components/drive-link-chip";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -21,9 +21,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { removeStudent, transferStudent } from "@/lib/actions/classes";
-import { DriveLinkChip } from "@/components/drive-link-chip";
-import type { ActionResult } from "@/lib/types";
+import { ACADEMIC_LEVELS } from "@/lib/academic-levels";
+import { removeStudent, setEnrollmentAcademicLevel } from "@/lib/actions/classes";
 
 import { ResetPasswordDialog } from "./reset-password-dialog";
 
@@ -34,6 +33,9 @@ export interface StudentRow {
   username: string | null;
   /** Link Drive nộp bài em tự khai; null nếu chưa khai. Chỉ GV của lớp đọc được. */
   driveUrl: string | null;
+  /** Xếp loại học lực CỦA LỚP NÀY, tích 1 lần — dùng ngữ cảnh cho mọi buổi
+   *  nhận xét (yêu cầu user 2026-08-28, thay vì chọn lại mỗi buổi). */
+  academicLevel: string | null;
 }
 
 export interface ClassOption {
@@ -41,20 +43,57 @@ export interface ClassOption {
   classCode: string;
 }
 
+/** Select xếp loại học lực — AUTO SAVE ngay khi đổi, không có nút Lưu riêng
+ *  (cùng tinh thần "tick Vắng lưu luôn" ở review-editor: tích 1 lần cho cả
+ *  lớp, GV không phải chọn lại mỗi buổi nhận xét). */
+function AcademicLevelSelect({
+  enrollmentId,
+  classId,
+  value,
+}: {
+  enrollmentId: string;
+  classId: string;
+  value: string | null;
+}) {
+  const [level, setLevel] = useState(value ?? "");
+  const [pending, startTransition] = useTransition();
+
+  function handleChange(next: string) {
+    const resolved = next === "none" ? "" : next;
+    setLevel(resolved);
+    startTransition(async () => {
+      await setEnrollmentAcademicLevel({
+        enrollmentId,
+        classId,
+        level: resolved,
+      });
+    });
+  }
+
+  return (
+    <Select value={level || "none"} onValueChange={handleChange} disabled={pending}>
+      <SelectTrigger size="sm" className="h-8 w-[140px] text-xs">
+        <SelectValue placeholder="Chưa chọn" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">Chưa chọn</SelectItem>
+        {ACADEMIC_LEVELS.map((l) => (
+          <SelectItem key={l.value} value={l.value}>
+            {l.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export function StudentsTable({
   classId,
   students,
-  otherClasses,
 }: {
   classId: string;
   students: StudentRow[];
-  otherClasses: ClassOption[];
 }) {
-  const [state, formAction] = useActionState<ActionResult, FormData>(
-    transferStudent,
-    {}
-  );
-
   if (students.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
@@ -65,14 +104,14 @@ export function StudentsTable({
 
   return (
     <div className="space-y-2">
-      <FormMessage result={state} />
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Họ tên</TableHead>
             <TableHead>Tên tài khoản</TableHead>
             <TableHead>Thư mục nộp bài</TableHead>
-            <TableHead className="w-[380px]">Thao tác</TableHead>
+            <TableHead>Xếp loại học lực</TableHead>
+            <TableHead className="w-[160px]">Thao tác</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -97,34 +136,14 @@ export function StudentsTable({
                 )}
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-3">
-                  <form action={formAction} className="flex items-center gap-2">
-                    <input
-                      type="hidden"
-                      name="enrollment_id"
-                      value={student.enrollmentId}
-                    />
-                    <input
-                      type="hidden"
-                      name="current_class_id"
-                      value={classId}
-                    />
-                    <Select name="target_class_id">
-                      <SelectTrigger size="sm" className="w-[120px]">
-                        <SelectValue placeholder="Lớp mới" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {otherClasses.map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id}>
-                            {cls.classCode}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Button type="submit" variant="outline" size="sm">
-                      Chuyển
-                    </Button>
-                  </form>
+                <AcademicLevelSelect
+                  enrollmentId={student.enrollmentId}
+                  classId={classId}
+                  value={student.academicLevel}
+                />
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
                   <ResetPasswordDialog
                     studentId={student.studentId}
                     studentName={student.fullName}
