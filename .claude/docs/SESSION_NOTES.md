@@ -6,34 +6,49 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-08-13, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-08-28, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 55 (`feature/custom-skill-groups`) vừa
-merge `develop` → `main` và đẩy production trong phiên này.
+**Đang làm:** KHÔNG có task dở. Đợt 57 (`feature/class-review-improvements`)
+vừa merge `develop` → `main` và đẩy production trong phiên này.
 
-**`main` = `origin/main` = `4ed8f96`** trước khi merge Đợt 55 (xem
-`git log --oneline -1 main` để lấy hash mới nhất — SESSION_NOTES luôn ghi
-chậm hơn merge thật một nhịp, theo đúng nếp cũ của file này).
-⚠️ **Có sửa `ai-service/` ở Đợt 49 (giữa Đợt 48→54)** → Render phải deploy
-lại. Kiểm `/health` phải trả commit mới nhất của `main`. Đợt 55 CHỈ đổi
-`web/` + migration DB, không đụng `ai-service/`.
+**`main` = `origin/main` = `13d6199`** (merge Đợt 57 — xem
+`git log --oneline -1 main` để lấy hash mới nhất nếu đã có phiên sau).
+⚠️ **`ai-service/` ĐỔI ở Đợt 57** (`prompts.py`/`schemas.py`/`routes/reviews.py`
+— thêm `is_project_period`/`project_progress_notes`, nhánh draft rỗng cho gợi
+ý nội dung buổi học) → Render phải deploy lại. Kiểm `/health` khớp commit mới.
 
-**4 migration user đã xác nhận CHẠY XONG** (Claude không tự verify được —
-không query DB trực tiếp):
+**6 migration user đã xác nhận CHẠY XONG** (Claude không tự verify được —
+không query DB trực tiếp, trừ lúc probe bằng script tay):
 `20260805000000_session_review_context_drop_advice.sql`,
 `20260805010000_periodic_test_review_split.sql`,
-`20260806000000_review_combos_single_type.sql` (cái này **XÓA SẠCH** dữ liệu
-`review_combos` cũ của MỌI giáo viên — cố ý, user đã chốt),
-`20260812155201_review_skill_groups.sql` (user xác nhận 2026-08-13 — tính
-năng "GV tự thêm nhóm kỹ năng" giờ hoạt động được ở production).
+`20260806000000_review_combos_single_type.sql` (**XÓA SẠCH** dữ liệu
+`review_combos` cũ lúc đó — cố ý, user đã chốt),
+`20260812155201_review_skill_groups.sql`,
+`20260828000000_class_level_project_period.sql` (ADD
+`enrollments.academic_level`/`sessions.is_project_period`, nới CHECK
+`review_options`/`review_combos`),
+`20260828010000_drop_student_reviews_academic_level.sql` (DROP
+`student_reviews.academic_level` **và** `review_combos.type`).
+🔴 **Sự cố đã xảy ra**: user dán CẢ HAI migration `20260828xxxxxx` TRƯỚC khi
+deploy code mới → `student_reviews.academic_level` mất trong khi code cũ trên
+production còn `SELECT`/`upsert` đích danh cột đó → **GV không lưu được nhận
+xét** cho tới lúc deploy xong. Phát hiện bằng probe schema thật
+(`node --env-file=.env.local scripts/<tên tạm>.mjs`, luôn xóa script tạm sau
+khi dùng), xử lý bằng deploy ngay. Bài học đầy đủ ở DECISIONS.md — **nhắc lại
+nghiêm: DROP luôn dán SAU khi code mới đã deploy, không dán cùng lúc với ADD.**
 
-⚠️ **CHƯA nghiệm thu bằng mắt trên production**: cả loạt tính năng Đợt 48→54
-(đặc biệt "áp nhận xét từ buổi trước cho cả lớp" — gọi AI hàng loạt, dễ vỡ nếu
-sai — và "xem buổi khác để tham khảo") **VÀ Đợt 55** (thêm/xóa nhóm kỹ năng).
-Chỉ chạy qua lint/typecheck/test/build — môi trường này không có trình duyệt
-để tự bấm thử. KHÔNG có E2E nào phủ các action mới: `applyReviewsFromSession`,
-`listSessionContentReferences`, `updateReviewCombo`/`createReviewCombo` (có
-`type`), và Đợt 55 là `addSkillGroup`/`deleteSkillGroup`/`resolveSkillGroup`.
+⚠️ **CHƯA nghiệm thu bằng mắt trên production**: toàn bộ Đợt 57 (dialog
+"⇄ Chuyển học viên", cột Xếp loại học lực auto-save, badge thay MultiSelect ở
+Điểm mạnh/Cải thiện, checkbox + ô "🎓 Quan sát SPCK", dropdown combo phẳng 40
+bộ chân dung, nút Gợi ý nội dung chạy được khi để trống) **VÀ** loạt Đợt
+48→54/55 cũ chưa từng nghiệm thu (xem lịch sử bên dưới) — môi trường này
+không có trình duyệt để tự bấm thử. KHÔNG có E2E nào phủ:
+`applyReviewsFromSession`, `listSessionContentReferences`,
+`updateReviewCombo`/`createReviewCombo`/`deleteAllReviewCombos`,
+`addSkillGroup`/`deleteSkillGroup`/`resolveSkillGroup`,
+`setEnrollmentAcademicLevel`. `reviews.e2e.ts` có phủ `saveReview`/
+`suggestSessionContent` theo schema mới (9/10 xanh lần chạy gần nhất — 1 ca
+đỏ vì Gemini 503 "quá tải", không phải lỗi code).
 
 🔴 **File quy tắc git MỚI: `.claude/docs/GIT-WORKFLOW-RULES.md`** (user thêm
 giữa phiên, không nằm trong docs router của CLAUDE.md — chỉ được nạp vì user
@@ -61,26 +76,31 @@ server (đừng tự kill tiến trình của user).
 được `onrender.com` — phải nhờ user tự mở.
 
 **Sản phẩm hiện có** (nghiệp vụ ở FEATURES.md, lịch sử ở ROADMAP.md): auth
-USERNAME; khóa→lớp→buổi + sao chép lớp + **xem nội dung buổi khác để tham
+USERNAME; khóa→lớp→buổi + sao chép lớp + **chuyển học viên qua dialog riêng**
++ **xếp loại học lực tích 1 lần/lớp** + **xem nội dung buổi khác để tham
 khảo** (buổi trước cùng lớp / cùng buổi số ở lớp khác cùng khóa) + **áp nhận
 xét buổi trước cho cả lớp** (gộp tích chọn + gọi AI hàng loạt); nhận xét AI
 theo buổi (bối cảnh buổi học cấp BUỔI, buổi kiểm tra định kỳ tách 2 phần nhận
-xét, **GV tự thêm nhóm kỹ năng riêng** bên cạnh 12 nhóm nền) + tổng hợp từng
-HV; **bộ combo nhận xét CHIA 2 LOẠI** (tích cực/cải thiện) có sửa được; tin
-Zalo cả lớp; khu Chấm bài 3 tab; khu học viên theo lớp + Drive; gallery + hồ
-sơ HV xuyên khóa; API key Gemini riêng; trang vận hành `/teacher/admin`; 3
-màn chiếu TV; `pnpm dev` tự mở trình duyệt.
+xét, **buổi SPCK** với ô quan sát riêng, **GV tự thêm nhóm kỹ năng riêng** bên
+cạnh 12 nhóm nền; Điểm mạnh/Cải thiện CHỈ thêm được qua combo — hết ô tìm-tích
+tự do) + tổng hợp từng HV; **bộ combo nhận xét = "chân dung học viên"** (1 bộ
+điền cả điểm mạnh + cải thiện + SPCK, 40 bộ mẫu) có sửa được; gợi ý nội dung
+buổi học chạy được kể cả không gõ gì; tin Zalo cả lớp; khu Chấm bài 3 tab; khu
+học viên theo lớp + Drive; gallery + hồ sơ HV xuyên khóa; API key Gemini
+riêng; trang vận hành `/teacher/admin`; 3 màn chiếu TV; `pnpm dev` tự mở
+trình duyệt.
 
 ## ✅ Cổng kiểm tra & E2E
 
-`web/`: **lint + typecheck + `pnpm test` (145 unit test) + build**.
-`ai-service/`: **`.venv/Scripts/python -m pytest`** (62 test — Đợt 55 không đụng ai-service).
+`web/`: **lint + typecheck + `pnpm test` (161 unit test) + build**.
+`ai-service/`: **`.venv/Scripts/python -m pytest`** (68 test — Đợt 57 CÓ đụng ai-service).
 
 E2E chạy trong `web/` trên DB THẬT (tự tạo, tự dọn), chia **HAI LOẠI** (Đợt 41):
 
 **A. `pnpm test:e2e`** — gọi THẲNG thân Server Action (`web/e2e/*.e2e.ts`).
-Đổi chữ ký hàm là `pnpm typecheck` đỏ, đổi hành vi là bộ này đỏ. **98 ca, CHƯA
-thêm ca nào cho các action mới Đợt 48→54 lẫn Đợt 55** (xem cảnh báo ở trên).
+Đổi chữ ký hàm là `pnpm typecheck` đỏ, đổi hành vi là bộ này đỏ. **98 ca —
+`reviews.e2e.ts` đã sửa theo schema Đợt 57, các bộ action mới khác VẪN CHƯA
+có ca nào** (xem danh sách ở cảnh báo phía trên).
 
 🔴 **Bộ này KHÔNG phủ lớp React bọc quanh action** — gọi thẳng thân hàm.
 **E2E xanh ≠ UI chạy được**, vẫn phải bấm thử — đã dính lỗi này 1 lần (Đợt 47,
@@ -92,7 +112,7 @@ thiếu `startTransition`).
 | `signup-login.e2e.ts` | 22 | signup/login/logout + createCourse/createClass |
 | `assignments-storage.e2e.ts` | 19 | createAssignment (có ca **rollback file**), deleteCourse |
 | `grading.e2e.ts` | 26 | **cần ai-service**; chấm bài + hỏi bài + trắc nghiệm. Tiêu 6 lượt Gemini |
-| `reviews.e2e.ts` | 10 | nhận xét theo buổi + đánh vắng; 1 ca cần ai-service. **CHƯA cập nhật cho `type` combo hay bulk-apply** |
+| `reviews.e2e.ts` | 10 | nhận xét theo buổi + đánh vắng + gợi ý nội dung; 1 ca cần ai-service. Đã sửa theo schema Đợt 57 (bỏ `academic_level` khỏi `student_reviews`, thêm ca draft rỗng); **CHƯA có ca cho `applyReviewsFromSession`/combo mới** |
 
 **B. `node --env-file=.env.local scripts/<script>`** — probe RLS gọi REST trần,
 CỐ Ý bỏ qua code app. **ĐỪNG chuyển sang gọi action.** 7 script, ~101 ca —
@@ -108,19 +128,20 @@ Công cụ chẩn đoán: `/health` ai-service, `scripts/check-integrity.mjs`,
 ## 📌 Quyết định đã chốt → `.claude/docs/DECISIONS.md`
 
 Đọc DECISIONS.md trước khi định làm ngược một quyết định cũ; thêm quyết định
-mới cũng ghi vào đó. Phiên này thêm ~7 mục — trọng tâm: bối cảnh buổi học cấp
-BUỔI thay lời khuyên per-student, buổi kiểm tra định kỳ GV tự đánh dấu (không
-cứng số buổi), xóa option ngay trong MultiSelect, combo CHỈ MỘT LOẠI + xóa
-sạch data cũ, thẻ nhận xét KHÔNG giấu combo trong accordion (đã thử rồi bỏ).
+mới cũng ghi vào đó. Phiên Đợt 57 thêm ~8 mục — trọng tâm: xếp loại học lực
+chuyển mỗi-buổi→mỗi-LỚP, MultiSelect gỡ khỏi Điểm mạnh/Cải thiện (combo là
+đường DUY NHẤT), SPCK là danh mục thứ 3, combo BỎ `type` quay lại "chân dung
+học viên" (đảo ngược quyết định 2026-08-06 lần 2, kèm bug rút nhãn luôn lấy
+2 câu đầu — đã sửa bằng xoay vòng), gợi ý nội dung chạy được khi để trống.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
-- 🟡 **E2E chưa phủ action mới Đợt 48→54 lẫn Đợt 55** — xem bảng trên. Ưu tiên
-  nếu làm: `applyReviewsFromSession` (rủi ro cao nhất, ghi hàng loạt + gọi AI
-  hàng loạt); Đợt 55 (`addSkillGroup`/`deleteSkillGroup`) rủi ro thấp hơn
-  nhưng cũng chưa có ca nào, kể cả probe RLS xác nhận GV A không xóa/thấy
-  nhóm của GV B.
+- 🟡 **E2E chưa phủ hầu hết action mới từ Đợt 48 tới 57** — xem bảng trên. Ưu
+  tiên nếu làm: `applyReviewsFromSession` (rủi ro cao nhất, ghi hàng loạt +
+  gọi AI hàng loạt); `setEnrollmentAcademicLevel`/combo mới Đợt 57 rủi ro thấp
+  hơn nhưng cũng chưa có ca nào; Đợt 55 (`addSkillGroup`/`deleteSkillGroup`)
+  cũng chưa, kể cả probe RLS xác nhận GV A không xóa/thấy nhóm của GV B.
 - 🟡 Phần RENDER của component không có test — nghiệm thu bằng mắt (có ý thức).
 - 🟡 `buildOpsReport` đếm dòng bằng `{ head: true }` — nuốt lỗi PostgREST (xem
   DECISIONS.md).
@@ -147,6 +168,41 @@ sạch data cũ, thẻ nhận xét KHÔNG giấu combo trong accordion (đã th�
   `web/scripts/`.
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
+
+### 2026-08-28 — Đợt 57 (`feature/class-review-improvements`) — xếp loại theo lớp, gỡ MultiSelect, SPCK, combo chân dung
+User yêu cầu 4 việc ban đầu (chuyển học viên gọn hơn, xếp loại học lực tích 1
+lần, bỏ ô tìm-tích ở Điểm mạnh/Cải thiện + thêm SPCK, gợi ý nội dung chạy
+được khi để trống) — dùng `AskUserQuestion` làm rõ 3 điểm mơ hồ trước khi vào
+Plan Mode, vì đây là task đụng schema + xóa UI hiện có, rủi ro làm sai cao.
+Ngay sau khi deploy, user yêu cầu tiếp "combo cần bổ sung nhiều hơn, không
+chia nhóm nữa, gộp lại cho nhanh" — dẫn tới thiết kế lại combo LẦN THỨ HAI
+trong cùng phiên (xem DECISIONS.md, mục "chân dung học viên").
+
+**Chi tiết đầy đủ ở DECISIONS.md + ROADMAP.md (Đợt 57)** — tóm tắt các điểm
+quan trọng nhất:
+- Xếp loại học lực → `enrollments.academic_level`, tích 1 lần/lớp.
+- Điểm mạnh/Cải thiện mất MultiSelect, combo là đường duy nhất thêm nhãn.
+- SPCK = danh mục thứ 3, cờ `sessions.is_project_period` GV tự đánh dấu.
+- Combo bỏ cột `type`, một bộ = "chân dung" chứa cả 3 ô; sửa bug rút nhãn
+  luôn lấy 2 câu đầu theo alphabet bằng cơ chế xoay vòng
+  (`review-combo-templates.ts`) — đây là nguyên nhân THẬT của việc "chưa tận
+  dụng hết danh mục" mà user phản ánh.
+- Gợi ý nội dung buổi học chạy được khi để trống (nếu có buổi trước).
+
+**Bài học quy trình quan trọng nhất phiên này**: user dán CẢ HAI migration
+(ADD + DROP) TRƯỚC khi deploy → production gián đoạn ngắn (GV không lưu được
+nhận xét). Phát hiện bằng cách PROBE SCHEMA THẬT (script Node tạm trong
+`web/scripts/`, xóa ngay sau khi chạy) thay vì đoán hay chỉ dựa lời user nói
+"tôi đã dán" — xem lại đúng luật cũ "đọc dữ liệu/schema thật trước khi tin".
+Về git: user yêu cầu "commit, push, deploy" trong 1 câu nhưng
+GIT-WORKFLOW-RULES.md chỉ cho phép tự động hóa commit/push (có xác nhận),
+KHÔNG có vế tương tự cho merge `develop`→`main` — đã dừng lại hỏi riêng bước
+merge thay vì suy diễn "deploy" bao gồm luôn merge, user xác nhận rồi mới làm.
+
+lint + typecheck + `pnpm test` 145→161 (bỏ 1 ca academic_level cũ, thêm 17 ca
+mới) + `pnpm build` sạch; pytest 62→68
+sạch. `reviews.e2e.ts` sửa theo schema mới, chạy thật 9/10 (1 ca đỏ do Gemini
+503 "quá tải", đã xác nhận bằng cách chạy lại).
 
 ### 2026-08-13 — Đợt 55 (`feature/custom-skill-groups`) — GV tự thêm nhóm kỹ năng
 **Đảo ngược quyết định cũ** "12 nhóm kỹ năng cố định" (DECISIONS.md) — lý do

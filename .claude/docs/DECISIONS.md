@@ -539,3 +539,114 @@
   LẦN lỡ code thẳng trên `main` (quên checkout sau merge) — vá bằng cách tạo
   branch từ đúng lúc `main` chưa có commit lạ, không mất gì, nhưng PHẢI
   `git branch --show-current` trước MỌI lần sửa file, không chỉ đầu phiên.
+  ⚠️ Rule "không tự merge dev→main" KHÔNG có vế "trừ khi user xác nhận" như 2
+  rule commit/push phía trên nó — khi user nói "deploy" mà chưa nói rõ có bao
+  gồm merge lên `main` hay không, HỎI LẠI riêng cho bước merge thay vì suy ra
+  từ chữ "deploy" (đã làm đúng 2026-08-28: commit+push feature branch trước,
+  hỏi riêng rồi mới merge dev→main khi user xác nhận).
+
+- **Xếp loại học lực chuyển từ mỗi-buổi sang mỗi-LỚP** (2026-08-28, đảo ngược
+  một phần quyết định Đợt 19 ở trên — "CHỈ làm ngữ cảnh cho AI" vẫn giữ, chỉ
+  đổi PHẠM VI lưu). Lý do: GV phải chọn lại y hệt một mức cho cùng một em ở
+  MỌI buổi trong suốt lớp — thao tác lặp vô ích. Chuyển sang
+  `enrollments.academic_level` (migration `20260828000000`), tích 1 LẦN ở
+  bảng "Danh sách học viên" (Select auto-save, không cần nút Lưu — cùng tinh
+  thần "tick Vắng lưu luôn"). Trang nhận xét theo buổi giờ CHỈ ĐỌC (badge 🏷️
+  cạnh tên HV), không còn Select sửa tại đó. Cột `student_reviews.academic_level`
+  đã DROP (`20260828010000`) — đường copy academic_level giữa 2 buổi trong
+  `applyReviewsFromSession` (Đợt 2026-08-06) cũng bỏ theo vì không còn ý nghĩa
+  (giá trị đã dùng chung cấp lớp, không có gì để "copy sang buổi khác" nữa).
+  **Phạm vi CỐ Ý là theo LỚP, không phải xuyên khóa/toàn học viên** — user
+  chọn khi được hỏi 2026-08-28, vì một em có thể học lực khác nhau ở 2 lớp
+  khác nhau (VD lớp cơ bản vs lớp nâng cao).
+
+- **Bỏ hẳn ô tìm-tích tự do (MultiSelect) khỏi Điểm mạnh/Cần cải thiện trong
+  trang nhận xét theo buổi** (2026-08-28, user chọn rõ giữa 2 phương án khi
+  được hỏi). Hai ô này giờ CHỈ nhận nhãn qua bộ combo áp nhanh (xem mục combo
+  bên dưới) + badge đã chọn (bấm ✕ để BỎ CHỌN, khác xóa khỏi danh mục).
+  `GroupFilter` (Select lọc theo nhóm kỹ năng) mất theo — không còn gì để lọc.
+  Muốn thêm/sửa từng câu lẻ vào danh mục (`review_options`) vẫn làm được,
+  nhưng chỉ ở trang Cài đặt, không còn gõ tự do ngay tại chỗ nhận xét như
+  Đợt 22 nữa. **"Quá trình làm bài kiểm tra" và "🎓 Quan sát SPCK" GIỮ
+  NGUYÊN MultiSelect** — quyết định này CHỈ áp cho Điểm mạnh/Cần cải thiện, 2
+  ô có combo thay thế được hoàn toàn; 2 ô kia không có cơ chế combo tương
+  đương nên vẫn cần gõ tự do. `SelectedBadges` (`web/src/components/`) là
+  component mới thay thế phần hiển thị+bỏ-chọn mà MultiSelect từng làm.
+
+- **SPCK (sản phẩm cuối khóa) = danh mục thứ 3 ngang hàng Điểm mạnh/Cải
+  thiện, dựa trên cờ buổi GV tự đánh dấu** (2026-08-28, SPCK = "Sản phẩm cuối
+  khóa", user giải thích khi được hỏi — đây là buổi thu hoạch cuối, GV quan
+  sát học viên làm đồ án, thường buổi 9-13). `sessions.is_project_period`
+  (migration `20260828000000`) — cùng cơ chế GV-tự-đánh-dấu với
+  `is_periodic_test` (KHÔNG hardcode buổi 9-13, lý do y hệt: tùy lớp buổi đó
+  có thể là việc khác). `review_options` category mới `project_progress`
+  (phẳng, không chia skill_group — giống `test_process`). **KHÁC
+  `is_periodic_test` ở CÁCH DÙNG trong prompt**: quan sát SPCK KHÔNG tách
+  thành phần riêng trong `comment` trả về — chỉ hòa vào đoạn nhận xét chung,
+  vì đây là quan sát TIẾN ĐỘ chứ không phải KẾT QUẢ một bài kiểm tra đã chấm
+  xong (đọc kỹ trước khi "sửa cho nhất quán" với periodic test).
+
+- **Bộ combo nhận xét BỎ HẲN cột `type`, quay lại mô hình "chân dung học
+  viên" TRỘN cả 3 ô trong 1 bộ** (2026-08-28, ĐẢO NGƯỢC quyết định Đợt
+  2026-08-06 "mỗi bộ 1 loại" — đây là lần đảo ngược THỨ HAI của cùng một
+  quyết định, sau lần seed lại 2026-08-13 vẫn giữ chia loại). Lý do lần này
+  khác hẳn 2 lần trước: **combo không còn là một trong nhiều cách thêm nhãn —
+  nó là đường DUY NHẤT** sau khi MultiSelect bị gỡ khỏi Điểm mạnh/Cải thiện
+  (mục ở trên). Giữ chia loại trong bối cảnh đó bắt GV áp 2-3 lượt/em, đúng
+  cái mà "gộp lại để tích chọn cho nhanh" (lời user) muốn giải quyết. Migration
+  `20260828010000` DROP cột `type` — **KHÔNG mất nhãn của bộ cũ**, chúng vẫn
+  nằm nguyên trong `strengths`/`improvements` (bộ cũ trước đây chỉ có 1 mảng
+  khác rỗng, giờ đọc như bộ có ô SPCK trống). Cột `review_combos.project_notes`
+  (mới) là mảng thứ 3 song song, chỉ dùng khi bộ có nhãn SPCK.
+  🔴 **Bug tìm thấy khi thiết kế lại — nguồn gốc thật của "chưa tận dụng hết
+  kỹ năng"**: hàm rút nhãn cũ luôn `.slice(0, 2)` nên MỌI bộ tham chiếu cùng
+  một nhóm kỹ năng đều nhận ĐÚNG 2 nhãn đầu theo alphabet — phần còn lại của
+  danh mục (có nhóm tới 10-12 câu) KHÔNG BAO GIỜ xuất hiện trong bộ mẫu nào.
+  Sửa bằng `pickRotating`/`rotateSlice` (`web/src/lib/review-combo-templates.ts`
+  — tách khỏi `"use server"` action để unit-test được logic thuần, cùng lý do
+  đã tách `review-status.ts`): mỗi bộ mẫu bắt đầu rút từ một VỊ TRÍ khác nhau
+  (theo index trong `COMBO_TEMPLATES`, tính TRƯỚC khi lọc trùng tên — để seed
+  lại sau khi xóa bớt bộ khác vẫn cho đúng bộ nhãn cũ, không bị lệch offset)
+  rồi CHẠY VÒNG khi hết mảng, thay vì luôn lấy từ đầu. Có test canh riêng
+  (`should give DIFFERENT labels to different templates from the same group`)
+  và test canh cả 11 nhóm kỹ năng nền (trừ `other`) phải được ít nhất 1 bộ
+  mẫu nhắc tới — thiếu nhóm nào là đỏ. **40 bộ mẫu mới** (16 theo 4 mức xếp
+  loại học lực, 16 theo tình huống lớp thực tế, 8 cho buổi SPCK) thay 32 bộ
+  cũ (16 tích cực + 16 cải thiện) — KHÔNG tự xóa bộ cũ của GV (seed chỉ bỏ
+  qua bộ trùng TÊN, không đụng bộ khác); thêm nút "🗑️ Xóa tất cả bộ"
+  (`deleteAllReviewCombos`, có `ConfirmDialog`) làm lối thoát dọn sạch để seed
+  lại, GV tự bấm chứ không tự động chạy.
+
+- **Chuyển học viên sang lớp khác: từ Select+nút inline trong TỪNG DÒNG bảng
+  → dialog riêng cạnh nút "+ Thêm học viên"** (2026-08-28, user chọn khi được
+  hỏi). `transfer-student-dialog.tsx` gọi thẳng `transferStudent` (action
+  KHÔNG đổi chữ ký). Cột "Thao tác" trong `students-table.tsx` giờ chỉ còn
+  🔑 Đặt lại mật khẩu + Xóa — gọn hơn, dễ theo dõi hơn theo đúng lý do user
+  đưa ra ("giúp dễ dàng theo dõi").
+
+- **Gợi ý nội dung buổi học chạy được khi để trống ghi chú** (2026-08-28, mở
+  rộng quyết định gốc 2026-08-03 ở trên — KHÔNG đảo ngược, chỉ thêm 1 nhánh
+  mới). Hai nhánh luật NGƯỢC NHAU về việc tự thêm kiến thức, cố ý KHÔNG gộp:
+  có draft vẫn giữ nguyên cấm tuyệt đối tự thêm kiến thức (lý do gốc 2026-08-03
+  không đổi: nội dung này chảy vào nhận xét gửi phụ huynh); draft RỖNG là ca
+  DUY NHẤT được phép tự đề xuất chủ đề, dựa HOÀN TOÀN vào tối đa 5 buổi trước
+  — vì không có ghi chú nào để bám vào thì "cấm bịa" vô nghĩa, phải cho AI
+  làm việc từ tiến trình đã có. Web tự chặn gọi AI khi draft rỗng LẪN không
+  có buổi trước nào có nội dung (VD buổi 1 của lớp mới) — báo lỗi rõ thay vì
+  gọi AI ra nội dung không có căn cứ gì.
+
+- 🔴 **Sự cố production ngắn hạn khi dán migration DROP trước khi deploy code
+  mới** (2026-08-28) — bài học quy trình, không phải bug code. User dán CẢ
+  HAI migration (`20260828000000` ADD và `20260828010000` DROP) cùng lúc,
+  TRƯỚC khi code mới được deploy. Hậu quả: `student_reviews.academic_level`
+  bị xóa trong khi code cũ trên production vẫn `SELECT`/`upsert` đích danh
+  cột đó → **GV không lưu được nhận xét nào** cho tới khi deploy xong. Phát
+  hiện bằng cách probe schema thật (`node --env-file=.env.local scripts/...`)
+  thay vì đoán — đúng luật "đừng tin lời mô tả, đọc dữ liệu/schema THẬT" đã
+  có ở trên. Xử lý: deploy code mới NGAY (code mới không đụng cột đó nữa) +
+  dán nốt câu DROP `review_combos.type` còn thiếu (ban đầu migration soạn 2
+  bước — nới lỏng CHECK rồi mới drop — để tương thích ngược, nhưng vì production
+  đã hỏng sẵn nên bỏ bước trung gian, drop thẳng). Nhắc lại quy ước đã có:
+  **THÊM/nới lỏng → dán TRƯỚC deploy; DROP → deploy code mới TRƯỚC, dán DROP
+  SAU** — không phải vì thích thứ tự đó, mà vì code ĐANG CHẠY vẫn tham chiếu
+  cột sắp mất.

@@ -799,6 +799,48 @@
       từ chính danh mục của GV; bỏ qua bộ trùng tên và bộ rỗng.
 - [x] Không migration (bảng/cột đã có sẵn từ Đợt tách loại).
 
+### Đợt 57 (`feature/class-review-improvements`) — xếp loại theo lớp, gỡ MultiSelect, SPCK, combo chân dung
+- [x] **Chuyển học viên**: Select+nút inline trong từng dòng bảng → dialog
+      "⇄ Chuyển học viên" cạnh nút "+ Thêm học viên" (`transferStudent` không
+      đổi chữ ký). Cột "Thao tác" chỉ còn Đặt lại mật khẩu + Xóa.
+- [x] **Xếp loại học lực chuyển sang mỗi-LỚP** (đảo ngược một phần Đợt 19):
+      `enrollments.academic_level` (migration `20260828000000`), tích 1 lần ở
+      bảng Danh sách học viên (Select auto-save). Trang nhận xét theo buổi chỉ
+      còn ĐỌC (badge 🏷️), không sửa tại chỗ nữa. Cột cũ
+      `student_reviews.academic_level` DROP ở `20260828010000`.
+- [x] **Bỏ hẳn MultiSelect (ô tìm-tích tự do) khỏi Điểm mạnh/Cần cải thiện** —
+      chỉ còn bộ combo áp nhanh + badge đã chọn (`SelectedBadges` mới). Quá
+      trình làm bài kiểm tra và SPCK vẫn giữ MultiSelect.
+- [x] **SPCK (sản phẩm cuối khóa) = danh mục thứ 3**: `sessions.is_project_period`
+      (GV tự đánh dấu, giống `is_periodic_test`), category `review_options`
+      mới `project_progress`, ô "🎓 Quan sát SPCK" ở trang nhận xét (không
+      lưu DB), khối Cài đặt riêng (`project-progress-manager.tsx`). Quan sát
+      hòa vào đoạn nhận xét chung, KHÔNG tách phần riêng như kiểm tra định kỳ.
+- [x] **Combo nhận xét thiết kế lại — bỏ cột `type`, một bộ = 1 "chân dung
+      học viên" chứa cả 3 ô** (đảo ngược Đợt 2026-08-06 lần 2): combo là
+      đường DUY NHẤT thêm Điểm mạnh/Cải thiện sau khi gỡ MultiSelect, chia
+      loại bắt GV áp 2-3 lượt/em. **Sửa bug seed cũ luôn lấy 2 nhãn đầu theo
+      alphabet** (`.slice(0,2)` → phần lớn danh mục GV chưa từng vào bộ nào)
+      bằng `pickRotating`/`rotateSlice` xoay vòng danh mục
+      (`web/src/lib/review-combo-templates.ts`, tách khỏi action để unit test
+      được). 40 bộ mẫu mới (16 theo xếp loại học lực, 16 theo tình huống lớp,
+      8 cho SPCK) thay 32 bộ cũ. Thêm nút "🗑️ Xóa tất cả bộ" để GV tự dọn.
+- [x] **Gợi ý nội dung buổi học chạy được khi để trống ghi chú** (mở rộng Đợt
+      47, không đảo ngược): draft rỗng là ca DUY NHẤT AI được tự đề xuất chủ
+      đề, dựa hoàn toàn vào tối đa 5 buổi trước; có draft vẫn cấm tuyệt đối
+      tự thêm kiến thức như cũ. Chặn gọi AI khi rỗng cả draft lẫn buổi trước.
+- [x] **17 unit test mới** (`review-combo-templates.test.ts`) → 161 test; **7
+      pytest mới** (SPCK + draft rỗng) → 68; lint + typecheck + build sạch.
+      `reviews.e2e.ts` sửa theo schema mới, chạy lại 9/10 (1 ca đỏ do Gemini
+      503 "quá tải", không phải lỗi code — xem DECISIONS.md).
+- [x] 🔴 **Sự cố ngắn: production không lưu được nhận xét** khi user dán cả 2
+      migration (ADD + DROP) TRƯỚC khi deploy code mới — cột
+      `student_reviews.academic_level` mất trong khi code cũ còn tham chiếu.
+      Phát hiện bằng probe schema thật, xử lý bằng deploy ngay + bài học ghi
+      lại ở DECISIONS.md (đúng quy ước THÊM trước/DROP sau, lần này lệch thứ tự).
+- [x] Merge `feature/class-review-improvements` → `develop` → `main`, push cả
+      3 nhánh. Vercel + Render (ai-service đổi) tự deploy.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
