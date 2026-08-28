@@ -2,22 +2,22 @@
 
 import { revalidatePath } from "next/cache";
 
-import type { SkillGroup } from "@/lib/skill-groups";
+import {
+  COMBO_TEMPLATES,
+  LABELS_PER_GROUP,
+  pickRotating,
+  rotateSlice,
+} from "@/lib/review-combo-templates";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
-
-export type ReviewComboType = "strength" | "improvement";
 
 export interface ReviewCombo {
   id: string;
   name: string;
-  type: ReviewComboType;
   strengths: string[];
   improvements: string[];
-}
-
-function asComboType(value: string): ReviewComboType | null {
-  return value === "strength" || value === "improvement" ? value : null;
+  /** Quan sát SPCK — chỉ dùng ở buổi có đánh dấu làm sản phẩm cuối khóa. */
+  projectNotes: string[];
 }
 
 /** Bộ combo lưu sẵn của GV đang đăng nhập (RLS `review_combos_teacher_all` đã
@@ -31,41 +31,56 @@ export async function listMyCombos(): Promise<ReviewCombo[]> {
 
   const { data } = await supabase
     .from("review_combos")
-    .select("id, name, type, strengths, improvements")
+    .select("id, name, strengths, improvements, project_notes")
     .eq("teacher_id", user.id)
-    .order("created_at");
-  return (data ?? []) as ReviewCombo[];
+    .order("name");
+  return ((data ?? []) as unknown as {
+    id: string;
+    name: string;
+    strengths: string[];
+    improvements: string[];
+    project_notes: string[];
+  }[]).map((c) => ({
+    id: c.id,
+    name: c.name,
+    strengths: c.strengths,
+    improvements: c.improvements,
+    projectNotes: c.project_notes,
+  }));
 }
+
+/** Đọc 3 mảng nhãn từ form. Một bộ giờ chứa CẢ BA (không chia loại nữa) — ô
+ *  nào GV để trống thì lưu mảng rỗng, áp bộ chỉ điền ô có nội dung. */
+function labelsFromForm(formData: FormData) {
+  return {
+    strengths: formData.getAll("strengths").map(String),
+    improvements: formData.getAll("improvements").map(String),
+    project_notes: formData.getAll("project_notes").map(String),
+  };
+}
+
+const EMPTY_COMBO_ERROR =
+  "Chọn ít nhất một nhãn (điểm mạnh, cần cải thiện hoặc SPCK) rồi mới lưu bộ.";
 
 export async function createReviewCombo(
   _prev: ActionResult,
   formData: FormData
 ): Promise<ActionResult> {
   const name = String(formData.get("name") ?? "").trim();
-  const type = asComboType(String(formData.get("type") ?? ""));
-  // Bộ CHỈ một loại (yêu cầu user 2026-08-06) — chỉ đọc mảng khớp `type`, mảng
-  // còn lại (nếu form lỡ gửi kèm) bị bỏ qua hẳn, không lưu lẫn vào.
-  const labels =
-    type === "strength"
-      ? formData.getAll("strengths").map(String)
-      : formData.getAll("improvements").map(String);
+  const labels = labelsFromForm(formData);
 
-  if (!type) {
-    return { error: "Chọn bộ này là Tích cực hay Cải thiện." };
-  }
   if (!name) {
     return { error: "Đặt tên cho bộ combo." };
   }
   if (name.length > 60) {
     return { error: "Tên bộ combo tối đa 60 ký tự." };
   }
-  if (labels.length === 0) {
-    return {
-      error:
-        type === "strength"
-          ? "Chọn ít nhất một điểm mạnh rồi mới lưu bộ."
-          : "Chọn ít nhất một điểm cần cải thiện rồi mới lưu bộ.",
-    };
+  if (
+    labels.strengths.length === 0 &&
+    labels.improvements.length === 0 &&
+    labels.project_notes.length === 0
+  ) {
+    return { error: EMPTY_COMBO_ERROR };
   }
 
   const supabase = await createClient();
@@ -76,13 +91,9 @@ export async function createReviewCombo(
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
-  const { error } = await supabase.from("review_combos").insert({
-    teacher_id: user.id,
-    name,
-    type,
-    strengths: type === "strength" ? labels : [],
-    improvements: type === "improvement" ? labels : [],
-  });
+  const { error } = await supabase
+    .from("review_combos")
+    .insert({ teacher_id: user.id, name, ...labels });
   if (error) {
     return { error: `Không lưu được bộ: ${error.message}` };
   }
@@ -100,15 +111,9 @@ export async function updateReviewCombo(
 ): Promise<ActionResult> {
   const id = String(formData.get("id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  const type = asComboType(String(formData.get("type") ?? ""));
-  // Loại KHÔNG đổi được lúc sửa (xem combo-manager.tsx) — vẫn đọc lại từ form
-  // ẩn để validate/insert đúng cột như lúc tạo.
-  const labels =
-    type === "strength"
-      ? formData.getAll("strengths").map(String)
-      : formData.getAll("improvements").map(String);
+  const labels = labelsFromForm(formData);
 
-  if (!id || !type) {
+  if (!id) {
     return { error: "Thiếu thông tin bộ combo." };
   }
   if (!name) {
@@ -117,13 +122,12 @@ export async function updateReviewCombo(
   if (name.length > 60) {
     return { error: "Tên bộ combo tối đa 60 ký tự." };
   }
-  if (labels.length === 0) {
-    return {
-      error:
-        type === "strength"
-          ? "Chọn ít nhất một điểm mạnh rồi mới lưu bộ."
-          : "Chọn ít nhất một điểm cần cải thiện rồi mới lưu bộ.",
-    };
+  if (
+    labels.strengths.length === 0 &&
+    labels.improvements.length === 0 &&
+    labels.project_notes.length === 0
+  ) {
+    return { error: EMPTY_COMBO_ERROR };
   }
 
   const supabase = await createClient();
@@ -138,11 +142,7 @@ export async function updateReviewCombo(
   // thêm teacher_id chỉ để chắc chắn không update nhầm row nào ngoài của mình.
   const { error } = await supabase
     .from("review_combos")
-    .update({
-      name,
-      strengths: type === "strength" ? labels : [],
-      improvements: type === "improvement" ? labels : [],
-    })
+    .update({ name, ...labels })
     .eq("id", id)
     .eq("teacher_id", user.id);
   if (error) {
@@ -155,59 +155,9 @@ export async function updateReviewCombo(
 }
 
 /**
- * Bộ mẫu combo dựng sẵn — MỖI BỘ CHỈ MỘT LOẠI (yêu cầu user 2026-08-13, hồi
- * sinh có sửa lại tính năng đã gỡ ở `20260806000000`: bản cũ trộn cả điểm
- * mạnh lẫn cần cải thiện theo "chân dung học viên", giờ KHÔNG được trộn nữa
- * nên tách hẳn 2 danh sách theo `type`). Mỗi bộ rút nhãn từ 1-3 NHÓM KỸ NĂNG
- * — lúc seed lấy chính nhãn trong danh mục của GV nên áp xong khớp catalog.
- * Bỏ nhóm `presentation` khỏi các bộ gộp nhiều nhóm (tùy buổi mới dùng) và
- * `other` (catch-all); `presentation` vẫn có bộ riêng của nó.
- */
-const STRENGTH_COMBO_TEMPLATES: { name: string; groups: SkillGroup[] }[] = [
-  { name: "💪 Tư duy logic tốt", groups: ["thinking"] },
-  { name: "💪 Sáng tạo, có ý tưởng riêng", groups: ["creativity"] },
-  { name: "💪 Code sạch, chắc nền tảng", groups: ["coding"] },
-  { name: "💪 Thao tác máy tính thành thạo", groups: ["computer_skills"] },
-  { name: "💪 Vận dụng AI hiệu quả", groups: ["ai_usage"] },
-  { name: "💪 Chủ động đặt câu hỏi", groups: ["questioning"] },
-  { name: "💪 Thái độ học tập tốt", groups: ["attitude"] },
-  { name: "💪 Kỷ luật, nề nếp tốt", groups: ["discipline"] },
-  { name: "💪 Tự học, tự nghiên cứu tốt", groups: ["self_study"] },
-  { name: "💪 Giao tiếp & hợp tác tốt", groups: ["collaboration"] },
-  { name: "💪 Thuyết trình tự tin", groups: ["presentation"] },
-  { name: "💪 Tư duy tốt, code chắc", groups: ["thinking", "coding"] },
-  { name: "💪 Chăm chỉ, kỷ luật tốt", groups: ["attitude", "discipline"] },
-  { name: "💪 Sáng tạo, thạo AI", groups: ["creativity", "ai_usage"] },
-  { name: "💪 Tự học tốt, chủ động hỏi", groups: ["self_study", "questioning"] },
-  { name: "💪 Học tốt toàn diện", groups: ["thinking", "coding", "self_study"] },
-];
-
-const IMPROVEMENT_COMBO_TEMPLATES: { name: string; groups: SkillGroup[] }[] = [
-  { name: "🎯 Cần rèn tư duy logic", groups: ["thinking"] },
-  { name: "🎯 Cần phát huy sáng tạo", groups: ["creativity"] },
-  { name: "🎯 Cần luyện code cẩn thận hơn", groups: ["coding"] },
-  { name: "🎯 Cần luyện thao tác máy tính", groups: ["computer_skills"] },
-  { name: "🎯 Cần dùng AI đúng cách hơn", groups: ["ai_usage"] },
-  { name: "🎯 Cần mạnh dạn đặt câu hỏi", groups: ["questioning"] },
-  { name: "🎯 Cần cải thiện thái độ học tập", groups: ["attitude"] },
-  { name: "🎯 Cần kỷ luật, tập trung hơn", groups: ["discipline"] },
-  { name: "🎯 Cần tự học thêm ở nhà", groups: ["self_study"] },
-  { name: "🎯 Cần hợp tác tốt hơn với bạn", groups: ["collaboration"] },
-  { name: "🎯 Cần luyện thuyết trình", groups: ["presentation"] },
-  { name: "🎯 Cần cẩn thận, kỷ luật hơn", groups: ["coding", "discipline"] },
-  { name: "🎯 Cần tập trung & chủ động hơn", groups: ["attitude", "discipline"] },
-  { name: "🎯 Cần rèn nền tảng & tự học", groups: ["thinking", "self_study"] },
-  { name: "🎯 Cần mạnh dạn hỏi & hợp tác", groups: ["questioning", "collaboration"] },
-  { name: "🎯 Cần rèn nền tảng toàn diện", groups: ["thinking", "coding", "self_study"] },
-];
-
-/** Số nhãn tối đa lấy từ mỗi nhóm cho một bộ — giữ bộ đủ ý mà không quá dài. */
-const MAX_LABELS_PER_GROUP = 2;
-
-/**
- * Thêm nhanh loạt bộ mẫu (nút ở trang Cài đặt, cả 2 cột Tích cực/Cải thiện).
- * Rút nhãn từ CHÍNH danh mục của GV theo nhóm kỹ năng; bỏ qua bộ trùng tên
- * (bấm nhiều lần không nhân đôi) và bộ rỗng (nhóm tham chiếu chưa có nhãn).
+ * Thêm nhanh loạt bộ mẫu chân dung (xem `review-combo-templates.ts`). Rút nhãn
+ * từ CHÍNH danh mục của GV nên áp xong khớp catalog; bỏ qua bộ trùng tên (bấm
+ * nhiều lần không nhân đôi) và bộ rỗng (các nhóm nó tham chiếu chưa có nhãn).
  */
 export async function seedDefaultCombos(): Promise<ActionResult> {
   const supabase = await createClient();
@@ -240,49 +190,37 @@ export async function seedDefaultCombos(): Promise<ActionResult> {
     const key = `${opt.category}:${opt.skill_group}`;
     (byKey.get(key) ?? byKey.set(key, []).get(key)!).push(opt.label);
   }
-  const pick = (category: "strength" | "improvement", groups: SkillGroup[]) => {
-    const seen = new Set<string>();
-    const result: string[] = [];
-    for (const group of groups) {
-      for (const label of (byKey.get(`${category}:${group}`) ?? []).slice(
-        0,
-        MAX_LABELS_PER_GROUP
-      )) {
-        if (!seen.has(label.toLowerCase())) {
-          seen.add(label.toLowerCase());
-          result.push(label);
-        }
-      }
-    }
-    return result;
-  };
+  // Danh mục SPCK không chia nhóm kỹ năng — gom mọi skill_group về một rổ.
+  const projectPool = options
+    .filter((o) => o.category === "project_progress")
+    .map((o) => o.label);
 
   const existingNames = new Set(
     (existing ?? []).map((c) => c.name.toLowerCase())
   );
 
-  const strengthRows = STRENGTH_COMBO_TEMPLATES.filter(
-    (t) => !existingNames.has(t.name.toLowerCase())
-  ).map((t) => ({
+  // Offset lấy theo vị trí trong COMBO_TEMPLATES (map TRƯỚC, lọc SAU): một bộ
+  // mẫu luôn rút đúng bộ nhãn đó dù seed lại sau khi đã xóa bớt bộ khác.
+  const rows = COMBO_TEMPLATES.map((t, index) => ({
     teacher_id: user.id,
     name: t.name,
-    type: "strength" as const,
-    strengths: pick("strength", t.groups),
-    improvements: [],
-  }));
-  const improvementRows = IMPROVEMENT_COMBO_TEMPLATES.filter(
-    (t) => !existingNames.has(t.name.toLowerCase())
-  ).map((t) => ({
-    teacher_id: user.id,
-    name: t.name,
-    type: "improvement" as const,
-    strengths: [],
-    improvements: pick("improvement", t.groups),
-  }));
-
-  const rows = [...strengthRows, ...improvementRows].filter(
-    (r) => r.strengths.length > 0 || r.improvements.length > 0
-  );
+    strengths: t.strengths
+      ? pickRotating(byKey, "strength", t.strengths, index)
+      : [],
+    improvements: t.improvements
+      ? pickRotating(byKey, "improvement", t.improvements, index)
+      : [],
+    project_notes: t.project
+      ? rotateSlice(projectPool, index * 2, LABELS_PER_GROUP)
+      : [],
+  }))
+    .filter((r) => !existingNames.has(r.name.toLowerCase()))
+    .filter(
+      (r) =>
+        r.strengths.length > 0 ||
+        r.improvements.length > 0 ||
+        r.project_notes.length > 0
+    );
 
   if (rows.length === 0) {
     return {
@@ -312,4 +250,29 @@ export async function deleteReviewCombo(formData: FormData): Promise<void> {
   // buổi học động nên dùng mẫu "[id]" + "page" để mọi buổi cập nhật.
   revalidatePath("/teacher/settings");
   revalidatePath("/teacher/sessions/[id]", "page");
+}
+
+/** Dọn sạch để làm lại từ đầu — cho GV bỏ loạt bộ cũ không dùng rồi seed bộ
+ *  chân dung mới (yêu cầu user 2026-08-28 "xóa những cái không dùng đi"). Chỉ
+ *  xóa bộ của CHÍNH GV; nhận xét đã lưu của học viên không đụng tới. */
+export async function deleteAllReviewCombos(): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const { error } = await supabase
+    .from("review_combos")
+    .delete()
+    .eq("teacher_id", user.id);
+  if (error) {
+    return { error: `Không xóa được: ${error.message}` };
+  }
+
+  revalidatePath("/teacher/settings");
+  revalidatePath("/teacher/sessions/[id]", "page");
+  return { success: "Đã xóa toàn bộ bộ combo. Bấm “Thêm nhanh bộ mẫu” để dựng lại." };
 }

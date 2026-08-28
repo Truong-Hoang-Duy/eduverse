@@ -18,6 +18,8 @@ def build(**over):
         "previous_comment": None,
         "is_periodic_test": False,
         "test_process_notes": None,
+        "is_project_period": False,
+        "project_progress_notes": None,
     }
     kwargs.update(over)
     return prompts.build_review_prompt(**kwargs)
@@ -63,3 +65,38 @@ def test_normal_session_ignores_test_process_notes() -> None:
     prompt = build(is_periodic_test=False, test_process_notes=["Làm bài tốt"])
 
     assert "Làm bài tốt" not in prompt
+
+
+def test_project_period_includes_teacher_notes_about_spck() -> None:
+    prompt = build(
+        is_project_period=True,
+        project_progress_notes=["Tập trung làm bài", "Chưa có ý tưởng"],
+    )
+
+    assert "Tập trung làm bài, Chưa có ý tưởng" in prompt
+    assert "SPCK" in prompt
+
+
+def test_project_period_without_notes_omits_the_block() -> None:
+    prompt = build(is_project_period=True, project_progress_notes=None)
+
+    assert "SPCK" not in prompt
+
+
+def test_project_period_does_not_split_into_two_sections() -> None:
+    # KHÁC is_periodic_test: SPCK chỉ hòa vào đoạn nhận xét chung, không tách
+    # phần riêng — đây là chủ ý (xem prompts.py).
+    prompt = build(
+        is_periodic_test=False,
+        is_project_period=True,
+        project_progress_notes=["Tập trung làm bài"],
+    )
+
+    assert "HAI PHẦN TÁCH BIỆT" not in prompt
+    assert "KHÔNG tách thành mục riêng" in prompt
+
+
+def test_normal_session_ignores_project_progress_notes_when_flag_is_off() -> None:
+    prompt = build(is_project_period=False, project_progress_notes=["Tập trung làm bài"])
+
+    assert "Tập trung làm bài" not in prompt

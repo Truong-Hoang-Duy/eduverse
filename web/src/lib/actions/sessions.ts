@@ -17,6 +17,7 @@ export async function updateSession(
   const content = String(formData.get("content") ?? "").trim();
   const reviewContext = String(formData.get("review_context") ?? "").trim();
   const isPeriodicTest = formData.get("is_periodic_test") === "true";
+  const isProjectPeriod = formData.get("is_project_period") === "true";
   const sessionDate = String(formData.get("session_date") ?? "").trim();
   // Rỗng = GV không chọn áp nhận xét từ buổi nào (mặc định).
   const copyFromSessionId = String(
@@ -35,6 +36,7 @@ export async function updateSession(
       content: content || null,
       review_context: reviewContext || null,
       is_periodic_test: isPeriodicTest,
+      is_project_period: isProjectPeriod,
       session_date: sessionDate || null,
     })
     .eq("id", id);
@@ -222,9 +224,6 @@ export async function suggestSessionContent(input: {
   if (!user) {
     return { error: "Phiên đăng nhập hết hạn." };
   }
-  if (!input.draftText.trim()) {
-    return { error: "Nhập ghi chú/ý muốn dạy trước khi xin gợi ý." };
-  }
 
   const { data: sessionData } = await supabase
     .from("sessions")
@@ -249,6 +248,16 @@ export async function suggestSessionContent(input: {
     .filter((s): s is { session_number: number; content: string } => Boolean(s.content))
     .sort((a, b) => a.session_number - b.session_number)
     .map((s) => ({ session_number: s.session_number, content: s.content }));
+
+  // Để trống ghi chú vẫn tạo được (user chốt 2026-08-28), MIỄN LÀ có buổi
+  // trước để AI dựa vào — buổi đầu tiên của lớp mà không gõ gì thì AI không
+  // có gì để nối tiếp, phải báo rõ thay vì gọi AI cho ra nội dung bịa.
+  if (!input.draftText.trim() && priorSessions.length === 0) {
+    return {
+      error:
+        "Chưa có buổi trước nào có nội dung để AI tham khảo — hãy nhập ghi chú hôm nay học gì.",
+    };
+  }
 
   try {
     const data = await callAiService<{ bullets: string[] }>(

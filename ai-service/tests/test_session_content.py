@@ -80,3 +80,24 @@ def test_should_work_without_prior_sessions() -> None:
 def test_should_not_apply_the_review_tone_rule() -> None:
     # Đây là mô tả giáo án cho GV, không phải nhận xét gửi phụ huynh.
     assert prompts.TONE_RULE not in build()
+
+
+def test_empty_draft_with_prior_sessions_asks_the_model_to_propose_content() -> None:
+    # User chốt 2026-08-28: để trống ghi chú vẫn tạo được, MIỄN LÀ có buổi
+    # trước để AI nối tiếp — nhánh NGƯỢC hẳn với "cấm bịa" khi có ghi chú.
+    prompt = build(
+        draft="",
+        prior_sessions=[(1, "Học biến và kiểu dữ liệu"), (2, "Học vòng lặp for")],
+    )
+
+    assert "CHƯA ghi ý muốn dạy" in prompt
+    assert "Dựa HOÀN TOÀN vào tiến trình các buổi TRƯỚC" in prompt
+    assert "Ghi chú thô của giáo viên cho buổi này:" not in prompt
+
+
+def test_draft_given_still_forbids_inventing_new_topics() -> None:
+    # Nhánh có ghi chú giữ nguyên luật cấm cũ — đừng để nới lỏng ở nhánh rỗng
+    # lan sang nhánh có ghi chú.
+    prompt = build(draft="day vong lap for")
+
+    assert "TUYỆT ĐỐI KHÔNG tự thêm kiến thức/chủ đề mới" in prompt

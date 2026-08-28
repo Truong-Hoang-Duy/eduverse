@@ -47,7 +47,7 @@ function form(fields: Record<string, string | string[]>): FormData {
 async function reviewRow(): Promise<ExistingReview | null> {
   const { data } = await admin()
     .from("student_reviews")
-    .select("strengths, improvements, ai_generated_comment, academic_level, is_absent")
+    .select("strengths, improvements, ai_generated_comment, is_absent")
     .eq("session_id", sessionId)
     .eq("student_id", student.id)
     .maybeSingle();
@@ -119,7 +119,6 @@ describe("saveReview — nhận xét bình thường", () => {
           student_id: student.id,
           strengths: ["Tư duy tốt", "Chăm phát biểu"],
           improvements: ["Cần cẩn thận hơn"],
-          academic_level: "gioi",
           is_absent: "false",
         })
       )
@@ -128,7 +127,6 @@ describe("saveReview — nhận xét bình thường", () => {
 
     const row = await reviewRow();
     expect(row?.strengths).toEqual(["Tư duy tốt", "Chăm phát biểu"]);
-    expect(row?.academic_level).toBe("gioi");
     expect(row?.is_absent).toBe(false);
     expect(isReviewed(row), "có điểm mạnh nghĩa là đã nhận xét").toBe(true);
   });
@@ -160,7 +158,6 @@ describe("saveReview — đánh vắng", () => {
     expect(row?.strengths).toEqual([]);
     expect(row?.improvements).toEqual([]);
     expect(row?.ai_generated_comment).toBeNull();
-    expect(row?.academic_level).toBeNull();
   });
 
   it("should let the teacher undo an accidental absence", async () => {
@@ -200,11 +197,14 @@ describe("suggestSessionContent — gợi ý nội dung buổi học (1 lượt 
     expect(error).toContain("Phiên đăng nhập");
   });
 
-  it("should require some notes to work from", async () => {
+  it("should refuse an empty draft when there is no prior session to lean on", async () => {
+    // Buổi 1 của lớp — không ghi chú LẪN không buổi trước nào có nội dung thì
+    // AI không có gì để dựa vào (khác buổi giữa/cuối lớp, nơi để trống vẫn
+    // tạo được nhờ tiến trình buổi trước — user chốt 2026-08-28).
     const { error } = await runAs(gv, () =>
       suggestSessionContent({ sessionId, draftText: "   " })
     );
-    expect(error).toContain("Nhập ghi chú");
+    expect(error).toContain("Chưa có buổi trước nào có nội dung");
   });
 
   it("should come back as bullet lines, not one paragraph", async () => {

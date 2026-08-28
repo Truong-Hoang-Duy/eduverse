@@ -27,6 +27,8 @@ def generate_review(body: GenerateReviewRequest) -> GenerateReviewResponse:
         session_context=body.session_context,
         is_periodic_test=body.is_periodic_test,
         test_process_notes=body.test_process_notes,
+        is_project_period=body.is_project_period,
+        project_progress_notes=body.project_progress_notes,
         previous_comment=body.previous_comment,
         prior_comments=body.prior_comments,
         academic_level=body.academic_level,

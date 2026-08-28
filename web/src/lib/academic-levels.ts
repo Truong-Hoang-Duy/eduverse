@@ -1,9 +1,11 @@
-// Mức xếp loại học lực cho nhận xét theo buổi. NGUỒN DUY NHẤT — mọi UI/action
-// import lại từ đây, không tự khai danh sách riêng (giống `skill-groups.ts`).
+// Mức xếp loại học lực — GV tích 1 lần cho MỖI LỚP (`enrollments.academic_level`,
+// đổi 2026-08-28 từ chọn lại mỗi buổi), dùng làm ngữ cảnh cho AI ở mọi buổi
+// nhận xét của lớp đó. NGUỒN DUY NHẤT — mọi UI/action import lại từ đây, không
+// tự khai danh sách riêng (giống `skill-groups.ts`).
 //
 // ⚠️ Sửa/thêm mức phải sửa CẢ CHECK constraint `academic_level` trong migration
 // (Postgres không cho ALTER CHECK trực tiếp — drop rồi add lại). Xem
-// `supabase/migrations/20260726000000_student_reviews_level_absent.sql`.
+// `supabase/migrations/20260828000000_class_level_project_period.sql`.
 
 export interface AcademicLevel {
   value: string;
