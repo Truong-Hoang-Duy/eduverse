@@ -9,7 +9,12 @@ import { SKILL_GROUPS, type SkillGroup } from "@/lib/skill-groups";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
-const VALID_CATEGORIES = ["strength", "improvement", "test_process"] as const;
+const VALID_CATEGORIES = [
+  "strength",
+  "improvement",
+  "test_process",
+  "project_progress",
+] as const;
 
 /** `skill_group` chấp nhận 1 trong 12 giá trị cố định, HOẶC id của một nhóm
  *  giáo viên tự thêm (`review_skill_groups`, phải THUỘC chính giáo viên này)
@@ -371,6 +376,40 @@ export async function seedDefaultTestProcessOptions(): Promise<void> {
   const rows = DEFAULT_TEST_PROCESS.map((label) => ({
     teacher_id: user.id,
     category: "test_process",
+    label,
+    skill_group: "other",
+  }));
+  await supabase.from("review_options").insert(rows);
+  revalidatePath("/teacher/settings");
+}
+
+// Danh mục "quan sát SPCK" (sản phẩm cuối khóa, buổi 9-13) — thêm 2026-08-28,
+// cùng cơ chế phẳng với DEFAULT_TEST_PROCESS (không theo skill_group). 2 câu
+// đầu lấy nguyên văn ví dụ user đưa, còn lại thêm cho đủ tông quan sát tiến độ
+// làm đồ án (không phải một kỹ năng cụ thể).
+const DEFAULT_PROJECT_PROGRESS: string[] = [
+  "Tập trung làm bài, tìm hiểu thêm nhiều kiến thức lập trình",
+  "Chưa có ý tưởng, còn gặp khó khăn trong việc xác định hướng làm",
+  "Chủ động hỏi khi bí ý tưởng",
+  "Biết chia nhỏ việc để làm dần từng phần",
+  "Hoàn thành đúng tiến độ đề ra",
+  "Cần hỗ trợ thêm để hoàn thiện sản phẩm",
+  "Có ý tưởng nhưng triển khai còn chậm",
+  "Chủ động tìm hiểu thêm kiến thức ngoài buổi học để làm sản phẩm",
+];
+
+/** Thêm nhanh bộ lựa chọn "quan sát SPCK" mặc định — cùng cơ chế gate như
+ *  `seedDefaultTestProcessOptions` (nút riêng, theo chính category rỗng). */
+export async function seedDefaultProjectProgressOptions(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const rows = DEFAULT_PROJECT_PROGRESS.map((label) => ({
+    teacher_id: user.id,
+    category: "project_progress",
     label,
     skill_group: "other",
   }));

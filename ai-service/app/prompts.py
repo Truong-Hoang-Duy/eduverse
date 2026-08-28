@@ -46,11 +46,17 @@ def build_review_prompt(
     academic_level: str | None = None,
     is_periodic_test: bool = False,
     test_process_notes: list[str] | None = None,
+    is_project_period: bool = False,
+    project_progress_notes: list[str] | None = None,
 ) -> str:
     """`is_periodic_test`: buổi có kiểm tra định kỳ (GV tự đánh dấu — KHÔNG cứng
     theo số buổi, vì buổi 14 tùy lớp có thể là thuyết trình thay vì kiểm tra;
     yêu cầu user 2026-08-05). Khi bật: nhận xét TÁCH RÕ 2 phần, gạch đầu dòng,
-    KHÔNG viết chung một đoạn — khác hẳn nhận xét buổi thường (3-5 câu liền)."""
+    KHÔNG viết chung một đoạn — khác hẳn nhận xét buổi thường (3-5 câu liền).
+
+    `is_project_period`: buổi có làm sản phẩm cuối khóa/SPCK (GV tự đánh dấu,
+    cùng cơ chế is_periodic_test, thêm 2026-08-28). KHÁC is_periodic_test: quan
+    sát SPCK CHỈ hòa vào đoạn nhận xét chung, KHÔNG tách phần riêng."""
     if is_periodic_test:
         instruction = (
             "Buổi này có KIỂM TRA ĐỊNH KỲ. Hãy viết nhận xét thành HAI PHẦN "
@@ -105,6 +111,14 @@ def build_review_prompt(
             "Quan sát của giáo viên về quá trình làm bài kiểm tra của em: "
             f"{', '.join(test_process_notes)} — dùng cho PHẦN 2 (kết quả kiểm "
             "tra định kỳ)."
+        )
+    if is_project_period and project_progress_notes:
+        # KHÔNG tách thành phần riêng như kiểm tra định kỳ — SPCK chỉ là quan
+        # sát bổ sung, hòa vào đoạn nhận xét chung (khác is_periodic_test).
+        parts.append(
+            "Quan sát của giáo viên về quá trình làm sản phẩm cuối khóa (SPCK) "
+            f"của em: {', '.join(project_progress_notes)} — nhắc tới như một "
+            "phần tự nhiên của nhận xét, KHÔNG tách thành mục riêng."
         )
     if previous_comment:
         parts.append(
@@ -292,17 +306,36 @@ def build_session_content_prompt(
             f"tiếp, không lặp lại kiến thức đã dạy trừ khi ghi chú nói rõ là ôn "
             f"tập):\n{joined}"
         )
-    parts.append(f"Ghi chú thô của giáo viên cho buổi này: {draft_text}")
+    # Để trống ghi chú vẫn tạo được (user chốt 2026-08-28) — hai nhánh có luật
+    # NGƯỢC NHAU về việc tự thêm kiến thức, đừng gộp chung:
+    if draft_text.strip():
+        parts.append(f"Ghi chú thô của giáo viên cho buổi này: {draft_text}")
+        no_invent_rule = (
+            "🔴 CHỈ viết những gì ghi chú của giáo viên đã nêu. TUYỆT ĐỐI KHÔNG "
+            "tự thêm kiến thức/chủ đề mới, kể cả khi thấy liên quan hoặc nên dạy "
+            "kèm."
+        )
+    else:
+        parts.append(
+            "Giáo viên CHƯA ghi ý muốn dạy cho buổi này. Dựa HOÀN TOÀN vào tiến "
+            "trình các buổi TRƯỚC để tự đề xuất nội dung hợp lý tiếp theo (bài "
+            "học mới nối tiếp mạch kiến thức đã dạy, hoặc ôn tập nếu phù hợp) — "
+            "đây là ca DUY NHẤT được phép tự đề xuất chủ đề, vì không có ghi chú "
+            "nào để bám vào."
+        )
+        no_invent_rule = (
+            "🔴 CHỈ đề xuất nội dung nối tiếp HỢP LÝ với các buổi trước đã liệt "
+            "kê ở trên — không bịa ra công nghệ/chủ đề không liên quan tới mạch "
+            "khóa học đang dạy."
+        )
     parts.append(
         "Viết lại thành DANH SÁCH GẠCH ĐẦU DÒNG (3-6 ý), mỗi ý MỘT việc sẽ dạy "
         "hoặc một bài tập. Mỗi ý tối đa 1 câu ngắn, đi thẳng vào trọng tâm — văn "
         "phong súc tích như ghi chú giáo án. Sắp theo thứ tự dạy trong buổi."
     )
     parts.append(
-        "🔴 CHỈ viết những gì ghi chú của giáo viên đã nêu. TUYỆT ĐỐI KHÔNG tự "
-        "thêm kiến thức/chủ đề mới, kể cả khi thấy liên quan hoặc nên dạy kèm. "
-        "Nội dung này được dùng làm ngữ cảnh để viết nhận xét gửi PHỤ HUYNH — "
-        "thêm thứ chưa dạy vào đây là báo sai cho phụ huynh."
+        f"{no_invent_rule} Nội dung này được dùng làm ngữ cảnh để viết nhận xét "
+        "gửi PHỤ HUYNH — thêm thứ chưa dạy vào đây là báo sai cho phụ huynh."
     )
     parts.append(
         "KHÔNG viết lời chào, KHÔNG nhắc tên học viên. Không tự thêm ký tự '-' "

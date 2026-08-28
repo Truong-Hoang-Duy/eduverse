@@ -10,6 +10,7 @@ import {
 
 import { FormMessage } from "@/components/forms/form-message";
 import { MultiSelect } from "@/components/multi-select";
+import { SelectedBadges } from "@/components/selected-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -23,18 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  ACADEMIC_LEVELS,
-  academicLevelLabel,
-} from "@/lib/academic-levels";
+import { academicLevelLabel } from "@/lib/academic-levels";
 import { generateAiReview, saveReview } from "@/lib/actions/reviews";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
 import { addReviewOption, deleteReviewOption } from "@/lib/actions/settings";
-import {
-  mergeSkillGroups,
-  type CustomSkillGroupRow,
-  type SkillGroupOption,
-} from "@/lib/skill-groups";
 import type { ActionResult } from "@/lib/types";
 
 import { ComboBar } from "./combo-bar";
@@ -45,37 +38,6 @@ export interface ReviewOptionItem {
   category: string;
   label: string;
   skill_group: string;
-}
-
-/** Bộ lọc nhóm kỹ năng cho combo box lựa chọn — "all" = không lọc. */
-function GroupFilter({
-  value,
-  onChange,
-  groups,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  groups: SkillGroupOption[];
-}) {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger
-        size="sm"
-        className="h-7 w-[150px] text-xs"
-        aria-label="Lọc theo nhóm kỹ năng"
-      >
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">Tất cả nhóm</SelectItem>
-        {groups.map((g) => (
-          <SelectItem key={g.value} value={g.value}>
-            {g.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
 }
 
 /** Một nguồn để copy nhanh điểm mạnh/cần cải thiện sang em đang nhận xét:
@@ -94,14 +56,15 @@ export function ReviewEditor({
   sessionContent,
   sessionContext,
   isPeriodicTest,
+  isProjectPeriod,
   studentId,
   studentName,
+  academicLevel,
   options,
   existing,
   priorComments,
   copySources,
   combos,
-  customGroups,
 }: {
   sessionId: string;
   sessionTitle: string;
@@ -112,18 +75,22 @@ export function ReviewEditor({
   /** Buổi có kiểm tra định kỳ — bật ô "quá trình làm bài" + tách nhận xét AI
    *  thành 2 phần (học tập / kiểm tra). */
   isPeriodicTest: boolean;
+  /** Buổi có làm sản phẩm cuối khóa (SPCK) — bật ô "quan sát SPCK", quan sát
+   *  được hòa vào đoạn nhận xét chung (không tách phần riêng như kiểm tra). */
+  isProjectPeriod: boolean;
   studentId: string;
   studentName: string;
+  /** Xếp loại học lực CỦA LỚP NÀY — tích 1 lần ở bảng "Danh sách học viên",
+   *  CHỈ ĐỌC ở đây (yêu cầu user 2026-08-28, thay vì chọn lại mỗi buổi). */
+  academicLevel: string | null;
   options: ReviewOptionItem[];
   existing: ExistingReview | null;
   /** Nhận xét các buổi trước của học viên này — cho AI tránh lặp lời văn. */
   priorComments?: string[];
   /** Nguồn copy nhanh: bạn cùng buổi + buổi trước của chính em. */
   copySources?: CopySource[];
-  /** Bộ combo lưu sẵn của GV — áp cả bộ điểm mạnh/cải thiện 1 chạm. */
+  /** Bộ combo lưu sẵn của GV — áp cả bộ điểm mạnh/cải thiện/SPCK 1 chạm. */
   combos?: ReviewCombo[];
-  /** Nhóm kỹ năng GV tự thêm (bên cạnh 12 nhóm nền cố định). */
-  customGroups?: CustomSkillGroupRow[];
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     saveReview,
@@ -134,13 +101,12 @@ export function ReviewEditor({
     existing?.improvements ?? []
   );
   const [comment, setComment] = useState(existing?.ai_generated_comment ?? "");
-  const [academicLevel, setAcademicLevel] = useState(
-    existing?.academic_level ?? ""
-  );
   const [isAbsent, setIsAbsent] = useState(existing?.is_absent ?? false);
   // KHÔNG lưu vào student_reviews (user chốt 2026-08-05) — chỉ dùng ngay khi
   // bấm "AI tạo nhận xét", mất khi tải lại trang, giống session_context cũ.
   const [testProcessNotes, setTestProcessNotes] = useState<string[]>([]);
+  // Cùng cơ chế với testProcessNotes — quan sát SPCK cũng KHÔNG lưu DB.
+  const [projectProgressNotes, setProjectProgressNotes] = useState<string[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
   const [aiError, setAiError] = useState("");
   const [aiPending, startAi] = useTransition();
@@ -167,9 +133,14 @@ export function ReviewEditor({
     setImprovements((prev) => mergeUnique(prev, source.improvements));
   }
 
-  function applyCombo(strengthsToAdd: string[], improvementsToAdd: string[]) {
+  function applyCombo(
+    strengthsToAdd: string[],
+    improvementsToAdd: string[],
+    projectNotesToAdd: string[]
+  ) {
     setStrengths((prev) => mergeUnique(prev, strengthsToAdd));
     setImprovements((prev) => mergeUnique(prev, improvementsToAdd));
+    setProjectProgressNotes((prev) => mergeUnique(prev, projectNotesToAdd));
   }
 
   // Gom nguồn copy theo nhóm, GIỮ thứ tự xuất hiện (bạn cùng buổi trước, rồi
@@ -181,19 +152,20 @@ export function ReviewEditor({
     else copyGroups.push({ group: source.group, items: [source] });
   }
 
-  // Bộ lọc nhóm kỹ năng của từng combo box — mặc định "all" (không lọc).
-  const [strengthGroup, setStrengthGroup] = useState("all");
-  const [improvementGroup, setImprovementGroup] = useState("all");
-  const allGroups = mergeSkillGroups(customGroups ?? []);
+  // Xóa khỏi danh mục dùng chung (review_options) — KHÔNG đụng tới các lựa
+  // chọn đã tick sẵn trong review này.
+  function deleteCustomOption(id: string) {
+    const fd = new FormData();
+    fd.set("id", id);
+    deleteReviewOption(fd).catch(() => {});
+  }
 
-  // Gõ tự do NGAY TRONG ô tick (MultiSelect onCreate): thêm vào review + lưu vào
-  // danh mục dùng chung (review_options) để lần sau chọn lại được. Không còn ô
-  // nhập riêng bên dưới (user 2026-07-27 thấy để dưới khó nhìn).
-  function persistCustomOption(
-    category: "strength" | "improvement" | "test_process",
-    label: string,
-    skillGroup: string
-  ) {
+  const testProcessOptions = options.filter((o) => o.category === "test_process");
+  const projectProgressOptions = options.filter(
+    (o) => o.category === "project_progress"
+  );
+
+  function persistFreeOption(category: "test_process" | "project_progress", label: string) {
     const alreadyInCatalog = options.some(
       (o) => o.category === category && o.label.toLowerCase() === label.toLowerCase()
     );
@@ -201,52 +173,9 @@ export function ReviewEditor({
     const fd = new FormData();
     fd.set("category", category);
     fd.set("label", label);
-    fd.set("skill_group", skillGroup);
+    fd.set("skill_group", "other");
     addReviewOption({}, fd).catch(() => {});
   }
-
-  // Xóa khỏi danh mục dùng chung (review_options) — KHÔNG đụng tới các lựa
-  // chọn đã tick sẵn trong review này (state `strengths`/`improvements`/
-  // `testProcessNotes` lưu theo NHÃN chữ, độc lập với id của danh mục).
-  function deleteCustomOption(id: string) {
-    const fd = new FormData();
-    fd.set("id", id);
-    deleteReviewOption(fd).catch(() => {});
-  }
-
-  function addCustomStrength(raw: string) {
-    const value = raw.trim();
-    if (!value) return;
-    setStrengths((prev) =>
-      prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
-    );
-    persistCustomOption("strength", value, strengthGroup === "all" ? "other" : strengthGroup);
-  }
-
-  function addCustomImprovement(raw: string) {
-    const value = raw.trim();
-    if (!value) return;
-    setImprovements((prev) =>
-      prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
-    );
-    persistCustomOption(
-      "improvement",
-      value,
-      improvementGroup === "all" ? "other" : improvementGroup
-    );
-  }
-
-  const strengthOptions = options.filter(
-    (o) =>
-      o.category === "strength" &&
-      (strengthGroup === "all" || o.skill_group === strengthGroup)
-  );
-  const improvementOptions = options.filter(
-    (o) =>
-      o.category === "improvement" &&
-      (improvementGroup === "all" || o.skill_group === improvementGroup)
-  );
-  const testProcessOptions = options.filter((o) => o.category === "test_process");
 
   function addCustomTestProcessNote(raw: string) {
     const value = raw.trim();
@@ -254,7 +183,16 @@ export function ReviewEditor({
     setTestProcessNotes((prev) =>
       prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
     );
-    persistCustomOption("test_process", value, "other");
+    persistFreeOption("test_process", value);
+  }
+
+  function addCustomProjectProgressNote(raw: string) {
+    const value = raw.trim();
+    if (!value) return;
+    setProjectProgressNotes((prev) =>
+      prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
+    );
+    persistFreeOption("project_progress", value);
   }
 
   function handleGenerate() {
@@ -270,6 +208,8 @@ export function ReviewEditor({
         sessionContext: sessionContext || undefined,
         isPeriodicTest,
         testProcessNotes: isPeriodicTest ? testProcessNotes : undefined,
+        isProjectPeriod,
+        projectProgressNotes: isProjectPeriod ? projectProgressNotes : undefined,
         previousComment: existing?.ai_generated_comment ?? undefined,
         priorComments,
         academicLevel: academicLevelLabel(academicLevel) ?? undefined,
@@ -314,12 +254,27 @@ export function ReviewEditor({
   }
 
   const reviewed = isReviewed(existing);
+  const levelLabel = academicLevelLabel(academicLevel);
+
+  // Số cột grid Điểm mạnh/Cải thiện/Quá trình làm bài/SPCK — tùy 2 cờ buổi.
+  const extraCols = (isPeriodicTest ? 1 : 0) + (isProjectPeriod ? 1 : 0);
+  const gridColsClass =
+    extraCols === 0
+      ? "grid gap-4 sm:grid-cols-2"
+      : extraCols === 1
+        ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        : "grid gap-4 sm:grid-cols-2 lg:grid-cols-4";
 
   return (
     <details className="group rounded-lg border bg-card">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-2 font-medium">
           {studentName}
+          {levelLabel && (
+            <Badge variant="outline" className="text-xs font-normal">
+              🏷️ {levelLabel}
+            </Badge>
+          )}
           {isAbsent ? (
             <Badge variant="outline" className="text-xs">
               Vắng
@@ -341,7 +296,6 @@ export function ReviewEditor({
         <input type="hidden" name="session_id" value={sessionId} />
         <input type="hidden" name="student_id" value={studentId} />
         <input type="hidden" name="is_absent" value={String(isAbsent)} />
-        <input type="hidden" name="academic_level" value={academicLevel} />
 
         {/* Đánh vắng — mặc định có đi học. Bật lên thì ẩn toàn bộ phần nhận xét
             vì em không học buổi này. */}
@@ -373,10 +327,10 @@ export function ReviewEditor({
           <input key={s} type="hidden" name="improvements" value={s} />
         ))}
 
-        {/* Combo/copy/xếp loại — LUÔN hiện trên CÙNG 1 dòng, không giấu trong
-            accordion: đây là thao tác áp nhanh GV dùng thường xuyên (user
-            chốt 2026-08-05). Xếp loại KHÔNG còn label riêng — đặt tên ngay
-            trong placeholder để gọn dòng. */}
+        {/* Combo/copy — LUÔN hiện thẳng, không giấu trong accordion: đây là
+            thao tác áp nhanh GV dùng thường xuyên (user chốt 2026-08-05).
+            Xếp loại học lực giờ CHỈ ĐỌC (badge trên tiêu đề), không còn Select
+            ở đây (user chốt 2026-08-28 — tích 1 lần ở Danh sách học viên). */}
         <div className="flex flex-wrap items-center gap-2">
           <ComboBar combos={combos ?? []} onApply={applyCombo} />
           {(copySources?.length ?? 0) > 0 && (
@@ -402,79 +356,16 @@ export function ReviewEditor({
               </SelectContent>
             </Select>
           )}
-          <Select
-            value={academicLevel}
-            onValueChange={(v) => setAcademicLevel(v === "none" ? "" : v)}
-          >
-            <SelectTrigger
-              id={`level-${studentId}`}
-              size="sm"
-              className="h-7 w-[190px] text-xs"
-              aria-label="Xếp loại học lực"
-            >
-              <SelectValue placeholder="🏷️ Xếp loại học lực..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Chưa chọn</SelectItem>
-              {ACADEMIC_LEVELS.map((l) => (
-                <SelectItem key={l.value} value={l.value}>
-                  {l.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
-        <div
-          className={
-            isPeriodicTest ? "grid gap-4 sm:grid-cols-3" : "grid gap-4 sm:grid-cols-2"
-          }
-        >
+        <div className={gridColsClass}>
           <div className="space-y-1.5">
-            <div className="flex h-7 items-center justify-between gap-2">
-              <p className="text-sm font-medium">💪 Điểm mạnh</p>
-              <GroupFilter
-                value={strengthGroup}
-                onChange={setStrengthGroup}
-                groups={allGroups}
-              />
-            </div>
-            <MultiSelect
-              options={strengthOptions}
-              selected={strengths}
-              onChange={setStrengths}
-              onCreate={addCustomStrength}
-              onDelete={deleteCustomOption}
-              placeholder="Chọn hoặc gõ điểm mạnh..."
-              emptyText={
-                strengthGroup === "all"
-                  ? "Chưa có lựa chọn — thêm trong trang Cài đặt."
-                  : "Nhóm này chưa có lựa chọn nào."
-              }
-            />
+            <p className="flex h-7 items-center text-sm font-medium">💪 Điểm mạnh</p>
+            <SelectedBadges selected={strengths} onChange={setStrengths} />
           </div>
           <div className="space-y-1.5">
-            <div className="flex h-7 items-center justify-between gap-2">
-              <p className="text-sm font-medium">🎯 Cần cải thiện</p>
-              <GroupFilter
-                value={improvementGroup}
-                onChange={setImprovementGroup}
-                groups={allGroups}
-              />
-            </div>
-            <MultiSelect
-              options={improvementOptions}
-              selected={improvements}
-              onChange={setImprovements}
-              onCreate={addCustomImprovement}
-              onDelete={deleteCustomOption}
-              placeholder="Chọn hoặc gõ điểm cần cải thiện..."
-              emptyText={
-                improvementGroup === "all"
-                  ? "Chưa có lựa chọn — thêm trong trang Cài đặt."
-                  : "Nhóm này chưa có lựa chọn nào."
-              }
-            />
+            <p className="flex h-7 items-center text-sm font-medium">🎯 Cần cải thiện</p>
+            <SelectedBadges selected={improvements} onChange={setImprovements} />
           </div>
           {isPeriodicTest && (
             <div className="space-y-1.5">
@@ -488,6 +379,22 @@ export function ReviewEditor({
                 onCreate={addCustomTestProcessNote}
                 onDelete={deleteCustomOption}
                 placeholder="Chọn hoặc gõ quan sát về bài kiểm tra..."
+                emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+              />
+            </div>
+          )}
+          {isProjectPeriod && (
+            <div className="space-y-1.5">
+              <div className="flex h-7 items-center">
+                <Label>🎓 Quan sát SPCK</Label>
+              </div>
+              <MultiSelect
+                options={projectProgressOptions}
+                selected={projectProgressNotes}
+                onChange={setProjectProgressNotes}
+                onCreate={addCustomProjectProgressNote}
+                onDelete={deleteCustomOption}
+                placeholder="Chọn hoặc gõ quan sát về SPCK..."
                 emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
               />
             </div>

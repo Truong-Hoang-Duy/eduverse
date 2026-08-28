@@ -7,7 +7,6 @@ export interface ExistingReview {
   strengths: string[];
   improvements: string[];
   ai_generated_comment: string | null;
-  academic_level: string | null;
   is_absent: boolean;
 }
 
@@ -55,7 +54,6 @@ export function reviewSignature(existing: ExistingReview | null): string {
   return [
     existing.strengths.join("|"),
     existing.improvements.join("|"),
-    existing.academic_level ?? "",
     existing.is_absent ? "1" : "0",
     existing.ai_generated_comment ?? "",
   ].join("~");

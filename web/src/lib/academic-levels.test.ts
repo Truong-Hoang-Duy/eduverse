@@ -55,7 +55,7 @@ describe("ACADEMIC_LEVELS", () => {
         "..",
         "supabase",
         "migrations",
-        "20260726000000_student_reviews_level_absent.sql"
+        "20260828000000_class_level_project_period.sql"
       ),
       "utf8"
     );

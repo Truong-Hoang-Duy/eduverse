@@ -28,6 +28,12 @@ class GenerateReviewRequest(AiRequest):
     # Quan sát của GV về quá trình làm bài kiểm tra — CHỈ dùng khi
     # is_periodic_test, KHÔNG lưu ở DB (chọn lại mỗi lần tạo nhận xét).
     test_process_notes: list[str] = []
+    # Buổi có làm sản phẩm cuối khóa (SPCK, thường buổi 9-13) — GV tự đánh dấu,
+    # giống is_periodic_test. Xem prompts.py.
+    is_project_period: bool = False
+    # Quan sát của GV về quá trình làm SPCK — CHỈ dùng khi is_project_period,
+    # KHÔNG lưu ở DB (giống test_process_notes).
+    project_progress_notes: list[str] = []
     previous_comment: str | None = None
     prior_comments: list[str] = []
     # Nhãn tiếng Việt của mức xếp loại học lực (Giỏi/Khá/...) — CHỈ để điều

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { academicLevelLabel, isAcademicLevel } from "@/lib/academic-levels";
+import { academicLevelLabel } from "@/lib/academic-levels";
 import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
@@ -15,8 +15,6 @@ export async function saveReview(
   const sessionId = String(formData.get("session_id") ?? "");
   const studentId = String(formData.get("student_id") ?? "");
   const isAbsent = formData.get("is_absent") === "true";
-  const rawLevel = String(formData.get("academic_level") ?? "");
-  const academicLevel = isAcademicLevel(rawLevel) ? rawLevel : null;
 
   if (!sessionId || !studentId) {
     return { error: "Thiếu thông tin buổi học / học viên." };
@@ -30,9 +28,9 @@ export async function saveReview(
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
-  // Vắng mặt = không nhận xét: xóa sạch điểm mạnh/cải thiện/mức xếp loại để dữ
-  // liệu buổi trước (nếu đổi từ có mặt sang vắng) không dính lại và không lọt
-  // vào tin Zalo tổng hợp.
+  // Vắng mặt = không nhận xét: xóa sạch điểm mạnh/cải thiện để dữ liệu buổi
+  // trước (nếu đổi từ có mặt sang vắng) không dính lại và không lọt vào tin
+  // Zalo tổng hợp.
   const strengths = isAbsent ? [] : formData.getAll("strengths").map(String);
   const improvements = isAbsent
     ? []
@@ -48,7 +46,6 @@ export async function saveReview(
       strengths,
       improvements,
       ai_generated_comment: aiComment || null,
-      academic_level: isAbsent ? null : academicLevel,
       is_absent: isAbsent,
       created_by: user.id,
     },
@@ -84,7 +81,6 @@ interface ApplyRow {
   student_id: string;
   strengths: string[];
   improvements: string[];
-  academic_level: string | null;
   ai_generated_comment: string | null;
   is_absent: boolean;
 }
@@ -106,9 +102,11 @@ export interface ApplyFromSessionResult {
  *
  * Luật đã chốt:
  * - GỘP chứ không ghi đè: thứ GV đã tích ở buổi này được giữ, chỉ thêm mục mới
- *   từ buổi nguồn. `academic_level` chỉ điền khi buổi này CHƯA chọn.
- * - Chỉ copy điểm mạnh / cần cải thiện / xếp loại. KHÔNG copy câu nhận xét gửi
- *   phụ huynh của buổi nguồn (nó nói về nội dung buổi đó, dán sang là sai bài).
+ *   từ buổi nguồn.
+ * - Chỉ copy điểm mạnh / cần cải thiện. KHÔNG copy câu nhận xét gửi phụ huynh
+ *   của buổi nguồn (nó nói về nội dung buổi đó, dán sang là sai bài). Xếp loại
+ *   học lực KHÔNG cần copy nữa — từ 2026-08-28 nó tích 1 lần ở cấp LỚP
+ *   (`enrollments.academic_level`), đã dùng chung cho mọi buổi sẵn rồi.
  * - Bỏ qua em đã đánh VẮNG ở buổi này, và em vắng/trống tích ở buổi nguồn.
  *
  * 🔴 LƯU TÍCH CHỌN TRƯỚC, gọi AI SAU — và mỗi em một lời gọi độc lập
@@ -133,7 +131,7 @@ export async function applyReviewsFromSession(input: {
   const { data: sessionData } = await supabase
     .from("sessions")
     .select(
-      "id, class_id, session_number, title, content, review_context, is_periodic_test"
+      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period"
     )
     .eq("id", input.sessionId)
     .single();
@@ -163,16 +161,16 @@ export async function applyReviewsFromSession(input: {
   ] = await Promise.all([
     supabase
       .from("enrollments")
-      .select("profiles(id, full_name)")
+      .select("profiles(id, full_name), academic_level")
       .eq("class_id", sessionData.class_id)
       .order("joined_at"),
     supabase
       .from("student_reviews")
-      .select("student_id, strengths, improvements, academic_level, ai_generated_comment, is_absent")
+      .select("student_id, strengths, improvements, ai_generated_comment, is_absent")
       .eq("session_id", input.sourceSessionId),
     supabase
       .from("student_reviews")
-      .select("student_id, strengths, improvements, academic_level, ai_generated_comment, is_absent")
+      .select("student_id, strengths, improvements, ai_generated_comment, is_absent")
       .eq("session_id", input.sessionId),
     // Lời văn các buổi TRƯỚC để AI không lặp cách diễn đạt.
     supabase
@@ -187,9 +185,14 @@ export async function applyReviewsFromSession(input: {
 
   const students = ((enrollments ?? []) as unknown as {
     profiles: { id: string; full_name: string } | null;
+    academic_level: string | null;
   }[])
-    .map((e) => e.profiles)
-    .filter((p): p is { id: string; full_name: string } => p !== null);
+    .filter((e) => e.profiles !== null)
+    .map((e) => ({
+      id: e.profiles!.id,
+      full_name: e.profiles!.full_name,
+      academic_level: e.academic_level,
+    }));
   if (students.length === 0) {
     return { ...empty, error: "Lớp chưa có học viên nào." };
   }
@@ -220,7 +223,6 @@ export async function applyReviewsFromSession(input: {
     student_id: string;
     strengths: string[];
     improvements: string[];
-    academic_level: string | null;
     is_absent: boolean;
     created_by: string;
   }[] = [];
@@ -248,19 +250,12 @@ export async function applyReviewsFromSession(input: {
       current?.improvements ?? [],
       source.improvements
     );
-    // Giữ mức GV đã chọn ở buổi này; chỉ điền khi còn trống.
-    const academicLevel =
-      current?.academic_level ??
-      (source.academic_level && isAcademicLevel(source.academic_level)
-        ? source.academic_level
-        : null);
 
     toUpsert.push({
       session_id: input.sessionId,
       student_id: student.id,
       strengths,
       improvements,
-      academic_level: academicLevel,
       is_absent: false,
       created_by: user.id,
     });
@@ -269,7 +264,7 @@ export async function applyReviewsFromSession(input: {
       studentName: student.full_name,
       strengths,
       improvements,
-      academicLevel,
+      academicLevel: student.academic_level,
       hasComment: Boolean(current?.ai_generated_comment),
     });
   }
@@ -307,6 +302,8 @@ export async function applyReviewsFromSession(input: {
         session_context: sessionData.review_context || null,
         is_periodic_test: sessionData.is_periodic_test,
         test_process_notes: [],
+        is_project_period: sessionData.is_project_period,
+        project_progress_notes: [],
         previous_comment: null,
         prior_comments: (priorCommentsByStudent.get(a.studentId) ?? []).slice(
           -MAX_PRIOR_COMMENTS
@@ -446,6 +443,12 @@ export interface GenerateReviewInput {
   /** Quan sát của GV về quá trình làm bài kiểm tra của em — chỉ gửi khi
    *  `isPeriodicTest`, KHÔNG lưu lại (chọn lại mỗi lần tạo nhận xét). */
   testProcessNotes?: string[];
+  /** Buổi có làm sản phẩm cuối khóa (SPCK, thường buổi 9-13) — GV tự đánh dấu,
+   *  giống `isPeriodicTest`. */
+  isProjectPeriod?: boolean;
+  /** Quan sát của GV về quá trình làm SPCK — chỉ gửi khi `isProjectPeriod`,
+   *  KHÔNG lưu lại (giống `testProcessNotes`). */
+  projectProgressNotes?: string[];
   previousComment?: string;
   /** Nhận xét (đã lưu) của các buổi TRƯỚC của cùng học viên — giúp AI đổi
    *  cách diễn đạt, tránh lặp lời văn giữa các buổi. */
@@ -479,6 +482,8 @@ export async function generateAiReview(
       session_context: input.sessionContext || null,
       is_periodic_test: input.isPeriodicTest ?? false,
       test_process_notes: input.testProcessNotes ?? [],
+      is_project_period: input.isProjectPeriod ?? false,
+      project_progress_notes: input.projectProgressNotes ?? [],
       previous_comment: input.previousComment || null,
       prior_comments: input.priorComments ?? [],
       academic_level: input.academicLevel || null,

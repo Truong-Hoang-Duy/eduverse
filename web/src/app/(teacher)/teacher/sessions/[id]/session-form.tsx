@@ -39,6 +39,7 @@ export interface SessionData {
   content: string | null;
   review_context: string | null;
   is_periodic_test: boolean;
+  is_project_period: boolean;
   session_date: string | null;
 }
 
@@ -67,6 +68,9 @@ export function SessionForm({
   );
   const [isPeriodicTest, setIsPeriodicTest] = useState(
     session.is_periodic_test
+  );
+  const [isProjectPeriod, setIsProjectPeriod] = useState(
+    session.is_project_period
   );
   // "" = không áp nhận xét từ buổi nào. Reset sau mỗi lần lưu để bấm Lưu lần
   // sau (VD sửa lại nội dung) không vô tình áp lại lần nữa.
@@ -156,6 +160,23 @@ export function SessionForm({
           Bật lên thì khi bấm &quot;AI tạo nhận xét&quot; cho từng em, nhận xét
           sẽ tách rõ 2 phần — quá trình học tập / kết quả kiểm tra — thay vì
           viết chung một đoạn.
+        </p>
+      </div>
+      <div className="space-y-1.5">
+        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            name="is_project_period"
+            value="true"
+            checked={isProjectPeriod}
+            onChange={(e) => setIsProjectPeriod(e.target.checked)}
+            className="size-4"
+          />
+          🎓 Buổi này có làm sản phẩm cuối khóa (SPCK)
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Bật lên thì khi nhận xét từng em sẽ hiện thêm ô quan sát quá trình
+          làm SPCK (thường buổi 9-13), dùng làm ngữ cảnh cho AI.
         </p>
       </div>
       {copyFromSessions.length > 0 && (

@@ -162,18 +162,21 @@ export type Database = {
       }
       enrollments: {
         Row: {
+          academic_level: string | null
           class_id: string
           id: string
           joined_at: string
           student_id: string
         }
         Insert: {
+          academic_level?: string | null
           class_id: string
           id?: string
           joined_at?: string
           student_id: string
         }
         Update: {
+          academic_level?: string | null
           class_id?: string
           id?: string
           joined_at?: string
@@ -334,27 +337,27 @@ export type Database = {
           id: string
           improvements: string[]
           name: string
+          project_notes: string[]
           strengths: string[]
           teacher_id: string
-          type: string
         }
         Insert: {
           created_at?: string
           id?: string
           improvements?: string[]
           name: string
+          project_notes?: string[]
           strengths?: string[]
           teacher_id: string
-          type: string
         }
         Update: {
           created_at?: string
           id?: string
           improvements?: string[]
           name?: string
+          project_notes?: string[]
           strengths?: string[]
           teacher_id?: string
-          type?: string
         }
         Relationships: [
           {
@@ -433,6 +436,7 @@ export type Database = {
           content: string | null
           id: string
           is_periodic_test: boolean
+          is_project_period: boolean
           review_context: string | null
           session_date: string | null
           session_number: number
@@ -443,6 +447,7 @@ export type Database = {
           content?: string | null
           id?: string
           is_periodic_test?: boolean
+          is_project_period?: boolean
           review_context?: string | null
           session_date?: string | null
           session_number: number
@@ -453,6 +458,7 @@ export type Database = {
           content?: string | null
           id?: string
           is_periodic_test?: boolean
+          is_project_period?: boolean
           review_context?: string | null
           session_date?: string | null
           session_number?: number
@@ -470,7 +476,6 @@ export type Database = {
       }
       student_reviews: {
         Row: {
-          academic_level: string | null
           ai_generated_comment: string | null
           created_at: string
           created_by: string
@@ -482,7 +487,6 @@ export type Database = {
           student_id: string
         }
         Insert: {
-          academic_level?: string | null
           ai_generated_comment?: string | null
           created_at?: string
           created_by: string
@@ -494,7 +498,6 @@ export type Database = {
           student_id: string
         }
         Update: {
-          academic_level?: string | null
           ai_generated_comment?: string | null
           created_at?: string
           created_by?: string

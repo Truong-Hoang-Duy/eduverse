@@ -72,8 +72,9 @@ export function SessionContentSuggestDialog({
           <DialogDescription>
             Gõ ý muốn dạy (tự do, không cần chỉn chu) — AI viết lại gọn gàng, có
             tham khảo nội dung 5 buổi gần nhất trong lớp để nối đúng tiến
-            trình. Không lưu gì cả — bạn tự copy hoặc dùng rồi bấm &quot;Lưu
-            nội dung&quot; ở form chính.
+            trình. Để trống ô này thì AI tự dựa hoàn toàn vào các buổi trước để
+            đề xuất nội dung tiếp theo, không cần gõ gì. Không lưu gì cả — bạn
+            tự copy hoặc dùng rồi bấm &quot;Lưu nội dung&quot; ở form chính.
           </DialogDescription>
         </DialogHeader>
 
@@ -82,14 +83,9 @@ export function SessionContentSuggestDialog({
             rows={4}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="VD: hôm nay học vòng lặp for với while, cho làm bài đổi tiền tệ, ôn lại biến với if"
+            placeholder="VD: hôm nay học vòng lặp for với while, cho làm bài đổi tiền tệ, ôn lại biến với if — hoặc để trống, AI tự nối tiếp buổi trước"
           />
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleSuggest}
-            disabled={pending || !draft.trim()}
-          >
+          <Button type="button" size="sm" onClick={handleSuggest} disabled={pending}>
             {pending ? "AI đang viết..." : "✨ Tạo gợi ý"}
           </Button>
           {error && <p className="text-sm text-destructive">{error}</p>}
