@@ -1,5 +1,5 @@
 /**
- * Motif "chữ ký" của trang triển lãm — TRIỆN TỐT NGHIỆP.
+ * Motif "chữ ký" của khu triển lãm — TRIỆN TỐT NGHIỆP.
  *
  * Phát triển từ icon mũ tốt nghiệp của app (`src/app/icon.svg`) thành một con
  * dấu tròn có viền khía, dùng lại ở ba cỡ để buộc cả trang vào một mạch:
@@ -10,6 +10,10 @@
  * Toàn bộ vẽ bằng inline SVG `currentColor` nên tự đổi theo `--sc-brass` của
  * từng mode, không cần hai bộ file ảnh. KHÔNG dùng emoji ở đây: emoji mỗi hệ
  * điều hành một kiểu, phá ngay bản sắc vừa dựng.
+ *
+ * Dùng chung bởi trang phụ huynh (`app/showcase/[token]`) VÀ màn hình TV phía
+ * giáo viên (`app/(teacher)/teacher/classes/[id]`) — đặt ở `components/` để cả
+ * hai import được, không route nào "sở hữu" file này.
  */
 
 /** Mũ tốt nghiệp — hình gốc lấy từ icon app, đặt vừa khung 64×64. */

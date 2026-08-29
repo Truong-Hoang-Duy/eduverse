@@ -1,4 +1,4 @@
-import { showcaseFontClass } from "./fonts";
+import { showcaseFontClass } from "@/components/showcase/fonts";
 
 /**
  * Bản sắc riêng của khu triển lãm phụ huynh — concept "Bảng vàng" (giấy khen +

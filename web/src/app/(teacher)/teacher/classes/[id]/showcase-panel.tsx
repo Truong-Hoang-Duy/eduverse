@@ -5,6 +5,9 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
 import { QrCode } from "@/components/qr-code";
+import { GraduationSeal } from "@/components/showcase/emblem";
+import { showcaseFontClass } from "@/components/showcase/fonts";
+import { TvNavButton } from "@/components/showcase/tv-nav-button";
 import {
   TvOverlay,
   enterBrowserFullscreen,
@@ -243,7 +246,7 @@ export function ShowcasePanel({
                 {copied ? "✓ Đã copy" : "📋 Copy"}
               </Button>
               <Button type="button" variant="outline" onClick={openTv}>
-                📺 Chiếu QR lên TV
+                QR Code
               </Button>
             </div>
             {status !== "live" && (
@@ -461,21 +464,41 @@ export function ShowcasePanel({
       )}
 
       {tvOpen && showcase && (
-        <TvOverlay onClose={closeTv}>
-          <div className="flex flex-col items-center gap-6 py-6 text-center">
-            <h2 className="text-4xl font-bold">
-              📱 Quý phụ huynh quét mã để xem sản phẩm các con
-            </h2>
-            <p className="text-2xl text-muted-foreground">Lớp {classCode}</p>
-            <div className="rounded-3xl bg-white p-6 shadow-lg">
-              <QrCode value={fullUrl} size={380} />
+        <TvOverlay onClose={closeTv} fullBleed>
+          <div
+            className={`${showcaseFontClass} showcase-theme showcase-surface relative flex h-full w-full flex-col items-center justify-center gap-[min(3.5vh,1.75rem)] overflow-hidden px-8 py-8 text-center`}
+          >
+            <div className="absolute top-6 right-6">
+              <TvNavButton onClick={closeTv} variant="ghost" ariaLabel="Thoát chế độ chiếu">
+                ✕ Thoát
+              </TvNavButton>
             </div>
-            <p className="max-w-3xl break-all font-mono text-lg text-muted-foreground">
+
+            <GraduationSeal size={76} withRibbon className="text-sc-brass" />
+
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold tracking-[0.22em] text-sc-brass uppercase">
+                Lễ tổng kết khóa học
+              </p>
+              <h2 className="max-w-4xl font-display text-[clamp(1.75rem,4.2vh,3rem)] leading-tight font-semibold text-sc-ink">
+                📱 Quý phụ huynh quét mã để xem sản phẩm các con
+              </h2>
+              <p className="font-display text-[clamp(1.25rem,3vh,1.75rem)] text-sc-brass">
+                Lớp {classCode}
+              </p>
+            </div>
+
+            <div className="sc-rule rounded-3xl bg-white p-6 shadow-lg">
+              <QrCode
+                value={fullUrl}
+                size={420}
+                className="block h-[clamp(190px,32vh,420px)] w-[clamp(190px,32vh,420px)]"
+              />
+            </div>
+
+            <p className="max-w-3xl truncate rounded-full border border-sc-line bg-sc-raised px-5 py-2 font-mono text-sm text-sc-ink-soft">
               {fullUrl}
             </p>
-            <Button size="lg" variant="outline" onClick={closeTv}>
-              ✕ Thoát
-            </Button>
           </div>
         </TvOverlay>
       )}
