@@ -1,8 +1,7 @@
 "use client";
 
+import { StarIcon } from "@/components/showcase/emblem";
 import { RATING_MAX } from "@/lib/showcase";
-
-import { StarIcon } from "./emblem";
 
 /**
  * Hàng sao chấm điểm một tiêu chí.

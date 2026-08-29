@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { MoonIcon, SunIcon } from "./emblem";
+import { MoonIcon, SunIcon } from "@/components/showcase/emblem";
 
 /**
  * Chuyển sáng/tối cho trang phụ huynh.

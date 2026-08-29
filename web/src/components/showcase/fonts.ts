@@ -8,6 +8,10 @@ import { Dancing_Script, Playfair_Display } from "next/font/google";
  * được biến `--font-*`. Trang (Server Component) phải truyền chuỗi class này
  * xuống để gắn thêm lên popup. Gọi `Playfair_Display()` hai lần ở hai file là
  * tải hai lần — nên cả layout lẫn trang cùng import từ đây.
+ *
+ * Đặt ở `components/` (không phải `app/showcase/`) vì màn hình TV phía giáo
+ * viên (`app/(teacher)/teacher/classes/[id]`) cũng dùng chung bộ font này để
+ * đồng bộ với bản điện thoại của phụ huynh.
  */
 
 // Serif tương phản cao — chất "in trên bằng khen". Có subset `vietnamese` nên
