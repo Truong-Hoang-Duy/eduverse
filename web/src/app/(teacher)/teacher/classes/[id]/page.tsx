@@ -264,38 +264,37 @@ export default async function ClassDetailPage({
       </div>
 
       <CollapsibleCard title="Buổi học" defaultOpen>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {sessions.map((session) => {
-              const filled = Boolean(session.content);
-              return (
-                <Link key={session.id} href={`/teacher/sessions/${session.id}`}>
-                  <div className="group flex h-full items-start gap-3 rounded-lg border p-3 transition-all hover:border-primary/40 hover:shadow-sm">
-                    <span
-                      className={`flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${
-                        filled
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {sessions.map((session) => {
+            const filled = Boolean(session.content);
+            return (
+              <Link key={session.id} href={`/teacher/sessions/${session.id}`}>
+                <div className="group flex h-full items-start gap-3 rounded-lg border p-3 transition-all hover:border-primary/40 hover:shadow-sm">
+                  <span
+                    className={`flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${filled
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
                       }`}
-                    >
-                      {session.session_number}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">
-                        {session.title ?? `Buổi ${session.session_number}`}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {session.session_date
-                          ? new Date(session.session_date).toLocaleDateString("vi-VN")
-                          : filled
-                            ? "Đã có nội dung"
-                            : "Chưa có nội dung"}
-                      </p>
-                    </div>
+                  >
+                    {session.session_number}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {session.title ?? `Buổi ${session.session_number}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {session.session_date
+                        ? new Date(session.session_date).toLocaleDateString("vi-VN")
+                        : filled
+                          ? "Đã có nội dung"
+                          : "Chưa có nội dung"}
+                    </p>
                   </div>
-                </Link>
-              );
-            })}
-          </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </CollapsibleCard>
 
       <CollapsibleCard title={`Danh sách học viên (${students.length})`}>
@@ -328,7 +327,7 @@ export default async function ClassDetailPage({
       </CollapsibleCard>
 
       <CollapsibleCard
-        title="🔗 Link cho phụ huynh"
+        title="🔗 Tổng kết khóa học"
         description="Trang công khai để phụ huynh xem sản phẩm cả lớp — gửi link hoặc chiếu QR trong buổi lễ cuối khóa"
       >
         <ShowcasePanel
