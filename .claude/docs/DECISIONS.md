@@ -650,3 +650,94 @@
   **THÊM/nới lỏng → dán TRƯỚC deploy; DROP → deploy code mới TRƯỚC, dán DROP
   SAU** — không phải vì thích thứ tự đó, mà vì code ĐANG CHẠY vẫn tham chiếu
   cột sắp mất.
+- **Ảnh sản phẩm cuối khóa = LINK NGOÀI học viên tự dán, KHÔNG dùng Supabase
+  Storage** (user chốt 2026-08-29, cột `projects.image_urls`). Lý do user đưa ra:
+  giảm chi phí lưu trữ. Lợi phụ rất lớn: **không có file mồ côi phải dọn** — điểm
+  đau lặp đi lặp lại của dự án (Gotcha 1 ở DATABASE.md). Đánh đổi: link ngoài chết
+  lúc nào cũng được, nên MỌI chỗ render dùng `components/safe-image.tsx` (thẻ `img`
+  thường + `onError` ẩn hẳn ảnh + `isSafeHttpUrl`). Dùng `img` chứ KHÔNG dùng
+  `next/image` vì `next/image` bắt khai trước từng domain trong `remotePatterns` —
+  không thể liệt kê hết trang host ảnh trên đời.
+  Quyết định cũ **"muốn ảnh thật thì upload lên Supabase Storage"** (2026-07-30)
+  đã bị thay bằng dòng này. Phần CÒN NGUYÊN GIÁ TRỊ của quyết định cũ: **KHÔNG
+  nhúng ảnh từ link Google Drive** — `uc?export=view` bị Google siết, link
+  `googleusercontent` không có tài liệu chính thức. `imageUrlWarning()` cảnh báo
+  đích danh khi học viên dán link Drive.
+- **Trang công khai cho phụ huynh đi qua RPC SECURITY DEFINER, KHÔNG mở policy
+  `anon` và KHÔNG dùng service-role** (2026-08-29). Ba lý do, theo thứ tự quan
+  trọng: (1) quyền ở đây không phải "là ai" mà là "có token còn hạn không" — RLS
+  không nhìn thấy token trên URL, chỉ hàm nhận tham số mới thấy; (2) mở policy anon
+  cho `projects`/`profiles` là mở TOÀN BỘ bảng rồi lọc bằng điều kiện, sai một dấu
+  là lộ sạch — còn hàm chỉ trả đúng những cột đã liệt kê, **cột mới thêm sau này
+  không tự lọt ra ngoài**; (3) service-role trong route mà ai cũng vào được là rủi
+  ro không đáng, và trái luật kiến trúc của dự án.
+  `get_showcase` trả **NULL cho cả 3 ca** token sai / đã tắt / hết hạn — cố ý không
+  phân biệt, để không xác nhận hộ kẻ dò token rằng nó từng tồn tại.
+- **Link phụ huynh mặc định hết hạn 7 ngày** (user chốt 2026-08-29) — đủ cho buổi
+  lễ và vài ngày xem lại, rồi tự chết mà GV không phải nhớ tắt. Trang lộ HỌ TÊN
+  đầy đủ của trẻ (user chốt: hiện tên đầy đủ để phụ huynh tìm đúng con), nên ba
+  đường thu hồi phải luôn có: tắt, đổi token, hết hạn. **Đừng bỏ bớt đường nào.**
+- **Trang phụ huynh: BỎ thanh tab/thanh tên, chuyển sang POPUP** (user chốt lại
+  2026-08-29 sau khi xem bản đầu). Lý do thực dụng: phụ huynh xem trên ĐIỆN THOẠI,
+  thanh tên 12-20 nút cuộn ngang chiếm hết màn hình và bấm nhầm liên tục. Một lưới
+  thẻ + popup là thao tác quen thuộc hơn hẳn; nút Bạn trước/Bạn tiếp dính đáy popup
+  giữ lại được ý "chuyển qua lại giữa từng bạn" mà không tốn chỗ.
+- **Phụ huynh CHẤM ĐIỂM + NHẬN XÉT ẨN DANH thay cho "lời chúc"** (user chốt
+  2026-08-29, thay hẳn thiết kế cũ — bảng `showcase_messages` chưa từng lên DB nên
+  sửa thẳng migration `20260829000000` thay vì tạo migration mới).
+  Ẩn danh là RÀNG BUỘC THIẾT KẾ, không phải tùy chọn: bảng `showcase_ratings` không
+  có cột tên/email/IP và RPC không nhận tên. Thứ duy nhất nhận diện là `visitor_id`
+  — chuỗi ngẫu nhiên trong localStorage — chỉ để 1 máy = 1 lượt/em và để chính máy
+  đó sửa lại. **Đừng thêm ô tên vào đây**, thêm là mất cả hai thứ đang có: phụ huynh
+  nói thật, và không ai so được "bố mẹ bạn A chấm con mình mấy điểm".
+  Ba tiêu chí đều NULLABLE: ép chấm đủ 3 thì phụ huynh không kịp nghe thuyết trình
+  sẽ chấm bừa, hỏng cả dữ liệu.
+- 🔴 **Điểm trung bình MẶC ĐỊNH KHÔNG hiện cho phụ huynh** (`show_rating_results`
+  DEFAULT false, 2026-08-29). Đây là lựa chọn về TRẺ CON chứ không phải về kỹ thuật:
+  bảng điểm công khai giữa buổi lễ biến trang này thành bảng xếp hạng các con ngay
+  trước mặt phụ huynh, và em điểm thấp nhất lãnh đủ. Phần định tính (nhận xét chữ)
+  vẫn hiện vì không xếp hạng được ai. Giáo viên LUÔN xem được bảng đầy đủ trong
+  trang lớp, và tự bật công khai nếu thấy phù hợp với lớp mình.
+- 🔴 **SỰ CỐ 2026-08-29 — sửa thẳng vào migration ĐÃ DÁN lên DB.** User dán
+  `20260829000000` (bản lời chúc), bật link, thấy QR bình thường. Sau đó user đổi
+  yêu cầu (lời chúc → chấm điểm ẩn danh) và tôi **sửa nội dung ngay trong file
+  migration đó** thay vì tạo file mới. Hậu quả: code mới `SELECT allow_ratings,
+  show_rating_results` trên schema cũ → PostgREST trả lỗi → `maybeSingle()` cho
+  `data = null` → trang lớp hiện "⚪ Chưa bật" và **link + QR biến mất** dù dòng
+  `class_showcases` vẫn còn nguyên trong DB. Sửa: trả `20260829000000` về đúng
+  bản đã dán, thêm `20260829010000` để chuyển v1→v2 (viết phòng thủ bằng
+  `information_schema` nên dán lại nhiều lần cũng không sao).
+  Đây là **lần thứ hai** cùng một lớp lỗi (lần đầu: Đợt 57, drop
+  `student_reviews.academic_level` trước khi deploy). Luật đã có từ trước và lần
+  này bị chính tôi vi phạm: **file trong `supabase/migrations/` mà user đã dán là
+  BẤT BIẾN**, kể cả khi nó vừa được tạo vài phút trước và kể cả khi user đổi ý
+  ngay sau đó. Đổi thiết kế = migration MỚI.
+- **Truy vấn quyết định TRẠNG THÁI hiển thị thì KHÔNG được nuốt `error`**
+  (2026-08-29). `const { data } = await supabase...` bỏ `error` đi khiến "truy vấn
+  hỏng" và "chưa có dữ liệu" ra cùng một kết quả `null` — giáo viên thấy "chưa bật
+  link" trong khi thật ra link vẫn đang bật, và không có manh mối nào để lần ra.
+  `ShowcasePanel` giờ nhận `loadError` và hiện băng đỏ nói rõ "đây là lỗi đọc dữ
+  liệu, không phải trạng thái thật". Áp dụng cho mọi chỗ tương tự về sau.
+- **Trang `/showcase` có BẢN SẮC THỊ GIÁC RIÊNG, khoanh vùng tuyệt đối** (2026-08-29,
+  concept "Bảng vàng"). Đây là trang DUY NHẤT người ngoài tổ chức nhìn thấy, và nó
+  đóng vai giấy khen chứ không phải dashboard — nên nó không dùng palette indigo
+  hay font của app. Cách khoanh: biến `--sc-*` nằm trong `.showcase-theme`, font nạp
+  ở `app/showcase/layout.tsx`. **Đừng dùng biến `--sc-*` ngoài `/showcase`**, và
+  đừng đổi palette app để chiều trang này.
+- **`.showcase-theme` CHỈ khai biến, phần sơn nền tách sang `.showcase-surface`**
+  — vì popup của Radix được portal ra thẳng `<body>`, NGOÀI cây DOM của layout, nên
+  phải gắn lại `.showcase-theme` lên chính `DialogContent` để nó có biến. Nếu class
+  đó cũng sơn nền thì popup bị ép nền `--sc-paper` và phải đánh nhau về độ ưu tiên
+  với utility Tailwind. Cùng lý do: **chuỗi class font phải TRUYỀN TAY** từ trang
+  (Server Component) xuống popup — `app/showcase/fonts.ts` là nguồn duy nhất, gọi
+  `Playfair_Display()` ở hai file là tải font hai lần.
+- **Bảng màu phải qua test tương phản, không duyệt bằng mắt** (`src/lib/contrast.ts` +
+  `contrast.test.ts`, 2026-08-29). Test ĐỌC THẲNG hex từ `globals.css` chứ không
+  chép lại — chép là sớm muộn cũng lệch rồi test xanh trong khi trang thật chữ chìm
+  vào nền. Mọi cặp chữ/nền của cả 2 mode phải ≥ 4.5:1 (AA). Đổi một mã màu mà quên
+  hậu quả là `pnpm test` đỏ ngay.
+- **Không dùng emoji làm phần tử giao diện trên trang này** (sao chấm điểm, tim, mặt
+  trời/mặt trăng, mũ tốt nghiệp) — emoji mỗi hệ điều hành vẽ một kiểu nên luôn trông
+  như giao diện mặc định, phá đúng thứ bản sắc vừa dựng. Tất cả nằm ở `emblem.tsx`
+  dưới dạng SVG `currentColor` nên tự đổi màu theo mode. Emoji trong CÂU CHỮ thì vẫn
+  bình thường.

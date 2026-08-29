@@ -13,3 +13,10 @@ export const PROJECT_FEATURE_MAX = 80;
 
 /** Bình luận sản phẩm — trước 2026-07-30 KHÔNG có giới hạn nào ở đâu cả. */
 export const PROJECT_COMMENT_MAX = 2000;
+
+/**
+ * Ảnh sản phẩm — LINK NGOÀI do học viên dán (không dùng Storage). Khớp CHECK
+ * `projects_image_urls_within_limits` (mig `20260829000000`); độ dài mỗi link
+ * nằm ở `IMAGE_URL_MAX` trong `lib/image-url.ts`.
+ */
+export const PROJECT_IMAGES_MAX = 6;

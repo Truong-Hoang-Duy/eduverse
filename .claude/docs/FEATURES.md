@@ -385,6 +385,58 @@ học viên (`components/gallery/`), khác ở 2 chỗ: nhóm theo lớp và xư
   `project_comments_delete_own`, migration `20260721000000`; quyền moderation
   cũ của GV đã bỏ theo yêu cầu 2026-07-18).
 
+### 🔗 Link triển lãm cho PHỤ HUYNH (mới 2026-08-29)
+Khối "🔗 Link cho phụ huynh" trong trang chi tiết lớp. Mục đích: buổi lễ cuối
+khóa, phụ huynh đến xem con thuyết trình, mở link trên ĐIỆN THOẠI của mình xem
+được sản phẩm của TẤT CẢ các em và chuyển qua lại giữa từng bạn.
+
+- **Không cần đăng nhập**: quyền vào nằm ở token ngẫu nhiên trên URL
+  (`/showcase/<token>`). Middleware mở đường riêng cho `/showcase/`; dữ liệu vẫn
+  được canh ở DB bằng RPC `get_showcase` (SECURITY DEFINER, tự kiểm token còn hạn).
+  **KHÔNG dùng service-role** ở route công khai.
+- **Đường thu hồi luôn trong tầm tay** (vì trang này lộ HỌ TÊN các em): mặc định
+  hết hạn sau **7 ngày**, GV tắt/bật lại bất cứ lúc nào (giữ nguyên token cũ),
+  hoặc **đổi link** — token mới, link cũ chết ngay. Bật lại KHÔNG mất bài chấm/tim.
+- **📺 Chiếu QR lên TV**: mã QR dựng thành SVG ngay trong app
+  (`components/qr-code.tsx`, dep `qrcode-generator` — KHÔNG gọi dịch vụ QR bên
+  ngoài, cùng chủ trương với việc bỏ dịch vụ rút gọn link). Nền trắng chữ đen cố
+  định kể cả dark mode, vì máy quét cần tương phản thật.
+- **Trang phụ huynh** (mobile-first): MỘT lưới thẻ, bấm vào một bạn là mở **popup**
+  toàn bộ thông tin bạn đó — KHÔNG có thanh tab/thanh tên (user chốt 2026-08-29,
+  bản đầu có thanh tên đã bỏ). Trong popup: ảnh, mô tả, chức năng, link
+  GitHub/Demo, ghi chú, nhận xét của bạn cùng lớp, ô chấm điểm, và hai nút
+  **← Bạn trước / Bạn tiếp →** dính đáy popup (máy tính dùng được phím ← →).
+- **Phụ huynh chấm điểm + nhận xét ẨN DANH cho từng em**: 3 tiêu chí sao 1–5 —
+  **Sản phẩm / Thuyết trình / Sáng tạo** (`RATING_CRITERIA` trong `lib/showcase.ts`)
+  — tiêu chí nào cũng BỎ TRỐNG được (có phụ huynh không kịp nghe thuyết trình),
+  cộng một ô nhận xét. KHÔNG có ô tên: ẩn danh để nói thật hơn và để không ai so
+  được "bố mẹ bạn A chấm con mình mấy điểm". Gửi lại là SỬA lượt cũ của chính máy
+  đó, không đẻ dòng mới.
+- **Điểm trung bình MẶC ĐỊNH KHÔNG hiện cho phụ huynh** (`show_rating_results`)
+  — bảng điểm công khai giữa buổi lễ biến trang này thành bảng xếp hạng trẻ con
+  trước mặt phụ huynh. Nhận xét chữ vẫn hiện (ẩn danh); giáo viên LUÔN xem được
+  bảng điểm đầy đủ trong trang lớp. GV tự bật nếu muốn công khai.
+- **Tiện ích cho lớp đông**: thanh tiến độ "Bạn đã nhận xét 3/12 bạn", dấu
+  **✓ Đã nhận xét** trên thẻ, và ô **tìm theo tên** (bỏ dấu — gõ "anh" ra "Ánh")
+  hiện khi lớp trên 6 em.
+- **Nhận xét hiện NGAY, GV gỡ sau** (user chốt: giữa buổi lễ không ai ngồi duyệt
+  kịp). Chống spam ở DB: ≤60 lượt chấm/phút toàn trang; mỗi máy chỉ 1 lượt/em.
+- GV chỉnh được: lời ngỏ đầu trang, bật/tắt chấm điểm, bật/tắt thả tim, bật/tắt
+  hiện điểm trung bình, và **tick ẩn từng em** khỏi trang công khai (em chưa xong
+  / gia đình không muốn công khai).
+- 🎨 **Bản sắc thị giác RIÊNG — concept "Bảng vàng"** (giấy khen + bảng tin lớp):
+  bảng màu ngà/than ấm + đồng thau + đất nung (KHÔNG dùng indigo của app), font
+  tiêu đề **Playfair Display**, chữ ký giáo viên cuối trang bằng **Dancing Script**,
+  motif **triện tốt nghiệp** dùng ở 3 cỡ (crest đầu trang / vòng quanh avatar /
+  con dấu "ĐÃ NHẬN XÉT"), viền kép kiểu giấy khen, băng dán góc ảnh, chức năng
+  hiện dạng checklist thành tích thay cho hàng tag. Toàn bộ khoanh trong
+  `.showcase-theme` nên KHÔNG rò sang khu GV/HV. Nút sáng/tối ở góc trên phải.
+- GV thấy số **lượt xem** (đếm 1 lần/trình duyệt), tổng tim, **bảng điểm trung
+  bình từng em theo 3 tiêu chí**, và danh sách nhận xét (gỡ được từng lượt).
+- **KHÔNG BAO GIỜ lọt ra trang này**: username, link Drive nộp bài, nhận xét/xếp
+  loại học lực, dữ liệu lớp khác. Trang có `robots: noindex` + `robots.txt`.
+
+
 ### Random nhóm thuyết trình + màn hình chiếu TV (trang chi tiết lớp)
 GV cắm laptop vào TV của lớp; cả 3 màn chiếu dùng chung `components/tv-overlay.tsx`
 (overlay toàn màn hình + xin fullscreen trình duyệt + Esc thoát):

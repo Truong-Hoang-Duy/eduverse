@@ -16,6 +16,7 @@ interface ProjectRow {
   name: string;
   description: string | null;
   features: string[];
+  image_urls: string[];
   repo_url: string | null;
   demo_url: string | null;
   extra_notes: string | null;
@@ -63,7 +64,7 @@ export default async function TeacherGalleryPage() {
       supabase
         .from("projects")
         .select(
-          "id, class_id, student_id, name, description, features, repo_url, demo_url, extra_notes, updated_at, profiles!projects_student_id_fkey(full_name)"
+          "id, class_id, student_id, name, description, features, image_urls, repo_url, demo_url, extra_notes, updated_at, profiles!projects_student_id_fkey(full_name)"
         )
         .order("updated_at", { ascending: false }),
       supabase
@@ -99,6 +100,7 @@ export default async function TeacherGalleryPage() {
       name: p.name,
       description: p.description,
       features: p.features,
+      image_urls: p.image_urls,
       repo_url: p.repo_url,
       drive_url: driveLinks[p.student_id] ?? null,
       demo_url: p.demo_url,

@@ -1,3 +1,4 @@
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { isSafeHttpUrl } from "@/lib/drive-url";
 
@@ -6,6 +7,7 @@ export interface ProjectView {
   name: string;
   description: string | null;
   features: string[];
+  image_urls: string[];
   repo_url: string | null;
   drive_url: string | null;
   demo_url: string | null;
@@ -63,6 +65,19 @@ export function ProjectCard({
           </p>
         )}
       </div>
+
+      {project.image_urls.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {project.image_urls.map((url, i) => (
+            <SafeImage
+              key={url}
+              src={url}
+              alt={`Ảnh ${i + 1} sản phẩm của ${project.authorName}`}
+              className="h-24 w-32 rounded-md border bg-muted object-cover"
+            />
+          ))}
+        </div>
+      )}
 
       {project.features.length > 0 && (
         <div className="flex flex-wrap gap-1.5">

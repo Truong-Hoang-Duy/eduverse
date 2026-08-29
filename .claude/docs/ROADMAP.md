@@ -841,6 +841,62 @@
 - [x] Merge `feature/class-review-improvements` → `develop` → `main`, push cả
       3 nhánh. Vercel + Render (ai-service đổi) tự deploy.
 
+### Đợt 58 (`feature/parent-showcase-link`) — link triển lãm sản phẩm cho PHỤ HUYNH
+- [x] **Trang công khai `/showcase/<token>`** xem KHÔNG cần đăng nhập: MỘT lưới
+      thẻ, bấm vào một bạn là mở **popup** đầy đủ (không thanh tab — user chốt
+      lại 2026-08-29), trong popup có nút Bạn trước/Bạn tiếp dính đáy + phím
+      ← →. Mobile-first (phụ huynh xem trên điện thoại).
+- [x] Middleware mở đường cho `/showcase/`; `robots: noindex` + `src/app/robots.ts`.
+- [x] **HAI** migration liên tiếp — bài học về vòng đời file trong
+      `supabase/migrations/` sau khi đã DÁN LÊN DB (xem sự cố ở DECISIONS.md):
+      `20260829000000` (`projects.image_urls` + bảng `class_showcases`/
+      `showcase_reactions` + bảng `showcase_messages` lúc đó còn là "lời chúc") —
+      user đã dán lên DB thật rồi. Đổi thiết kế (lời chúc → chấm điểm ẩn danh)
+      diễn ra NGAY SAU ĐÓ; sửa thẳng vào file đã dán làm code mới đọc cột
+      chưa tồn tại → panel tưởng "chưa bật link", QR biến mất dù link vẫn
+      sống. Sửa bằng `20260829010000` (chuyển đổi CÓ ĐIỀU KIỆN qua
+      `information_schema`, dán lại nhiều lần không sao): đổi tên
+      `allow_messages`→`allow_ratings`, thêm `show_rating_results`, tạo bảng
+      `showcase_ratings` (thay `showcase_messages`), viết lại `get_showcase`,
+      thêm `rate_showcase_project`/`get_my_showcase_ratings`, rồi mới DROP bảng cũ.
+      Tổng cộng 5 RPC anon: `get_showcase`/`bump_showcase_view`/
+      `rate_showcase_project`/`get_my_showcase_ratings`/`toggle_showcase_reaction`.
+      KHÔNG mở policy anon cho bảng nào, KHÔNG dùng service-role ở route công khai.
+- [x] **Ảnh sản phẩm = link ngoài học viên dán** (user chốt: không dùng Storage
+      để chi phí = 0 và không có file mồ côi). Ô nhập có xem trước +
+      `imageUrlWarning` cảnh báo link Drive/link trang thay vì link ảnh. Ảnh hiện
+      ở gallery HV, gallery GV, trang lớp, màn chiếu TV và trang phụ huynh.
+- [x] **Phụ huynh chấm điểm + nhận xét ẨN DANH từng em**: 3 tiêu chí sao 1–5
+      (Sản phẩm / Thuyết trình / Sáng tạo), tiêu chí nào cũng bỏ trống được,
+      KHÔNG có ô tên. Chấm lại là SỬA lượt cũ (upsert theo `visitor_id`).
+      **Điểm trung bình mặc định KHÔNG hiện cho phụ huynh** — tránh biến trang
+      thành bảng xếp hạng trẻ con; GV luôn xem được bảng đầy đủ trong trang lớp.
+- [x] Tiện ích lớp đông: thanh tiến độ "đã nhận xét X/Y bạn", dấu ✓ trên thẻ,
+      ô tìm theo tên bỏ dấu (`normalizeVi`) khi lớp trên 6 em.
+- [x] Khối "🔗 Link cho phụ huynh" ở trang lớp: bật/gia hạn (1/7/30 ngày/không
+      hạn, mặc định 7), Copy link, **📺 Chiếu QR lên TV**, đổi link, tắt link,
+      lời ngỏ, bật/tắt chấm điểm + thả tim + hiện điểm TB, tick ẩn từng em,
+      lượt xem/tim, **bảng điểm TB từng em**, gỡ từng lượt nhận xét.
+- [x] Dependency MỚI (user duyệt): `qrcode-generator` — thuần JS, không dep con,
+      QR dựng thành SVG ngay trong app, không gọi dịch vụ QR bên ngoài.
+- [x] Tab Hướng dẫn của HV: mục 4 "Đăng ảnh sản phẩm" (postimages/imgbb, cách
+      lấy Direct link); mục API key dời thành mục 5.
+- [x] **Bản sắc thị giác riêng cho `/showcase`** (user duyệt kế hoạch trước khi
+      code): concept "Bảng vàng", palette ngà/than ấm + đồng thau + đất nung cho
+      cả 2 mode, Playfair Display + Dancing Script (đều có subset `vietnamese`),
+      motif triện tốt nghiệp 3 cỡ, viền kép giấy khen, checklist thành tích,
+      form lưu bút giấy kẻ dòng, sao/tim vẽ SVG thay emoji, focus ring đồng thau.
+      `contrast.test.ts` đọc hex thẳng từ `globals.css` và ép mọi cặp chữ/nền
+      đạt WCAG AA ở cả 2 mode (25 ca) — đổi màu là test đỏ.
+- [x] `lint + typecheck + 229 unit test + build` sạch; E2E mới
+      `e2e/showcase.e2e.ts` (40 ca — token, ẩn HV, chấm điểm/sửa lượt/ẩn danh,
+      công tắc hiện điểm, tim, lượt xem, thu hồi link, ranh giới RLS 3 bảng mới) —
+      user dán cả 2 migration + `pnpm test:e2e` chạy trên DB thật SAU khi dán:
+      **40/40 xanh**. (Bộ `grading.e2e.ts` có 1-3 ca đỏ vì Gemini báo "đang quá
+      tải" ở cả hai lượt chạy — flake đã biết của dự án, KHÔNG liên quan nhánh này.)
+- [x] User nghiệm thu bằng mắt trên `pnpm dev` (sáng + tối, điện thoại): xác nhận
+      "ổn định, đẹp mắt" — 2026-08-29.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

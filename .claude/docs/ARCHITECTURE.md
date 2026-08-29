@@ -30,6 +30,9 @@ web/src/
 │                        #     admin (vận hành — chỉ ADMIN_USERNAMES)
 ├── app/(student)/       # HV: /student = danh sách lớp; 3 tab nằm TRONG từng lớp:
 │                        #     classes/[classId]/{projects,gallery,guide}
+├── app/showcase/[token]/ # PHỤ HUYNH — public, KHÔNG qua (auth)/(teacher)/(student),
+│                        #     layout riêng nạp font + palette ".showcase-theme"
+│                        #     (xem lib/showcase.ts, lib/showcase-data.ts)
 ├── components/          # dùng chung: app-shell/nav/footer, page-header, stat-card,
 │                        # confirm-dialog, theme-toggle, drive-link-chip, project-card,
 │                        # page-skeleton, nav-link-label, gallery/
@@ -99,6 +102,12 @@ supabase/migrations/     # SQL schema + RLS (dán tay vào SQL Editor — mạng
   RLS `sessions_teacher_all` sẵn có.
 - **Hồ sơ HV xuyên khóa:** bấm tên HV trong lớp → timeline nhận xét gốc từng buổi
   (`student_reviews` + `sessions`) + AI tổng hợp toàn khóa. Chỉ GV của lớp (RLS).
+- **Link triển lãm cho phụ huynh (`/showcase/[token]`):** DUY NHẤT nơi khách
+  KHÔNG đăng nhập đọc/ghi dữ liệu. Quyền không nằm ở RLS theo user mà ở token —
+  đi qua RPC `SECURITY DEFINER` (`get_showcase`, `rate_showcase_project`...),
+  KHÔNG mở policy `anon`, KHÔNG dùng service-role. Middleware mở đường riêng cho
+  path này. Xem DATABASE.md (bảng `class_showcases`/`showcase_ratings`/
+  `showcase_reactions`) và FEATURES.md.
 - **Chấm bài AI (công cụ độc lập, KHÔNG theo lớp) — 3 tab chung nav "Chấm bài":**
   - *Bài tập hàng ngày* (`/teacher/assignments`): đề thuộc course + session_number,
     file đề lưu Storage — **thứ duy nhất toàn hệ thống được lưu**. GV chọn đề →

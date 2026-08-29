@@ -26,17 +26,20 @@ import {
 import {
   PROJECT_FEATURE_MAX,
   PROJECT_FEATURES_MAX,
+  PROJECT_IMAGES_MAX,
   PROJECT_NAME_MAX,
   PROJECT_TEXT_MAX,
 } from "@/lib/project-limits";
 
 import { FeatureChips } from "./feature-chips";
+import { ImageUrlChips } from "./image-url-chips";
 
 export interface ProjectData {
   id: string;
   name: string;
   description: string | null;
   features: string[];
+  image_urls: string[];
   repo_url: string | null;
   demo_url: string | null;
   extra_notes: string | null;
@@ -69,6 +72,9 @@ export function ProjectEditor({
   const [name, setName] = useState(project?.name ?? "");
   const [description, setDescription] = useState(project?.description ?? "");
   const [features, setFeatures] = useState<string[]>(project?.features ?? []);
+  const [imageUrls, setImageUrls] = useState<string[]>(
+    project?.image_urls ?? []
+  );
   const [repoUrl, setRepoUrl] = useState(project?.repo_url ?? "");
   const [demoUrl, setDemoUrl] = useState(project?.demo_url ?? "");
   const [notes, setNotes] = useState(project?.extra_notes ?? "");
@@ -86,6 +92,7 @@ export function ProjectEditor({
     setName(saved.name);
     setDescription(saved.description ?? "");
     setFeatures(saved.features);
+    setImageUrls(saved.image_urls);
     setRepoUrl(saved.repo_url ?? "");
     setDemoUrl(saved.demo_url ?? "");
     setNotes(saved.extra_notes ?? "");
@@ -150,6 +157,11 @@ export function ProjectEditor({
       {isEditing && <input type="hidden" name="id" value={projectId} />}
       <input type="hidden" name="class_id" value={classId} />
       <input type="hidden" name="features" value={features.join("\n")} />
+      <input
+        type="hidden"
+        name="image_urls"
+        value={imageUrls.join("\n")}
+      />
 
       <div className="space-y-1.5">
         <Label htmlFor={`name-${classId}`}>Tên dự án *</Label>
@@ -250,6 +262,15 @@ export function ProjectEditor({
             ))}
           </div>
         )}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Ảnh sản phẩm (tối đa {PROJECT_IMAGES_MAX} ảnh)</Label>
+        <ImageUrlChips
+          urls={imageUrls}
+          onChange={setImageUrls}
+          max={PROJECT_IMAGES_MAX}
+        />
       </div>
 
       {/* 2 cột bằng nhau, trải hết chiều rộng. Trước là `sm:grid-cols-3` từ hồi
