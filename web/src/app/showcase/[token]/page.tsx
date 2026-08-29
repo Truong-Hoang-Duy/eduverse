@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 
 import { loadShowcase } from "@/lib/showcase-data";
 
-import { showcaseFontClass } from "../fonts";
-import { GraduationSeal } from "./emblem";
+import { GraduationSeal } from "@/components/showcase/emblem";
+import { showcaseFontClass } from "@/components/showcase/fonts";
 import { ShowcaseView } from "./showcase-view";
 
 /**

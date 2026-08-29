@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 
+import { GraduationSeal } from "@/components/showcase/emblem";
 import { rateShowcaseProject } from "@/lib/actions/showcase-public";
 import {
   RATING_CRITERIA,
@@ -9,7 +10,6 @@ import {
   type MyRating,
 } from "@/lib/showcase";
 
-import { GraduationSeal } from "./emblem";
 import { StarRating } from "./star-rating";
 
 /**

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { SafeImage } from "@/components/safe-image";
+import { CheckMark, GraduationSeal, HeartIcon } from "@/components/showcase/emblem";
+import { SealAvatar } from "@/components/showcase/seal-avatar";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +28,6 @@ import {
   type ShowcaseProject,
 } from "@/lib/showcase";
 
-import { CheckMark, GraduationSeal, HeartIcon, SealRing } from "./emblem";
 import { RatingForm } from "./rating-form";
 import { StarDisplay } from "./star-rating";
 import { ThemeSwitch } from "./theme-switch";
@@ -80,10 +81,6 @@ function saveMyHearts(token: string, ids: string[]): void {
   }
 }
 
-function initials(name: string): string {
-  return name.trim().charAt(0).toUpperCase() || "?";
-}
-
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("vi-VN", {
     hour: "2-digit",
@@ -113,24 +110,6 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
     <p className="text-[11px] font-semibold tracking-[0.18em] text-sc-brass uppercase">
       {children}
     </p>
-  );
-}
-
-/** Chữ cái đầu tên em, đóng trong vòng triện khía. */
-function SealAvatar({ name, size = 48 }: { name: string; size?: number }) {
-  return (
-    <span
-      className="relative inline-flex shrink-0 items-center justify-center"
-      style={{ width: size, height: size }}
-    >
-      <SealRing className="absolute inset-0 size-full text-sc-brass/70" />
-      <span
-        className="font-display font-semibold text-sc-ink"
-        style={{ fontSize: size * 0.4 }}
-      >
-        {initials(name)}
-      </span>
-    </span>
   );
 }
 
