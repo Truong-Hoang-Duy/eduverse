@@ -8,7 +8,30 @@
 - **Không tự ý push.**
 - Chỉ thực hiện commit/push khi người dùng **xác nhận rõ ràng** (VD: "commit đi", "ok commit", "push lên đi").
 - Nếu không chắc người dùng đã xác nhận hay chưa, hỏi lại trước khi thực hiện.
-- **Không tự ý merge nhánh dev vào main.** 
+- **Không tự ý merge nhánh dev vào main** — TRỪ khi người dùng gõ từ khóa "deploy" (xem mục 1a, ghi đè các gạch đầu dòng phía trên cho đúng chuỗi việc đó).
+
+### 1a. Từ khóa "deploy" — xác nhận một lần cho CẢ chuỗi
+
+Khi tin nhắn của người dùng có chứa chữ **"deploy"**, coi đó là xác nhận DUY NHẤT
+cho toàn bộ chuỗi sau — KHÔNG hỏi lại từng bước, KHÔNG dừng lại chờ xác nhận
+riêng cho commit/push/merge:
+
+1. Commit các thay đổi đang chờ trên nhánh hiện tại (nếu đang ở `main`/`develop`
+   thì tạo nhánh mới trước, theo mục 4).
+2. Push nhánh đó lên `origin`.
+3. Merge nhánh đó vào `develop`, push `develop`.
+4. Merge `develop` vào `main`, push `main`.
+
+Vẫn PHẢI giữ 2 việc sau dù đã có từ khóa "deploy" — đây không phải bước hỏi ý
+kiến, mà là kiểm tra kỹ thuật bắt buộc trước khi lên production:
+
+- Chạy lint/typecheck/test (theo lệnh ở CLAUDE.md) TRƯỚC khi merge lên `main`.
+  Không bỏ qua bước này dù user không nhắc tới.
+- Nếu gặp conflict khi merge, hoặc lint/typecheck/test đỏ: DỪNG LẠI, báo lỗi cụ
+  thể cho user, không tự ý "sửa cho qua" rồi merge tiếp.
+
+Ngoài hai trường hợp trên, làm hết một mạch rồi báo kết quả cuối — không hỏi
+xin phép giữa chừng.
 
 ## 2. Quy tắc viết commit message
 
@@ -42,6 +65,8 @@ fix: resolve null pointer on empty cart checkout
 1. Chạy `git log --oneline -10` để tham khảo cú pháp commit trước đó trong repo.
 2. Chạy `git status` / `git diff` để xác nhận đúng phạm vi thay đổi sẽ commit.
 3. Soạn commit message theo format `feat: ...` hoặc `fix: ...` tương ứng, không có dòng Co-Authored-By hay attribution.
-4. Chỉ thực hiện `git commit` khi người dùng đã xác nhận.
-5. Chỉ thực hiện `git push` khi người dùng yêu cầu riêng (không tự động push sau khi commit).
+4. Chỉ thực hiện `git commit` khi người dùng đã xác nhận — từ khóa "deploy"
+   (mục 1a) TÍNH LÀ xác nhận, không cần hỏi thêm.
+5. Chỉ thực hiện `git push` khi người dùng yêu cầu riêng (không tự động push
+   sau khi commit) — cùng ngoại lệ "deploy" như trên.
 6. Kiểm tra nhánh đã có trên `origin` chưa trước khi push để quyết định tạo nhánh mới hay chỉ push commit thêm vào nhánh sẵn có.
