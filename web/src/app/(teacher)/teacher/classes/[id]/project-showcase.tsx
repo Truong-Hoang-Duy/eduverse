@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { SafeImage } from "@/components/safe-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ProjectView } from "@/components/project-card";
@@ -161,6 +162,19 @@ export function ProjectShowcase({
                 </div>
               </div>
 
+              {current.image_urls.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {current.image_urls.slice(0, 4).map((url, i) => (
+                    <SafeImage
+                      key={url}
+                      src={url}
+                      alt={`Ảnh ${i + 1} sản phẩm của ${current.authorName}`}
+                      className="max-h-[45vh] w-full rounded-2xl border bg-muted object-contain"
+                    />
+                  ))}
+                </div>
+              )}
+
               {current.description && (
                 <p className="text-2xl leading-relaxed whitespace-pre-wrap text-muted-foreground">
                   {current.description}
@@ -209,6 +223,13 @@ export function ProjectShowcase({
                       className={`rounded-2xl border-2 p-5 text-left transition-all hover:-translate-y-1 hover:shadow-lg ${theme.card} animate-in fade-in slide-in-from-bottom-2`}
                       style={{ animationDelay: `${i * 50}ms` }}
                     >
+                      {p.image_urls.length > 0 && (
+                        <SafeImage
+                          src={p.image_urls[0]}
+                          alt={`Ảnh sản phẩm của ${p.authorName}`}
+                          className="mb-3 h-32 w-full rounded-xl border bg-muted object-cover"
+                        />
+                      )}
                       <div className="flex items-center gap-3">
                         <span
                           className={`flex size-12 shrink-0 items-center justify-center rounded-full text-xl font-bold text-white ${theme.avatar}`}

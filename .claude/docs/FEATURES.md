@@ -94,43 +94,62 @@
   sản phẩm — lớp mới trống. Kỹ thuật: insert lớp → trigger sinh N buổi trống →
   `upsert` đè giáo án theo `unique(class_id, session_number)` → insert enrollments
   → redirect sang lớp mới. Chưa có lớp khác thì dialog báo và chặn.
-- Danh sách học viên trong lớp; **chuyển học viên sang lớp khác** (kể cả khác khóa).
+- Danh sách học viên trong lớp; **chuyển học viên sang lớp khác** (kể cả khác
+  khóa) qua dialog **"⇄ Chuyển học viên"** (`transfer-student-dialog.tsx`) đặt
+  cạnh nút "+ Thêm học viên" phía trên bảng (đổi 2026-08-28 — trước đó là
+  Select + nút "Chuyển" inline trong TỪNG DÒNG bảng, chiếm nhiều chỗ và khó
+  theo dõi). Cột "Thao tác" trong bảng giờ chỉ còn 🔑 Đặt lại mật khẩu + Xóa.
 - **Thêm học viên vào lớp**: nút "+ Thêm học viên" → tìm theo **họ tên hoặc tên
   tài khoản** → bấm Thêm. Dùng RPC `search_students` (SECURITY DEFINER) vì
   `profiles_select` chỉ cho GV thấy HV đã ở trong lớp mình — xem DATABASE.md.
+- **Xếp loại học lực CỦA LỚP** (Select trong bảng "Danh sách học viên", auto
+  save ngay khi đổi — không có nút Lưu riêng): Giỏi / Khá / Trung bình / Cần cố
+  gắng, tích **1 LẦN cho cả lớp** thay vì chọn lại mỗi buổi nhận xét (đổi
+  2026-08-28, xem chi tiết ở mục "Buổi học & nhận xét"). Lưu ở
+  `enrollments.academic_level`.
 - Xóa lớp → confirm (mất enrollment, session, review).
 
 ### Buổi học & nhận xét
 - Mỗi lớp có N buổi sinh sẵn; GV điền tiêu đề + nội dung + ngày cho từng buổi.
-- Trang nhận xét theo buổi cho từng học viên: tick **điểm mạnh** / **điểm cần cải
-  thiện** từ danh mục `review_options` (GV tự quản lý danh mục này) + ô lời khuyên.
-- **Bộ lọc nhóm kỹ năng** trên mỗi combo box (điểm mạnh / cần cải thiện): 12
-  nhóm NỀN — 🧠 Tư duy, ✨ Sáng tạo, 💻 Kỹ năng code, 🖥️ Kỹ năng sử dụng máy
-  tính, 🤖 Vận dụng AI, ❓ Đặt câu hỏi, 🌱 Thái độ học tập, ⏰ Kỷ luật/Nề nếp,
-  📚 Tự học/Nghiên cứu thêm, 🤝 Giao tiếp & hợp tác, 🎤 Thuyết trình, 📌 Khác —
-  **mặc định "Tất cả nhóm"** (không lọc). Chỉ thu hẹp danh sách hiển thị, KHÔNG
-  đổi giá trị đã chọn trước đó. Nhóm lưu ở cột `review_options.skill_group`
-  (`web/src/lib/skill-groups.ts` export `SKILL_GROUPS` — 12 nhóm nền, mọi UI
-  import lại, không tự khai danh sách riêng).
-- **Giáo viên tự thêm nhóm kỹ năng riêng** (yêu cầu user 2026-08-12, khối "Nhóm
-  kỹ năng tự thêm" ở đầu "Danh mục nhận xét" trong Cài đặt): gõ tên nhóm (VD
-  "🎨 Thiết kế") → bấm Thêm, nhóm mới hiện ngay thành accordion mới cùng hàng
-  12 nhóm nền, và trong bộ lọc nhóm ở trang buổi học. Nhóm tự thêm hiện dạng
-  badge có nút ✕ — bấm xóa (`ConfirmDialog`) chuyển các lựa chọn đang thuộc
-  nhóm về "📌 Khác", KHÔNG mất lựa chọn. Riêng theo từng giáo viên (bảng
-  `review_skill_groups`, RLS như `review_combos`) — trước đây 12 nhóm là DUY
-  NHẤT và đóng cứng, thêm nhóm phải sửa code + CHECK constraint (đã tốn công 2
-  lần); giờ giáo viên tự làm được, không cần Claude sửa code nữa.
-- **Gõ câu mới NGAY TRONG ô tick** (user 2026-07-27 — bỏ ô nhập riêng bên dưới
-  vì khó nhìn): `MultiSelect` có prop `onCreate` — gõ vào ô tìm kiếm, không khớp
-  mục nào thì hiện dòng "➕ Thêm ..." (hoặc Enter). Câu mới vừa vào nhận xét vừa
-  lưu `review_options` (skill_group theo bộ lọc đang chọn). Vùng badge đã chọn
-  bị GIỚI HẠN chiều cao + cuộn (`max-h-24 overflow-y-auto`, chip wrap chữ) nên
-  nhiều/dài mấy cũng KHÔNG đẩy vỡ bố cục (trước đây badge tràn làm bể layout).
+- **Gợi ý nội dung buổi học bằng AI** (nút "✨ Gợi ý nội dung" cạnh ô "Nội dung
+  buổi học"): gõ ghi chú thô (tùy chọn) → AI viết lại gọn gàng, có tham khảo
+  tối đa 5 buổi TRƯỚC trong lớp để nối đúng tiến trình. **Để trống ghi chú vẫn
+  tạo được** (đổi 2026-08-28) — MIỄN LÀ có ít nhất 1 buổi trước đã có nội dung,
+  AI tự đề xuất bài tiếp theo dựa hoàn toàn vào tiến trình đó; không có buổi
+  trước nào (VD buổi 1 của lớp mới) mà cũng để trống thì báo lỗi rõ, không gọi
+  AI bừa. Có draft thì vẫn giữ luật cũ: CHỈ viết đúng ý GV đã ghi, tuyệt đối
+  không tự thêm kiến thức mới (nội dung này chảy vào nhận xét gửi phụ huynh).
+- Trang nhận xét theo buổi cho từng học viên: **💪 Điểm mạnh** và **🎯 Cần cải
+  thiện** giờ CHỈ thêm được qua **bộ combo áp nhanh** (xem mục "Bộ combo nhận
+  xét" bên dưới) — ô tìm-tích tự do (MultiSelect) đã bị GỠ khỏi 2 ô này
+  (2026-08-28). Mỗi ô hiện danh sách badge đã áp, bấm ✕ trên badge để bỏ chọn
+  (khác xóa khỏi danh mục). Muốn thêm/sửa từng câu lẻ trong danh mục vẫn làm ở
+  Cài đặt như trước.
+- **Quá trình làm bài kiểm tra** và **🎓 Quan sát SPCK** (xem 2 mục riêng bên
+  dưới) VẪN giữ ô tìm-tích tự do (`MultiSelect`, gõ câu mới ngay trong ô tìm
+  kiếm, không khớp mục nào thì hiện "➕ Thêm ..." hoặc Enter) — chỉ Điểm
+  mạnh/Cần cải thiện mới bị gỡ, vì đó là 2 ô có combo thay thế được hoàn toàn.
 - **Bộ mặc định** (nút "⚡ Thêm nhanh bộ lựa chọn mặc định" ở trang Cài đặt khi
   GV chưa có lựa chọn nào): 112 điểm mạnh + 112 cần cải thiện — **mỗi nhóm ít
   nhất 10 lựa chọn** (yêu cầu user 2026-07-18, presentation có 12), bỏ "Khác"
-  vì là catch-all.
+  vì là catch-all. Danh mục này vẫn CÓ ý nghĩa dù ô tìm-tích đã gỡ: là nguồn
+  nhãn để bộ combo (mục dưới) rút ra.
+- **Nhóm kỹ năng** (`review_options.skill_group`, `web/src/lib/skill-groups.ts`
+  export `SKILL_GROUPS` — 12 nhóm nền): 🧠 Tư duy, ✨ Sáng tạo, 💻 Kỹ năng code,
+  🖥️ Kỹ năng sử dụng máy tính, 🤖 Vận dụng AI, ❓ Đặt câu hỏi, 🌱 Thái độ học
+  tập, ⏰ Kỷ luật/Nề nếp, 📚 Tự học/Nghiên cứu thêm, 🤝 Giao tiếp & hợp tác, 🎤
+  Thuyết trình, 📌 Khác — dùng để tổ chức danh mục ở Cài đặt (accordion) và để
+  bộ mẫu combo rút nhãn theo nhóm. Không còn bộ lọc nhóm ở trang buổi học (mất
+  theo khi gỡ MultiSelect của Điểm mạnh/Cải thiện 2026-08-28).
+- **Giáo viên tự thêm nhóm kỹ năng riêng** (yêu cầu user 2026-08-12, khối "Nhóm
+  kỹ năng tự thêm" ở đầu "Danh mục nhận xét" trong Cài đặt): gõ tên nhóm (VD
+  "🎨 Thiết kế") → bấm Thêm, nhóm mới hiện ngay thành accordion mới cùng hàng
+  12 nhóm nền. Nhóm tự thêm hiện dạng badge có nút ✕ — bấm xóa (`ConfirmDialog`)
+  chuyển các lựa chọn đang thuộc nhóm về "📌 Khác", KHÔNG mất lựa chọn. Riêng
+  theo từng giáo viên (bảng `review_skill_groups`, RLS như `review_combos`) —
+  trước đây 12 nhóm là DUY NHẤT và đóng cứng, thêm nhóm phải sửa code + CHECK
+  constraint (đã tốn công 2 lần); giờ giáo viên tự làm được, không cần Claude
+  sửa code nữa.
 - **Trang Cài đặt hiển thị dạng accordion theo nhóm** (2026-07-18): mỗi nhóm kỹ
   năng là 1 khối thu gọn/mở rộng (`<details>`, cùng pattern với `ReviewEditor`),
   mặc định đóng, hiện số lượng lựa chọn trong nhóm ngay trên tiêu đề. Form
@@ -144,11 +163,14 @@
 - Nút **"AI tạo nhận xét"** → điền sẵn đoạn nhận xét → GV sửa → lưu. Cạnh đó có
   nút **📋 Copy** để copy nhanh đoạn nhận xét đang hiện (gửi riêng phụ huynh em
   đó qua Zalo/tin nhắn cá nhân — khác với tin Zalo TỔNG HỢP cả lớp bên dưới).
-- **Xếp loại học lực** (tùy chọn, mỗi em/mỗi buổi): Giỏi / Khá / Trung bình /
-  Cần cố gắng (nguồn `web/src/lib/academic-levels.ts` — sửa/thêm mức phải sửa CẢ
-  CHECK constraint `academic_level`, drop+add). Mức này CHỈ làm ngữ cảnh cho AI
-  viết nhận xét vừa trình độ — prompt cấm nêu thẳng xếp loại cho phụ huynh (user
-  chốt 2026-07-27). Chưa chọn = null, không ảnh hưởng gì.
+- **Xếp loại học lực** (nguồn `web/src/lib/academic-levels.ts` — sửa/thêm mức
+  phải sửa CẢ CHECK constraint, drop+add): Giỏi / Khá / Trung bình / Cần cố
+  gắng. **Từ 2026-08-28 tích 1 LẦN CHO CẢ LỚP** ở bảng "Danh sách học viên"
+  (`enrollments.academic_level`) thay vì chọn lại mỗi buổi — trang nhận xét
+  theo buổi chỉ HIỂN THỊ badge 🏷️ cạnh tên HV (đọc từ enrollment), không sửa
+  được tại đó nữa. Mức này CHỈ làm ngữ cảnh cho AI viết nhận xét vừa trình độ —
+  prompt cấm nêu thẳng xếp loại cho phụ huynh (user chốt 2026-07-27). Chưa
+  chọn = null, không ảnh hưởng gì.
 - **Copy điểm mạnh / cần cải thiện** (combo "📋 Copy ... từ", 2 nhóm — user
   chốt 2026-07-27): "👥 Bạn cùng buổi" (các bạn CÙNG buổi đã LƯU lựa chọn) +
   "📅 Buổi trước của em" (chính em đó, tối đa 5 buổi gần nhất đã tích). Chọn →
@@ -156,29 +178,49 @@
   đè. Nguồn là dữ liệu ĐÃ LƯU (không phải state live). Buổi trước lấy từ cùng
   query `priorReviews` ở `page.tsx` (đã bỏ lọc `ai_generated_comment is null` để
   còn thấy buổi chỉ có tích mà chưa lưu câu nhận xét).
-- **Bộ combo nhận xét** ("nhận xét nhanh", user chốt 2026-07-27 — bảng
-  `review_combos`): TÁCH RÕ 2 nơi.
-  - **Tạo/quản lý ở trang Cài đặt** (`combo-manager.tsx`, khối "Bộ combo nhận
-    xét"): **chia 2 CỘT theo loại** (💪 Tích cực / 🎯 Cải thiện, cột `type`,
-    thêm 2026-08-06) — một bộ CHỈ chứa điểm mạnh HOẶC chỉ chứa điểm cần cải
-    thiện, không pha trộn; đặt tên bộ + chọn nhiều nhãn CÙNG loại qua
-    `MultiSelect`. **Sửa được** (tên + nhãn), loại CỐ ĐỊNH từ lúc tạo. Mỗi thẻ
-    combo **đóng mặc định** (tên + số lượng nhãn), bấm mới xổ ra danh sách
-    nhãn — bộ nhiều nhãn từng đẩy trang dài ra.
-  - **Nút "⚡ Thêm nhanh bộ mẫu"** (`seedDefaultCombos`, hồi sinh có sửa lại
-    2026-08-13 — bản trước gỡ hẳn lúc chia `type` vì không tách tự động được
-    bộ đã pha trộn): dựng **32 bộ mẫu, TÁCH SẴN theo loại** (16 tích cực + 16
-    cải thiện — `STRENGTH_COMBO_TEMPLATES`/`IMPROVEMENT_COMBO_TEMPLATES` trong
-    `review-combos.ts`), mỗi bộ rút nhãn từ 1-3 nhóm kỹ năng CÙNG loại (trải
-    hết 11 nhóm, bỏ `other` vì là catch-all). Rút nhãn từ CHÍNH danh mục của
-    GV nên áp xong khớp catalog; bỏ qua bộ trùng tên (bấm nhiều lần không
-    nhân đôi) và bộ rỗng (nhóm tham chiếu chưa có nhãn nào).
-  - **Áp ở mỗi học viên** (`ComboBar` trong `sessions/[id]`): CHỈ 1 combo "⚡ Áp
-    dụng bộ combo..." → gộp union cả bộ vào lựa chọn hiện tại. KHÔNG còn nút
-    "Lưu bộ"/"Quản lý bộ" tại chỗ (đã bỏ 2026-07-27 — dồn về Cài đặt).
+- **Bộ combo nhận xét** ("nhận xét nhanh" — bảng `review_combos`) — **THIẾT KẾ
+  LẠI 2026-08-28, ĐẢO NGƯỢC quyết định chia loại của 2026-08-06**: một bộ giờ
+  là **"chân dung học viên"** chứa ĐỦ CẢ BA ô (💪 điểm mạnh + 🎯 cần cải thiện +
+  🎓 SPCK) trong CÙNG một dòng, không còn cột `type` phân loại. Lý do đảo
+  ngược: cùng đợt này ô tìm-tích tự do bị gỡ khỏi Điểm mạnh/Cần cải thiện nên
+  combo là đường DUY NHẤT để thêm 2 ô đó — giữ chia loại thì mỗi em phải áp
+  2-3 lượt combo mới xong; gộp lại thì 1 lần bấm điền đủ.
+  - **Tạo/quản lý ở trang Cài đặt** (`combo-manager.tsx`): MỘT danh sách phẳng
+    (không chia cột/nhóm nữa). Mỗi bộ có 3 `MultiSelect` con (điểm mạnh / cần
+    cải thiện / SPCK) — ô nào để trống thì áp bộ không đụng tới ô đó ở trang
+    buổi học. **Sửa được** tên + cả 3 ô nhãn. Mỗi thẻ combo **đóng mặc định**
+    (tên + số lượng nhãn từng ô), bấm mới xổ ra badge chi tiết.
+  - **Nút "🗑️ Xóa tất cả bộ"** (mới, `deleteAllReviewCombos`, có `ConfirmDialog`)
+    — lối thoát để GV dọn sạch loạt bộ cũ không hợp thiết kế mới rồi seed lại,
+    KHÔNG tự động chạy.
+  - **Nút "⚡ Thêm nhanh bộ mẫu"** (`seedDefaultCombos`) dựng **40 bộ chân
+    dung** (`COMBO_TEMPLATES` trong `web/src/lib/review-combo-templates.ts` —
+    tách khỏi action để unit test được logic thuần): 16 bộ theo 4 mức xếp loại
+    học lực (mỗi mức vài biến thể), 16 bộ theo tình huống lớp học thực tế
+    ("Làm nhanh nhưng hay sai vặt", "Phụ thuộc AI, ít tự nghĩ"...), 8 bộ cho
+    buổi SPCK. Mỗi bộ rút nhãn từ 1-3 nhóm kỹ năng CÙNG loại, **XOAY VÒNG** qua
+    `pickRotating`/`rotateSlice` thay vì luôn lấy 2 nhãn đầu theo alphabet (bug
+    bản cũ: mọi bộ tham chiếu cùng nhóm nhận ĐÚNG 2 nhãn đầu, phần còn lại của
+    danh mục — có khi cả trăm câu — không bao giờ được dùng). Giờ mỗi bộ lấy
+    3 nhãn/nhóm và bắt đầu từ vị trí khác nhau, trải đều toàn bộ danh mục của
+    GV. Rút nhãn từ CHÍNH danh mục GV nên áp xong khớp catalog; bỏ qua bộ
+    trùng tên (bấm nhiều lần không nhân đôi) và bộ rỗng.
+  - **Áp ở mỗi học viên** (`ComboBar` trong `sessions/[id]`): CHỈ 1 dropdown
+    PHẲNG (không còn tiêu đề nhóm) "⚡ Áp dụng bộ combo..." → gộp union cả 3 ô
+    vào lựa chọn hiện tại trong 1 lần bấm.
   - Combos dùng CHUNG mọi lớp/buổi của GV, tải server-side (`listMyCombos`).
-    `createReviewCombo`/`deleteReviewCombo` revalidate cả `/teacher/settings`
-    lẫn route buổi học động.
+    `createReviewCombo`/`updateReviewCombo`/`deleteReviewCombo`/
+    `deleteAllReviewCombos` revalidate cả `/teacher/settings` lẫn route buổi
+    học động.
+- **🎓 SPCK — sản phẩm cuối khóa** (mới 2026-08-28): buổi có checkbox "🎓 Buổi
+  này có làm sản phẩm cuối khóa (SPCK)" trong form Nội dung buổi học
+  (`sessions.is_project_period`, GV TỰ ĐÁNH DẤU — không hardcode buổi 9-13,
+  cùng cơ chế `is_periodic_test`). Bật lên thì trang nhận xét hiện thêm ô
+  "🎓 Quan sát SPCK" (MultiSelect, category `review_options` mới `project_progress`,
+  quản lý ở khối Cài đặt riêng "Sản phẩm cuối khóa (SPCK)") — quan sát KHÔNG
+  lưu DB (giống "quá trình làm bài kiểm tra"), chỉ feed prompt AI. KHÁC buổi
+  kiểm tra định kỳ: quan sát SPCK hòa vào đoạn nhận xét chung, KHÔNG tách
+  thành phần riêng.
 - **Đánh vắng** (checkbox 🚫 đầu form, mặc định CÓ đi học): bật lên thì ẩn toàn
   bộ phần nhận xét, bấm Lưu để đánh dấu. Em vắng bị **loại khỏi tin Zalo tổng
   hợp** (`zalo.ts` lọc `is_absent`) và **tính là đã xử lý** trong bộ đếm "X/Y" +
@@ -342,6 +384,58 @@ học viên (`components/gallery/`), khác ở 2 chỗ: nhóm theo lớp và xư
   nhận xét mới xóa được nhận xét của mình** — không ai xóa của ai (policy
   `project_comments_delete_own`, migration `20260721000000`; quyền moderation
   cũ của GV đã bỏ theo yêu cầu 2026-07-18).
+
+### 🔗 Link triển lãm cho PHỤ HUYNH (mới 2026-08-29)
+Khối "🔗 Link cho phụ huynh" trong trang chi tiết lớp. Mục đích: buổi lễ cuối
+khóa, phụ huynh đến xem con thuyết trình, mở link trên ĐIỆN THOẠI của mình xem
+được sản phẩm của TẤT CẢ các em và chuyển qua lại giữa từng bạn.
+
+- **Không cần đăng nhập**: quyền vào nằm ở token ngẫu nhiên trên URL
+  (`/showcase/<token>`). Middleware mở đường riêng cho `/showcase/`; dữ liệu vẫn
+  được canh ở DB bằng RPC `get_showcase` (SECURITY DEFINER, tự kiểm token còn hạn).
+  **KHÔNG dùng service-role** ở route công khai.
+- **Đường thu hồi luôn trong tầm tay** (vì trang này lộ HỌ TÊN các em): mặc định
+  hết hạn sau **7 ngày**, GV tắt/bật lại bất cứ lúc nào (giữ nguyên token cũ),
+  hoặc **đổi link** — token mới, link cũ chết ngay. Bật lại KHÔNG mất bài chấm/tim.
+- **📺 Chiếu QR lên TV**: mã QR dựng thành SVG ngay trong app
+  (`components/qr-code.tsx`, dep `qrcode-generator` — KHÔNG gọi dịch vụ QR bên
+  ngoài, cùng chủ trương với việc bỏ dịch vụ rút gọn link). Nền trắng chữ đen cố
+  định kể cả dark mode, vì máy quét cần tương phản thật.
+- **Trang phụ huynh** (mobile-first): MỘT lưới thẻ, bấm vào một bạn là mở **popup**
+  toàn bộ thông tin bạn đó — KHÔNG có thanh tab/thanh tên (user chốt 2026-08-29,
+  bản đầu có thanh tên đã bỏ). Trong popup: ảnh, mô tả, chức năng, link
+  GitHub/Demo, ghi chú, nhận xét của bạn cùng lớp, ô chấm điểm, và hai nút
+  **← Bạn trước / Bạn tiếp →** dính đáy popup (máy tính dùng được phím ← →).
+- **Phụ huynh chấm điểm + nhận xét ẨN DANH cho từng em**: 3 tiêu chí sao 1–5 —
+  **Sản phẩm / Thuyết trình / Sáng tạo** (`RATING_CRITERIA` trong `lib/showcase.ts`)
+  — tiêu chí nào cũng BỎ TRỐNG được (có phụ huynh không kịp nghe thuyết trình),
+  cộng một ô nhận xét. KHÔNG có ô tên: ẩn danh để nói thật hơn và để không ai so
+  được "bố mẹ bạn A chấm con mình mấy điểm". Gửi lại là SỬA lượt cũ của chính máy
+  đó, không đẻ dòng mới.
+- **Điểm trung bình MẶC ĐỊNH KHÔNG hiện cho phụ huynh** (`show_rating_results`)
+  — bảng điểm công khai giữa buổi lễ biến trang này thành bảng xếp hạng trẻ con
+  trước mặt phụ huynh. Nhận xét chữ vẫn hiện (ẩn danh); giáo viên LUÔN xem được
+  bảng điểm đầy đủ trong trang lớp. GV tự bật nếu muốn công khai.
+- **Tiện ích cho lớp đông**: thanh tiến độ "Bạn đã nhận xét 3/12 bạn", dấu
+  **✓ Đã nhận xét** trên thẻ, và ô **tìm theo tên** (bỏ dấu — gõ "anh" ra "Ánh")
+  hiện khi lớp trên 6 em.
+- **Nhận xét hiện NGAY, GV gỡ sau** (user chốt: giữa buổi lễ không ai ngồi duyệt
+  kịp). Chống spam ở DB: ≤60 lượt chấm/phút toàn trang; mỗi máy chỉ 1 lượt/em.
+- GV chỉnh được: lời ngỏ đầu trang, bật/tắt chấm điểm, bật/tắt thả tim, bật/tắt
+  hiện điểm trung bình, và **tick ẩn từng em** khỏi trang công khai (em chưa xong
+  / gia đình không muốn công khai).
+- 🎨 **Bản sắc thị giác RIÊNG — concept "Bảng vàng"** (giấy khen + bảng tin lớp):
+  bảng màu ngà/than ấm + đồng thau + đất nung (KHÔNG dùng indigo của app), font
+  tiêu đề **Playfair Display**, chữ ký giáo viên cuối trang bằng **Dancing Script**,
+  motif **triện tốt nghiệp** dùng ở 3 cỡ (crest đầu trang / vòng quanh avatar /
+  con dấu "ĐÃ NHẬN XÉT"), viền kép kiểu giấy khen, băng dán góc ảnh, chức năng
+  hiện dạng checklist thành tích thay cho hàng tag. Toàn bộ khoanh trong
+  `.showcase-theme` nên KHÔNG rò sang khu GV/HV. Nút sáng/tối ở góc trên phải.
+- GV thấy số **lượt xem** (đếm 1 lần/trình duyệt), tổng tim, **bảng điểm trung
+  bình từng em theo 3 tiêu chí**, và danh sách nhận xét (gỡ được từng lượt).
+- **KHÔNG BAO GIỜ lọt ra trang này**: username, link Drive nộp bài, nhận xét/xếp
+  loại học lực, dữ liệu lớp khác. Trang có `robots: noindex` + `robots.txt`.
+
 
 ### Random nhóm thuyết trình + màn hình chiếu TV (trang chi tiết lớp)
 GV cắm laptop vào TV của lớp; cả 3 màn chiếu dùng chung `components/tv-overlay.tsx`

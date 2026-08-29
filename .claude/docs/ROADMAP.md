@@ -799,6 +799,104 @@
       từ chính danh mục của GV; bỏ qua bộ trùng tên và bộ rỗng.
 - [x] Không migration (bảng/cột đã có sẵn từ Đợt tách loại).
 
+### Đợt 57 (`feature/class-review-improvements`) — xếp loại theo lớp, gỡ MultiSelect, SPCK, combo chân dung
+- [x] **Chuyển học viên**: Select+nút inline trong từng dòng bảng → dialog
+      "⇄ Chuyển học viên" cạnh nút "+ Thêm học viên" (`transferStudent` không
+      đổi chữ ký). Cột "Thao tác" chỉ còn Đặt lại mật khẩu + Xóa.
+- [x] **Xếp loại học lực chuyển sang mỗi-LỚP** (đảo ngược một phần Đợt 19):
+      `enrollments.academic_level` (migration `20260828000000`), tích 1 lần ở
+      bảng Danh sách học viên (Select auto-save). Trang nhận xét theo buổi chỉ
+      còn ĐỌC (badge 🏷️), không sửa tại chỗ nữa. Cột cũ
+      `student_reviews.academic_level` DROP ở `20260828010000`.
+- [x] **Bỏ hẳn MultiSelect (ô tìm-tích tự do) khỏi Điểm mạnh/Cần cải thiện** —
+      chỉ còn bộ combo áp nhanh + badge đã chọn (`SelectedBadges` mới). Quá
+      trình làm bài kiểm tra và SPCK vẫn giữ MultiSelect.
+- [x] **SPCK (sản phẩm cuối khóa) = danh mục thứ 3**: `sessions.is_project_period`
+      (GV tự đánh dấu, giống `is_periodic_test`), category `review_options`
+      mới `project_progress`, ô "🎓 Quan sát SPCK" ở trang nhận xét (không
+      lưu DB), khối Cài đặt riêng (`project-progress-manager.tsx`). Quan sát
+      hòa vào đoạn nhận xét chung, KHÔNG tách phần riêng như kiểm tra định kỳ.
+- [x] **Combo nhận xét thiết kế lại — bỏ cột `type`, một bộ = 1 "chân dung
+      học viên" chứa cả 3 ô** (đảo ngược Đợt 2026-08-06 lần 2): combo là
+      đường DUY NHẤT thêm Điểm mạnh/Cải thiện sau khi gỡ MultiSelect, chia
+      loại bắt GV áp 2-3 lượt/em. **Sửa bug seed cũ luôn lấy 2 nhãn đầu theo
+      alphabet** (`.slice(0,2)` → phần lớn danh mục GV chưa từng vào bộ nào)
+      bằng `pickRotating`/`rotateSlice` xoay vòng danh mục
+      (`web/src/lib/review-combo-templates.ts`, tách khỏi action để unit test
+      được). 40 bộ mẫu mới (16 theo xếp loại học lực, 16 theo tình huống lớp,
+      8 cho SPCK) thay 32 bộ cũ. Thêm nút "🗑️ Xóa tất cả bộ" để GV tự dọn.
+- [x] **Gợi ý nội dung buổi học chạy được khi để trống ghi chú** (mở rộng Đợt
+      47, không đảo ngược): draft rỗng là ca DUY NHẤT AI được tự đề xuất chủ
+      đề, dựa hoàn toàn vào tối đa 5 buổi trước; có draft vẫn cấm tuyệt đối
+      tự thêm kiến thức như cũ. Chặn gọi AI khi rỗng cả draft lẫn buổi trước.
+- [x] **17 unit test mới** (`review-combo-templates.test.ts`) → 161 test; **7
+      pytest mới** (SPCK + draft rỗng) → 68; lint + typecheck + build sạch.
+      `reviews.e2e.ts` sửa theo schema mới, chạy lại 9/10 (1 ca đỏ do Gemini
+      503 "quá tải", không phải lỗi code — xem DECISIONS.md).
+- [x] 🔴 **Sự cố ngắn: production không lưu được nhận xét** khi user dán cả 2
+      migration (ADD + DROP) TRƯỚC khi deploy code mới — cột
+      `student_reviews.academic_level` mất trong khi code cũ còn tham chiếu.
+      Phát hiện bằng probe schema thật, xử lý bằng deploy ngay + bài học ghi
+      lại ở DECISIONS.md (đúng quy ước THÊM trước/DROP sau, lần này lệch thứ tự).
+- [x] Merge `feature/class-review-improvements` → `develop` → `main`, push cả
+      3 nhánh. Vercel + Render (ai-service đổi) tự deploy.
+
+### Đợt 58 (`feature/parent-showcase-link`) — link triển lãm sản phẩm cho PHỤ HUYNH
+- [x] **Trang công khai `/showcase/<token>`** xem KHÔNG cần đăng nhập: MỘT lưới
+      thẻ, bấm vào một bạn là mở **popup** đầy đủ (không thanh tab — user chốt
+      lại 2026-08-29), trong popup có nút Bạn trước/Bạn tiếp dính đáy + phím
+      ← →. Mobile-first (phụ huynh xem trên điện thoại).
+- [x] Middleware mở đường cho `/showcase/`; `robots: noindex` + `src/app/robots.ts`.
+- [x] **HAI** migration liên tiếp — bài học về vòng đời file trong
+      `supabase/migrations/` sau khi đã DÁN LÊN DB (xem sự cố ở DECISIONS.md):
+      `20260829000000` (`projects.image_urls` + bảng `class_showcases`/
+      `showcase_reactions` + bảng `showcase_messages` lúc đó còn là "lời chúc") —
+      user đã dán lên DB thật rồi. Đổi thiết kế (lời chúc → chấm điểm ẩn danh)
+      diễn ra NGAY SAU ĐÓ; sửa thẳng vào file đã dán làm code mới đọc cột
+      chưa tồn tại → panel tưởng "chưa bật link", QR biến mất dù link vẫn
+      sống. Sửa bằng `20260829010000` (chuyển đổi CÓ ĐIỀU KIỆN qua
+      `information_schema`, dán lại nhiều lần không sao): đổi tên
+      `allow_messages`→`allow_ratings`, thêm `show_rating_results`, tạo bảng
+      `showcase_ratings` (thay `showcase_messages`), viết lại `get_showcase`,
+      thêm `rate_showcase_project`/`get_my_showcase_ratings`, rồi mới DROP bảng cũ.
+      Tổng cộng 5 RPC anon: `get_showcase`/`bump_showcase_view`/
+      `rate_showcase_project`/`get_my_showcase_ratings`/`toggle_showcase_reaction`.
+      KHÔNG mở policy anon cho bảng nào, KHÔNG dùng service-role ở route công khai.
+- [x] **Ảnh sản phẩm = link ngoài học viên dán** (user chốt: không dùng Storage
+      để chi phí = 0 và không có file mồ côi). Ô nhập có xem trước +
+      `imageUrlWarning` cảnh báo link Drive/link trang thay vì link ảnh. Ảnh hiện
+      ở gallery HV, gallery GV, trang lớp, màn chiếu TV và trang phụ huynh.
+- [x] **Phụ huynh chấm điểm + nhận xét ẨN DANH từng em**: 3 tiêu chí sao 1–5
+      (Sản phẩm / Thuyết trình / Sáng tạo), tiêu chí nào cũng bỏ trống được,
+      KHÔNG có ô tên. Chấm lại là SỬA lượt cũ (upsert theo `visitor_id`).
+      **Điểm trung bình mặc định KHÔNG hiện cho phụ huynh** — tránh biến trang
+      thành bảng xếp hạng trẻ con; GV luôn xem được bảng đầy đủ trong trang lớp.
+- [x] Tiện ích lớp đông: thanh tiến độ "đã nhận xét X/Y bạn", dấu ✓ trên thẻ,
+      ô tìm theo tên bỏ dấu (`normalizeVi`) khi lớp trên 6 em.
+- [x] Khối "🔗 Link cho phụ huynh" ở trang lớp: bật/gia hạn (1/7/30 ngày/không
+      hạn, mặc định 7), Copy link, **📺 Chiếu QR lên TV**, đổi link, tắt link,
+      lời ngỏ, bật/tắt chấm điểm + thả tim + hiện điểm TB, tick ẩn từng em,
+      lượt xem/tim, **bảng điểm TB từng em**, gỡ từng lượt nhận xét.
+- [x] Dependency MỚI (user duyệt): `qrcode-generator` — thuần JS, không dep con,
+      QR dựng thành SVG ngay trong app, không gọi dịch vụ QR bên ngoài.
+- [x] Tab Hướng dẫn của HV: mục 4 "Đăng ảnh sản phẩm" (postimages/imgbb, cách
+      lấy Direct link); mục API key dời thành mục 5.
+- [x] **Bản sắc thị giác riêng cho `/showcase`** (user duyệt kế hoạch trước khi
+      code): concept "Bảng vàng", palette ngà/than ấm + đồng thau + đất nung cho
+      cả 2 mode, Playfair Display + Dancing Script (đều có subset `vietnamese`),
+      motif triện tốt nghiệp 3 cỡ, viền kép giấy khen, checklist thành tích,
+      form lưu bút giấy kẻ dòng, sao/tim vẽ SVG thay emoji, focus ring đồng thau.
+      `contrast.test.ts` đọc hex thẳng từ `globals.css` và ép mọi cặp chữ/nền
+      đạt WCAG AA ở cả 2 mode (25 ca) — đổi màu là test đỏ.
+- [x] `lint + typecheck + 229 unit test + build` sạch; E2E mới
+      `e2e/showcase.e2e.ts` (40 ca — token, ẩn HV, chấm điểm/sửa lượt/ẩn danh,
+      công tắc hiện điểm, tim, lượt xem, thu hồi link, ranh giới RLS 3 bảng mới) —
+      user dán cả 2 migration + `pnpm test:e2e` chạy trên DB thật SAU khi dán:
+      **40/40 xanh**. (Bộ `grading.e2e.ts` có 1-3 ca đỏ vì Gemini báo "đang quá
+      tải" ở cả hai lượt chạy — flake đã biết của dự án, KHÔNG liên quan nhánh này.)
+- [x] User nghiệm thu bằng mắt trên `pnpm dev` (sáng + tối, điện thoại): xác nhận
+      "ổn định, đẹp mắt" — 2026-08-29.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

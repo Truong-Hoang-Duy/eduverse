@@ -18,6 +18,11 @@ import { EditClassDialog } from "./edit-class-dialog";
 import { GroupRandomizer } from "./group-randomizer";
 import { ProjectShowcase } from "./project-showcase";
 import {
+  ShowcasePanel,
+  type ShowcaseRatingRow,
+  type ShowcaseRow,
+} from "./showcase-panel";
+import {
   StudentsTable,
   type ClassOption,
   type StudentRow,
@@ -62,7 +67,7 @@ export default async function ClassDetailPage({
     supabase
       .from("projects")
       .select(
-        "id, student_id, name, description, features, repo_url, demo_url, extra_notes, profiles!projects_student_id_fkey(full_name)"
+        "id, student_id, name, description, features, image_urls, repo_url, demo_url, extra_notes, profiles!projects_student_id_fkey(full_name)"
       )
       .eq("class_id", id)
       .order("updated_at", { ascending: false }),
@@ -124,6 +129,7 @@ export default async function ClassDetailPage({
       name: string;
       description: string | null;
       features: string[];
+      image_urls: string[];
       repo_url: string | null;
       demo_url: string | null;
       extra_notes: string | null;
@@ -135,6 +141,7 @@ export default async function ClassDetailPage({
       name: p.name,
       description: p.description,
       features: p.features,
+      image_urls: p.image_urls,
       repo_url: p.repo_url,
       drive_url: driveLinks[p.student_id] ?? null,
       demo_url: p.demo_url,
@@ -142,6 +149,55 @@ export default async function ClassDetailPage({
       authorName: p.profiles?.full_name ?? "Học viên",
     })
   );
+
+  // Link triển lãm gửi phụ huynh. RLS `class_showcases_teacher_all` đã chặn lớp
+  // của giáo viên khác, ở đây chỉ lọc theo lớp đang mở.
+  const { data: showcaseData, error: showcaseError } = await supabase
+    .from("class_showcases")
+    .select(
+      "id, token, is_enabled, expires_at, intro, allow_ratings, allow_reactions, show_rating_results, hidden_student_ids, view_count"
+    )
+    .eq("class_id", id)
+    .maybeSingle();
+
+  const showcase = (showcaseData ?? null) as (ShowcaseRow & { id: string }) | null;
+  // KHÔNG nuốt lỗi ở đây: nếu truy vấn hỏng (thiếu cột vì migration chưa dán,
+  // RLS đổi...) thì `showcase` cũng là null y như khi chưa bật link — giáo viên
+  // sẽ thấy 'Chưa bật' và tưởng link tự biến mất. Đã dính đúng lỗi này 2026-08-29.
+  const showcaseLoadError = showcaseError
+    ? `Không đọc được cấu hình link: ${showcaseError.message}`
+    : null;
+  const authorByProject = new Map(projects.map((p) => [p.id, p.authorName]));
+
+  let showcaseRatings: ShowcaseRatingRow[] = [];
+  let heartCount = 0;
+  if (showcase) {
+    const [{ data: ratingRows }, { data: heartRows }] = await Promise.all([
+      supabase
+        .from("showcase_ratings")
+        .select(
+          "id, project_id, score_product, score_presentation, score_creativity, comment, created_at"
+        )
+        .eq("showcase_id", showcase.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("showcase_reactions")
+        .select("id")
+        .eq("showcase_id", showcase.id),
+    ]);
+    // Bài chấm ẩn danh: dòng KHÔNG có tên người gửi. `studentName` là tên em
+    // ĐƯỢC CHẤM, lấy từ chính danh sách sản phẩm phía trên.
+    showcaseRatings = (ratingRows ?? []).map((r) => ({
+      id: r.id,
+      studentName: authorByProject.get(r.project_id) ?? "Học viên",
+      score_product: r.score_product,
+      score_presentation: r.score_presentation,
+      score_creativity: r.score_creativity,
+      comment: r.comment,
+      created_at: r.created_at,
+    }));
+    heartCount = (heartRows ?? []).length;
+  }
 
   return (
     <div className="space-y-6">
@@ -268,6 +324,24 @@ export default async function ClassDetailPage({
         <GroupRandomizer
           classCode={cls.class_code}
           students={students.map((s) => ({ id: s.studentId, name: s.fullName }))}
+        />
+      </CollapsibleCard>
+
+      <CollapsibleCard
+        title="🔗 Link cho phụ huynh"
+        description="Trang công khai để phụ huynh xem sản phẩm cả lớp — gửi link hoặc chiếu QR trong buổi lễ cuối khóa"
+      >
+        <ShowcasePanel
+          classId={cls.id}
+          classCode={cls.class_code}
+          showcase={showcase}
+          loadError={showcaseLoadError}
+          students={students.map((s) => ({
+            id: s.studentId,
+            fullName: s.fullName,
+          }))}
+          ratings={showcaseRatings}
+          heartCount={heartCount}
         />
       </CollapsibleCard>
 

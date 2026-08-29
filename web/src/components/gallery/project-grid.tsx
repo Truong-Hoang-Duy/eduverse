@@ -121,7 +121,7 @@ export function ProjectGrid({
       </div>
 
       <Dialog open={openId !== null} onOpenChange={(o) => !o && setOpenId(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="scrollbar-slim max-h-[85vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
           {selected && (
             <>
               <DialogHeader>

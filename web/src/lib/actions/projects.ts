@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { getMyApiKey } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import { imageUrlError } from "@/lib/image-url";
 import {
   PROJECT_COMMENT_MAX,
   PROJECT_FEATURE_MAX,
   PROJECT_FEATURES_MAX,
+  PROJECT_IMAGES_MAX,
   PROJECT_NAME_MAX,
   PROJECT_TEXT_MAX,
 } from "@/lib/project-limits";
@@ -34,6 +36,19 @@ function parseFeatures(raw: string): string[] {
     .filter(Boolean);
 }
 
+/** Tách ô ảnh (mỗi dòng một link) thành mảng, bỏ dòng trống và link trùng. */
+function parseImageUrls(raw: string): string[] {
+  const seen = new Set<string>();
+  return raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => {
+      if (!line || seen.has(line)) return false;
+      seen.add(line);
+      return true;
+    });
+}
+
 /** URL http(s) hợp lệ (chuỗi rỗng được coi là hợp lệ — không bắt buộc). */
 function isValidUrl(value: string): boolean {
   if (!value) return true;
@@ -51,6 +66,7 @@ export interface SavedProject {
   name: string;
   description: string | null;
   features: string[];
+  image_urls: string[];
   repo_url: string | null;
   demo_url: string | null;
   extra_notes: string | null;
@@ -67,6 +83,7 @@ export async function saveProject(
   const name = String(formData.get("name") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const features = parseFeatures(String(formData.get("features") ?? ""));
+  const imageUrls = parseImageUrls(String(formData.get("image_urls") ?? ""));
   const repoUrl = String(formData.get("repo_url") ?? "").trim();
   const demoUrl = String(formData.get("demo_url") ?? "").trim();
   const extraNotes = String(formData.get("extra_notes") ?? "").trim();
@@ -88,6 +105,13 @@ export async function saveProject(
   }
   if (features.some((f) => f.length > PROJECT_FEATURE_MAX)) {
     return { error: `Mỗi chức năng tối đa ${PROJECT_FEATURE_MAX} ký tự.` };
+  }
+  if (imageUrls.length > PROJECT_IMAGES_MAX) {
+    return { error: `Tối đa ${PROJECT_IMAGES_MAX} ảnh sản phẩm.` };
+  }
+  for (const url of imageUrls) {
+    const problem = imageUrlError(url);
+    if (problem) return { error: `Ảnh sản phẩm: ${problem}` };
   }
   for (const [label, url] of [
     ["GitHub", repoUrl],
@@ -112,6 +136,7 @@ export async function saveProject(
     name,
     description: description || null,
     features,
+    image_urls: imageUrls,
     repo_url: repoUrl || null,
     // Không có drive_url: link Drive ở cấp học viên (`student_drive_links`).
     demo_url: demoUrl || null,
@@ -137,6 +162,7 @@ export async function saveProject(
       name: saved.name,
       description: saved.description,
       features: saved.features,
+      image_urls: saved.image_urls,
       repo_url: saved.repo_url,
       demo_url: saved.demo_url,
       extra_notes: saved.extra_notes,
