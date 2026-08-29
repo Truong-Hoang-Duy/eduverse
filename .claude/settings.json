@@ -14,5 +14,18 @@
       "Read(./.env)",
       "Read(./.env.*)"
     ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/deploy-reminder.js",
+            "statusMessage": "Kiểm tra GIT-WORKFLOW-RULES.md..."
+          }
+        ]
+      }
+    ]
   }
 }
