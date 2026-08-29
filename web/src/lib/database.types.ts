@@ -125,6 +125,62 @@ export type Database = {
           },
         ]
       }
+      class_showcases: {
+        Row: {
+          allow_ratings: boolean
+          allow_reactions: boolean
+          class_id: string
+          created_at: string
+          expires_at: string | null
+          hidden_student_ids: string[]
+          id: string
+          intro: string | null
+          is_enabled: boolean
+          show_rating_results: boolean
+          token: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          allow_ratings?: boolean
+          allow_reactions?: boolean
+          class_id: string
+          created_at?: string
+          expires_at?: string | null
+          hidden_student_ids?: string[]
+          id?: string
+          intro?: string | null
+          is_enabled?: boolean
+          show_rating_results?: boolean
+          token: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          allow_ratings?: boolean
+          allow_reactions?: boolean
+          class_id?: string
+          created_at?: string
+          expires_at?: string | null
+          hidden_student_ids?: string[]
+          id?: string
+          intro?: string | null
+          is_enabled?: boolean
+          show_rating_results?: boolean
+          token?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_showcases_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: true
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           code: string
@@ -283,6 +339,7 @@ export type Database = {
           extra_notes: string | null
           features: string[]
           id: string
+          image_urls: string[]
           name: string
           repo_url: string | null
           student_id: string
@@ -296,6 +353,7 @@ export type Database = {
           extra_notes?: string | null
           features?: string[]
           id?: string
+          image_urls?: string[]
           name: string
           repo_url?: string | null
           student_id: string
@@ -309,6 +367,7 @@ export type Database = {
           extra_notes?: string | null
           features?: string[]
           id?: string
+          image_urls?: string[]
           name?: string
           repo_url?: string | null
           student_id?: string
@@ -474,6 +533,99 @@ export type Database = {
           },
         ]
       }
+      showcase_ratings: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          project_id: string
+          score_creativity: number | null
+          score_presentation: number | null
+          score_product: number | null
+          showcase_id: string
+          updated_at: string
+          visitor_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          project_id: string
+          score_creativity?: number | null
+          score_presentation?: number | null
+          score_product?: number | null
+          showcase_id: string
+          updated_at?: string
+          visitor_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string
+          score_creativity?: number | null
+          score_presentation?: number | null
+          score_product?: number | null
+          showcase_id?: string
+          updated_at?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showcase_ratings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showcase_ratings_showcase_id_fkey"
+            columns: ["showcase_id"]
+            isOneToOne: false
+            referencedRelation: "class_showcases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showcase_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          showcase_id: string
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          showcase_id: string
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          showcase_id?: string
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showcase_reactions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showcase_reactions_showcase_id_fkey"
+            columns: ["showcase_id"]
+            isOneToOne: false
+            referencedRelation: "class_showcases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_reviews: {
         Row: {
           ai_generated_comment: string | null
@@ -621,8 +773,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      bump_showcase_view: { Args: { p_token: string }; Returns: undefined }
       get_class_id_by_code: { Args: { p_class_code: string }; Returns: string }
       get_email_by_username: { Args: { p_username: string }; Returns: string }
+      get_my_showcase_ratings: {
+        Args: { p_token: string; p_visitor_id: string }
+        Returns: Json
+      }
+      get_showcase: { Args: { p_token: string }; Returns: Json }
       is_enrolled: { Args: { p_class_id: string }; Returns: boolean }
       is_teacher: { Args: never; Returns: boolean }
       is_teacher_of_class: { Args: { p_class_id: string }; Returns: boolean }
@@ -632,6 +790,22 @@ export type Database = {
           class_code: string
           course_name: string
         }[]
+      }
+      rate_showcase_project: {
+        Args: {
+          p_comment: string | null
+          p_creativity: number | null
+          p_presentation: number | null
+          p_product: number | null
+          p_project_id: string
+          p_token: string
+          p_visitor_id: string
+        }
+        Returns: Json
+      }
+      toggle_showcase_reaction: {
+        Args: { p_project_id: string; p_token: string; p_visitor_id: string }
+        Returns: Json
       }
       search_students: {
         Args: { p_query: string }

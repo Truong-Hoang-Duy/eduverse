@@ -17,6 +17,7 @@ const VIDEOS = {
   drive: "https://www.youtube.com/watch?v=NWEu-bCUuLM",
   deploy: "https://www.youtube.com/watch?v=X6boIuWzBhg",
   apikey: "https://www.youtube.com/watch?v=JZCjL3hrvcY",
+  images: "",
 };
 
 /** Tách video ID từ link YouTube mọi dạng; trả "" nếu không nhận ra. */
@@ -63,8 +64,22 @@ const SECTIONS = [
     ],
   },
   {
+    key: "images" as const,
+    title: "4. Đăng ảnh sản phẩm để khoe với bố mẹ",
+    description:
+      "Ảnh chụp màn hình sản phẩm sẽ hiện trên trang thầy cô gửi phụ huynh trong buổi lễ cuối khóa. Hệ thống KHÔNG giữ file ảnh — em đưa ảnh lên một trang host ảnh miễn phí rồi dán link vào.",
+    steps: [
+      "Chụp màn hình sản phẩm đang chạy (phím PrtSc, hoặc Windows + Shift + S).",
+      "Mở postimages.org hoặc imgbb.com — không cần đăng ký tài khoản.",
+      "Kéo ảnh vào trang đó rồi bấm Upload, chờ vài giây.",
+      'Copy dòng "Direct link" (link kết thúc bằng .jpg hoặc .png).',
+      'Vào tab Sản phẩm → ô "Ảnh sản phẩm" → dán link → Enter. Ảnh phải hiện ra ở khung xem trước thì mới đúng.',
+      'Không thấy ảnh? Bấm chuột phải vào ảnh trên trang host → "Sao chép địa chỉ hình ảnh" rồi dán lại. Link Google Drive KHÔNG dùng được.',
+    ],
+  },
+  {
     key: "apikey" as const,
-    title: "4. Lấy API key Gemini miễn phí (để dùng AI riêng)",
+    title: "5. Lấy API key Gemini miễn phí (để dùng AI riêng)",
     description:
       "Cả lớp đang dùng chung một key nên rất dễ hết lượt. Có key riêng thì em có hạn mức riêng, miễn phí, không cần thẻ.",
     steps: [

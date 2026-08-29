@@ -23,7 +23,7 @@
 ## Endpoints
 
 ### POST /generate-review — nhận xét học viên theo buổi
-Input: `{student_name, session_title, session_content, strengths[], improvements[], session_context?, is_periodic_test?, test_process_notes[], previous_comment?, prior_comments[], academic_level?}`
+Input: `{student_name, session_title, session_content, strengths[], improvements[], session_context?, is_periodic_test?, test_process_notes[], is_project_period?, project_progress_notes[], previous_comment?, prior_comments[], academic_level?}`
 `session_context` = bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay
 kiểm tra) — thay cho `advice_hint` per-student cũ (gỡ 2026-08-05).
 `is_periodic_test` = buổi có kiểm tra định kỳ (GV tự đánh dấu ở `SessionForm`,
@@ -33,13 +33,21 @@ kiểm tra) thay vì đoạn văn 3-5 câu. `test_process_notes[]` = quan sát c
 quá trình làm bài (chọn từ danh mục `review_options` category `test_process`)
 — CHỈ dùng cho phần 2, KHÔNG lưu DB (chọn lại mỗi lần tạo nhận xét). Thêm
 2026-08-05.
+`is_project_period` = buổi có làm sản phẩm cuối khóa/SPCK, thường buổi 9-13
+(GV tự đánh dấu, cùng cơ chế `is_periodic_test`; thêm 2026-08-28).
+`project_progress_notes[]` = quan sát của GV về quá trình làm SPCK (category
+`project_progress`) — CHỈ dùng khi `is_project_period`, KHÔNG lưu DB (giống
+`test_process_notes`). **KHÁC `is_periodic_test`**: SPCK KHÔNG tách thành phần
+riêng — quan sát chỉ hòa vào đoạn nhận xét chung, vì đây là quan sát tiến độ
+chứ không phải kết quả một bài kiểm tra.
 Output: `{comment: string}` — đoạn nhận xét tiếng Việt 3–5 câu, giọng khích lệ,
 nêu điểm mạnh trước, điểm cần cải thiện sau, chốt bằng lời khuyên cụ thể (buổi
 thường); tách 2 phần gạch đầu dòng khi `is_periodic_test`.
 `academic_level` là NHÃN tiếng Việt (Giỏi/Khá/Trung bình/Cần cố gắng) — CHỈ để
 AI chỉnh độ sâu/giọng cho vừa trình độ, prompt cấm nêu thẳng xếp loại cho phụ
 huynh (user chốt 2026-07-27). Web gửi nhãn qua `academicLevelLabel()`, không gửi
-mã.
+mã. **Từ 2026-08-28 nguồn của nhãn này là `enrollments.academic_level`** (GV
+tích 1 lần/lớp), không còn `student_reviews.academic_level` (cột đã DROP).
 
 ### POST /generate-zalo-summary — tin nhắn tóm tắt lớp theo mẫu
 Input: `{class_code, session_title, session_content, reviews: [{student_name, strengths[], improvements[]}], template_text}`
@@ -53,6 +61,23 @@ Input: `{student_name, class_code, course_name, reviews: [{session_number, sessi
 — toàn bộ nhận xét các buổi đã học của em đó trong lớp.
 Output: `{qua_trinh_hoc, diem_manh, diem_yeu, dinh_huong, kho_khan}` — 5 mục,
 mỗi mục 2-4 câu; UI ghép thành văn bản copy gửi riêng phụ huynh.
+
+### POST /suggest-session-content — gợi ý nội dung buổi học
+Input: `{course_name, class_code, session_number, draft_text, prior_sessions: [{session_number, content}]}`
+Output: `{bullets: [string]}` — GẠCH ĐẦU DÒNG (3-6 ý), web tự thêm `"- "` nên
+model KHÔNG được tự thêm ký tự đầu dòng (chốt 2026-08-03).
+`prior_sessions` = tối đa 5 buổi TRƯỚC gần nhất cùng lớp đã có nội dung, để AI
+nối đúng tiến trình (không lặp kiến thức trừ khi ghi chú nói rõ là ôn tập).
+`draft_text` có thể RỖNG (chốt 2026-08-28) — hai nhánh luật NGƯỢC NHAU, đừng gộp:
+- **Có draft**: CHỈ viết lại đúng ý GV đã ghi. TUYỆT ĐỐI KHÔNG tự thêm kiến
+  thức/chủ đề mới — nội dung này chảy vào nhận xét gửi PHỤ HUYNH, thêm thứ
+  chưa dạy vào đây là báo sai cho phụ huynh (quyết định gốc 2026-08-03).
+- **Draft rỗng**: đây là ca DUY NHẤT được phép tự đề xuất chủ đề — dựa HOÀN
+  TOÀN vào `prior_sessions` để đề xuất bài tiếp theo hợp lý. Web tự chặn gọi
+  endpoint này khi draft rỗng LẪN không có `prior_sessions` nào (`suggestSessionContent`
+  trong `lib/actions/sessions.ts`) — AI không có gì để dựa vào thì đừng gọi.
+Không áp `TONE_RULE` — đây là mô tả giáo án cho GV, không phải nhận xét gửi
+phụ huynh.
 
 ### POST /suggest-features — gợi ý tính năng cho sản phẩm học viên
 Input: `{project_name, description, existing_features[], course_code}`

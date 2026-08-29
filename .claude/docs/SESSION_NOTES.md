@@ -6,50 +6,75 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-08-13, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-08-29, bởi: Claude)
 
-**Đang làm:** KHÔNG có task dở. Đợt 55 (`feature/custom-skill-groups`) vừa
+**Đang làm:** KHÔNG có task dở. Đợt 58 (`feature/parent-showcase-link`) vừa
 merge `develop` → `main` và đẩy production trong phiên này.
 
-**`main` = `origin/main` = `4ed8f96`** trước khi merge Đợt 55 (xem
+**`main` = `origin/main` = `b8e8a1a`** trước khi merge Đợt 58 (xem
 `git log --oneline -1 main` để lấy hash mới nhất — SESSION_NOTES luôn ghi
 chậm hơn merge thật một nhịp, theo đúng nếp cũ của file này).
-⚠️ **Có sửa `ai-service/` ở Đợt 49 (giữa Đợt 48→54)** → Render phải deploy
-lại. Kiểm `/health` phải trả commit mới nhất của `main`. Đợt 55 CHỈ đổi
-`web/` + migration DB, không đụng `ai-service/`.
+`ai-service/` KHÔNG đổi ở Đợt 58 — không cần deploy lại Render cho đợt này.
+⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp
+commit mới") chưa từng được xác nhận đã kiểm trong session nào — máy dev
+không vào được `onrender.com`, nhờ user tự mở kiểm tra nếu chưa làm.
 
-**4 migration user đã xác nhận CHẠY XONG** (Claude không tự verify được —
-không query DB trực tiếp):
-`20260805000000_session_review_context_drop_advice.sql`,
-`20260805010000_periodic_test_review_split.sql`,
-`20260806000000_review_combos_single_type.sql` (cái này **XÓA SẠCH** dữ liệu
-`review_combos` cũ của MỌI giáo viên — cố ý, user đã chốt),
-`20260812155201_review_skill_groups.sql` (user xác nhận 2026-08-13 — tính
-năng "GV tự thêm nhóm kỹ năng" giờ hoạt động được ở production).
+🔴 **Phát hiện đầu phiên: `develop` bị BỎ SÓT một commit chỉ-sửa-docs trên
+`main`** (`b8e8a1a`, không phải merge commit — có vẻ soạn trực tiếp trên
+`main` ở phiên trước rồi quên đồng bộ ngược). Do nhánh `feature/parent-showcase-link`
+tách từ `develop` (đang thiếu commit đó), các file docs sửa trong phiên này
+ban đầu bị soạn ĐÈ LÊN bản CŨ (thiếu toàn bộ nội dung Đợt 57: xếp loại học lực
+theo lớp, SPCK, combo "chân dung học viên"...). Phát hiện bằng cách so
+`git diff --stat develop main` trước khi merge — thấy 5 file docs + 1 file
+code lệch nhau đúng 1 commit. Xử lý: dựng lại toàn bộ docs Đợt 58 TRÊN NỀN bản
+`main` (giữ nguyên nội dung Đợt 57), không phải merge conflict thô. **Bài học
+lặp lại của Đợt 55**: đầu phiên thấy trạng thái nhánh lạ (ở đây là "hai nhánh
+chuẩn lệch nhau") thì phải đối chiếu TRƯỚC khi viết đè, đọc DECISIONS.md.
 
-⚠️ **CHƯA nghiệm thu bằng mắt trên production**: cả loạt tính năng Đợt 48→54
-(đặc biệt "áp nhận xét từ buổi trước cho cả lớp" — gọi AI hàng loạt, dễ vỡ nếu
-sai — và "xem buổi khác để tham khảo") **VÀ Đợt 55** (thêm/xóa nhóm kỹ năng).
-Chỉ chạy qua lint/typecheck/test/build — môi trường này không có trình duyệt
-để tự bấm thử. KHÔNG có E2E nào phủ các action mới: `applyReviewsFromSession`,
-`listSessionContentReferences`, `updateReviewCombo`/`createReviewCombo` (có
-`type`), và Đợt 55 là `addSkillGroup`/`deleteSkillGroup`/`resolveSkillGroup`.
+**8 migration user đã xác nhận DÁN + CHẠY XONG** (Claude không tự verify
+được — không query DB trực tiếp, trừ lúc probe bằng script tay). 6 migration
+Đợt 57 (`20260805000000` → `20260828010000`, xem chi tiết lịch sử phiên
+trước) + **2 migration MỚI Đợt 58**:
+`20260829000000_class_showcase.sql` (`projects.image_urls`; bảng
+`class_showcases`/`showcase_reactions`; RPC anon cho khách vãng lai),
+`20260829010000_showcase_ratings.sql` (đổi thiết kế tương tác của khách —
+"lời chúc" → "chấm điểm ẩn danh": đổi tên `allow_messages`→`allow_ratings`,
+thêm `show_rating_results`, DROP bảng `showcase_messages` thay bằng
+`showcase_ratings`, viết lại `get_showcase` + 2 RPC mới).
+🔴 **Sự cố ngắn tương tự Đợt 57 nhưng KHÔNG chạm production của user vì phát
+hiện trước khi user dán**: Claude sửa THẲNG vào `20260829000000.sql` sau khi
+đổi thiết kế lời chúc→chấm điểm, dù user ĐÃ dán bản cũ và bật thử link (thấy
+QR chạy được lần đầu). Vì code mới đọc cột `allow_ratings`/`show_rating_results`
+chưa tồn tại, panel "🔗 Link cho phụ huynh" hiện "chưa bật" dù dòng
+`class_showcases` vẫn còn — user báo lại đúng triệu chứng này. Sửa: trả file
+`000000` về ĐÚNG bản đã dán, viết `20260829010000` làm bước chuyển đổi (dùng
+`information_schema` nên dán lại nhiều lần không sao), và bịt luôn chỗ nuốt
+`error` ở Server Action khiến "lỗi đọc dữ liệu" và "chưa bật link" hiện giống
+hệt nhau trên UI. Toàn bộ bài học ở DECISIONS.md — **luật cũ nhắc lại nghiêm:
+file trong `supabase/migrations/` mà user đã dán là BẤT BIẾN, kể cả vừa tạo
+vài phút trước; đổi thiết kế = migration MỚI, không sửa file cũ.**
 
-🔴 **File quy tắc git MỚI: `.claude/docs/GIT-WORKFLOW-RULES.md`** (user thêm
-giữa phiên, không nằm trong docs router của CLAUDE.md — chỉ được nạp vì user
-gõ `@đường-dẫn` thẳng). **Đọc file này ĐẦU MỖI PHIÊN từ giờ**, nó SIẾT hơn
-`.claude/rules/git-workflow.md` cũ:
-- KHÔNG tự ý commit — phải đợi user xác nhận rõ ràng, MỖI LẦN (không phải one-time).
-- KHÔNG tự ý push — xác nhận riêng, tách khỏi xác nhận commit.
-- KHÔNG tự ý merge `develop` → `main`.
+✅ **Đợt 58 là NGOẠI LỆ hiếm hoi trong dự án: ĐÃ nghiệm thu bằng mắt + ĐÃ chạy
+E2E trên DB thật, cả hai đều xanh.** User tự bấm thử trên `pnpm dev` (sáng +
+tối, điện thoại) và xác nhận "ổn định, đẹp mắt". Sau khi dán migration,
+`pnpm test:e2e` chạy `e2e/showcase.e2e.ts` (40 ca) trên DB thật: **40/40
+xanh** ở cả 2 lần chạy trong phiên. (`grading.e2e.ts` có 1-3 ca đỏ vì Gemini
+"đang quá tải" — flake đã biết, không liên quan nhánh này.) Vẫn CHƯA nghiệm
+thu: toàn bộ Đợt 48→57 cũ (xem cảnh báo trong lịch sử phiên bên dưới, chưa
+đổi từ trước tới giờ).
+
+🔴 **`.claude/docs/GIT-WORKFLOW-RULES.md` SIẾT hơn `.claude/rules/git-workflow.md`
+cũ** — đọc file này ĐẦU MỖI PHIÊN:
+- KHÔNG tự ý commit/push/merge `develop`→`main` — phải đợi user xác nhận rõ
+  ràng MỖI LẦN.
 - Commit message tiếng Anh, `feat:`/`fix:`, **KHÔNG** `Co-Authored-By` hay bất
   kỳ attribution nào của Claude.
-- Luôn `git branch --show-current` TRƯỚC KHI SỬA CODE — phiên này đã 3 LẦN lỡ
-  code thẳng trên `main` (quên checkout sau khi merge xong việc trước) rồi mới
-  tạo nhánh vá lại. Chưa mất gì nhưng rất dễ mất nếu main đã có commit lạ lúc đó.
+- Luôn `git branch --show-current` TRƯỚC KHI SỬA CODE.
 
 **Bắt đầu phiên sau:** `git checkout develop && git pull --ff-only && git checkout -b feature/<slug>`
-— và **kiểm tra lại branch trước MỖI lần sửa file**, không chỉ lần đầu.
+— và **kiểm tra lại branch trước MỖI lần sửa file**, không chỉ lần đầu. Cũng
+nên `git log --oneline -3 main ^develop` một lần đầu phiên để bắt sớm kiểu
+lệch nhánh vừa dính ở trên.
 
 ⚠️ **`pnpm build` xung đột với `pnpm dev` đang chạy** (lỗi lạ "Cannot find
 module for page") — port 3000 dùng chung `.next` cache. Luôn `netstat -ano |
@@ -61,30 +86,33 @@ server (đừng tự kill tiến trình của user).
 được `onrender.com` — phải nhờ user tự mở.
 
 **Sản phẩm hiện có** (nghiệp vụ ở FEATURES.md, lịch sử ở ROADMAP.md): auth
-USERNAME; khóa→lớp→buổi + sao chép lớp + **xem nội dung buổi khác để tham
-khảo** (buổi trước cùng lớp / cùng buổi số ở lớp khác cùng khóa) + **áp nhận
-xét buổi trước cho cả lớp** (gộp tích chọn + gọi AI hàng loạt); nhận xét AI
-theo buổi (bối cảnh buổi học cấp BUỔI, buổi kiểm tra định kỳ tách 2 phần nhận
-xét, **GV tự thêm nhóm kỹ năng riêng** bên cạnh 12 nhóm nền) + tổng hợp từng
-HV; **bộ combo nhận xét CHIA 2 LOẠI** (tích cực/cải thiện) có sửa được; tin
-Zalo cả lớp; khu Chấm bài 3 tab; khu học viên theo lớp + Drive; gallery + hồ
-sơ HV xuyên khóa; API key Gemini riêng; trang vận hành `/teacher/admin`; 3
-màn chiếu TV; `pnpm dev` tự mở trình duyệt.
+USERNAME; khóa→lớp→buổi + sao chép lớp + chuyển học viên qua dialog riêng +
+xếp loại học lực tích 1 lần/lớp + xem nội dung buổi khác để tham khảo + áp
+nhận xét buổi trước cho cả lớp; nhận xét AI theo buổi (buổi kiểm tra định kỳ
+tách 2 phần, buổi SPCK có ô quan sát riêng, GV tự thêm nhóm kỹ năng riêng) +
+tổng hợp từng HV; bộ combo nhận xét = "chân dung học viên"; gợi ý nội dung
+buổi học chạy được kể cả không gõ gì; tin Zalo cả lớp; khu Chấm bài 3 tab; khu
+học viên theo lớp + Drive; gallery + hồ sơ HV xuyên khóa; API key Gemini
+riêng; trang vận hành `/teacher/admin`; 3 màn chiếu TV; **link triển lãm sản
+phẩm cuối khóa cho PHỤ HUYNH** (mới — `/showcase/<token>`, không cần đăng
+nhập, bản sắc thị giác riêng "Bảng vàng", QR chiếu TV, phụ huynh chấm điểm +
+nhận xét ẩn danh từng em); `pnpm dev` tự mở trình duyệt.
 
 ## ✅ Cổng kiểm tra & E2E
 
-`web/`: **lint + typecheck + `pnpm test` (145 unit test) + build**.
-`ai-service/`: **`.venv/Scripts/python -m pytest`** (62 test — Đợt 55 không đụng ai-service).
+`web/`: **lint + typecheck + `pnpm test` (229 unit test) + build**.
+`ai-service/`: **`.venv/Scripts/python -m pytest`** (68 test — Đợt 58 KHÔNG đụng ai-service).
 
 E2E chạy trong `web/` trên DB THẬT (tự tạo, tự dọn), chia **HAI LOẠI** (Đợt 41):
 
 **A. `pnpm test:e2e`** — gọi THẲNG thân Server Action (`web/e2e/*.e2e.ts`).
-Đổi chữ ký hàm là `pnpm typecheck` đỏ, đổi hành vi là bộ này đỏ. **98 ca, CHƯA
-thêm ca nào cho các action mới Đợt 48→54 lẫn Đợt 55** (xem cảnh báo ở trên).
+Đổi chữ ký hàm là `pnpm typecheck` đỏ, đổi hành vi là bộ này đỏ. **138 ca** —
+`showcase.e2e.ts` (Đợt 58) đã chạy thật, 40/40 xanh. Các bộ action Đợt 48→57
+(combo, SPCK, xếp loại theo lớp...) **vẫn CHƯA có ca nào** (xem cảnh báo trên).
 
 🔴 **Bộ này KHÔNG phủ lớp React bọc quanh action** — gọi thẳng thân hàm.
 **E2E xanh ≠ UI chạy được**, vẫn phải bấm thử — đã dính lỗi này 1 lần (Đợt 47,
-thiếu `startTransition`).
+thiếu `startTransition`). Đợt 58 là ngoại lệ: ĐÃ bấm thử thật, không chỉ dựa E2E.
 
 | Bộ | Test | Ghi chú |
 |---|---|---|
@@ -92,7 +120,8 @@ thiếu `startTransition`).
 | `signup-login.e2e.ts` | 22 | signup/login/logout + createCourse/createClass |
 | `assignments-storage.e2e.ts` | 19 | createAssignment (có ca **rollback file**), deleteCourse |
 | `grading.e2e.ts` | 26 | **cần ai-service**; chấm bài + hỏi bài + trắc nghiệm. Tiêu 6 lượt Gemini |
-| `reviews.e2e.ts` | 10 | nhận xét theo buổi + đánh vắng; 1 ca cần ai-service. **CHƯA cập nhật cho `type` combo hay bulk-apply** |
+| `reviews.e2e.ts` | 10 | nhận xét theo buổi + đánh vắng + gợi ý nội dung; 1 ca cần ai-service. Schema Đợt 57; **CHƯA có ca cho `applyReviewsFromSession`/combo mới** |
+| `showcase.e2e.ts` | 40 | **MỚI Đợt 58**; link phụ huynh: token, ẩn HV, chấm điểm/sửa lượt/ẩn danh thật, công tắc hiện điểm TB, thả tim, lượt xem, thu hồi link (tắt/bật/đổi token/hết hạn), ranh giới RLS 3 bảng mới. Không cần ai-service |
 
 **B. `node --env-file=.env.local scripts/<script>`** — probe RLS gọi REST trần,
 CỐ Ý bỏ qua code app. **ĐỪNG chuyển sang gọi action.** 7 script, ~101 ca —
@@ -108,25 +137,27 @@ Công cụ chẩn đoán: `/health` ai-service, `scripts/check-integrity.mjs`,
 ## 📌 Quyết định đã chốt → `.claude/docs/DECISIONS.md`
 
 Đọc DECISIONS.md trước khi định làm ngược một quyết định cũ; thêm quyết định
-mới cũng ghi vào đó. Phiên này thêm ~7 mục — trọng tâm: bối cảnh buổi học cấp
-BUỔI thay lời khuyên per-student, buổi kiểm tra định kỳ GV tự đánh dấu (không
-cứng số buổi), xóa option ngay trong MultiSelect, combo CHỈ MỘT LOẠI + xóa
-sạch data cũ, thẻ nhận xét KHÔNG giấu combo trong accordion (đã thử rồi bỏ).
+mới cũng ghi vào đó. Phiên Đợt 58 thêm ~12 mục — trọng tâm: ảnh sản phẩm là
+LINK NGOÀI (không Storage), trang công khai đi qua RPC SECURITY DEFINER
+(không mở policy anon, không service-role), link hết hạn mặc định 7 ngày,
+đổi "lời chúc" → "chấm điểm ẩn danh" (bảng KHÔNG có cột tên), điểm trung bình
+mặc định KHÔNG hiện cho phụ huynh (tránh xếp hạng trẻ con), bản sắc thị giác
+riêng "Bảng vàng" phải qua test tương phản WCAG AA, không dùng emoji làm phần
+tử giao diện.
 
 ## ⚠️ Vấn đề đang mở / cần chú ý
 
 ### Nợ kỹ thuật đã biết, CHƯA làm
-- 🟡 **E2E chưa phủ action mới Đợt 48→54 lẫn Đợt 55** — xem bảng trên. Ưu tiên
-  nếu làm: `applyReviewsFromSession` (rủi ro cao nhất, ghi hàng loạt + gọi AI
-  hàng loạt); Đợt 55 (`addSkillGroup`/`deleteSkillGroup`) rủi ro thấp hơn
-  nhưng cũng chưa có ca nào, kể cả probe RLS xác nhận GV A không xóa/thấy
-  nhóm của GV B.
+- 🟡 **E2E chưa phủ hầu hết action Đợt 48→57** (xem bảng trên) — `showcase.e2e.ts`
+  của Đợt 58 là bộ MỚI DUY NHẤT đã đủ ca. Ưu tiên nếu làm tiếp:
+  `applyReviewsFromSession` (rủi ro cao nhất, ghi hàng loạt + gọi AI hàng
+  loạt), `setEnrollmentAcademicLevel`/combo mới Đợt 57, `addSkillGroup`/
+  `deleteSkillGroup` Đợt 55.
 - 🟡 Phần RENDER của component không có test — nghiệm thu bằng mắt (có ý thức).
 - 🟡 `buildOpsReport` đếm dòng bằng `{ head: true }` — nuốt lỗi PostgREST (xem
   DECISIONS.md).
-- 🟡 E2E action còn thiếu: tin Zalo, sản phẩm (`projects`), API key, mật khẩu —
-  mới chỉ có probe RLS. Mẫu ở `web/e2e/_harness.ts`, nhớ khai tiền tố vào
-  `test-user-prefixes.json`.
+- 🟡 E2E action còn thiếu: tin Zalo, API key, mật khẩu — mới chỉ có probe RLS.
+  Mẫu ở `web/e2e/_harness.ts`, nhớ khai tiền tố vào `test-user-prefixes.json`.
 
 ### Ràng buộc môi trường (không sửa được, phải sống chung)
 - Migration dán tay vào Supabase SQL Editor — mạng chặn cổng 5432/6543. SQL
@@ -148,76 +179,50 @@ sạch data cũ, thẻ nhận xét KHÔNG giấu combo trong accordion (đã th�
 
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
 
-### 2026-08-13 — Đợt 55 (`feature/custom-skill-groups`) — GV tự thêm nhóm kỹ năng
-**Đảo ngược quyết định cũ** "12 nhóm kỹ năng cố định" (DECISIONS.md) — lý do
-chốt cũ (chi phí sửa CHECK constraint mỗi lần thêm nhóm, đã tốn công 2 lần:
-Đợt 15/16) chính là nỗi đau tính năng này giải quyết. Bảng mới
-`review_skill_groups` (teacher-owned, RLS như `review_combos`) cho nhóm GV tự
-thêm; 12 nhóm nền vẫn cố định trong `skill-groups.ts`, không đụng dữ liệu
-`review_options` cũ. `skill_group` giờ chấp nhận slug nền HOẶC id nhóm tự
-thêm — gỡ CHECK constraint, sở hữu validate ở Server Action
-(`resolveSkillGroup`) vì không diễn tả được union đó bằng CHECK/FK trên một
-cột text. Cài đặt có khối "Nhóm kỹ năng tự thêm" (thêm/xóa); xóa nhóm chuyển
-lựa chọn đang thuộc về "📌 Khác" thay vì chặn xóa hay mất dữ liệu (user chốt).
+### 2026-08-29 — Đợt 58 (`feature/parent-showcase-link`) — link triển lãm sản phẩm cho PHỤ HUYNH
+User muốn một link công khai gửi phụ huynh xem sản phẩm cuối khóa của cả lớp
+trong buổi lễ tốt nghiệp. Khảo sát trước khi code (không có sẵn khái niệm
+"khách vãng lai" trong app — mọi route đều sau `requireRole`), hỏi rõ 4 điểm
+mơ hồ bằng `AskUserQuestion` (phạm vi, nội dung hiện, hiện tên đầy đủ hay
+viết tắt, hạn dùng mặc định) trước khi viết migration đầu tiên.
 
-**Đồng thời gộp nốt nhánh `docs/handoff-2026-08-12`** — bàn giao phiên Đợt
-48→54 đã viết xong và PUSH cuối phiên trước nhưng CHƯA merge vào
-`develop`/`main` (bị bỏ sót); merge sạch, không xung đột.
+**Thiết kế đổi 2 lần theo phản hồi trực tiếp** (giống nếp cũ của Đợt 48→54):
+(1) bản đầu có "lời chúc" công khai + thanh tên các em dính đầu trang để
+chuyển bạn; (2) user xem xong yêu cầu đổi hẳn sang "chấm điểm + nhận xét ẨN
+DANH" (3 tiêu chí sao Sản phẩm/Thuyết trình/Sáng tạo, đều được bỏ trống) và
+bỏ thanh tên → chuyển sang POPUP khi bấm vào từng em, vì thanh tên 12-20 nút
+cuộn ngang không hợp điện thoại. Bảng `showcase_ratings` thay hẳn
+`showcase_messages` — không có cột tên vì ẩn danh là RÀNG BUỘC THIẾT KẾ.
 
-**Bài học:** đầu phiên đọc `git branch --show-current` thấy đang đứng ở nhánh
-docs lạ (không phải `main`/`develop`/`feature/*`) — dấu hiệu có bàn giao dở từ
-phiên trước, nên gộp trước khi bắt đầu việc mới để không viết đè/làm mất lịch
-sử đã ghi. Migration mới (`20260812155201`) vẫn cần user tự dán vào Supabase
-SQL Editor — Claude không tự chạy được.
+**Sự cố migration** (xem chi tiết ở "Trạng thái hiện tại" phía trên): sửa
+thẳng file migration đã dán thay vì tạo file mới, khiến panel "chưa bật link"
+sai sự thật ngay sau lần đổi thiết kế. Vá bằng migration nối tiếp
+(`information_schema`, dán lại vô hại) + bịt chỗ nuốt `error` khiến triệu
+chứng khó chẩn đoán.
 
-### 2026-08-12 — Đợt 48→54 (một phiên rất dài, production `4ed8f96`)
-**Nhận xét học viên, đổi liên tục theo phản hồi trực tiếp trên UI:**
-"Lời khuyên" per-student → **"Bối cảnh buổi học" cấp BUỔI** (gõ 1 lần/buổi,
-migration xóa cột `advice`). **Buổi kiểm tra định kỳ** — GV tự tick (KHÔNG
-cứng số buổi 5/9/14, vì buổi 14 có khi là thuyết trình) → AI tách nhận xét
-thành 2 phần (học tập / kiểm tra), thêm ô "quá trình làm bài" (multi-select
-KHÔNG lưu, chỉ feed prompt). **MultiSelect** giờ xóa được lựa chọn ngay tại
-chỗ (dấu ✕, confirm dialog dựng NGOÀI DropdownMenu vì Radix tự đóng nội dung
-khi thấy tương tác ngoài nó), dropdown tự nới rộng + chữ xuống dòng thay vì
-cắt. Thẻ nhận xét thử ÍT NHẤT 3 layout theo phản hồi liên tiếp — chốt cuối:
-combo/copy/xếp loại chung 1 dòng (xếp loại bỏ label dùng placeholder), điểm
-mạnh/cải thiện/quá trình làm bài chung 1 dòng khác, **KHÔNG giấu gì trong
-accordion** (đã thử "Tùy chọn thêm" rồi bỏ ngay vì combo là thao tác tần suất
-cao). Ngày học tự điền hôm nay-1.
+**Bản sắc thị giác riêng "Bảng vàng"** (user yêu cầu RÕ RÀNG "không phải
+giao diện tối mặc định", duyệt bản kế hoạch trước khi code): palette ngà/than
+ấm + đồng thau + đất nung khoanh trong `.showcase-theme`, Playfair Display +
+Dancing Script, motif triện tốt nghiệp (phát triển từ icon mũ tốt nghiệp sẵn
+có) dùng 3 cỡ, viền kép giấy khen, checklist thành tích thay hàng tag rời
+rạc, sao/tim vẽ SVG thay emoji hệ thống. `contrast.test.ts` MỚI đọc hex thẳng
+từ `globals.css`, ép mọi cặp chữ/nền cả 2 mode đạt WCAG AA — đổi màu không
+qua test là biết ngay, không phải duyệt bằng mắt. Bug kỹ thuật đáng nhớ:
+popup Radix portal ra ngoài cây DOM của layout nên không thừa kế được biến
+font/màu — phải tách `.showcase-theme` (khai biến) khỏi `.showcase-surface`
+(sơn nền) và truyền tay class font xuống popup.
 
-**Bộ combo nhận xét:** đổi qua lại dropdown ↔ hàng nút theo phản hồi (chốt:
-MỘT dropdown, vì GV có hàng chục bộ thì hàng nút tràn 4-5 dòng); thêm SỬA
-(update, loại cố định từ lúc tạo); **chia hẳn 2 loại** tích cực/cải thiện —
-migration XÓA SẠCH data cũ (không tách tự động được bộ đã pha trộn, user chốt
-vậy); gỡ nút "Thêm nhanh bộ mẫu" + `COMBO_TEMPLATES`; thẻ combo đóng mặc định
-(tên + số lượng), bấm mới xổ ra — bộ nhiều nhãn từng đẩy cả trang dài ra.
+**Phát hiện cuối phiên (trước khi merge)**: `develop` thiếu 1 commit
+docs-only đã có trên `main` (xem "Trạng thái hiện tại") — dựng lại docs Đợt
+58 trên nền `main` thay vì để git tự 3-way-merge các file prose dài.
 
-**Tính năng mới:** **"Áp nhận xét từ buổi trước cho CẢ LỚP"** — 1 nút trong
-form Nội dung buổi học, GỘP điểm mạnh/cải thiện/xếp loại (không đè), rồi gọi
-Gemini viết nhận xét cho TỪNG em (song song, `allSettled`) — hết lượt thì em
-đó để trống chứ KHÔNG rollback, tích chọn vẫn giữ. Phải thêm `reviewSignature`
-vào `key` của `ReviewEditor` vì `useState(existing)` không tự cập nhật khi
-props đổi do ghi hàng loạt. **"Xem nội dung buổi khác"** — popup buổi trước
-của lớp + cùng buổi số ở lớp khác cùng khóa, chỉ đọc, RLS có sẵn đủ dùng.
+Dependency MỚI (user duyệt): `qrcode-generator`. Ảnh sản phẩm đổi hẳn sang
+link ngoài học viên tự dán (không Storage, user chốt vì chi phí — lợi phụ:
+hết nạn file mồ côi).
 
-**Ngoài chuyên môn:** `pnpm dev` tự mở trình duyệt khi sẵn sàng (script Node
-thuần, không thêm dependency). User thêm `GIT-WORKFLOW-RULES.md` SIẾT quy
-trình git giữa phiên — xem cảnh báo 🔴 ở đầu file.
+`lint + typecheck + 229 unit test + build` sạch; `pnpm test:e2e` 138 ca,
+`showcase.e2e.ts` (40 ca) 40/40 xanh trên DB thật sau khi user dán migration.
+User tự nghiệm thu bằng mắt (sáng + tối, điện thoại): "ổn định, đẹp mắt".
 
-**Bài học:**
-- **Đọc kỹ câu hỏi trước khi code** — 1 lần hiểu sai "gom vào accordion" thành
-  ngược ý user, phải làm lại; 1 lần user gửi ảnh chê UI mà không giải thích
-  liền, phải tự suy luận nguyên nhân (đúng) rồi mới sửa.
-- **`useState(props)` không tự đồng bộ** — bài học lặp lại từ nhiều bug khác
-  trong dự án: mọi nơi đọc `existing`/`props` vào `useState` một lần đều có
-  nguy cơ stale sau khi server ghi lại dữ liệu ở chỗ khác.
-- **Luôn `git branch --show-current` trước khi sửa** — 3 lần quên trong 1
-  phiên, dù đã tự nhắc ở phiên trước.
-
-### 2026-08-03 — Đợt 47: đánh vắng tự lưu + gợi ý theo gạch đầu dòng (`38aebbd`)
-Tick "Vắng" giờ LƯU LUÔN (thiếu `startTransition` từng làm lỗi đỏ mà E2E vẫn
-xanh — bài học lặp lại ở Đợt 48→54). Gợi ý nội dung buổi học đổi sang gạch
-đầu dòng.
-
-> Phiên cũ hơn (Đợt 1→46): xem ROADMAP.md — đã có tóm tắt + bài học nén sẵn ở
+> Phiên cũ hơn (Đợt 1→57): xem ROADMAP.md — đã có tóm tắt + bài học nén sẵn ở
 > đó, không lặp lại ở đây nữa.

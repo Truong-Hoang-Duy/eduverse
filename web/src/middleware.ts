@@ -32,8 +32,12 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAuthPage = path.startsWith("/login") || path.startsWith("/signup");
+  // Trang triển lãm sản phẩm gửi phụ huynh: quyền vào nằm ở TOKEN trên URL, phụ
+  // huynh không có tài khoản nên đá về /login là hỏng hẳn tính năng. Dữ liệu vẫn
+  // được canh ở DB — RPC `get_showcase` tự kiểm token còn hạn.
+  const isPublicShowcase = path.startsWith("/showcase/");
 
-  if (!user && !isAuthPage && path !== "/") {
+  if (!user && !isAuthPage && !isPublicShowcase && path !== "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
