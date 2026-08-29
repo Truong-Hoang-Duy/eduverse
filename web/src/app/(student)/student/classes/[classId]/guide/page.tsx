@@ -17,7 +17,7 @@ const VIDEOS = {
   drive: "https://www.youtube.com/watch?v=NWEu-bCUuLM",
   deploy: "https://www.youtube.com/watch?v=X6boIuWzBhg",
   apikey: "https://www.youtube.com/watch?v=JZCjL3hrvcY",
-  images: "",
+  images: "https://www.youtube.com/watch?v=LVoXkDeoso8",
 };
 
 /** Tách video ID từ link YouTube mọi dạng; trả "" nếu không nhận ra. */
@@ -65,16 +65,16 @@ const SECTIONS = [
   },
   {
     key: "images" as const,
-    title: "4. Đăng ảnh sản phẩm để khoe với bố mẹ",
+    title: "4. Đăng ảnh sản phẩm",
     description:
-      "Ảnh chụp màn hình sản phẩm sẽ hiện trên trang thầy cô gửi phụ huynh trong buổi lễ cuối khóa. Hệ thống KHÔNG giữ file ảnh — em đưa ảnh lên một trang host ảnh miễn phí rồi dán link vào.",
+      "Ảnh chụp màn hình sản phẩm sẽ hiện trên trang tổng kết khóa học.",
     steps: [
       "Chụp màn hình sản phẩm đang chạy (phím PrtSc, hoặc Windows + Shift + S).",
-      "Mở postimages.org hoặc imgbb.com — không cần đăng ký tài khoản.",
+      "Mở https://postimages.org/ — không cần đăng ký tài khoản.",
       "Kéo ảnh vào trang đó rồi bấm Upload, chờ vài giây.",
       'Copy dòng "Direct link" (link kết thúc bằng .jpg hoặc .png).',
       'Vào tab Sản phẩm → ô "Ảnh sản phẩm" → dán link → Enter. Ảnh phải hiện ra ở khung xem trước thì mới đúng.',
-      'Không thấy ảnh? Bấm chuột phải vào ảnh trên trang host → "Sao chép địa chỉ hình ảnh" rồi dán lại. Link Google Drive KHÔNG dùng được.',
+      'Không thấy ảnh? Bấm chuột phải vào ảnh trên trang host → "Sao chép địa chỉ hình ảnh" rồi dán lại.',
     ],
   },
   {
