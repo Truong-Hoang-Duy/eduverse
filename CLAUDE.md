@@ -41,8 +41,12 @@ Khi phiên làm việc sắp kết thúc hoặc user gõ `/handoff`, cập nhậ
 | Endpoint FastAPI, prompt Gemini, JSON schema | `.claude/docs/AI-SERVICE.md` |
 | Nghiệp vụ/UX từng tính năng theo vai trò | `.claude/docs/FEATURES.md` |
 | Prompt mẫu để mở phiên chat mới | `.claude/docs/PROMPTS.md` |
+| **Deploy / merge lên `main` / bất kỳ thao tác git nào** — đọc TRƯỚC khi commit/push/merge, siết hơn mục 7 dưới đây | `.claude/docs/GIT-WORKFLOW-RULES.md` |
 
 KHÔNG đọc cả thư mục docs một lượt; chỉ nạp đúng file cần cho task hiện tại.
+(`GIT-WORKFLOW-RULES.md` còn được tự chèn qua hook `UserPromptSubmit` — xem
+`.claude/hooks/deploy-reminder.js` — mỗi khi prompt có chữ "deploy"; dòng router
+này là lớp phòng vệ thứ hai cho các cách diễn đạt khác, VD "đẩy code lên production".)
 
 ## 4. Commands (dùng CHÍNH XÁC các lệnh này)
 
