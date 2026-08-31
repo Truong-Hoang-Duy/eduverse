@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app import prompts
-from app.gemini import generate_json
+from app.llm import generate_json
 from app.schemas import SuggestFeaturesRequest, SuggestFeaturesResponse
 
 router = APIRouter()
@@ -40,5 +40,6 @@ def suggest_features(body: SuggestFeaturesRequest) -> SuggestFeaturesResponse:
             "required": ["suggestions"],
         },
         api_key=body.api_key,
+        provider=body.provider,
     )
     return SuggestFeaturesResponse(**data)

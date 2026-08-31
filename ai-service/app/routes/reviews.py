@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app import prompts
-from app.gemini import generate_json
+from app.llm import generate_json
 from app.schemas import (
     GenerateReviewRequest,
     GenerateReviewResponse,
@@ -41,6 +41,7 @@ def generate_review(body: GenerateReviewRequest) -> GenerateReviewResponse:
             "required": ["comment"],
         },
         api_key=body.api_key,
+        provider=body.provider,
     )
     return GenerateReviewResponse(**data)
 
@@ -81,6 +82,7 @@ def generate_student_summary(body: StudentSummaryRequest) -> StudentSummaryRespo
             ],
         },
         api_key=body.api_key,
+        provider=body.provider,
     )
     return StudentSummaryResponse(**data)
 
@@ -106,6 +108,7 @@ def suggest_session_content(
             "required": ["bullets"],
         },
         api_key=body.api_key,
+        provider=body.provider,
     )
     # Model thỉnh thoảng vẫn tự thêm "-"/"•" dù prompt cấm; cắt ở đây để phía web
     # khỏi ra "- - Ôn vòng lặp".
@@ -141,5 +144,6 @@ def generate_zalo_summary(body: ZaloSummaryRequest) -> ZaloSummaryResponse:
             "required": ["message"],
         },
         api_key=body.api_key,
+        provider=body.provider,
     )
     return ZaloSummaryResponse(**data)

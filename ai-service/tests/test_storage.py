@@ -6,7 +6,7 @@ import zipfile
 import pytest
 from fastapi import HTTPException
 
-from app.storage import bytes_to_part, docx_to_text
+from app.storage import bytes_to_openai_content, bytes_to_part, docx_to_text
 
 _DOCX_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
@@ -103,3 +103,45 @@ def test_code_file_still_goes_through_as_text() -> None:
 
     assert part.text is not None
     assert "<h1>Xin chao</h1>" in part.text
+
+
+# ---------- bytes_to_openai_content: cùng luật phân loại text/binary với
+# bytes_to_part (dùng chung app.storage._classify), chỉ khác kiểu bọc ra. ----------
+
+
+def test_openai_content_code_file_is_text_block() -> None:
+    block = bytes_to_openai_content("index.html", b"<h1>Xin chao</h1>")
+
+    assert block == {"type": "text", "text": "--- File: index.html ---\n<h1>Xin chao</h1>"}
+
+
+def test_openai_content_docx_is_text_block() -> None:
+    block = bytes_to_openai_content("bai.docx", make_docx())
+
+    assert block["type"] == "text"
+    assert "print(i)" in block["text"]
+
+
+def test_openai_content_image_is_base64_image_url() -> None:
+    png_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 20
+    block = bytes_to_openai_content("anh.png", png_bytes, "image/png")
+
+    assert block["type"] == "image_url"
+    assert block["image_url"]["url"].startswith("data:image/png;base64,")
+
+
+def test_openai_content_pdf_is_base64_file_block() -> None:
+    pdf_bytes = b"%PDF-1.4\n" + b"\x00" * 20
+    block = bytes_to_openai_content("de-bai.pdf", pdf_bytes, "application/pdf")
+
+    assert block["type"] == "file"
+    assert block["file"]["filename"] == "de-bai.pdf"
+    assert block["file"]["file_data"].startswith("data:application/pdf;base64,")
+
+
+def test_openai_content_rejects_legacy_doc_same_as_gemini_path() -> None:
+    with pytest.raises(HTTPException) as exc:
+        bytes_to_openai_content("bai.doc", b"\xd0\xcf\x11\xe0 noi dung word cu")
+
+    assert exc.value.status_code == 400
+    assert ".docx" in exc.value.detail

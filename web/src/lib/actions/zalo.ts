@@ -1,6 +1,6 @@
 "use server";
 
-import { getMyApiKey } from "@/lib/actions/api-key";
+import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
 
@@ -69,11 +69,17 @@ export async function generateZaloSummary(input: {
   // đó thay vì khái quát chung cả lớp (yêu cầu user 2026-07-21).
   const isOneOnOne = (enrollmentsData ?? []).length === 1;
 
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
   try {
     const data = await callAiService<{ message: string }>(
       "/generate-zalo-summary",
       {
-        api_key: await getMyApiKey(),
+        api_key: aiConfig.api_key,
+        provider: aiConfig.provider,
         class_code: classCode,
         session_title: session.title ?? `Buổi ${session.session_number}`,
         session_content: session.content ?? "",

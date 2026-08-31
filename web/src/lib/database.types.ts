@@ -713,18 +713,24 @@ export type Database = {
       user_secrets: {
         Row: {
           gemini_api_key: string | null
+          openai_api_key: string | null
+          provider: string
           updated_at: string
           use_own_key: boolean
           user_id: string
         }
         Insert: {
           gemini_api_key?: string | null
+          openai_api_key?: string | null
+          provider?: string
           updated_at?: string
           use_own_key?: boolean
           user_id: string
         }
         Update: {
           gemini_api_key?: string | null
+          openai_api_key?: string | null
+          provider?: string
           updated_at?: string
           use_own_key?: boolean
           user_id?: string

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getMyApiKey } from "@/lib/actions/api-key";
+import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { imageUrlError } from "@/lib/image-url";
 import {
@@ -247,11 +247,17 @@ export async function suggestFeatures(input: {
     return { error: "Hãy nhập tên và mô tả dự án trước khi xin gợi ý." };
   }
 
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
   try {
     const data = await callAiService<{ suggestions: FeatureSuggestion[] }>(
       "/suggest-features",
       {
-        api_key: await getMyApiKey(),
+        api_key: aiConfig.api_key,
+        provider: aiConfig.provider,
         project_name: input.projectName,
         description: input.description,
         existing_features: input.existingFeatures,

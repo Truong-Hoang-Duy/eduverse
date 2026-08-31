@@ -4,12 +4,17 @@ from pydantic import BaseModel, Field
 
 
 class AiRequest(BaseModel):
-    """Mọi request AI đều có thể kèm key riêng của người dùng.
+    """Mọi request AI đều có thể kèm provider + key riêng của người dùng.
 
-    None → ai-service dùng key mặc định trong biến môi trường.
+    provider mặc định "gemini". api_key None → ai-service dùng key mặc định
+    trong biến môi trường — CHỈ áp dụng cho Gemini. OpenAI KHÔNG có key hệ
+    thống trong bất kỳ trường hợp nào (xem app/openai_client.py); web đã chặn
+    gọi sang đây khi provider="openai" mà chưa có key, route vẫn tự chặn lại
+    (app/openai_client.py) phòng khi web có bug.
     """
 
     api_key: str | None = None
+    provider: Literal["gemini", "openai"] = "gemini"
 
 
 # ---------- /generate-review ----------

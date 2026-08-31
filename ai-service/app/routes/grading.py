@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 from google.genai import types
 
 from app import prompts
-from app.gemini import generate_json
+from app.llm import Provider, generate_json
 from app.schemas import (
     GradeSubmissionRequest,
     GradeSubmissionResponse,
@@ -16,7 +16,12 @@ from app.schemas import (
     ReviewProjectRequest,
     ReviewProjectResponse,
 )
-from app.storage import bytes_to_part, download_as_part
+from app.storage import (
+    bytes_to_openai_content,
+    bytes_to_part,
+    download_as_openai_content,
+    download_as_part,
+)
 
 router = APIRouter()
 
@@ -87,12 +92,14 @@ _ENTRY_NAMES = (
 )
 
 
-def _inline_parts(files: list[InlineFile]) -> list[types.Part]:
-    """Giải base64 rồi bọc thành Part. Ảnh/PDF đi đường nhị phân, code đi đường chữ.
+def _inline_parts(files: list[InlineFile], provider: Provider) -> list:
+    """Giải base64 rồi bọc thành content cho ĐÚNG provider đang gọi.
 
-    Gọi TRƯỚC `download_as_part`: đây là kiểm tra rẻ tiền và hoàn toàn cục bộ,
-    chạy trước thì file hỏng ra lỗi 400 đúng nghĩa thay vì bị 404 "không tìm thấy
-    đề" che mất, và không tốn một lượt gọi Storage vô ích.
+    Ảnh/PDF đi đường nhị phân, code đi đường chữ (xem app/storage.py). Gọi
+    TRƯỚC `download_as_part`/`download_as_openai_content`: đây là kiểm tra rẻ
+    tiền và hoàn toàn cục bộ, chạy trước thì file hỏng ra lỗi 400 đúng nghĩa
+    thay vì bị 404 "không tìm thấy đề" che mất, và không tốn một lượt gọi
+    Storage vô ích.
     """
     parts = []
     for f in files:
@@ -102,8 +109,23 @@ def _inline_parts(files: list[InlineFile]) -> list[types.Part]:
             raise HTTPException(
                 status_code=400, detail=f"File không hợp lệ: {f.name}"
             ) from exc
-        parts.append(bytes_to_part(f.name, data, f.mime_type))
+        if provider == "openai":
+            parts.append(bytes_to_openai_content(f.name, data, f.mime_type))
+        else:
+            parts.append(bytes_to_part(f.name, data, f.mime_type))
     return parts
+
+
+def _spec_and_submission_parts(
+    provider: Provider, spec_file_path: str, files: list[InlineFile]
+) -> list:
+    """Đề bài (Storage) + bài làm (inline), cùng kiểu content với `provider`."""
+    submission_parts = _inline_parts(files, provider)
+    if provider == "openai":
+        spec_part = download_as_openai_content(SPEC_BUCKET, spec_file_path)
+    else:
+        spec_part = download_as_part(SPEC_BUCKET, spec_file_path)
+    return [spec_part, *submission_parts]
 
 
 def _keep_requested_parts(data: dict, mode: str) -> dict:
@@ -134,8 +156,7 @@ def _keep_requested_parts(data: dict, mode: str) -> dict:
 @router.post("/grade-submission", response_model=GradeSubmissionResponse)
 def grade_submission(body: GradeSubmissionRequest) -> GradeSubmissionResponse:
     # Đề bài lấy từ Storage (được lưu); bài làm gửi inline, không lưu ở đâu cả.
-    submission_parts = _inline_parts(body.files)
-    file_parts = [download_as_part(SPEC_BUCKET, body.spec_file_path), *submission_parts]
+    file_parts = _spec_and_submission_parts(body.provider, body.spec_file_path, body.files)
 
     prompt = prompts.build_grading_prompt(
         course_name=body.course_name,
@@ -148,6 +169,7 @@ def grade_submission(body: GradeSubmissionRequest) -> GradeSubmissionResponse:
         response_schema=GRADING_SCHEMA,
         file_parts=file_parts,
         api_key=body.api_key,
+        provider=body.provider,
     )
     return GradeSubmissionResponse(**_keep_requested_parts(data, body.mode))
 
@@ -175,8 +197,7 @@ def help_student(body: HelpStudentRequest) -> HelpStudentResponse:
     `files` rỗng là hợp lệ: đó là ca "em chưa biết bắt đầu từ đâu", chỉ cần đề
     bài. Đây là điểm khác duy nhất về đầu vào so với `/grade-submission`.
     """
-    student_parts = _inline_parts(body.files)
-    file_parts = [download_as_part(SPEC_BUCKET, body.spec_file_path), *student_parts]
+    file_parts = _spec_and_submission_parts(body.provider, body.spec_file_path, body.files)
 
     prompt = prompts.build_student_help_prompt(
         course_name=body.course_name,
@@ -191,6 +212,7 @@ def help_student(body: HelpStudentRequest) -> HelpStudentResponse:
         response_schema=STUDENT_HELP_SCHEMA,
         file_parts=file_parts,
         api_key=body.api_key,
+        provider=body.provider,
     )
     return HelpStudentResponse(**_drop_diagnosis_without_code(data, bool(body.files)))
 
@@ -207,10 +229,19 @@ def review_project(body: ReviewProjectRequest) -> ReviewProjectResponse:
     """Nhận xét sản phẩm cuối khóa: KHÔNG đề bài, KHÔNG điểm, không lưu gì."""
     files = sorted(body.files, key=lambda f: _entry_first(f.path))
 
-    file_parts = [
-        types.Part.from_text(text=f"--- File: {f.path} ---\n{f.content}")
-        for f in files
-    ]
+    # Sản phẩm cuối khóa chỉ nhận file CHỮ (ảnh/nhị phân đã bị lọc từ phía web)
+    # nên content block cho cả 2 provider đều là text, chỉ khác kiểu dữ liệu.
+    file_parts: list = (
+        [
+            {"type": "text", "text": f"--- File: {f.path} ---\n{f.content}"}
+            for f in files
+        ]
+        if body.provider == "openai"
+        else [
+            types.Part.from_text(text=f"--- File: {f.path} ---\n{f.content}")
+            for f in files
+        ]
+    )
 
     prompt = prompts.build_project_review_prompt(
         course_name=body.course_name,
@@ -222,5 +253,6 @@ def review_project(body: ReviewProjectRequest) -> ReviewProjectResponse:
         response_schema=PROJECT_REVIEW_SCHEMA,
         file_parts=file_parts,
         api_key=body.api_key,
+        provider=body.provider,
     )
     return ReviewProjectResponse(**data)
