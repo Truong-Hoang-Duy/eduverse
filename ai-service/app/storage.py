@@ -1,8 +1,11 @@
-"""Dựng Part cho Gemini từ file Storage (đề bài) hoặc bytes inline (bài làm)."""
+"""Dựng nội dung file cho AI (Gemini Part / OpenAI content block) từ file
+Storage (đề bài) hoặc bytes inline (bài làm)."""
 
+import base64
 import io
 import mimetypes
 import zipfile
+from typing import Literal
 from xml.etree import ElementTree
 
 from fastapi import HTTPException
@@ -110,8 +113,17 @@ def _is_code_file(name: str) -> bool:
     return any(name.lower().endswith(ext) for ext in _CODE_EXTENSIONS)
 
 
-def bytes_to_part(name: str, data: bytes, mime: str | None = None) -> types.Part:
-    """Bọc bytes thành Part: code/text đưa dạng text, còn lại (PDF/ảnh) dạng nhị phân."""
+def _classify(
+    name: str, data: bytes, mime: str | None = None
+) -> tuple[Literal["text", "binary"], str, str | None]:
+    """Quyết định file là TEXT hay BINARY — DÙNG CHUNG cho cả Gemini lẫn OpenAI.
+
+    Trả (kind, text, resolved_mime): `text` chỉ có nghĩa khi kind=="text"
+    (rỗng khi "binary"); `resolved_mime` chỉ có nghĩa khi kind=="binary". Tách
+    khỏi `bytes_to_part` để `bytes_to_openai_content` không phải chép lại luật
+    docx/.doc cũ/magic-bytes — hai provider phải coi cùng 1 file là text hay
+    nhị phân GIỐNG NHAU.
+    """
     _reject_if_unreadable(name, data)
 
     if mime is None:
@@ -131,16 +143,14 @@ def bytes_to_part(name: str, data: bytes, mime: str | None = None) -> types.Part
         )
 
     # Đặt TRƯỚC nhánh text: mimetypes đoán .docx ra mime riêng (không phải text/*)
-    # nên nếu để rơi xuống dưới sẽ gửi bytes ZIP thô cho Gemini và nó từ chối.
+    # nên nếu để rơi xuống dưới sẽ gửi bytes ZIP thô cho AI và nó từ chối.
     if lowered.endswith(".docx") or mime == DOCX_MIME:
-        text = docx_to_text(name, data)
-        return types.Part.from_text(text=f"--- File: {name} ---\n{text}")
+        return "text", docx_to_text(name, data), None
 
     if mime is None or mime.startswith("text/") or _is_code_file(name):
-        text = data.decode("utf-8", errors="replace")
-        return types.Part.from_text(text=f"--- File: {name} ---\n{text}")
+        return "text", data.decode("utf-8", errors="replace"), None
 
-    # Ảnh/PDF hỏng → báo rõ thay vì để Gemini trả lỗi khó hiểu.
+    # Ảnh/PDF hỏng → báo rõ thay vì để AI trả lỗi khó hiểu.
     expected = _MAGIC_BYTES.get(mime)
     if expected and not data.startswith(expected):
         raise HTTPException(
@@ -151,16 +161,57 @@ def bytes_to_part(name: str, data: bytes, mime: str | None = None) -> types.Part
                 "hãy thử upload lại bằng file khác."
             ),
         )
-    return types.Part.from_bytes(data=data, mime_type=mime)
+    return "binary", "", mime
 
 
-def download_as_part(bucket: str, path: str) -> types.Part:
-    """Tải 1 file từ Storage và bọc thành Part cho Gemini (multimodal)."""
+def bytes_to_part(name: str, data: bytes, mime: str | None = None) -> types.Part:
+    """Bọc bytes thành Part cho Gemini: code/text dạng text, còn lại (PDF/ảnh) nhị phân."""
+    kind, text, resolved_mime = _classify(name, data, mime)
+    if kind == "text":
+        return types.Part.from_text(text=f"--- File: {name} ---\n{text}")
+    return types.Part.from_bytes(data=data, mime_type=resolved_mime)
+
+
+def bytes_to_openai_content(name: str, data: bytes, mime: str | None = None) -> dict:
+    """Bọc bytes thành 1 content block Chat Completions của OpenAI.
+
+    Ảnh đi qua `image_url` kiểu data URI base64 (chuẩn OpenAI hỗ trợ file
+    nhị phân qua chat, không cần Files API riêng); PDF qua `file` cùng cách.
+    """
+    kind, text, resolved_mime = _classify(name, data, mime)
+    if kind == "text":
+        return {"type": "text", "text": f"--- File: {name} ---\n{text}"}
+
+    b64 = base64.b64encode(data).decode("ascii")
+    mime_type = resolved_mime or "application/octet-stream"
+    if mime_type == "application/pdf":
+        return {
+            "type": "file",
+            "file": {
+                "filename": name,
+                "file_data": f"data:{mime_type};base64,{b64}",
+            },
+        }
+    return {
+        "type": "image_url",
+        "image_url": {"url": f"data:{mime_type};base64,{b64}"},
+    }
+
+
+def _download_bytes(bucket: str, path: str) -> bytes:
     try:
-        data: bytes = _supabase().storage.from_(bucket).download(path)
+        return _supabase().storage.from_(bucket).download(path)
     except Exception as exc:
         raise HTTPException(
             status_code=404, detail=f"Không tải được file: {bucket}/{path}"
         ) from exc
 
-    return bytes_to_part(path, data)
+
+def download_as_part(bucket: str, path: str) -> types.Part:
+    """Tải 1 file từ Storage và bọc thành Part cho Gemini (multimodal)."""
+    return bytes_to_part(path, _download_bytes(bucket, path))
+
+
+def download_as_openai_content(bucket: str, path: str) -> dict:
+    """Tải 1 file từ Storage và bọc thành content block cho OpenAI."""
+    return bytes_to_openai_content(path, _download_bytes(bucket, path))

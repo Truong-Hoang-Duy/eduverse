@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getMyApiKey } from "@/lib/actions/api-key";
+import { getAiConfig } from "@/lib/actions/api-key";
 import { applyReviewsFromSession } from "@/lib/actions/reviews";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
@@ -259,11 +259,17 @@ export async function suggestSessionContent(input: {
     };
   }
 
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
   try {
     const data = await callAiService<{ bullets: string[] }>(
       "/suggest-session-content",
       {
-        api_key: await getMyApiKey(),
+        api_key: aiConfig.api_key,
+        provider: aiConfig.provider,
         course_name: session.classes?.courses?.name ?? "",
         class_code: session.classes?.class_code ?? "",
         session_number: session.session_number,
