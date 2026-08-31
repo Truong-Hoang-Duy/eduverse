@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { academicLevelLabel } from "@/lib/academic-levels";
-import { getMyApiKey } from "@/lib/actions/api-key";
+import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
@@ -286,40 +286,46 @@ export async function applyReviewsFromSession(input: {
   // --- Bước 2: gọi AI cho từng em (tích chọn đã an toàn trong DB) ---
   // Bỏ qua em đã có sẵn câu nhận xét — khỏi phí lượt Gemini khi bấm lại lần 2.
   const needComment = applied.filter((a) => !a.hasComment);
-  const apiKey = await getMyApiKey();
+  const aiConfig = await getAiConfig();
   const sessionTitle =
     sessionData.title ?? `Buổi ${sessionData.session_number}`;
 
-  const results = await Promise.allSettled(
-    needComment.map(async (a) => {
-      const data = await callAiService<{ comment: string }>("/generate-review", {
-        api_key: apiKey,
-        student_name: a.studentName,
-        session_title: sessionTitle,
-        session_content: sessionData.content ?? "",
-        strengths: a.strengths,
-        improvements: a.improvements,
-        session_context: sessionData.review_context || null,
-        is_periodic_test: sessionData.is_periodic_test,
-        test_process_notes: [],
-        is_project_period: sessionData.is_project_period,
-        project_progress_notes: [],
-        previous_comment: null,
-        prior_comments: (priorCommentsByStudent.get(a.studentId) ?? []).slice(
-          -MAX_PRIOR_COMMENTS
-        ),
-        academic_level: academicLevelLabel(a.academicLevel),
-      });
-      return { studentId: a.studentId, comment: data.comment };
-    })
-  );
+  // Chưa có OpenAI key (đang chọn OpenAI) → KHÔNG tự ý gọi bằng key khác, bỏ
+  // qua bước AI nhưng tích chọn ở bước 1 vẫn đã lưu — báo rõ lý do trong `error`.
+  let comments: { studentId: string; comment: string }[] = [];
+  if (aiConfig.ok && needComment.length > 0) {
+    const results = await Promise.allSettled(
+      needComment.map(async (a) => {
+        const data = await callAiService<{ comment: string }>("/generate-review", {
+          api_key: aiConfig.api_key,
+          provider: aiConfig.provider,
+          student_name: a.studentName,
+          session_title: sessionTitle,
+          session_content: sessionData.content ?? "",
+          strengths: a.strengths,
+          improvements: a.improvements,
+          session_context: sessionData.review_context || null,
+          is_periodic_test: sessionData.is_periodic_test,
+          test_process_notes: [],
+          is_project_period: sessionData.is_project_period,
+          project_progress_notes: [],
+          previous_comment: null,
+          prior_comments: (priorCommentsByStudent.get(a.studentId) ?? []).slice(
+            -MAX_PRIOR_COMMENTS
+          ),
+          academic_level: academicLevelLabel(a.academicLevel),
+        });
+        return { studentId: a.studentId, comment: data.comment };
+      })
+    );
 
-  const comments = results
-    .filter(
-      (r): r is PromiseFulfilledResult<{ studentId: string; comment: string }> =>
-        r.status === "fulfilled" && Boolean(r.value.comment)
-    )
-    .map((r) => r.value);
+    comments = results
+      .filter(
+        (r): r is PromiseFulfilledResult<{ studentId: string; comment: string }> =>
+          r.status === "fulfilled" && Boolean(r.value.comment)
+      )
+      .map((r) => r.value);
+  }
 
   // Ghi từng câu một: `upsert` hàng loạt sẽ ghi đè cả strengths/improvements
   // vừa lưu ở bước 1 bằng giá trị mặc định của cột nếu thiếu khóa.
@@ -338,6 +344,7 @@ export async function applyReviewsFromSession(input: {
     applied: toUpsert.length,
     generated: comments.length,
     aiFailed: needComment.length - comments.length,
+    ...(!aiConfig.ok && needComment.length > 0 ? { error: aiConfig.error } : {}),
   };
 }
 
@@ -398,11 +405,17 @@ export async function generateStudentSummary(input: {
     };
   }
 
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
   try {
     const summary = await callAiService<StudentSummary>(
       "/generate-student-summary",
       {
-        api_key: await getMyApiKey(),
+        api_key: aiConfig.api_key,
+        provider: aiConfig.provider,
         student_name: student?.full_name ?? "Học viên",
         class_code: cls?.class_code ?? "",
         course_name:
@@ -471,9 +484,15 @@ export async function generateAiReview(
     return { error: "Phiên đăng nhập hết hạn." };
   }
 
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
   try {
     const data = await callAiService<{ comment: string }>("/generate-review", {
-      api_key: await getMyApiKey(),
+      api_key: aiConfig.api_key,
+      provider: aiConfig.provider,
       student_name: input.studentName,
       session_title: input.sessionTitle,
       session_content: input.sessionContent,

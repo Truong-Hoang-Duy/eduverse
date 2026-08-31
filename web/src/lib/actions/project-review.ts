@@ -1,6 +1,6 @@
 "use server";
 
-import { getMyApiKey } from "@/lib/actions/api-key";
+import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import {
   emptyTally,
@@ -99,9 +99,15 @@ export async function reviewProject(input: {
     courseName = course?.name ?? "";
   }
 
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
   try {
     const review = await callAiService<ProjectReview>("/review-project", {
-      api_key: await getMyApiKey(),
+      api_key: aiConfig.api_key,
+      provider: aiConfig.provider,
       files: input.files.map((f) => ({ path: f.path, content: f.content })),
       course_name: courseName,
       notes: input.notes?.trim() || null,

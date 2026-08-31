@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_service_key: str = ""
     gemini_model: str = "gemini-flash-latest"
+    # OpenAI KHÔNG có key hệ thống — cố ý không có setting "openai_api_key" ở
+    # đây, mỗi tài khoản luôn dùng key riêng của họ (xem app/openai_client.py).
+    openai_model: str = "gpt-5.6-luna"
 
     # Render tự đặt biến này cho mỗi bản build (tên biến do Render quy định, đừng
     # đổi). Trả ra ở /health để biết CHÍNH XÁC production đang chạy commit nào —

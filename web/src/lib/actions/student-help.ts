@@ -1,6 +1,6 @@
 "use server";
 
-import { getMyApiKey } from "@/lib/actions/api-key";
+import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { GRADING_BUDGET } from "@/lib/submission-files";
 import { createClient } from "@/lib/supabase/server";
@@ -72,9 +72,15 @@ export async function helpStudent(input: {
     return { error: "Đề bài chưa có file — tạo lại đề với file đính kèm." };
   }
 
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
   try {
     const help = await callAiService<StudentHelp>("/help-student", {
-      api_key: await getMyApiKey(),
+      api_key: aiConfig.api_key,
+      provider: aiConfig.provider,
       spec_file_path: assignment.spec_file_path,
       files: input.files.map((f) => ({
         name: f.name,
