@@ -348,7 +348,7 @@ export default async function ClassDetailPage({
         title={`🚀 Sản phẩm cuối khóa (${projects.length})`}
         description="Sản phẩm học viên trong lớp đã khai báo"
       >
-        <div className="mb-3 flex justify-end">
+        <div className="mb-3 flex flex-wrap justify-end gap-2">
           <ProjectShowcase classCode={cls.class_code} projects={projects} />
         </div>
         <div className="space-y-4">
