@@ -15,10 +15,15 @@ import {
 import { Button } from "@/components/ui/button";
 import type { ProjectView } from "@/components/project-card";
 import { isSafeHttpUrl } from "@/lib/drive-url";
+import { buildIdleReel } from "@/lib/idle-reel";
 
 /** Ảnh hiển thị tối đa trên lưới của slide từng em — ảnh dư gộp vào ô "+N ảnh"
  *  mở lightbox xem hết, để lưới luôn đều và không tràn khung. */
 const MAX_GRID_IMAGES = 4;
+
+/** Mỗi cảnh màn hình chờ đứng bao lâu. 7 giây: đủ để phụ huynh vừa vào phòng
+ *  kịp đọc tên em và tên sản phẩm, chưa đủ lâu để thành màn hình đứng hình. */
+const IDLE_SCENE_MS = 7000;
 
 function BigLink({ href, label }: { href: string | null; label: string }) {
   if (!href) return null;
@@ -170,6 +175,47 @@ function StudentSlide({
   );
 }
 
+/** Một cảnh của màn hình chờ: ảnh to hết cỡ, tên em + tên sản phẩm ở dưới.
+ *  Chiếu lúc phụ huynh đang lục tục vào phòng, chưa ai thuyết trình. */
+function IdleSlide({
+  project,
+  imageUrl,
+}: {
+  project: ProjectView;
+  imageUrl: string | null;
+}) {
+  return (
+    <div
+      // `key` ở chỗ gọi ép React dựng lại → animation chạy lại mỗi cảnh.
+      className="flex h-full min-h-0 flex-col items-center justify-center gap-6 p-8 sm:p-10 animate-in fade-in duration-700"
+    >
+      {imageUrl ? (
+        <div className="relative flex min-h-0 flex-1 items-center justify-center">
+          <SafeImage
+            src={imageUrl}
+            alt={`Ảnh sản phẩm của ${project.authorName}`}
+            className="max-h-full max-w-full rounded-xl object-contain shadow-lg"
+          />
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <GraduationSeal size={160} withRibbon className="text-sc-brass/70" />
+        </div>
+      )}
+
+      <div className="flex shrink-0 items-center gap-5">
+        <SealAvatar name={project.authorName} size={72} />
+        <div className="min-w-0 text-left">
+          <p className="truncate font-display text-3xl font-semibold text-sc-ink sm:text-4xl">
+            {project.authorName}
+          </p>
+          <p className="truncate text-xl text-sc-brass sm:text-2xl">{project.name}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OverviewSlide({
   slides,
   onJump,
@@ -307,12 +353,16 @@ function Lightbox({
   );
 }
 
+type TvView = "slides" | "overview" | "idle";
+
 /** Màn hình chiếu thuyết trình sản phẩm cuối khóa, thiết kế theo tư duy SLIDE
  *  (concept "Bảng vàng" đồng bộ với trang phụ huynh `/showcase`) — mỗi cảnh
  *  khít khung `100dvh`, hạn chế cuộn tối đa:
  *  - "slides": mỗi em một slide, chuyển bằng nút hoặc phím ← →, thứ tự theo tên.
  *  - "overview": tổng kết CẢ LỚP một màn — chiếu khi nói chuyện với phụ huynh
- *    sau khi các em thuyết trình xong; bấm thẻ để nhảy về slide của em đó. */
+ *    sau khi các em thuyết trình xong; bấm thẻ để nhảy về slide của em đó.
+ *  - "idle": màn hình chờ TỰ CHẠY vòng ảnh sản phẩm — chiếu lúc phụ huynh đang
+ *    vào phòng, trước khi buổi lễ bắt đầu (thêm 2026-09-04). */
 export function ProjectShowcase({
   classCode,
   projects,
@@ -321,8 +371,9 @@ export function ProjectShowcase({
   projects: ProjectView[];
 }) {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"slides" | "overview">("slides");
+  const [view, setView] = useState<TvView>("slides");
   const [index, setIndex] = useState(0);
+  const [idleIndex, setIdleIndex] = useState(0);
   const [lightbox, setLightbox] = useState<number | null>(null);
 
   const slides = [...projects].sort((a, b) =>
@@ -330,6 +381,20 @@ export function ProjectShowcase({
   );
   const current = slides[Math.min(index, slides.length - 1)];
   const isLast = index === slides.length - 1;
+
+  const reel = buildIdleReel(slides);
+  const idleScene = reel[idleIndex % Math.max(reel.length, 1)];
+
+  // Màn hình chờ tự chạy vòng, KHÔNG dừng ở cảnh cuối: giáo viên bật rồi bỏ đó
+  // đi đón phụ huynh, quay lại vẫn thấy nó đang chạy.
+  useEffect(() => {
+    if (!open || view !== "idle" || reel.length === 0) return;
+    const timer = setInterval(
+      () => setIdleIndex((i) => (i + 1) % reel.length),
+      IDLE_SCENE_MS
+    );
+    return () => clearInterval(timer);
+  }, [open, view, reel.length]);
 
   useEffect(() => {
     if (!open || view !== "slides" || lightbox !== null) return;
@@ -348,9 +413,10 @@ export function ProjectShowcase({
 
   if (projects.length === 0) return null;
 
-  function enter() {
+  function enter(mode: TvView = "slides") {
     setIndex(0);
-    setView("slides");
+    setIdleIndex(0);
+    setView(mode);
     setOpen(true);
     enterBrowserFullscreen();
   }
@@ -370,8 +436,14 @@ export function ProjectShowcase({
       {/* Đặt song song với nút "📺 Chiếu QR lên TV" ở khối bên cạnh: cùng động
           từ "chiếu ... lên TV" để giáo viên đọc lướt là biết cả hai đều mở màn
           trình chiếu, không phải một trang quản lý nào khác. */}
-      <Button variant="outline" onClick={enter}>
+      <Button variant="outline" onClick={() => enter("slides")}>
         🎬 Chiếu sản phẩm
+      </Button>
+      {/* Đường vào THẲNG màn hình chờ: lúc cần nó (phụ huynh đang vào phòng)
+          giáo viên còn đang đón khách, không muốn phải vào slide rồi lần mò
+          đổi chế độ. */}
+      <Button variant="outline" onClick={() => enter("idle")}>
+        🖼️ Màn hình chờ
       </Button>
 
       {open && current && (
@@ -382,11 +454,17 @@ export function ProjectShowcase({
                 title={
                   view === "slides"
                     ? `🎤 Sản phẩm cuối khóa · Lớp ${classCode}`
-                    : `🎉 Sản phẩm cuối khóa · Lớp ${classCode}`
+                    : view === "idle"
+                      ? `🖼️ Chào mừng quý phụ huynh · Lớp ${classCode}`
+                      : `🎉 Sản phẩm cuối khóa · Lớp ${classCode}`
                 }
                 progress={view === "slides" ? `${index + 1}/${slides.length}` : undefined}
               >
-                {view === "slides" ? (
+                {view === "idle" ? (
+                  <TvNavButton onClick={() => setView("slides")}>
+                    ▶️ Bắt đầu thuyết trình
+                  </TvNavButton>
+                ) : view === "slides" ? (
                   <>
                     <TvNavButton
                       onClick={() => setIndex((i) => Math.max(i - 1, 0))}
@@ -422,7 +500,13 @@ export function ProjectShowcase({
               </TvChrome>
 
               <div className="min-h-0 flex-1">
-                {view === "slides" ? (
+                {view === "idle" && idleScene ? (
+                  <IdleSlide
+                    key={idleScene.key}
+                    project={idleScene.project}
+                    imageUrl={idleScene.imageUrl}
+                  />
+                ) : view === "slides" ? (
                   <StudentSlide project={current} onOpenLightbox={setLightbox} />
                 ) : (
                   <OverviewSlide slides={slides} onJump={jumpToSlide} />

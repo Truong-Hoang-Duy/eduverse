@@ -107,6 +107,14 @@
   gắng, tích **1 LẦN cho cả lớp** thay vì chọn lại mỗi buổi nhận xét (đổi
   2026-08-28, xem chi tiết ở mục "Buổi học & nhận xét"). Lưu ở
   `enrollments.academic_level`.
+- **Lớp "đã hoàn thành" — SUY RA, không có cột trạng thái** (2026-09-04):
+  lớp xong khi buổi CUỐI (buổi thứ `total_sessions`) đã xử lý xong MỌI học viên
+  (`isHandled` = đã nhận xét HOẶC đã đánh vắng — cùng thước đo với bộ đếm "X/Y"
+  ở trang buổi học). Logic ở `web/src/lib/class-completion.ts` (có unit test);
+  dashboard tự hỏi thêm 2 query (sessions → nhận xét của đúng buổi cuối). Danh
+  sách lớp có **bộ lọc Đang học (mặc định) / Đã hoàn thành / Tất cả** và badge
+  "✓ Đã hoàn thành" trên thẻ; StatCard đổi thành "Lớp đang học". Lớp chưa có
+  học viên nào KHÔNG tính là hoàn thành.
 - Xóa lớp → confirm (mất enrollment, session, review).
 
 ### Buổi học & nhận xét
@@ -419,11 +427,24 @@ khóa, phụ huynh đến xem con thuyết trình, mở link trên ĐIỆN THO�
   (`components/qr-code.tsx`, dep `qrcode-generator` — KHÔNG gọi dịch vụ QR bên
   ngoài, cùng chủ trương với việc bỏ dịch vụ rút gọn link). Nền trắng chữ đen cố
   định kể cả dark mode, vì máy quét cần tương phản thật.
-- **Trang phụ huynh** (mobile-first): MỘT lưới thẻ, bấm vào một bạn là mở **popup**
-  toàn bộ thông tin bạn đó — KHÔNG có thanh tab/thanh tên (user chốt 2026-08-29,
-  bản đầu có thanh tên đã bỏ). Trong popup: ảnh, mô tả, chức năng, link
-  GitHub/Demo, ghi chú, nhận xét của bạn cùng lớp, ô chấm điểm, và hai nút
-  **← Bạn trước / Bạn tiếp →** dính đáy popup (máy tính dùng được phím ← →).
+- **Trang phụ huynh** (mobile-first): bấm vào một bạn là mở **popup** toàn bộ
+  thông tin bạn đó — KHÔNG có thanh tab/thanh tên (user chốt 2026-08-29, bản đầu
+  có thanh tên đã bỏ). Trong popup: ảnh, mô tả, chức năng, link GitHub/Demo, ghi
+  chú, nhận xét của bạn cùng lớp, ô chấm điểm, và hai nút **← Bạn trước / Bạn
+  tiếp →** dính đáy popup (máy tính dùng được phím ← →).
+- **3 chế độ xem + sắp xếp/lọc** (2026-09-04, trước đó chỉ có lưới thẻ; hiện khi
+  lớp >2 bạn): **Lưới** (mặc định) / **Danh sách** (1 dòng/bạn, gọn, không có
+  nút tim để khỏi bấm nhầm khi định mở chi tiết) / **Trình chiếu** (mỗi lần một
+  bạn + nút Bạn trước/Bạn tiếp). Sắp xếp: Tên A→Z (mặc định) / Mới cập nhật /
+  Nhiều tim nhất (chỉ hiện khi bật thả tim). Nút lọc **"Chưa nhận xét"** (chỉ
+  khi bật chấm điểm) để phụ huynh biết còn sót bạn nào. Logic thuần ở
+  `arrangeShowcaseProjects` (`lib/showcase.ts`, có unit test). ⚠️ Mọi thao tác
+  chuyển bạn (popup, trình chiếu) bám theo danh sách ĐANG HIỂN THỊ, không phải
+  danh sách gốc.
+- **Mặc định giao diện SÁNG** (2026-09-04): `/showcase` cố tình KHÔNG ăn theo
+  `prefers-color-scheme` (script theme ở `app/layout.tsx` loại trừ đường dẫn
+  này) — điện thoại phụ huynh để chế độ tối thì trang "Bảng vàng" ra tối om.
+  Chỉ vào tối khi người xem TỰ bấm nút đổi.
 - **Phụ huynh chấm điểm + nhận xét ẨN DANH cho từng em**: 3 tiêu chí sao 1–5 —
   **Sản phẩm / Thuyết trình / Sáng tạo** (`RATING_CRITERIA` trong `lib/showcase.ts`)
   — tiêu chí nào cũng BỎ TRỐNG được (có phụ huynh không kịp nghe thuyết trình),
@@ -466,6 +487,14 @@ GV cắm laptop vào TV của lớp; cả 3 màn chiếu dùng chung `components
 - **☕ Nghỉ giữa giờ** (nút ở header trang lớp): chọn 5/10/15 phút HOẶC nhập số
   phút tùy ý (1–180) → đồng hồ đếm ngược khổng lồ, còn ≤1 phút chuyển đỏ, hết
   giờ hiện "vào học thôi!"; có tạm dừng / +1 phút / chọn lại.
+- **🖼️ Màn hình chờ** (nút riêng cạnh "🎬 Chiếu sản phẩm", mới 2026-09-04):
+  tự chạy vòng ảnh sản phẩm toàn màn hình (7 giây/cảnh, lặp vô hạn) — chiếu lúc
+  phụ huynh đang vào phòng, trước khi buổi lễ bắt đầu. Bấm "▶️ Bắt đầu thuyết
+  trình" để sang chế độ slide. Thứ tự cảnh do `lib/idle-reel.ts` dựng (có unit
+  test): đi theo LƯỢT nên mỗi vòng qua đủ mặt cả lớp và **không em nào bị chiếu
+  hai cảnh liên tiếp** (kể cả chỗ nối khi vòng lặp quay lại đầu) — đổi lại, ảnh
+  thứ n của một em bị bỏ nếu cả lớp không còn ai có ảnh thứ n. Em chưa có ảnh
+  vẫn có một cảnh (hiện triện tốt nghiệp), không bỏ quên ai.
 - **🎤 Thuyết trình sản phẩm** (nút ở thẻ Sản phẩm cuối khóa) — 2 chế độ:
   - **Từng em**: slideshow mỗi em một slide (tên, dự án, mô tả, chức năng, link
     to bấm được), chuyển bằng nút hoặc phím ← →, thứ tự theo tên, đếm "3/12".
