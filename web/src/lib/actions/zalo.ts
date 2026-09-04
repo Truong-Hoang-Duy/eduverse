@@ -74,25 +74,34 @@ export async function generateZaloSummary(input: {
     return { error: aiConfig.error };
   }
 
+  const sessionLabel = session.title ?? `Buổi ${session.session_number}`;
+
   try {
-    const data = await callAiService<{ message: string }>(
+    const data = await callAiService<{ tom_tat: string; loi_nhan: string }>(
       "/generate-zalo-summary",
       {
         api_key: aiConfig.api_key,
         provider: aiConfig.provider,
         class_code: classCode,
-        session_title: session.title ?? `Buổi ${session.session_number}`,
+        session_title: sessionLabel,
         session_content: session.content ?? "",
         reviews: reviews.map((r) => ({
           student_name: r.profiles?.full_name ?? "Học viên",
           strengths: r.strengths,
           improvements: r.improvements,
         })),
-        template_text: template.template_text,
         is_one_on_one: isOneOnOne,
       }
     );
-    return { message: data.message };
+    // Ghép vào mẫu bằng string replace THUẦN (không qua AI) — mẫu GV đã chọn
+    // được giữ NGUYÊN VĂN (kể cả markup **/_ và khoảng trắng), chỉ 4
+    // placeholder cố định {ten_lop} {buoi} {tom_tat} {loi_nhan} được thay.
+    const message = template.template_text
+      .replaceAll("{ten_lop}", classCode)
+      .replaceAll("{buoi}", sessionLabel)
+      .replaceAll("{tom_tat}", data.tom_tat)
+      .replaceAll("{loi_nhan}", data.loi_nhan);
+    return { message };
   } catch (err) {
     if (err instanceof AiServiceError) {
       return { error: err.message };

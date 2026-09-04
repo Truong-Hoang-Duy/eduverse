@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { generateZaloSummary } from "@/lib/actions/zalo";
+import { zaloMarkupToHtml, zaloMarkupToPlainText } from "@/lib/zalo-format";
 
 export interface TemplateChoice {
   id: string;
@@ -47,7 +48,20 @@ export function ZaloPanel({
   }
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(message);
+    const plain = zaloMarkupToPlainText(message);
+    try {
+      // Ghi cả text/html lẫn text/plain: khung chat Zalo PC (contenteditable)
+      // đọc text/html khi dán nên đậm/nghiêng/bullet lên đúng — xem
+      // .claude/docs/DECISIONS.md (nghiên cứu 2026-09-04).
+      const item = new ClipboardItem({
+        "text/html": new Blob([zaloMarkupToHtml(message)], { type: "text/html" }),
+        "text/plain": new Blob([plain], { type: "text/plain" }),
+      });
+      await navigator.clipboard.write([item]);
+    } catch {
+      // Trình duyệt không hỗ trợ ClipboardItem đa định dạng → copy chữ thường.
+      await navigator.clipboard.writeText(plain);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   }
@@ -96,6 +110,10 @@ export function ZaloPanel({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
+          <p className="text-xs text-muted-foreground">
+            Gõ {"**đậm**"}, {"_nghiêng_"}, dòng bắt đầu bằng {'"- "'} thành gạch đầu
+            dòng — sửa trực tiếp ở đây nếu AI viết sai.
+          </p>
           <Button onClick={handleCopy} size="sm" variant="outline">
             {copied ? "✓ Đã copy — dán vào nhóm Zalo" : "📋 Copy tin nhắn"}
           </Button>

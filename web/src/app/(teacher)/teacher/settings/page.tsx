@@ -79,7 +79,7 @@ export default async function SettingsPage() {
 
       <SettingsSection
         title="Quá trình làm bài kiểm tra"
-        description="Lựa chọn hiện ở buổi có đánh dấu &quot;kiểm tra định kỳ&quot; — cạnh ô xếp loại học lực"
+        description="Lựa chọn hiện ở buổi có đánh dấu &quot;kiểm tra định kỳ&quot;"
       >
         <TestProcessManager
           options={(options ?? []).filter((o) => o.category === "test_process")}
