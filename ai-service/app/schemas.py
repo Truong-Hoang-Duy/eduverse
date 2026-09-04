@@ -62,13 +62,18 @@ class ZaloSummaryRequest(AiRequest):
     session_title: str
     session_content: str = ""
     reviews: list[StudentReviewItem] = []
-    template_text: str
     # Lớp chỉ có 1 học viên (dạy kèm 1-1) — đổi cách nhận xét, xem prompts.py.
     is_one_on_one: bool = False
 
 
 class ZaloSummaryResponse(BaseModel):
-    message: str
+    # CHỈ 2 mảnh nội dung ĐỘNG — KHÔNG trả cả tin nhắn hoàn chỉnh. Việc ghép
+    # vào mẫu (`{ten_lop}` `{buoi}` `{tom_tat}` `{loi_nhan}`) làm bằng string
+    # replace thuần ở web (`lib/actions/zalo.ts`), không qua AI, để mẫu GV đã
+    # chọn được giữ NGUYÊN VĂN — không còn rủi ro AI diễn đạt lại cấu trúc/
+    # khoảng trắng của mẫu (đổi 2026-09-04, xem DECISIONS.md).
+    tom_tat: str
+    loi_nhan: str
 
 
 # ---------- /generate-student-summary ----------

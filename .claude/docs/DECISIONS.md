@@ -248,6 +248,107 @@
   - Text để copy dựng bởi `web/src/lib/student-help-text.ts` (logic thuần, có
     unit test): 3 khối có tiêu đề CHỮ HOA, đánh số lại từ 1 trong từng khối, bỏ
     khối rỗng. Zalo không có markdown nên đừng thêm `**`/`#`.
+- **Nghiên cứu 2026-09-04: tin Zalo phụ huynh CÓ THỂ copy ra định dạng đậm/
+  nghiêng/bullet, KHÔNG THỂ ra màu chữ** — test thật bằng `ClipboardItem` ghi
+  cả `text/html` lẫn `text/plain` rồi dán vào khung chat Zalo PC (script test ở
+  scratchpad, không còn trong repo):
+  - Khung chat Zalo PC là contenteditable, dán HTML từ ứng dụng ngoài ĐƯỢC giữ
+    định dạng nếu dùng đúng tập thẻ mà bảng "Định dạng văn bản" (Ctrl+Shift+X)
+    của Zalo hỗ trợ: `<b>`, `<i>`, `<u>`, `<s>`, `<ul><li>`. Đây KHÁC với phát
+    hiện cũ ở trên (Hỏi bài) — chỗ đó nói về gõ literal `**`/`#` (không lên),
+    còn đây là dán HTML qua clipboard (lên đúng).
+  - **Màu chữ (`style="color:..."`) KHÔNG lên** — Zalo không có bảng chọn màu
+    trong tính năng định dạng, đây là giới hạn nền tảng chứ không phải lỗi
+    cách dán. Nếu muốn làm nổi tiêu đề mục (VD "Kiến thức đã học:") thì dùng
+    **đậm** thay cho màu xanh lá như mẫu ảnh GV đưa ra.
+  - `<p>` và `<li>` lồng nhau tạo khoảng trống thừa giữa các dòng/mục khi dán;
+    khắc phục bằng cách gộp vào MỘT khối `<div>` duy nhất, xuống dòng bằng
+    `<br>` (không dùng nhiều `<p>` liên tiếp). Không dùng `<ul><li>` thật —
+    bullet là ký tự "• " thuần chèn trước dòng, để chắc chắn không có khoảng
+    trống thừa dù chưa kiểm chứng kỹ biến thể `<ul><li>` không `<p>` bọc.
+  - **ĐÃ TRIỂN KHAI 2026-09-04**: `web/src/lib/zalo-format.ts`
+    (`zaloMarkupToHtml`/`zaloMarkupToPlainText`, có unit test) đọc markup nhẹ
+    GV tự gõ trong `template_text` (`**đậm**`, `_nghiêng_`, dòng bắt đầu
+    `"- "` → bullet) và render ra HTML an toàn (đã escape) chỉ dùng `<b>`,
+    `<i>`, `<br>`. KHÔNG đổi schema — `zalo_templates.template_text` vẫn là
+    text thuần, chỉ đổi QUY ƯỚC nội dung. Nút Copy ở `zalo-panel.tsx` ghi
+    `ClipboardItem` cả `text/html` lẫn `text/plain` (fallback `writeText` nếu
+    trình duyệt không hỗ trợ).
+  - ⚠️ **BỎ khung "Xem trước trên Zalo"** (user chốt 2026-09-04, cùng ngày thêm
+    — bỏ ngay sau khi thấy không cần): đã gỡ khỏi cả `zalo-panel.tsx` lẫn
+    `template-manager.tsx`. Đừng tự thêm lại trừ khi user chủ động nêu lại.
+  - **"<br><br>" cho dòng trống bị Zalo GỘP MẤT khi dán — không ra khoảng
+    cách nào** (phát hiện thật qua test 2026-09-04, sau khi bản đầu tưởng đã
+    ổn): 2 `<br>` liên tiếp không có nội dung ở giữa bị sanitizer của Zalo coi
+    là dư thừa và gộp lại. Khắc phục bằng cách chèn `&nbsp;` giữa 2 `<br>` cho
+    dòng trống (`"<br>&nbsp;<br>"`) — dòng có nội dung (dù vô hình) nên không
+    bị gộp. Xem `zaloMarkupToHtml`.
+  - **ĐẢO NGƯỢC quyết định "`{tom_tat}` không ký tự đầu dòng" (dòng 46-53 phía
+    trên, chốt 2026-07-18)**: `build_zalo_summary_prompt` giờ yêu cầu AI thêm
+    tiền tố `"- "` cho mỗi kiến thức trong `{tom_tat}` để khớp cú pháp bullet
+    của `zalo-format.ts` — lý do đảo: hồi 2026-07-18 Zalo copy ra chỉ là chữ
+    thường nên bullet không có tác dụng gì; giờ bullet THẬT lên được trên Zalo
+    nên giữ luật cũ chỉ làm mất định dạng ảnh GV muốn. Luật "KHÔNG tự thêm câu
+    đánh giá vào `{tom_tat}`" và "KHÔNG tự thêm tiêu đề" VẪN GIỮ NGUYÊN, chỉ
+    đổi mỗi phần ký tự đầu dòng.
+  - Mẫu mặc định (`DEFAULT_TEMPLATE` ở `web/src/lib/actions/settings.ts`) đã
+    đổi theo cấu trúc ảnh GV đưa ra: đậm cho lời chào + tiêu đề mục, nghiêng
+    cho chữ ký — KHÔNG có màu (Zalo không hỗ trợ).
+  - **CHƯA áp cho** nút Copy nhận xét riêng từng học viên (`review-editor.tsx`,
+    mục "AI tạo nhận xét" trong FEATURES.md) — phạm vi lần này chỉ tin Zalo
+    TỔNG HỢP cả lớp (`zalo_templates`/`zalo-panel.tsx`). Muốn mở rộng thì làm
+    riêng, đừng tưởng đã bao trùm.
+- **Ghép mẫu tin Zalo ĐỔI SANG string replace THUẦN ở web, KHÔNG còn để AI ghép
+  cả tin nhắn** (2026-09-04, user yêu cầu "tuân thủ tạo theo mẫu đã chọn, không
+  mặc định" — lo AI diễn đạt lại/lệch cấu trúc mẫu GV đã chọn dù prompt cũ đã
+  dặn "giữ nguyên phần còn lại"):
+  - **Trước**: `build_zalo_summary_prompt` nhận cả `template_text`, nhét
+    nguyên mẫu vào prompt, bảo Gemini tự thay 4 placeholder rồi trả về
+    `{"message": "<tin nhắn hoàn chỉnh>"}` — rủi ro model paraphrase/đổi
+    khoảng trắng phần KHÔNG phải placeholder dù đã dặn giữ nguyên.
+  - **Giờ**: `/generate-zalo-summary` (ai-service) CHỈ trả `{"tom_tat": "...",
+    "loi_nhan": "..."}` — không nhận `template_text`, không biết mẫu là gì.
+    `generateZaloSummary` (`web/src/lib/actions/zalo.ts`) tự ghép bằng
+    `template.template_text.replaceAll(...)` cho ĐÚNG 4 placeholder cố định
+    `{ten_lop}` `{buoi}` `{tom_tat}` `{loi_nhan}` — phần còn lại của mẫu (kể
+    cả markup `**`/`_`, khoảng trắng, dòng trống) giữ NGUYÊN VĂN 100%, không
+    qua AI nữa.
+  - ⚠️ **Đánh đổi**: bỏ luôn cơ chế cũ "AI tự đọc ngữ cảnh để đoán placeholder
+    nào là nhận xét chung nếu GV đặt tên khác `{loi_nhan}`" (dòng 46-53 phía
+    trên, phần "KHÔNG hardcode tên biến") — giờ CHỈ ĐÚNG 4 tên placeholder này
+    được thay, tên khác sẽ hiện nguyên `{...}` trong tin nhắn. Chấp nhận được
+    vì UI Cài đặt (`template-manager.tsx`) từ trước tới giờ chỉ từng hướng dẫn
+    đúng 4 tên này, không có mẫu thật nào dùng tên khác.
+  - `ZaloSummaryRequest` bỏ field `template_text`; `ZaloSummaryResponse` đổi
+    từ `message: str` sang `tom_tat: str` + `loi_nhan: str`.
+  - **Mẫu tin SỬA ĐƯỢC + có thanh định dạng** (2026-09-04, ngay sau khi thêm
+    markup: GV không sửa nổi mẫu cũ vì trang Cài đặt chỉ có tạo/xóa):
+    `updateZaloTemplate` + `TemplateItem` (khuôn giống `ComboItem` — mỗi item
+    một `useActionState`, `useEffect` đóng form khi `state.success`). Thanh
+    định dạng thao tác THẲNG trên selection của `<textarea>` (`wrapSelection`/
+    `toggleBullet`/`insertAtCursor`) — cố ý KHÔNG dùng rich-text editor:
+    `template_text` phải ở dạng text thuần để `zalo-format.ts` đọc markup, và
+    thêm editor là thêm dependency (CLAUDE.md cấm tự thêm).
+  - **Markup PHẢI trải được qua nhiều dòng** (sửa 2026-09-04 sau khi GV báo khối
+    đầu/cuối in ra nguyên `**`): GV gõ `**` ở đầu lời chào rồi đóng mãi 2 đoạn
+    sau, và ký chữ ký kiểu `**_Trân trọng,\nThầy Duy_**`. Bản đầu quét TỪNG
+    DÒNG nên cặp ký hiệu bắc qua dòng không bao giờ khớp. Giờ thay markup
+    TRƯỚC khi tách dòng (`[\s\S]+?`).
+  - ⚠️ **Thẻ phải ÔM QUA `<br>` (`<b>dòng 1<br>dòng 2</b>`) — ĐỪNG đóng ở cuối
+    dòng rồi mở lại ở dòng sau** (`</b><br><b>`): bản đầu làm kiểu đóng/mở lại
+    cho "an toàn với mọi kiểu làm sạch HTML", GV dán thử thì Zalo coi mỗi cụm
+    thẻ là một KHỐI riêng và chèn thêm một dòng trống giữa chúng — chữ ký
+    "Trân trọng, / Thầy Duy" bị tách đôi. Đã gỡ; có unit test canh
+    (`not.toContain("</b><br><b>")`). Đây là bài học kiểu "cẩn thận quá hóa
+    hỏng" — đừng tự thêm lại lớp phòng vệ đó.
+  - `_nghiêng_` có rào chắn (`ITALIC_RE`): dấu mở phải sau khoảng trắng/đầu
+    chuỗi/thẻ, dấu đóng phải trước khoảng trắng/dấu câu/thẻ — nếu không, khi
+    cho phép trải nhiều dòng thì `bien_the_khac` hay 2 placeholder gõ nhầm sẽ
+    bị ghép thành một đoạn in nghiêng dài.
+  - `bulletContent` trong `zalo-format.ts` gộp ký hiệu bullet LẶP
+    (`/^(?:[-•]\s+)+/`): GV gõ `- {tom_tat}` trong mẫu mà AI cũng đã thêm `"- "`
+    cho từng kiến thức → dòng đầu ra "- - Vòng lặp for", không gộp thì hiện
+    "• - Vòng lặp for".
 - **Nav trên điện thoại xuống hàng riêng khi có >2 mục** (2026-07-31): 4 mục
   tiếng Việt của giáo viên (~214px chữ) cộng logo + nút giao diện + avatar không
   vừa một hàng ~360px, "Vận hành" đè lên nút đổi giao diện. Học viên chỉ có 1
