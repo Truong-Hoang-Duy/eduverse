@@ -20,12 +20,16 @@ import {
 } from "@/lib/actions/showcase-public";
 import {
   RATING_CRITERIA,
+  SHOWCASE_LAYOUTS,
+  SHOWCASE_SORTS,
+  arrangeShowcaseProjects,
   hasRated,
-  normalizeVi,
   overallScore,
   type MyRating,
+  type ShowcaseLayout,
   type ShowcasePayload,
   type ShowcaseProject,
+  type ShowcaseSort,
 } from "@/lib/showcase";
 
 import { RatingForm } from "./rating-form";
@@ -214,6 +218,10 @@ export function ShowcaseView({
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [layout, setLayout] = useState<ShowcaseLayout>("grid");
+  const [sort, setSort] = useState<ShowcaseSort>("name");
+  const [onlyUnrated, setOnlyUnrated] = useState(false);
+  const [slide, setSlide] = useState(0);
   const [hearts, setHearts] = useState<Record<string, number>>(() =>
     Object.fromEntries(projects.map((p) => [p.id, p.reaction_count]))
   );
@@ -249,24 +257,44 @@ export function ShowcaseView({
     }
   }, [token]);
 
-  const openIndex = projects.findIndex((p) => p.id === openId);
-  const current = openIndex >= 0 ? projects[openIndex] : null;
+  const ratedIds = useMemo(
+    () => projects.filter((p) => hasRated(myRatings[p.id])).map((p) => p.id),
+    [projects, myRatings]
+  );
+
+  // Thứ tự phụ huynh đang NHÌN THẤY — mọi thao tác chuyển bạn (popup, trình
+  // chiếu) đều bám theo danh sách này, không bám danh sách gốc; nếu không thì
+  // vừa sắp xếp xong bấm "Bạn tiếp" lại nhảy sang một bạn ở tận đâu.
+  const visible = useMemo(
+    () =>
+      arrangeShowcaseProjects(projects, {
+        query,
+        sort,
+        hearts,
+        onlyUnrated,
+        ratedIds,
+      }),
+    [projects, query, sort, hearts, onlyUnrated, ratedIds]
+  );
+
+  const openIndex = visible.findIndex((p) => p.id === openId);
+  const current = openIndex >= 0 ? visible[openIndex] : null;
 
   useEffect(() => {
     if (!current) return;
     const onKey = (e: KeyboardEvent) => {
       // Máy tính (giáo viên chiếu, hoặc phụ huynh xem lại ở nhà) dùng được phím
       // mũi tên; điện thoại đã có hai nút to ở cuối popup.
-      if (e.key === "ArrowRight" && openIndex < projects.length - 1) {
-        setOpenId(projects[openIndex + 1].id);
+      if (e.key === "ArrowRight" && openIndex < visible.length - 1) {
+        setOpenId(visible[openIndex + 1].id);
       }
       if (e.key === "ArrowLeft" && openIndex > 0) {
-        setOpenId(projects[openIndex - 1].id);
+        setOpenId(visible[openIndex - 1].id);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [current, openIndex, projects]);
+  }, [current, openIndex, visible]);
 
   const saveRating = useCallback((rating: MyRating) => {
     setMyRatings((prev) => ({ ...prev, [rating.project_id]: rating }));
@@ -321,17 +349,11 @@ export function ShowcaseView({
     setHearts((prev) => ({ ...prev, [projectId]: res.count ?? prev[projectId] }));
   }
 
-  const visible = useMemo(() => {
-    const needle = normalizeVi(query);
-    if (!needle) return projects;
-    return projects.filter(
-      (p) =>
-        normalizeVi(p.author_name).includes(needle) ||
-        normalizeVi(p.name).includes(needle)
-    );
-  }, [projects, query]);
+  const ratedCount = ratedIds.length;
 
-  const ratedCount = projects.filter((p) => hasRated(myRatings[p.id])).length;
+  // Lọc/sắp xếp làm danh sách ngắn lại — kẹp lại để không trỏ ra ngoài mảng.
+  const slideIndex = Math.min(slide, Math.max(visible.length - 1, 0));
+  const slideProject = visible[slideIndex];
 
   return (
     <main className="pb-16">
@@ -402,6 +424,64 @@ export function ShowcaseView({
           />
         )}
 
+        {/* Chế độ xem + sắp xếp. Lớp 1-2 bạn thì mấy thứ này chỉ tổ rối. */}
+        {projects.length > 2 && (
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div
+              role="group"
+              aria-label="Chế độ xem"
+              className="flex rounded-full border border-sc-line bg-sc-raised p-0.5"
+            >
+              {SHOWCASE_LAYOUTS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setLayout(opt.value)}
+                  aria-pressed={layout === opt.value}
+                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                    layout === opt.value
+                      ? "bg-sc-brass-soft font-medium text-sc-brass"
+                      : "text-sc-ink-soft hover:text-sc-ink"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as ShowcaseSort)}
+              aria-label="Sắp xếp"
+              className="rounded-full border border-sc-line bg-sc-raised px-3 py-1.5 text-sm text-sc-ink focus:border-sc-brass focus:outline-none"
+            >
+              {SHOWCASE_SORTS.filter(
+                // Không có tim thì "nhiều tim nhất" là lựa chọn vô nghĩa.
+                (opt) => opt.value !== "hearts" || showcase.allow_reactions
+              ).map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            {showcase.allow_ratings && (
+              <button
+                type="button"
+                onClick={() => setOnlyUnrated((v) => !v)}
+                aria-pressed={onlyUnrated}
+                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                  onlyUnrated
+                    ? "border-sc-brass bg-sc-brass-soft font-medium text-sc-brass"
+                    : "border-sc-line bg-sc-raised text-sc-ink-soft hover:text-sc-ink"
+                }`}
+              >
+                Chưa nhận xét
+              </button>
+            )}
+          </div>
+        )}
+
         {heartError && (
           <p className="mt-4 text-center text-sm text-sc-terracotta">{heartError}</p>
         )}
@@ -415,8 +495,57 @@ export function ShowcaseView({
           </div>
         ) : visible.length === 0 ? (
           <p className="mt-6 rounded-2xl border border-dashed border-sc-brass/40 p-8 text-center text-sm text-sc-ink-soft">
-            Không tìm thấy bạn nào khớp “{query}”.
+            {query
+              ? `Không tìm thấy bạn nào khớp “${query}”.`
+              : "Bạn đã nhận xét hết cả lớp rồi — bỏ lọc “Chưa nhận xét” để xem lại."}
           </p>
+        ) : layout === "list" ? (
+          <ul className="mt-6 space-y-2">
+            {visible.map((p) => (
+              <ProjectListRow
+                key={p.id}
+                project={p}
+                hearts={hearts[p.id] ?? 0}
+                rated={hasRated(myRatings[p.id])}
+                allowReactions={showcase.allow_reactions}
+                onOpen={() => setOpenId(p.id)}
+              />
+            ))}
+          </ul>
+        ) : layout === "slideshow" && slideProject ? (
+          <div className="mt-6 space-y-4">
+            <div className="mx-auto max-w-md">
+              <ProjectCardTile
+                project={slideProject}
+                hearts={hearts[slideProject.id] ?? 0}
+                hearted={myHearts.includes(slideProject.id)}
+                rated={hasRated(myRatings[slideProject.id])}
+                showResults={showcase.show_rating_results}
+                allowReactions={showcase.allow_reactions}
+                onOpen={() => setOpenId(slideProject.id)}
+                onHeart={() => toggleHeart(slideProject.id)}
+              />
+            </div>
+            <div className="flex items-center justify-center gap-3">
+              <SlideNavButton
+                onClick={() => setSlide(Math.max(slideIndex - 1, 0))}
+                disabled={slideIndex === 0}
+              >
+                ← Bạn trước
+              </SlideNavButton>
+              <span className="font-display text-lg text-sc-brass">
+                {slideIndex + 1}/{visible.length}
+              </span>
+              <SlideNavButton
+                onClick={() =>
+                  setSlide(Math.min(slideIndex + 1, visible.length - 1))
+                }
+                disabled={slideIndex >= visible.length - 1}
+              >
+                Bạn tiếp →
+              </SlideNavButton>
+            </div>
+          </div>
         ) : (
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {visible.map((p) => (
@@ -458,7 +587,7 @@ export function ShowcaseView({
               project={current}
               guestNotes={guestNotes[current.id] ?? []}
               position={openIndex + 1}
-              total={projects.length}
+              total={visible.length}
               hearts={hearts[current.id] ?? 0}
               hearted={myHearts.includes(current.id)}
               visitorId={visitorId}
@@ -467,12 +596,10 @@ export function ShowcaseView({
               allowReactions={showcase.allow_reactions}
               showResults={showcase.show_rating_results}
               onHeart={() => toggleHeart(current.id)}
-              onPrev={() =>
-                openIndex > 0 && setOpenId(projects[openIndex - 1].id)
-              }
+              onPrev={() => openIndex > 0 && setOpenId(visible[openIndex - 1].id)}
               onNext={() =>
-                openIndex < projects.length - 1 &&
-                setOpenId(projects[openIndex + 1].id)
+                openIndex < visible.length - 1 &&
+                setOpenId(visible[openIndex + 1].id)
               }
               onRated={saveRating}
             />
@@ -480,6 +607,77 @@ export function ShowcaseView({
         </DialogContent>
       </Dialog>
     </main>
+  );
+}
+
+function SlideNavButton({
+  onClick,
+  disabled,
+  children,
+}: {
+  onClick: () => void;
+  disabled: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-full border border-sc-brass/45 px-4 py-2 text-sm font-medium text-sc-brass transition-colors hover:bg-sc-brass-soft disabled:opacity-30"
+    >
+      {children}
+    </button>
+  );
+}
+
+/**
+ * Một dòng trong chế độ "Danh sách" — cùng dữ liệu nhận diện với thẻ lưới
+ * (avatar triện + tên + tên dự án + dấu đã nhận xét) nhưng bỏ ảnh và danh sách
+ * chức năng, để lớp đông thì lướt hết cả lớp trong một màn điện thoại.
+ *
+ * Không có nút tim ở đây: dòng gọn thì mọi thứ sát nhau, bấm nhầm tim khi định
+ * mở chi tiết là chuyện chắc chắn xảy ra — tim vẫn bấm được trong popup.
+ */
+function ProjectListRow({
+  project,
+  hearts,
+  rated,
+  allowReactions,
+  onOpen,
+}: {
+  project: ShowcaseProject;
+  hearts: number;
+  rated: boolean;
+  allowReactions: boolean;
+  onOpen: () => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-center gap-3 rounded-xl border border-sc-line bg-sc-raised p-2.5 text-left transition-colors hover:border-sc-brass/50"
+      >
+        <SealAvatar name={project.author_name} size={40} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-display text-base font-semibold">
+            {project.author_name}
+          </span>
+          <span className="block truncate text-sm text-sc-ink-soft">
+            {project.name}
+          </span>
+        </span>
+        {rated && <CheckMark className="size-5 shrink-0 text-sc-terracotta" />}
+        {allowReactions && hearts > 0 && (
+          <span className="flex shrink-0 items-center gap-1 text-sm text-sc-brass">
+            <HeartIcon filled className="size-4" />
+            {hearts}
+          </span>
+        )}
+        <span className="shrink-0 text-sm text-sc-brass">→</span>
+      </button>
+    </li>
   );
 }
 

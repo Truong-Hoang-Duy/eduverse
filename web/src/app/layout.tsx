@@ -24,10 +24,16 @@ export const metadata: Metadata = {
 };
 
 // Chạy TRƯỚC khi paint để tránh nháy trắng khi đang ở chế độ tối.
+//
+// `/showcase` (trang phụ huynh) cố tình KHÔNG ăn theo `prefers-color-scheme`:
+// phụ huynh mở link lần đầu giữa buổi lễ, điện thoại để chế độ tối là trang
+// "Bảng vàng" ra tối om trong khi bản sắc của nó là giấy khen nền ngà (user
+// chốt 2026-09-04). Chỉ vào tối khi người xem TỰ bấm nút đổi (lưu 'theme').
 const THEME_SCRIPT = `
 try {
   var t = localStorage.getItem('theme');
-  if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+  var showcase = location.pathname.indexOf('/showcase') === 0;
+  if (t === 'dark' || (!t && !showcase && matchMedia('(prefers-color-scheme: dark)').matches)) {
     document.documentElement.classList.add('dark');
   }
 } catch (e) {}

@@ -349,6 +349,42 @@
     (`/^(?:[-•]\s+)+/`): GV gõ `- {tom_tat}` trong mẫu mà AI cũng đã thêm `"- "`
     cho từng kiến thức → dòng đầu ra "- - Vòng lặp for", không gộp thì hiện
     "• - Vòng lặp for".
+- **Trạng thái "lớp đã hoàn thành" SUY RA từ nhận xét, KHÔNG thêm cột DB**
+  (2026-09-04): lớp xong khi buổi CUỐI đã `isHandled` hết mọi học viên. Cột
+  `classes.status` sẽ cần trigger/hành động đặt cờ, và cờ đó lệch ngay khi GV
+  thêm học viên mới hoặc sửa nhận xét buổi cuối — suy ra thì luôn khớp dữ liệu
+  thật, 0 migration. Logic ở `lib/class-completion.ts`, dashboard trả giá bằng
+  2 query phụ (sessions → nhận xét của đúng buổi cuối; KHÔNG lấy nhận xét mọi
+  buổi vì gấp `total_sessions` lần số dòng mà không dùng tới).
+  ⚠️ Hệ quả đã biết: lớp kết thúc SỚM (dạy 10/14 buổi rồi nghỉ) sẽ không bao giờ
+  tự chuyển sang "đã hoàn thành" vì buổi cuối chưa nhận xét. Chưa có nút đánh
+  dấu tay — nếu cần thì đó là lúc phải cân nhắc lại việc thêm cột.
+- **`/showcase` KHÔNG ăn theo `prefers-color-scheme`** (2026-09-04): script
+  theme ở `app/layout.tsx` loại trừ đường dẫn `/showcase` khi quyết định chế độ
+  mặc định. Phụ huynh mở link lần đầu giữa buổi lễ, điện thoại để chế độ tối là
+  trang "Bảng vàng" (bản sắc giấy khen nền ngà) ra tối om. Lựa chọn TỰ BẤM
+  (localStorage `theme`) vẫn được tôn trọng ở cả hai chiều.
+- **Trang phụ huynh có 3 chế độ xem + sắp xếp/lọc** (2026-09-04, mở rộng từ
+  "chỉ một lưới thẻ" của 2026-08-29 — KHÔNG đảo ngược quyết định cũ: vẫn không
+  có thanh tab/thanh tên, lưới vẫn là mặc định):
+  - Lưới / Danh sách / Trình chiếu, chỉ hiện khi lớp >2 bạn.
+  - Sắp "Nhiều tim nhất" là lựa chọn của CHÍNH người xem, không phải bảng xếp
+    hạng bày sẵn — trang vẫn không hiện thứ hạng và điểm TB vẫn ẩn theo
+    `show_rating_results`. Đây là ranh giới với luật "không biến thành bảng xếp
+    hạng trẻ con": đừng thêm nhãn "Top 1", huy hiệu, hay sắp theo tim MẶC ĐỊNH.
+  - Chế độ Danh sách cố tình KHÔNG có nút tim: dòng gọn thì mọi thứ sát nhau,
+    bấm nhầm tim khi định mở chi tiết là chuyện chắc chắn xảy ra.
+  - Chuyển bạn (popup + trình chiếu) bám danh sách ĐANG HIỂN THỊ, không bám
+    danh sách gốc — trước đây popup luôn duyệt `projects` nên vừa sắp xếp xong
+    bấm "Bạn tiếp" là nhảy sang một bạn ở tận đâu.
+- **Màn hình chờ TV: không em nào chiếu 2 cảnh liên tiếp, kể cả chỗ nối vòng
+  lặp** (2026-09-04, `lib/idle-reel.ts`): dựng theo LƯỢT (ảnh đầu của cả lớp →
+  ảnh thứ hai của những em có → ...). Lượt sau lượt đầu CHỈ chạy khi còn ít nhất
+  2 em có ảnh ở lượt đó, nên ảnh thứ n của một em bị BỎ nếu cả lớp không còn ai
+  có ảnh thứ n. Cố tình đánh đổi: giữ hết ảnh thì em nhiều ảnh nhất chiếm trọn
+  phần đuôi và bị chiếu liên tiếp trước mặt phụ huynh cả lớp. Unit test canh cả
+  hai điều kiện (liên tiếp trong vòng + chỗ nối) — đừng "tối ưu" cho hiện đủ ảnh
+  mà bỏ luật này.
 - **Nav trên điện thoại xuống hàng riêng khi có >2 mục** (2026-07-31): 4 mục
   tiếng Việt của giáo viên (~214px chữ) cộng logo + nút giao diện + avatar không
   vừa một hàng ~360px, "Vận hành" đè lên nút đổi giao diện. Học viên chỉ có 1

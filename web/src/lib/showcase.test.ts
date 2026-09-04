@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  arrangeShowcaseProjects,
   expiryFromPreset,
   hasRated,
   normalizeVi,
@@ -186,5 +187,81 @@ describe("normalizeVi", () => {
 
   it("should trim and lowercase", () => {
     expect(normalizeVi("  AN  ")).toBe("an");
+  });
+});
+
+describe("arrangeShowcaseProjects", () => {
+  const base = {
+    description: null,
+    features: [],
+    image_urls: [],
+    repo_url: null,
+    demo_url: null,
+    extra_notes: null,
+    reaction_count: 0,
+    rating_count: 0,
+    rating_avg: null,
+    guest_notes: [],
+    comments: [],
+  };
+  const an = { ...base, id: "an", author_name: "Ánh", name: "Game rắn", updated_at: "2026-09-01T00:00:00Z" };
+  const binh = { ...base, id: "binh", author_name: "Bình", name: "Máy tính", updated_at: "2026-09-03T00:00:00Z" };
+  const cuong = { ...base, id: "cuong", author_name: "Cường", name: "Web bán hàng", updated_at: "2026-09-02T00:00:00Z" };
+  const projects = [cuong, an, binh];
+
+  const opts = {
+    query: "",
+    sort: "name" as const,
+    hearts: {} as Record<string, number>,
+    onlyUnrated: false,
+    ratedIds: [] as string[],
+  };
+
+  it("should sort by author name in Vietnamese order by default", () => {
+    expect(arrangeShowcaseProjects(projects, opts).map((p) => p.id)).toEqual([
+      "an",
+      "binh",
+      "cuong",
+    ]);
+  });
+
+  it("should sort by most recently updated first", () => {
+    expect(
+      arrangeShowcaseProjects(projects, { ...opts, sort: "recent" }).map((p) => p.id)
+    ).toEqual(["binh", "cuong", "an"]);
+  });
+
+  it("should sort by hearts, falling back to name on a tie", () => {
+    const hearts = { cuong: 5, an: 2, binh: 2 };
+    expect(
+      arrangeShowcaseProjects(projects, { ...opts, sort: "hearts", hearts }).map(
+        (p) => p.id
+      )
+    ).toEqual(["cuong", "an", "binh"]);
+  });
+
+  it("should keep only the students this device has not rated yet", () => {
+    expect(
+      arrangeShowcaseProjects(projects, {
+        ...opts,
+        onlyUnrated: true,
+        ratedIds: ["an"],
+      }).map((p) => p.id)
+    ).toEqual(["binh", "cuong"]);
+  });
+
+  it("should search by name without diacritics, across author and project name", () => {
+    expect(
+      arrangeShowcaseProjects(projects, { ...opts, query: "anh" }).map((p) => p.id)
+    ).toEqual(["an"]);
+    expect(
+      arrangeShowcaseProjects(projects, { ...opts, query: "ban hang" }).map((p) => p.id)
+    ).toEqual(["cuong"]);
+  });
+
+  it("should not mutate the array it was given", () => {
+    const input = [...projects];
+    arrangeShowcaseProjects(input, opts);
+    expect(input.map((p) => p.id)).toEqual(["cuong", "an", "binh"]);
   });
 });
