@@ -257,7 +257,25 @@ trong bảng danh sách lớp.
 
 ### Tin nhắn Zalo (copy thủ công — KHÔNG dùng Zalo API)
 - CRUD mẫu tin (`zalo_templates`) với placeholder `{ten_lop}` `{buoi}` `{tom_tat}` `{loi_nhan}`.
+  **Sửa được mẫu đã lưu** (nút ✏️, `updateZaloTemplate` — thêm 2026-09-04; trước
+  đó chỉ tạo/xóa nên muốn sửa phải xóa đi làm lại). Ô nội dung có **thanh định
+  dạng**: **B** / *I* bọc phần bôi đen bằng `**`/`_`, nút "• Gạch đầu dòng"
+  thêm/bỏ `"- "` cho mọi dòng đang chạm tới (dùng được cho cả dòng chữ tĩnh lẫn
+  dòng chứa placeholder, VD `- {tom_tat}`), và 4 nút chèn nhanh placeholder.
 - Chọn lớp + buổi → AI tổng hợp từ các nhận xét đã lưu → preview → nút **Copy**.
+- **Định dạng đậm/nghiêng/bullet khi dán vào Zalo (2026-09-04)**: `template_text`
+  hỗ trợ markup nhẹ GV tự gõ — `**đậm**`, `_nghiêng_`, dòng bắt đầu `"- "` thành
+  gạch đầu dòng (`web/src/lib/zalo-format.ts`). Nút Copy ở trang buổi học ghi
+  clipboard CẢ `text/html` lẫn `text/plain` — dán vào khung chat Zalo PC
+  (contenteditable) lên đúng đậm/nghiêng/bullet vì Zalo tôn trọng các thẻ mà
+  bảng "Định dạng văn bản" (Ctrl+Shift+X) của nó hỗ trợ. **Zalo KHÔNG hỗ trợ
+  màu chữ** — đây là giới hạn nền tảng đã kiểm chứng thật, dùng đậm thay màu
+  cho tiêu đề mục. **Không có khung xem trước** (đã bỏ theo yêu cầu user cùng
+  ngày) — GV sửa trực tiếp trên ô nhắn nếu AI viết sai. Mẫu GV đã chọn được
+  ghép NGUYÊN VĂN bằng string replace ở web (KHÔNG qua AI diễn đạt lại) — chỉ
+  đúng 4 placeholder `{ten_lop}` `{buoi}` `{tom_tat}` `{loi_nhan}` được thay,
+  phần còn lại của mẫu giữ y nguyên. Chi tiết kỹ thuật + lý do từng quyết định
+  ở DECISIONS.md.
 - **`{tom_tat}` CHỈ chứa danh sách kiến thức** (chốt lại lần 3 cùng ngày
   2026-07-18): liệt kê từng kiến thức XUỐNG DÒNG RIÊNG, KHÔNG gạch đầu dòng/số
   thứ tự, KHÔNG tự thêm tiêu đề (GV tự viết tiêu đề trong `template_text`),

@@ -146,13 +146,18 @@ def build_zalo_summary_prompt(
     session_title: str,
     session_content: str,
     reviews_text: str,
-    template_text: str,
     is_one_on_one: bool = False,
 ) -> str:
     """`is_one_on_one`: lớp chỉ có 1 học viên (dạy kèm 1-1) — khi đó nhận xét
     THIÊN VỀ RIÊNG em đó thay vì khái quát chung cả lớp (yêu cầu user
     2026-07-21). Lớp >1 người giữ nguyên hành vi cũ: nhận xét chung, không
-    nêu tên — ĐỪNG đổi lại 2 quy tắc này khi is_one_on_one=False."""
+    nêu tên — ĐỪNG đổi lại 2 quy tắc này khi is_one_on_one=False.
+
+    CHỈ trả về 2 mảnh nội dung động (`tom_tat`, `loi_nhan`) — KHÔNG nhận
+    `template_text` và KHÔNG ghép vào mẫu nữa (đổi 2026-09-04). Việc ghép mẫu
+    làm bằng string replace thuần ở `web/src/lib/actions/zalo.ts` để mẫu GV
+    đã chọn được giữ NGUYÊN VĂN, không còn rủi ro model diễn đạt lại cấu trúc/
+    khoảng trắng của mẫu. Xem lý do ở DECISIONS.md."""
     if is_one_on_one:
         intro_rule = (
             "Hãy tổng hợp tình hình học tập của buổi này thành tin nhắn gửi "
@@ -192,35 +197,31 @@ def build_zalo_summary_prompt(
             TONE_RULE,
             intro_rule,
             focus_rule,
-            "ĐỊNH DẠNG phần tóm tắt (thay vào {tom_tat}): CHỈ liệt kê các kiến "
-            "thức/khái niệm chính của buổi (dựa vào Nội dung buổi học bên dưới), "
-            "MỖI KIẾN THỨC XUỐNG DÒNG RIÊNG. TUYỆT ĐỐI KHÔNG tự thêm dòng tiêu đề "
-            "kiểu 'Kiến thức đã học' — mẫu tin đã có sẵn tiêu đề đó rồi, thêm vào "
-            "sẽ bị lặp 2 lần. TUYỆT ĐỐI KHÔNG thêm gạch đầu dòng ('-'), dấu chấm "
-            "tròn ('•'), hay số thứ tự (1. 2. 3.) ở đầu mỗi dòng — chỉ xuống dòng "
-            "đơn thuần, không ký tự nào khác. TUYỆT ĐỐI KHÔNG viết thêm câu nhận "
-            "xét/đánh giá nào vào đây — {tom_tat} CHỈ chứa danh sách kiến thức, "
-            "không hơn.\n"
-            "Ví dụ đúng ({tom_tat} — nội dung minh họa, không phải nội dung thật):\n"
-            "Vòng lặp for\n"
-            "Vòng lặp while\n"
-            "Câu lệnh break và continue",
-            general_comment_intro
-            + "mẫu tin thường có MỘT MỤC RIÊNG cho việc này (thường có chữ như "
-            "'đánh giá', 'nhận xét', 'tình hình học tập' ngay TRƯỚC một "
-            "placeholder) — hãy đọc kỹ mẫu tin để tìm đúng chỗ đó và viết nhận "
-            "xét vào ĐÚNG placeholder đó (KHÔNG phải {tom_tat}), dạng một đoạn "
-            "VĂN XUÔI liền mạch (KHÔNG xuống dòng, KHÔNG gạch đầu dòng/số thứ "
-            "tự), nối ý bằng dấu phẩy/liên từ (và, nhưng, bên cạnh đó...).",
+            "Hãy viết ĐÚNG HAI mảnh nội dung sau — giáo viên sẽ tự ghép vào mẫu "
+            "tin có sẵn, bạn KHÔNG cần và KHÔNG được viết thêm gì khác ngoài 2 "
+            "mảnh này (không lời chào, không tiêu đề, không phần nào khác):",
+            "1. tom_tat — CHỈ liệt kê các kiến thức/khái niệm chính của buổi (dựa "
+            "vào Nội dung buổi học bên dưới), MỖI KIẾN THỨC XUỐNG DÒNG RIÊNG, MỖI "
+            "DÒNG BẮT ĐẦU BẰNG '- ' (dấu gạch ngang rồi một dấu cách, đúng 1 lần "
+            "— hệ thống sẽ tự đổi thành gạch đầu dòng khi copy vào Zalo). TUYỆT "
+            "ĐỐI KHÔNG tự thêm dòng tiêu đề kiểu 'Kiến thức đã học' — mẫu tin đã "
+            "có sẵn tiêu đề đó rồi, thêm vào sẽ bị lặp 2 lần. TUYỆT ĐỐI KHÔNG "
+            "dùng dấu chấm tròn ('•') hay số thứ tự (1. 2. 3.) — chỉ '- ' như "
+            "trên. TUYỆT ĐỐI KHÔNG viết thêm câu nhận xét/đánh giá nào vào đây — "
+            "tom_tat CHỈ chứa danh sách kiến thức, không hơn.\n"
+            "Ví dụ đúng (tom_tat — nội dung minh họa, không phải nội dung thật):\n"
+            "- Vòng lặp for\n"
+            "- Vòng lặp while\n"
+            "- Câu lệnh break và continue",
+            "2. loi_nhan — " + general_comment_intro + "dạng một đoạn VĂN XUÔI "
+            "liền mạch (KHÔNG xuống dòng, KHÔNG gạch đầu dòng/số thứ tự), nối ý "
+            "bằng dấu phẩy/liên từ (và, nhưng, bên cạnh đó...).",
             f"Lớp: {class_code}",
             f"Buổi học: {session_title}",
             f"Nội dung buổi học: {session_content}",
             f"Nhận xét từng học viên:\n{reviews_text}",
-            "Ghép nội dung vào ĐÚNG mẫu tin sau, thay các placeholder "
-            "{ten_lop}, {buoi}, {tom_tat}, {loi_nhan} bằng nội dung phù hợp, "
-            "giữ nguyên mọi phần khác của mẫu (kể cả emoji, xuống dòng):",
-            template_text,
-            'Trả về JSON: {"message": "<tin nhắn hoàn chỉnh>"}',
+            'Trả về JSON: {"tom_tat": "<danh sách kiến thức>", "loi_nhan": '
+            '"<đoạn nhận xét chung>"}',
         ]
     )
 

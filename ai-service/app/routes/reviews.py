@@ -133,15 +133,17 @@ def generate_zalo_summary(body: ZaloSummaryRequest) -> ZaloSummaryResponse:
         session_title=body.session_title,
         session_content=body.session_content,
         reviews_text=reviews_text,
-        template_text=body.template_text,
         is_one_on_one=body.is_one_on_one,
     )
     data = generate_json(
         prompt,
         response_schema={
             "type": "object",
-            "properties": {"message": {"type": "string"}},
-            "required": ["message"],
+            "properties": {
+                "tom_tat": {"type": "string"},
+                "loi_nhan": {"type": "string"},
+            },
+            "required": ["tom_tat", "loi_nhan"],
         },
         api_key=body.api_key,
         provider=body.provider,

@@ -471,8 +471,50 @@ export async function addZaloTemplate(
     return { error: `Không thêm được: ${error.message}` };
   }
 
+  // Mẫu tạo/sửa ở Cài đặt nhưng CHỌN ở trang buổi học → revalidate cả hai,
+  // route buổi học động nên dùng mẫu "[id]" + "page".
   revalidatePath("/teacher/settings");
+  revalidatePath("/teacher/sessions/[id]", "page");
   return { success: "Đã lưu mẫu tin." };
+}
+
+/** Sửa mẫu đã lưu — GV cần chỉnh markup (`**đậm**`, `- ` bullet) cho khớp cấu
+ *  trúc tin gửi phụ huynh mà không phải xóa đi tạo lại (yêu cầu user 2026-09-04). */
+export async function updateZaloTemplate(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const id = String(formData.get("id") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const templateText = String(formData.get("template_text") ?? "").trim();
+
+  if (!id) {
+    return { error: "Thiếu mẫu cần sửa." };
+  }
+  if (!name || !templateText) {
+    return { error: "Nhập tên mẫu và nội dung mẫu." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const { error } = await supabase
+    .from("zalo_templates")
+    .update({ name, template_text: templateText })
+    .eq("id", id)
+    .eq("teacher_id", user.id);
+  if (error) {
+    return { error: `Không lưu được: ${error.message}` };
+  }
+
+  revalidatePath("/teacher/settings");
+  revalidatePath("/teacher/sessions/[id]", "page");
+  return { success: `Đã cập nhật mẫu "${name}".` };
 }
 
 export async function deleteZaloTemplate(formData: FormData): Promise<void> {
@@ -482,17 +524,21 @@ export async function deleteZaloTemplate(formData: FormData): Promise<void> {
   const supabase = await createClient();
   await supabase.from("zalo_templates").delete().eq("id", id);
   revalidatePath("/teacher/settings");
+  revalidatePath("/teacher/sessions/[id]", "page");
 }
 
-const DEFAULT_TEMPLATE = `📢 THÔNG BÁO LỚP {ten_lop} — {buoi}
+const DEFAULT_TEMPLATE = `**Kính gửi Quý Phụ huynh,**
 
-Kính gửi quý phụ huynh,
+**Thầy/Cô xin thông tin tới Quý Phụ huynh về nội dung học tập của lớp {ten_lop} trong {buoi} như sau:**
 
+**Kiến thức đã học:**
 {tom_tat}
 
-💌 Lời nhắn: {loi_nhan}
+**Đánh giá chung quá trình học tập:**
+{loi_nhan}
 
-Cảm ơn quý phụ huynh đã đồng hành cùng lớp! 🌟`;
+_Trân trọng,_
+_Giáo viên_`;
 
 /** Thêm mẫu tin Zalo mặc định. */
 export async function seedDefaultTemplate(): Promise<void> {
