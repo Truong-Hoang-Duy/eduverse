@@ -902,8 +902,10 @@
 - [x] Component cốt lõi: Button (gradient, shadow, scale effect), Card (backdrop-blur)
 - [x] App Shell & Navigation: Floating header, nền gradient phát sáng tạo chiều sâu.
 - [x] Trang Phụ huynh (`/showcase`): Bổ sung hiệu ứng Hover lift (3D tilt mô phỏng) và đổ bóng màu đồng thau cho thẻ sản phẩm.
-- [x] Đã thiết lập `GEMINI.md` để đồng bộ ngữ cảnh cho cả Gemini và Claude cùng làm việc. 
-- [x] Không can thiệp logic, chỉ nâng cấp CSS/Tailwind. Đã push `main` và deploy lên Vercel.
+### Đợt 60 (`feature/randomizer-individuals`) — Bốc thăm cá nhân
+- [x] Đổi tên công cụ "Random nhóm thuyết trình" thành "Bốc thăm ngẫu nhiên".
+- [x] Bổ sung tùy chọn bốc thăm theo cá nhân: chọn ngẫu nhiên $N$ bạn trong lớp, hiển thị dưới dạng một nhóm "Thành viên may mắn" duy nhất.
+- [x] Cập nhật UI hiển thị nhãn và nút chính xác theo từng chế độ bốc thăm.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

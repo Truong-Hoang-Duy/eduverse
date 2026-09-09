@@ -317,8 +317,8 @@ export default async function ClassDetailPage({
       </CollapsibleCard>
 
       <CollapsibleCard
-        title="🎲 Random nhóm thuyết trình"
-        description="Chia nhóm ngẫu nhiên theo số nhóm hoặc số người mỗi nhóm"
+        title="🎲 Bốc thăm ngẫu nhiên"
+        description="Bốc thăm cá nhân hoặc chia nhóm ngẫu nhiên"
       >
         <GroupRandomizer
           classCode={cls.class_code}

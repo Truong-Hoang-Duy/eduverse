@@ -29,7 +29,7 @@ export interface PresentationGroup {
   members: GroupMember[];
 }
 
-type Mode = "byGroups" | "bySize";
+type Mode = "byGroups" | "bySize" | "individuals";
 
 /** Linh vật + bộ màu cố định theo THỨ TỰ nhóm — đủ tương phản khi chiếu TV.
  *  Class Tailwind phải là chuỗi literal đầy đủ (JIT không hiểu tên ghép động). */
@@ -65,6 +65,17 @@ function buildGroups(members: GroupMember[], count: number): PresentationGroup[]
     groups[i % count].members.push(member);
   });
   return groups;
+}
+
+function pickIndividuals(members: GroupMember[], count: number): PresentationGroup[] {
+  const shuffled = shuffle(members);
+  const selected = shuffled.slice(0, Math.min(count, members.length));
+  return [
+    {
+      name: "Thành viên may mắn",
+      members: selected,
+    },
+  ];
 }
 
 function GroupCard({
@@ -168,7 +179,7 @@ export function GroupRandomizer({
     activeStudents.length === 0 ||
     !Number.isFinite(num) ||
     num < 1 ||
-    (mode === "byGroups" && num > activeStudents.length);
+    (mode !== "bySize" && num > activeStudents.length);
 
   function handleRandom() {
     if (invalid || activeStudents.length === 0) return;
@@ -176,11 +187,19 @@ export function GroupRandomizer({
 
     // Hiệu ứng: xáo liên tục ~800ms rồi chốt kết quả cuối.
     timers.current.interval = setInterval(() => {
-      setGroups(buildGroups(activeStudents, groupCount));
+      setGroups(
+        mode === "individuals"
+          ? pickIndividuals(activeStudents, num)
+          : buildGroups(activeStudents, groupCount)
+      );
     }, 80);
     timers.current.timeout = setTimeout(() => {
       if (timers.current.interval) clearInterval(timers.current.interval);
-      setGroups(buildGroups(activeStudents, groupCount));
+      setGroups(
+        mode === "individuals"
+          ? pickIndividuals(activeStudents, num)
+          : buildGroups(activeStudents, groupCount)
+      );
       setShuffling(false);
     }, 800);
   }
@@ -240,12 +259,13 @@ export function GroupRandomizer({
             <SelectContent>
               <SelectItem value="byGroups">Theo số nhóm</SelectItem>
               <SelectItem value="bySize">Theo số người mỗi nhóm</SelectItem>
+              <SelectItem value="individuals">Cá nhân</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="w-28 space-y-1.5">
           <Label htmlFor="group-value">
-            {mode === "byGroups" ? "Số nhóm" : "Người/nhóm"}
+            {mode === "individuals" ? "Số lượng bốc" : mode === "byGroups" ? "Số nhóm" : "Người/nhóm"}
           </Label>
           <Input
             id="group-value"
@@ -258,10 +278,10 @@ export function GroupRandomizer({
         </div>
         <Button onClick={handleRandom} disabled={shuffling || invalid}>
           {shuffling
-            ? "🎲 Đang xáo..."
+            ? "🎲 Đang bốc..."
             : groups.length > 0
-              ? "🎲 Random lại"
-              : "🎲 Random nhóm"}
+              ? "🎲 Bốc lại"
+              : "🎲 Bốc thăm"}
         </Button>
         {groups.length > 0 && (
           <Button variant="outline" onClick={enterTv}>
@@ -274,7 +294,8 @@ export function GroupRandomizer({
         {absentIds.size > 0
           ? `${activeStudents.length}/${students.length} học viên có mặt`
           : `${students.length} học viên`}
-        {!invalid && groupCount > 0 && ` → ${groupCount} nhóm`}
+        {!invalid && mode === "individuals" && ` → Bốc thăm ${num} bạn`}
+        {!invalid && mode !== "individuals" && groupCount > 0 && ` → ${groupCount} nhóm`}
         {invalid && activeStudents.length === 0 && " · chưa có học viên nào có mặt"}
         {invalid && activeStudents.length > 0 && " · số không hợp lệ"}
       </p>
@@ -297,15 +318,15 @@ export function GroupRandomizer({
         <TvOverlay onClose={exitTv}>
           <div className="flex flex-wrap items-center gap-4">
             <h2 className="text-3xl font-bold">
-              🎤 Nhóm thuyết trình · Lớp {classCode}
+              🎤 {mode === "individuals" ? "Bốc thăm cá nhân" : "Nhóm thuyết trình"} · Lớp {classCode}
             </h2>
             <span className="text-xl text-muted-foreground">
-              {activeStudents.length} học viên → {groups.length} nhóm
+              {activeStudents.length} học viên → {mode === "individuals" ? `bốc ${num} bạn` : `${groups.length} nhóm`}
               {absentIds.size > 0 && ` · ${absentIds.size} vắng`}
             </span>
             <div className="ml-auto flex items-center gap-3">
               <Button size="lg" onClick={handleRandom} disabled={shuffling || invalid}>
-                {shuffling ? "🎲 Đang xáo..." : "🎲 Random lại"}
+                {shuffling ? "🎲 Đang bốc..." : "🎲 Bốc lại"}
               </Button>
               <Button size="lg" variant="ghost" onClick={exitTv} aria-label="Thoát chế độ chiếu">
                 ✕ Thoát

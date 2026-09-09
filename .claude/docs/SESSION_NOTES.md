@@ -8,11 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-09, bởi: Gemini)
 
-**Đang làm:** KHÔNG có task dở. Đợt 59 (`feature/ui-glassmorphism-upgrade`) vừa
-merge thẳng `main` và đẩy production trong phiên này bởi Gemini.
+**Đang làm:** KHÔNG có task dở. Đợt 60 (`feature/randomizer-individuals`) vừa
+merge thẳng `main` trong phiên này bởi Gemini.
 *Lưu ý: Bắt đầu từ Đợt 59, dự án được phát triển song song bởi cả Claude và Gemini.*
 
-**`main` = `origin/main`** đã bao gồm Đợt 59 (xem
+**`main` = `origin/main`** đã bao gồm Đợt 60 (xem
 `git log --oneline -1 main` để lấy hash mới nhất).
 chậm hơn merge thật một nhịp, theo đúng nếp cũ của file này).
 `ai-service/` KHÔNG đổi ở Đợt 58 — không cần deploy lại Render cho đợt này.
