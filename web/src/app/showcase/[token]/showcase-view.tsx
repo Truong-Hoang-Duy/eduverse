@@ -715,7 +715,7 @@ function ProjectCardTile({
           onOpen();
         }
       }}
-      className="sc-rule cursor-pointer rounded-2xl bg-sc-raised p-3 text-left transition-transform hover:-translate-y-1"
+      className="sc-rule cursor-pointer rounded-2xl bg-sc-raised p-3 text-left transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_color-mix(in_oklab,var(--sc-brass)_30%,transparent)]"
     >
       {project.image_urls.length > 0 && (
         <div className="relative mb-3">

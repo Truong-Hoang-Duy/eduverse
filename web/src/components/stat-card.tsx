@@ -16,8 +16,8 @@ export function StatCard({
   progress?: number;
 }) {
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
-      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+    <div className="glass-card p-4 flex flex-col justify-between group">
+      <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase transition-colors group-hover:text-primary">
         {label}
       </p>
       <p className="mt-1.5 text-3xl font-bold tracking-tight">{value}</p>

@@ -73,7 +73,7 @@ export function ProjectCard({
               key={url}
               src={url}
               alt={`Ảnh ${i + 1} sản phẩm của ${project.authorName}`}
-              className="h-24 w-32 rounded-md border bg-muted object-cover"
+              className="h-24 w-32 rounded-md border border-border/50 bg-muted object-cover transition-all duration-300 hover:scale-105 hover:shadow-md hover:border-border cursor-pointer"
             />
           ))}
         </div>
