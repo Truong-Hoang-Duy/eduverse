@@ -6,13 +6,14 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-08-29, bởi: Claude)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-09, bởi: Gemini)
 
-**Đang làm:** KHÔNG có task dở. Đợt 58 (`feature/parent-showcase-link`) vừa
-merge `develop` → `main` và đẩy production trong phiên này.
+**Đang làm:** KHÔNG có task dở. Đợt 59 (`feature/ui-glassmorphism-upgrade`) vừa
+merge thẳng `main` và đẩy production trong phiên này bởi Gemini.
+*Lưu ý: Bắt đầu từ Đợt 59, dự án được phát triển song song bởi cả Claude và Gemini.*
 
-**`main` = `origin/main` = `b8e8a1a`** trước khi merge Đợt 58 (xem
-`git log --oneline -1 main` để lấy hash mới nhất — SESSION_NOTES luôn ghi
+**`main` = `origin/main`** đã bao gồm Đợt 59 (xem
+`git log --oneline -1 main` để lấy hash mới nhất).
 chậm hơn merge thật một nhịp, theo đúng nếp cũ của file này).
 `ai-service/` KHÔNG đổi ở Đợt 58 — không cần deploy lại Render cho đợt này.
 ⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp

@@ -897,6 +897,14 @@
 - [x] User nghiệm thu bằng mắt trên `pnpm dev` (sáng + tối, điện thoại): xác nhận
       "ổn định, đẹp mắt" — 2026-08-29.
 
+### Đợt 59 (`feature/ui-glassmorphism-upgrade`) — Nâng cấp giao diện Glassmorphism
+- [x] Áp dụng ngôn ngữ thiết kế Glassmorphism toàn cục: `globals.css` thêm `.glass-panel`, `.glass-card`
+- [x] Component cốt lõi: Button (gradient, shadow, scale effect), Card (backdrop-blur)
+- [x] App Shell & Navigation: Floating header, nền gradient phát sáng tạo chiều sâu.
+- [x] Trang Phụ huynh (`/showcase`): Bổ sung hiệu ứng Hover lift (3D tilt mô phỏng) và đổ bóng màu đồng thau cho thẻ sản phẩm.
+- [x] Đã thiết lập `GEMINI.md` để đồng bộ ngữ cảnh cho cả Gemini và Claude cùng làm việc. 
+- [x] Không can thiệp logic, chỉ nâng cấp CSS/Tailwind. Đã push `main` và deploy lên Vercel.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
