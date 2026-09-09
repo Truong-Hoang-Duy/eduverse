@@ -909,7 +909,7 @@
 
 ### Đợt 61 (`feature/showcase-cron-and-zalo-greeting`)
 - [x] Thêm hệ thống dọn dẹp showcase: tạo cron job `pg_cron` (migration `20260909000000`) tự động kiểm tra và xóa các link tổng kết hết hạn mỗi giờ, tận dụng `ON DELETE CASCADE` dọn dẹp các đánh giá và phản hồi liên quan để trả lớp về trạng thái chưa bật ban đầu.
-- [x] Zalo: Tích hợp logic chèn lời chào dành riêng cho buổi học đầu tiên (Session 1) vào nội dung đầu tin nhắn tổng hợp. Lời chào được format cứng trong code, có emoji sinh động giúp tạo thiện cảm ngày đầu.
+- [x] Zalo: Sinh lời chào Buổi 1 bằng AI (Gemini hoặc ChatGPT lấy theo API Key cá nhân) thay vì gán cứng. Văn phong trang trọng, chuẩn mực học đường, không emoji và chuẩn format Zalo. Đóng gói riêng qua endpoint `/generate-greeting`.
 - [x] Cập nhật lại tài liệu `ROADMAP.md` và `SESSION_NOTES.md` sau khi hoàn thành phiên.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
