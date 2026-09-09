@@ -40,9 +40,10 @@ Khi phiên làm việc sắp kết thúc, bạn PHẢI cập nhật tài liệu 
 | Schema DB, RLS, quan hệ course→class→session | `.claude/docs/DATABASE.md` |
 | Endpoint FastAPI, prompt Gemini, JSON schema | `.claude/docs/AI-SERVICE.md` |
 | Nghiệp vụ/UX từng tính năng theo vai trò | `.claude/docs/FEATURES.md` |
-| **Deploy / git workflow** | `.claude/docs/GIT-WORKFLOW-RULES.md` |
+| **Deploy / merge lên `main` / bất kỳ thao tác git nào** — đọc TRƯỚC khi commit/push/merge, siết hơn mục 7 dưới đây | `.claude/docs/GIT-WORKFLOW-RULES.md` |
 
 KHÔNG đọc cả thư mục docs một lượt; chỉ nạp đúng file cần cho task hiện tại.
+(Bắt buộc đọc `GIT-WORKFLOW-RULES.md` TRƯỚC khi push code. Tuyệt đối không tự ý push khi chưa được xác thực/chạy test thành công giống như Claude.)
 
 ## 4. Commands (dùng CHÍNH XÁC các lệnh này)
 
@@ -81,7 +82,7 @@ Luôn chạy lint + typecheck + test liên quan trước khi coi task là hoàn 
 - Xóa là XÓA SẠCH: DB cascade sẵn nhưng **Storage không cascade** — xóa dòng có file phải tự dọn Storage.
 - Không thêm dependency mới khi chưa hỏi ý kiến user.
 
-## 7. Git Workflow
+## 7. Git Workflow (chi tiết trong .claude/rules/git-workflow.md)
 
 - Branch từ `develop`: `feature/<slug>`, `fix/<slug>`
 - Conventional Commits tiếng Anh: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`

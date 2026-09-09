@@ -17,6 +17,17 @@ class AiRequest(BaseModel):
     provider: Literal["gemini", "openai"] = "gemini"
 
 
+# ---------- /generate-greeting ----------
+class GenerateGreetingRequest(AiRequest):
+    course_name: str
+    class_code: str
+    teacher_name: str
+
+
+class GenerateGreetingResponse(BaseModel):
+    greeting: str
+
+
 # ---------- /generate-review ----------
 class GenerateReviewRequest(AiRequest):
     student_name: str

@@ -104,8 +104,42 @@ export async function generateZaloSummary(input: {
     return { message };
   } catch (err) {
     if (err instanceof AiServiceError) {
-      return { error: err.message };
+      return { error: `Lỗi AI: ${err.message}` };
     }
-    return { error: "Không kết nối được AI service (thử lại sau 30 giây nếu server vừa thức dậy)." };
+    return { error: "Lỗi hệ thống khi tạo tin nhắn Zalo" };
+  }
+}
+
+export async function generateSessionGreeting({
+  classCode,
+  courseName,
+  teacherName,
+}: {
+  classCode: string;
+  courseName: string;
+  teacherName: string;
+}) {
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
+  try {
+    const data = await callAiService<{ greeting: string }>(
+      "/generate-greeting",
+      {
+        api_key: aiConfig.api_key,
+        provider: aiConfig.provider,
+        class_code: classCode,
+        course_name: courseName,
+        teacher_name: teacherName,
+      }
+    );
+    return { greeting: data.greeting };
+  } catch (err) {
+    if (err instanceof AiServiceError) {
+      return { error: `Lỗi AI: ${err.message}` };
+    }
+    return { error: "Lỗi hệ thống khi tạo lời chào" };
   }
 }

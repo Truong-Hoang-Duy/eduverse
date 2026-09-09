@@ -8,8 +8,9 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-09, bởi: Gemini)
 
-**Đang làm:** KHÔNG có task dở. Đợt 60 (`feature/randomizer-individuals`) vừa
-merge thẳng `main` trong phiên này bởi Gemini.
+**Đang làm:** Đã hoàn thành 2 yêu cầu:
+1. Thêm cron job tự động dọn dẹp showcase hết hạn (migration `20260909000000_cron_delete_expired_showcase.sql`). *Lưu ý: Lệnh `supabase db push` chưa chạy được do lỗi mạng (kết nối Supabase Pooler).*
+2. Thêm khung lời chào đặc biệt cho tin Zalo buổi 1 (chỉnh sửa trực tiếp tại `web/src/lib/actions/zalo.ts`).
 *Lưu ý: Bắt đầu từ Đợt 59, dự án được phát triển song song bởi cả Claude và Gemini.*
 
 **`main` = `origin/main`** đã bao gồm Đợt 60 (xem

@@ -13,7 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { generateZaloSummary } from "@/lib/actions/zalo";
+import {
+  generateSessionGreeting,
+  generateZaloSummary,
+} from "@/lib/actions/zalo";
 import { zaloMarkupToHtml, zaloMarkupToPlainText } from "@/lib/zalo-format";
 
 export interface TemplateChoice {
@@ -23,9 +26,17 @@ export interface TemplateChoice {
 
 export function ZaloPanel({
   sessionId,
+  sessionNumber,
+  classCode,
+  courseName,
+  teacherName,
   templates,
 }: {
   sessionId: string;
+  sessionNumber?: number;
+  classCode?: string;
+  courseName?: string;
+  teacherName?: string;
   templates: TemplateChoice[];
 }) {
   const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
@@ -33,6 +44,7 @@ export function ZaloPanel({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [pending, startGenerate] = useTransition();
+  const [pendingGreeting, startGenerateGreeting] = useTransition();
 
   function handleGenerate() {
     setError("");
@@ -43,6 +55,23 @@ export function ZaloPanel({
         setError(res.error);
       } else {
         setMessage(res.message ?? "");
+      }
+    });
+  }
+
+  function handleGenerateGreeting() {
+    setError("");
+    setCopied(false);
+    startGenerateGreeting(async () => {
+      const res = await generateSessionGreeting({
+        classCode: classCode ?? "",
+        courseName: courseName ?? "",
+        teacherName: teacherName ?? "",
+      });
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setMessage(res.greeting ?? "");
       }
     });
   }
@@ -96,8 +125,13 @@ export function ZaloPanel({
             </SelectContent>
           </Select>
         </div>
+        {sessionNumber === 1 && (
+          <Button onClick={handleGenerateGreeting} disabled={pendingGreeting} variant="secondary" size="sm">
+            {pendingGreeting ? "AI đang viết..." : "🌟 Tạo lời chào (Buổi 1)"}
+          </Button>
+        )}
         <Button onClick={handleGenerate} disabled={pending || !templateId} size="sm">
-          {pending ? "AI đang tổng hợp..." : "✨ Tạo tin nhắn"}
+          {pending ? "AI đang tổng hợp..." : "✨ Tạo tin nhắn Zalo"}
         </Button>
       </div>
 
