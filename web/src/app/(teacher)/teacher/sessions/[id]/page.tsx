@@ -32,7 +32,7 @@ interface SessionRow {
   is_periodic_test: boolean;
   is_project_period: boolean;
   session_date: string | null;
-  classes: { class_code: string } | null;
+  classes: { class_code: string; courses: { name: string } | null } | null;
 }
 
 interface EnrollmentRow {
@@ -77,7 +77,7 @@ export default async function SessionDetailPage({
   const { data: sessionData } = await supabase
     .from("sessions")
     .select(
-      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, session_date, classes(class_code)"
+      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, session_date, classes(class_code, courses(name))"
     )
     .eq("id", id)
     .single();
@@ -274,6 +274,10 @@ export default async function SessionDetailPage({
         <CardContent>
           <ZaloPanel
             sessionId={session.id}
+            sessionNumber={session.session_number}
+            classCode={session.classes?.class_code ?? ""}
+            courseName={session.classes?.courses?.name ?? ""}
+            teacherName={profile.full_name}
             templates={templatesData ?? []}
           />
         </CardContent>

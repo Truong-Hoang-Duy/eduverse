@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from app import prompts
 from app.llm import generate_json
 from app.schemas import (
+    GenerateGreetingRequest,
+    GenerateGreetingResponse,
     GenerateReviewRequest,
     GenerateReviewResponse,
     StudentSummaryRequest,
@@ -14,6 +16,26 @@ from app.schemas import (
 )
 
 router = APIRouter()
+
+
+@router.post("/generate-greeting", response_model=GenerateGreetingResponse)
+def generate_greeting(body: GenerateGreetingRequest) -> GenerateGreetingResponse:
+    prompt = prompts.build_greeting_prompt(
+        course_name=body.course_name,
+        class_code=body.class_code,
+        teacher_name=body.teacher_name,
+    )
+    data = generate_json(
+        prompt,
+        response_schema={
+            "type": "object",
+            "properties": {"greeting": {"type": "string"}},
+            "required": ["greeting"],
+        },
+        api_key=body.api_key,
+        provider=body.provider,
+    )
+    return GenerateGreetingResponse(**data)
 
 
 @router.post("/generate-review", response_model=GenerateReviewResponse)

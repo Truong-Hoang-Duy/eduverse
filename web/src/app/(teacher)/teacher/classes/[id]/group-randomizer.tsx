@@ -133,8 +133,8 @@ export function GroupRandomizer({
   classCode: string;
   students: GroupMember[];
 }) {
-  const [mode, setMode] = useState<Mode>("byGroups");
-  const [value, setValue] = useState("3");
+  const [mode, setMode] = useState<Mode>("individuals");
+  const [value, setValue] = useState("1");
   const [groups, setGroups] = useState<PresentationGroup[]>([]);
   const [shuffling, setShuffling] = useState(false);
   const [tvMode, setTvMode] = useState(false);
@@ -285,7 +285,7 @@ export function GroupRandomizer({
         </Button>
         {groups.length > 0 && (
           <Button variant="outline" onClick={enterTv}>
-            📺 Chiếu màn hình
+            📺 Kết quả
           </Button>
         )}
       </div>
