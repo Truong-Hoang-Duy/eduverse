@@ -202,6 +202,12 @@ sai sự thật ngay sau lần đổi thiết kế. Vá bằng migration nối t
 (`information_schema`, dán lại vô hại) + bịt chỗ nuốt `error` khiến triệu
 chứng khó chẩn đoán.
 
+## Cập nhật phiên làm việc (Cập nhật bởi: Gemini)
+- Hoàn thành tính năng sinh lời chào Buổi 1 bằng AI (Gemini/OpenAI) thay vì hardcode. Tính năng lấy API Key/Provider từ cài đặt cá nhân của người dùng.
+- Tinh chỉnh Prompt cho lời chào Buổi 1: không dùng emoji, format chuẩn Zalo, văn phong trang trọng, ngôn ngữ chuẩn học đường.
+- Setup cron job để tự động dọn dẹp các bản ghi Showcase hết hạn (dùng `pg_cron`).
+- Đã merge và deploy code (feature/ai-session-1-greeting -> develop -> main).
+
 **Bản sắc thị giác riêng "Bảng vàng"** (user yêu cầu RÕ RÀNG "không phải
 giao diện tối mặc định", duyệt bản kế hoạch trước khi code): palette ngà/than
 ấm + đồng thau + đất nung khoanh trong `.showcase-theme`, Playfair Display +
