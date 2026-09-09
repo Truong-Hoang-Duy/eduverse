@@ -897,6 +897,21 @@
 - [x] User nghiệm thu bằng mắt trên `pnpm dev` (sáng + tối, điện thoại): xác nhận
       "ổn định, đẹp mắt" — 2026-08-29.
 
+### Đợt 59 (`feature/ui-glassmorphism-upgrade`) — Nâng cấp giao diện Glassmorphism
+- [x] Áp dụng ngôn ngữ thiết kế Glassmorphism toàn cục: `globals.css` thêm `.glass-panel`, `.glass-card`
+- [x] Component cốt lõi: Button (gradient, shadow, scale effect), Card (backdrop-blur)
+- [x] App Shell & Navigation: Floating header, nền gradient phát sáng tạo chiều sâu.
+- [x] Trang Phụ huynh (`/showcase`): Bổ sung hiệu ứng Hover lift (3D tilt mô phỏng) và đổ bóng màu đồng thau cho thẻ sản phẩm.
+### Đợt 60 (`feature/randomizer-individuals`) — Bốc thăm cá nhân
+- [x] Đổi tên công cụ "Random nhóm thuyết trình" thành "Bốc thăm ngẫu nhiên".
+- [x] Bổ sung tùy chọn bốc thăm theo cá nhân: chọn ngẫu nhiên $N$ bạn trong lớp, hiển thị dưới dạng một nhóm "Thành viên may mắn" duy nhất.
+- [x] Cập nhật UI hiển thị nhãn và nút chính xác theo từng chế độ bốc thăm.
+
+### Đợt 61 (`feature/showcase-cron-and-zalo-greeting`)
+- [x] Thêm hệ thống dọn dẹp showcase: tạo cron job `pg_cron` (migration `20260909000000`) tự động kiểm tra và xóa các link tổng kết hết hạn mỗi giờ, tận dụng `ON DELETE CASCADE` dọn dẹp các đánh giá và phản hồi liên quan để trả lớp về trạng thái chưa bật ban đầu.
+- [x] Zalo: Tích hợp logic chèn lời chào dành riêng cho buổi học đầu tiên (Session 1) vào nội dung đầu tin nhắn tổng hợp. Lời chào được format cứng trong code, có emoji sinh động giúp tạo thiện cảm ngày đầu.
+- [x] Cập nhật lại tài liệu `ROADMAP.md` và `SESSION_NOTES.md` sau khi hoàn thành phiên.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

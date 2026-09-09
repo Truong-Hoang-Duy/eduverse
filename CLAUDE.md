@@ -3,6 +3,10 @@
 > Behavioral contract giữa team và Claude. Mỗi dòng ở đây phải THAY ĐỔI cách Claude
 > hành xử — nếu không, xóa đi. Giữ file dưới ~200 dòng; nội dung dài hơn tách vào
 > `.claude/rules/` và `.claude/docs/`.
+> 
+> **LƯU Ý QUAN TRỌNG:** Dự án này hiện được code song song bởi cả Claude và Gemini. 
+> Cả 2 AI đều dùng chung các tài liệu trong thư mục `.claude/docs/`. Khi hoàn thành 1 task,
+> hãy đảm bảo cập nhật đầy đủ thông tin để AI còn lại có thể nắm bắt ngữ cảnh.
 
 ## 1. Project Overview
 

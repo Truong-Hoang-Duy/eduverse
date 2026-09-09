@@ -226,6 +226,40 @@ def build_zalo_summary_prompt(
     )
 
 
+def build_greeting_prompt(
+    course_name: str,
+    class_code: str,
+    teacher_name: str,
+) -> str:
+    return "\n".join(
+        [
+            SYSTEM_ROLE,
+            "Nhiệm vụ: Viết LỜI CHÀO KHAI GIẢNG (Buổi 1) để giáo viên gửi cho phụ huynh qua nhóm Zalo.",
+            "QUY TẮC VĂN PHONG QUAN TRỌNG:",
+            "- Lời văn TRANG TRỌNG, lịch sự, chuẩn mực ngôn ngữ học đường (chuẩn thuật ngữ trường lớp).",
+            "- TUYỆT ĐỐI KHÔNG dùng các từ ngữ quá cảm xúc, thái quá như 'háo hức', 'đam mê', 'tuyệt vời', 'vô cùng', 'cực kỳ'.",
+            "- Viết giống văn phong của giáo viên thật viết cho phụ huynh: thẳng thắn, rõ ràng, súc tích. KHÔNG rườm rà, sáo rỗng hay mang phong cách AI máy móc.",
+            "- TUYỆT ĐỐI KHÔNG dùng bất kỳ icon/emoji nào (không dùng 🌟, ✅, ✨...).",
+            "- Định dạng CHUẨN ZALO: bôi đậm bằng **chữ**, in nghiêng bằng _chữ_, gạch đầu dòng dùng ký tự '- '.",
+            f"Khóa học: {course_name}",
+            f"Lớp: {class_code}",
+            f"Tên giáo viên: {teacher_name}",
+            "Nội dung bắt buộc phải có (hãy diễn đạt lại cho trang trọng và mượt mà):",
+            "- Gửi lời chào phụ huynh và học viên.",
+            f"- Giới thiệu giáo viên ({teacher_name}) phụ trách khóa học ({course_name}) này.",
+            "- Cam kết truyền đạt kiến thức một cách hiệu quả, dễ hiểu và đồng hành cùng học viên.",
+            "- Nhắc phụ huynh có thể liên hệ nếu gặp khó khăn về bài vở hoặc thiết bị máy móc.",
+            "- Nhắc nhở quy định: Tham gia đầy đủ đúng giờ (nghỉ phải xin phép trước 1 ngày để sắp xếp lịch học bù).",
+            "- Nhắc nhở quy định: Hoàn thành bài tập về nhà trước buổi học hàng tuần trên trang https://denise.mindx.edu.vn.",
+            "- Nhắc nhở quy định: Chuẩn bị đầy đủ thiết bị (máy tính, sạc, chuột).",
+            "- Khuyến khích học viên chủ động đặt câu hỏi trong giờ học.",
+            "- Chốt lại bằng lời cảm ơn phụ huynh đã tin tưởng và lời chúc quá trình học tập đạt kết quả tốt.",
+            "YÊU CẦU ĐẦU RA: Viết thành một nội dung tin nhắn. Bắt đầu bằng một tiêu đề in đậm rõ ràng (ví dụ: **THÔNG BÁO KHAI GIẢNG VÀ NỘI QUY LỚP...**). KHÔNG dùng các cụm từ sáo rỗng như 'Kính gửi thư này...'.",
+            'Trả về JSON: {"greeting": "<nội dung lời chào>"}',
+        ]
+    )
+
+
 def build_student_summary_prompt(
     student_name: str,
     class_code: str,

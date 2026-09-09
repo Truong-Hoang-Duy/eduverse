@@ -37,7 +37,7 @@ export function AppNav({ profile }: { profile: Profile }) {
   const stackOnMobile = links.length > 2;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-4 z-40 mx-4 sm:mx-auto max-w-5xl rounded-2xl border border-border/50 bg-background/60 backdrop-blur-xl shadow-sm transition-all">
       {/* Dùng `order` thay vì render NavLinks hai lần: giữ đúng MỘT client
           component, và thứ tự đọc bằng bàn phím vẫn là logo → nav → tài khoản. */}
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 sm:flex-nowrap sm:gap-4">

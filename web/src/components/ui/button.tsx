@@ -9,15 +9,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        default: "bg-gradient-to-b from-primary/90 to-primary text-primary-foreground shadow-[0_2px_10px_rgba(0,0,0,0.1)] hover:shadow-[0_4px_16px_color-mix(in_oklab,var(--primary)_40%,transparent)] hover:brightness-110 active:scale-95",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border/50 bg-background/50 backdrop-blur-sm shadow-sm hover:bg-muted/80 hover:text-foreground hover:border-border aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input/50 dark:bg-input/10 dark:hover:bg-input/30 active:scale-95",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-gradient-to-b from-secondary/80 to-secondary text-secondary-foreground shadow-sm hover:brightness-105 active:scale-95 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "hover:bg-muted/80 hover:text-foreground active:scale-95 aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/40",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+          "bg-gradient-to-b from-destructive/80 to-destructive text-destructive-foreground shadow-sm hover:brightness-110 active:scale-95 focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
