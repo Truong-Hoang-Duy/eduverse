@@ -6,12 +6,12 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-09, bởi: Gemini)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-10, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành 2 yêu cầu:
-1. Thêm cron job tự động dọn dẹp showcase hết hạn (migration `20260909000000_cron_delete_expired_showcase.sql`). *Lưu ý: Lệnh `supabase db push` chưa chạy được do lỗi mạng (kết nối Supabase Pooler).*
-2. Thêm khung lời chào đặc biệt cho tin Zalo buổi 1 (chỉnh sửa trực tiếp tại `web/src/lib/actions/zalo.ts`).
-*Lưu ý: Bắt đầu từ Đợt 59, dự án được phát triển song song bởi cả Claude và Gemini.*
+**Đang làm:** Đã hoàn thành tính năng:
+1. Thêm bộ lọc tìm kiếm & chọn học viên ("vừa nhập hoặc vừa chọn") trên trang Showcase phụ huynh (`/showcase/[token]`): bỏ điều kiện ẩn ô tìm kiếm khi lớp <= 6 bạn, combobox dropdown danh sách học sinh của lớp, hàng nút chọn nhanh (quick chips) tên từng em tiện lợi trên điện thoại, nút xóa nhanh (✕), nút khôi phục ở empty state.
+2. Thêm thanh tìm kiếm & chọn học viên trên trang Thư viện của học viên (`/student/classes/[classId]/gallery`) và Thư viện giáo viên (`/teacher/gallery`) qua component `ProjectGrid` và `GalleryView`.
+3. Unit tests pass 264/264, typecheck và lint đều sạch 100%. Nhánh hiện tại: `feature/showcase-name-filter`.
 
 **`main` = `origin/main`** đã bao gồm Đợt 60 (xem
 `git log --oneline -1 main` để lấy hash mới nhất).
@@ -207,6 +207,7 @@ chứng khó chẩn đoán.
 - Tinh chỉnh Prompt cho lời chào Buổi 1: không dùng emoji, format chuẩn Zalo, văn phong trang trọng, ngôn ngữ chuẩn học đường.
 - Setup cron job để tự động dọn dẹp các bản ghi Showcase hết hạn (dùng `pg_cron`).
 - Đã merge và deploy code (feature/ai-session-1-greeting -> develop -> main).
+- Bổ sung tính năng lọc theo tên học viên & tên sản phẩm trên trang Showcase phụ huynh (`/showcase/[token]`), Thư viện học viên (`/student/classes/[classId]/gallery`), và Thư viện giáo viên (`/teacher/gallery`). Loại bỏ điều kiện `projects.length > 6` để các lớp nhỏ vẫn luôn có ô tìm kiếm. Đã bổ sung unit tests và pass toàn bộ 264 tests. (Nhánh `feature/showcase-name-filter`).
 
 **Bản sắc thị giác riêng "Bảng vàng"** (user yêu cầu RÕ RÀNG "không phải
 giao diện tối mặc định", duyệt bản kế hoạch trước khi code): palette ngà/than

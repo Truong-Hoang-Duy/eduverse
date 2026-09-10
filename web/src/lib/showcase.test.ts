@@ -259,6 +259,21 @@ describe("arrangeShowcaseProjects", () => {
     ).toEqual(["cuong"]);
   });
 
+  it("should handle uppercase query and trailing spaces when searching by name", () => {
+    expect(
+      arrangeShowcaseProjects(projects, { ...opts, query: "  ÁNH  " }).map((p) => p.id)
+    ).toEqual(["an"]);
+    expect(
+      arrangeShowcaseProjects(projects, { ...opts, query: "BINH" }).map((p) => p.id)
+    ).toEqual(["binh"]);
+  });
+
+  it("should return empty array when query does not match any author or project name", () => {
+    expect(
+      arrangeShowcaseProjects(projects, { ...opts, query: "khong co ai" })
+    ).toEqual([]);
+  });
+
   it("should not mutate the array it was given", () => {
     const input = [...projects];
     arrangeShowcaseProjects(input, opts);
