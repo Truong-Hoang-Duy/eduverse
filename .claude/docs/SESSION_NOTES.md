@@ -9,8 +9,8 @@
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-10, bởi: Gemini)
 
 **Đang làm:** Đã hoàn thành tính năng:
-1. Thêm bộ lọc tìm kiếm theo tên học viên & tên sản phẩm trên trang Showcase phụ huynh (`/showcase/[token]`): bỏ điều kiện ẩn ô tìm kiếm khi lớp <= 6 bạn, thêm icon kính lúp, nút xóa nhanh (✕), nút khôi phục ở empty state.
-2. Thêm thanh tìm kiếm theo tên học viên & tên sản phẩm trên trang Thư viện của học viên (`/student/classes/[classId]/gallery`) và Thư viện giáo viên (`/teacher/gallery`) qua component `ProjectGrid` và `GalleryView`.
+1. Thêm bộ lọc tìm kiếm & chọn học viên ("vừa nhập hoặc vừa chọn") trên trang Showcase phụ huynh (`/showcase/[token]`): bỏ điều kiện ẩn ô tìm kiếm khi lớp <= 6 bạn, combobox dropdown danh sách học sinh của lớp, hàng nút chọn nhanh (quick chips) tên từng em tiện lợi trên điện thoại, nút xóa nhanh (✕), nút khôi phục ở empty state.
+2. Thêm thanh tìm kiếm & chọn học viên trên trang Thư viện của học viên (`/student/classes/[classId]/gallery`) và Thư viện giáo viên (`/teacher/gallery`) qua component `ProjectGrid` và `GalleryView`.
 3. Unit tests pass 264/264, typecheck và lint đều sạch 100%. Nhánh hiện tại: `feature/showcase-name-filter`.
 
 **`main` = `origin/main`** đã bao gồm Đợt 60 (xem
