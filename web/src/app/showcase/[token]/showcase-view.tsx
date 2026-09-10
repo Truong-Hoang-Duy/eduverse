@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { SafeImage } from "@/components/safe-image";
 import { CheckMark, GraduationSeal, HeartIcon } from "@/components/showcase/emblem";
@@ -24,6 +24,7 @@ import {
   SHOWCASE_SORTS,
   arrangeShowcaseProjects,
   hasRated,
+  normalizeVi,
   overallScore,
   type MyRating,
   type ShowcaseLayout,
@@ -218,6 +219,8 @@ export function ShowcaseView({
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<ShowcaseLayout>("grid");
   const [sort, setSort] = useState<ShowcaseSort>("name");
   const [onlyUnrated, setOnlyUnrated] = useState(false);
@@ -232,6 +235,39 @@ export function ShowcaseView({
   );
   const [visitorId, setVisitorId] = useState("");
   const [heartError, setHeartError] = useState("");
+
+  const students = useMemo(() => {
+    return [...projects]
+      .map((p) => ({
+        id: p.id,
+        name: p.author_name,
+        projectName: p.name,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, "vi"));
+  }, [projects]);
+
+  const dropdownStudents = useMemo(() => {
+    const needle = normalizeVi(query);
+    if (!needle) return students;
+    return students.filter(
+      (s) =>
+        normalizeVi(s.name).includes(needle) ||
+        normalizeVi(s.projectName).includes(needle)
+    );
+  }, [students, query]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(e.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const id = readVisitorId();
@@ -413,40 +449,13 @@ export function ShowcaseView({
           </div>
         )}
 
-        {/* Tìm theo tên con hoặc sản phẩm */}
+        {/* Tìm kiếm hoặc chọn học viên */}
         {projects.length > 0 && (
-          <div className="relative mt-4">
-            <span
-              className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sc-ink-soft"
-              aria-hidden="true"
-            >
-              <svg
-                className="size-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                />
-              </svg>
-            </span>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm tên con hoặc tên sản phẩm..."
-              aria-label="Tìm theo tên học sinh hoặc sản phẩm"
-              className="w-full rounded-full border border-sc-line bg-sc-raised py-2.5 pr-10 pl-10 text-sm text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                aria-label="Xóa tìm kiếm"
-                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-sc-ink-soft hover:text-sc-ink transition-colors"
+          <div className="mt-4 space-y-2">
+            <div ref={searchContainerRef} className="relative">
+              <span
+                className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sc-ink-soft"
+                aria-hidden="true"
               >
                 <svg
                   className="size-4"
@@ -455,10 +464,164 @@ export function ShowcaseView({
                   strokeWidth={2}
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  />
                 </svg>
+              </span>
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setIsDropdownOpen(true);
+                }}
+                onFocus={() => setIsDropdownOpen(true)}
+                placeholder="Nhập hoặc chọn học sinh / sản phẩm..."
+                aria-label="Tìm hoặc chọn học sinh"
+                className="w-full rounded-full border border-sc-line bg-sc-raised py-2.5 pr-16 pl-10 text-sm text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
+              />
+              <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-1">
+                {query && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setIsDropdownOpen(false);
+                    }}
+                    aria-label="Xóa tìm kiếm"
+                    className="p-1 text-sc-ink-soft hover:text-sc-ink transition-colors"
+                  >
+                    <svg
+                      className="size-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsDropdownOpen((v) => !v)}
+                  aria-label="Danh sách học viên"
+                  aria-expanded={isDropdownOpen}
+                  className="p-1 text-sc-ink-soft hover:text-sc-ink transition-colors"
+                >
+                  <svg
+                    className={`size-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Menu dropdown chọn học viên */}
+              {isDropdownOpen && (
+                <div className="absolute z-20 mt-1.5 w-full rounded-2xl border border-sc-line bg-sc-raised p-1.5 shadow-lg max-h-60 overflow-y-auto">
+                  <div
+                    onClick={() => {
+                      setQuery("");
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors ${
+                      !query
+                        ? "bg-sc-brass-soft font-semibold text-sc-brass"
+                        : "text-sc-ink hover:bg-sc-brass-soft/50"
+                    }`}
+                  >
+                    <span>Tất cả học viên ({students.length})</span>
+                    {!query && <span className="text-xs text-sc-brass">✓</span>}
+                  </div>
+                  <div className="my-1 border-t border-sc-line" />
+                  {dropdownStudents.length === 0 ? (
+                    <p className="px-3 py-2 text-xs text-sc-ink-soft text-center">
+                      Không có học sinh nào khớp
+                    </p>
+                  ) : (
+                    dropdownStudents.map((s) => {
+                      const isSelected = normalizeVi(query) === normalizeVi(s.name);
+                      return (
+                        <div
+                          key={s.id}
+                          onClick={() => {
+                            setQuery(s.name);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors ${
+                            isSelected
+                              ? "bg-sc-brass-soft font-semibold text-sc-brass"
+                              : "text-sc-ink hover:bg-sc-brass-soft/50"
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1 pr-2">
+                            <p className="font-medium truncate">{s.name}</p>
+                            <p className="text-xs text-sc-ink-soft truncate">{s.projectName}</p>
+                          </div>
+                          {isSelected && <span className="text-xs text-sc-brass shrink-0">✓</span>}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Hàng nút bấm chọn nhanh học sinh trong lớp */}
+            <div
+              className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none"
+              role="tablist"
+              aria-label="Chọn nhanh học viên"
+            >
+              <span className="shrink-0 text-xs font-medium text-sc-ink-soft">
+                Chọn em:
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setIsDropdownOpen(false);
+                }}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
+                  !query
+                    ? "bg-sc-brass font-semibold text-sc-paper shadow-xs"
+                    : "border border-sc-line bg-sc-raised text-sc-ink hover:border-sc-brass/50 hover:bg-sc-brass-soft"
+                }`}
+              >
+                Tất cả ({students.length})
               </button>
-            )}
+              {students.map((s) => {
+                const isSelected = normalizeVi(query) === normalizeVi(s.name);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setQuery("");
+                      } else {
+                        setQuery(s.name);
+                      }
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
+                      isSelected
+                        ? "bg-sc-brass font-semibold text-sc-paper shadow-xs"
+                        : "border border-sc-line bg-sc-raised text-sc-ink hover:border-sc-brass/50 hover:bg-sc-brass-soft"
+                    }`}
+                  >
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

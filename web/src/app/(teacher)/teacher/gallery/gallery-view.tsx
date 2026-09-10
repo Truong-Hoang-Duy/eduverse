@@ -65,6 +65,25 @@ export function GalleryView({
   const filteredClasses =
     classFilter === ALL ? classes : classes.filter((c) => c.id === classFilter);
 
+  const currentClassStudents = useMemo(() => {
+    if (classFilter === ALL) return [];
+    const list: string[] = [];
+    const seen = new Set<string>();
+    for (const p of projects.filter((p) => p.classId === classFilter)) {
+      if (!seen.has(p.authorName)) {
+        seen.add(p.authorName);
+        list.push(p.authorName);
+      }
+    }
+    for (const m of membersWithoutProject.filter((m) => m.key.startsWith(`${classFilter}:`))) {
+      if (!seen.has(m.name)) {
+        seen.add(m.name);
+        list.push(m.name);
+      }
+    }
+    return list.sort((a, b) => a.localeCompare(b, "vi"));
+  }, [classFilter, projects, membersWithoutProject]);
+
   const totalMatches =
     filteredProjects.length + filteredMembersWithoutProject.length;
 
@@ -108,6 +127,52 @@ export function GalleryView({
           </Select>
         </div>
       </div>
+
+      {currentClassStudents.length > 0 && (
+        <div
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none"
+          role="tablist"
+          aria-label="Chọn nhanh học viên"
+        >
+          <span className="shrink-0 text-xs font-medium text-muted-foreground">
+            Chọn em:
+          </span>
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
+              !query
+                ? "bg-primary font-medium text-primary-foreground shadow-xs"
+                : "border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+            }`}
+          >
+            Tất cả ({currentClassStudents.length})
+          </button>
+          {currentClassStudents.map((name) => {
+            const isSelected = needle === normalizeVi(name);
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => {
+                  if (isSelected) {
+                    setQuery("");
+                  } else {
+                    setQuery(name);
+                  }
+                }}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
+                  isSelected
+                    ? "bg-primary font-medium text-primary-foreground shadow-xs"
+                    : "border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+                }`}
+              >
+                {name}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {query && (
         <div className="flex items-center justify-between text-xs text-muted-foreground">

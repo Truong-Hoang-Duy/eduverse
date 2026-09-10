@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Search, X } from "lucide-react";
 
 import { ProjectCard, type ProjectView } from "@/components/project-card";
 import { Badge } from "@/components/ui/badge";
@@ -49,8 +49,52 @@ export function ProjectGrid({
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const needle = normalizeVi(query);
+
+  const studentList = useMemo(() => {
+    const list: { id: string; name: string; projectName?: string }[] = [];
+    const seen = new Set<string>();
+
+    for (const p of projects) {
+      if (!seen.has(p.authorName)) {
+        seen.add(p.authorName);
+        list.push({ id: p.id, name: p.authorName, projectName: p.name });
+      }
+    }
+    for (const m of membersWithoutProject) {
+      if (!seen.has(m.name)) {
+        seen.add(m.name);
+        list.push({ id: m.key, name: m.name });
+      }
+    }
+
+    return list.sort((a, b) => a.name.localeCompare(b.name, "vi"));
+  }, [projects, membersWithoutProject]);
+
+  const dropdownStudents = useMemo(() => {
+    if (!needle) return studentList;
+    return studentList.filter(
+      (s) =>
+        normalizeVi(s.name).includes(needle) ||
+        (s.projectName && normalizeVi(s.projectName).includes(needle))
+    );
+  }, [studentList, needle]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(e.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const filteredProjects = useMemo(() => {
     if (!searchable || !needle) return projects;
@@ -75,24 +119,149 @@ export function ProjectGrid({
   return (
     <div className="space-y-4">
       {searchable && hasTotal && (
-        <div className="relative max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm theo tên học viên hoặc sản phẩm..."
-            aria-label="Tìm theo tên học viên hoặc sản phẩm"
-            className="h-9 pl-9 pr-9"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label="Xóa tìm kiếm"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+        <div className="space-y-2">
+          <div ref={searchContainerRef} className="relative max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setIsDropdownOpen(true);
+              }}
+              onFocus={() => setIsDropdownOpen(true)}
+              placeholder="Nhập hoặc chọn học viên / sản phẩm..."
+              aria-label="Tìm hoặc chọn học viên"
+              className="h-9 pl-9 pr-16"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setIsDropdownOpen(false);
+                  }}
+                  aria-label="Xóa tìm kiếm"
+                  className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <X className="size-4" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen((v) => !v)}
+                aria-label="Danh sách học viên"
+                aria-expanded={isDropdownOpen}
+                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronDown
+                  className={`size-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+            </div>
+
+            {/* Menu dropdown chọn học viên */}
+            {isDropdownOpen && (
+              <div className="absolute z-20 mt-1.5 w-full rounded-xl border bg-popover text-popover-foreground p-1 shadow-md max-h-60 overflow-y-auto">
+                <div
+                  onClick={() => {
+                    setQuery("");
+                    setIsDropdownOpen(false);
+                  }}
+                  className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${
+                    !query
+                      ? "bg-accent font-medium text-accent-foreground"
+                      : "hover:bg-accent/60"
+                  }`}
+                >
+                  <span>Tất cả học viên ({studentList.length})</span>
+                  {!query && <span className="text-xs text-primary">✓</span>}
+                </div>
+                <div className="my-1 border-t" />
+                {dropdownStudents.length === 0 ? (
+                  <p className="px-3 py-2 text-xs text-muted-foreground text-center">
+                    Không có học sinh nào khớp
+                  </p>
+                ) : (
+                  dropdownStudents.map((s) => {
+                    const isSelected = needle === normalizeVi(s.name);
+                    return (
+                      <div
+                        key={s.id}
+                        onClick={() => {
+                          setQuery(s.name);
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors ${
+                          isSelected
+                            ? "bg-accent font-medium text-accent-foreground"
+                            : "hover:bg-accent/60"
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1 pr-2">
+                          <p className="font-medium truncate">{s.name}</p>
+                          {s.projectName && (
+                            <p className="text-xs text-muted-foreground truncate">{s.projectName}</p>
+                          )}
+                        </div>
+                        {isSelected && <span className="text-xs text-primary shrink-0">✓</span>}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Hàng nút bấm chọn nhanh học sinh trong lớp */}
+          {studentList.length > 0 && (
+            <div
+              className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none"
+              role="tablist"
+              aria-label="Chọn nhanh học viên"
             >
-              <X className="size-4" />
-            </button>
+              <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                Chọn em:
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setIsDropdownOpen(false);
+                }}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
+                  !query
+                    ? "bg-primary font-medium text-primary-foreground shadow-xs"
+                    : "border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+                }`}
+              >
+                Tất cả ({studentList.length})
+              </button>
+              {studentList.map((s) => {
+                const isSelected = needle === normalizeVi(s.name);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setQuery("");
+                      } else {
+                        setQuery(s.name);
+                      }
+                      setIsDropdownOpen(false);
+                    }}
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
+                      isSelected
+                        ? "bg-primary font-medium text-primary-foreground shadow-xs"
+                        : "border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+                    }`}
+                  >
+                    {s.name}
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
