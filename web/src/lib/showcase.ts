@@ -167,6 +167,7 @@ export interface ShowcasePayload {
   allow_reactions: boolean;
   show_rating_results: boolean;
   expires_at: string | null;
+  spotlight_project_id: string | null;
   projects: ShowcaseProject[];
 }
 

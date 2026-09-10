@@ -75,7 +75,9 @@ export function RatingForm({
       }
       onSaved(res.rating);
       setMessage(
-        existing ? "Đã cập nhật nhận xét của bạn." : "Cảm ơn quý phụ huynh!"
+        existing
+          ? "Đã cập nhật nhận xét của bạn."
+          : "Cảm ơn bạn đã gửi nhận xét và lời chúc!"
       );
     });
   }
@@ -86,11 +88,10 @@ export function RatingForm({
         <GraduationSeal size={34} className="mt-0.5 shrink-0 text-sc-brass" />
         <div className="min-w-0">
           <h3 className="font-display text-lg leading-tight">
-            Gửi em {studentName} đôi lời
+            Gửi nhận xét cho em {studentName}
           </h3>
           <p className="text-xs text-sc-ink-soft">
-            Hoàn toàn ẩn danh — không ai biết ai chấm. Tiêu chí nào không theo
-            dõi được thì cứ bỏ trống.
+            Ẩn danh — Phụ huynh và các bạn cùng gửi lời chúc, động viên cho bài thuyết trình hôm nay.
           </p>
         </div>
       </header>
@@ -116,7 +117,7 @@ export function RatingForm({
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           maxLength={SHOWCASE_COMMENT_MAX}
-          placeholder={`Điều gì ở sản phẩm của em ${studentName} làm bạn ấn tượng nhất?`}
+          placeholder={`Viết nhận xét, lời chúc hoặc điều bạn ấn tượng nhất về sản phẩm của em ${studentName}...`}
           className="sc-ruled w-full resize-none rounded-xl border border-sc-line bg-transparent px-3 py-1 text-base sm:text-sm leading-7 text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
         />
       </label>
