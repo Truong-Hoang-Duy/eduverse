@@ -17,9 +17,10 @@
    - Bỏ toàn bộ UI và logic thả tim (`HeartButton`, `HeartIcon`, state `hearts`, `myHearts`, hàm `toggleHeart`, `readMyHearts`, `saveMyHearts`) trên trang Showcase phụ huynh (`showcase-view.tsx`).
    - Bỏ checkbox "Cho thả tim" trên ShowcasePanel của giáo viên (thay bằng hidden input `value="false"` để tương thích Server Action), bỏ hiển thị `{heartCount} lượt thả tim` và bỏ query `showcase_reactions` trong `teacher/classes/[id]/page.tsx` giúp tối ưu tốc độ tải trang.
    - Cập nhật `showcase.ts` và `showcase.test.ts`.
-3. Unit tests pass 264/264, typecheck và lint sạch 100% không lỗi. Nhánh hiện tại: `feature/showcase-no-hearts-zoom-lock`.
+3. Unit tests pass 264/264, typecheck và lint sạch 100% không lỗi.
+4. Đã push, merge và deploy vào `main`.
 
-**`main` = `origin/main` = `d72ee42`** (tính năng vừa nhập vừa chọn học viên trên Showcase và Gallery).
+**`main` = `origin/main` = `d516d16`** (khóa mobile zoom khi mở popup + xóa hoàn toàn chế độ thả tim).
 `ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.
 ⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp
 commit mới") chưa từng được xác nhận đã kiểm trong session nào — máy dev
