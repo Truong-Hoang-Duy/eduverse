@@ -413,15 +413,53 @@ export function ShowcaseView({
           </div>
         )}
 
-        {/* Lớp đông thì cuộn trên điện thoại rất mệt — cho tìm theo tên. */}
-        {projects.length > 6 && (
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm tên con hoặc tên sản phẩm..."
-            aria-label="Tìm theo tên"
-            className="mt-4 w-full rounded-full border border-sc-line bg-sc-raised px-4 py-2.5 text-sm text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
-          />
+        {/* Tìm theo tên con hoặc sản phẩm */}
+        {projects.length > 0 && (
+          <div className="relative mt-4">
+            <span
+              className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sc-ink-soft"
+              aria-hidden="true"
+            >
+              <svg
+                className="size-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                />
+              </svg>
+            </span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Tìm tên con hoặc tên sản phẩm..."
+              aria-label="Tìm theo tên học sinh hoặc sản phẩm"
+              className="w-full rounded-full border border-sc-line bg-sc-raised py-2.5 pr-10 pl-10 text-sm text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label="Xóa tìm kiếm"
+                className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-sc-ink-soft hover:text-sc-ink transition-colors"
+              >
+                <svg
+                  className="size-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
         )}
 
         {/* Chế độ xem + sắp xếp. Lớp 1-2 bạn thì mấy thứ này chỉ tổ rối. */}
@@ -494,11 +532,22 @@ export function ShowcaseView({
             </p>
           </div>
         ) : visible.length === 0 ? (
-          <p className="mt-6 rounded-2xl border border-dashed border-sc-brass/40 p-8 text-center text-sm text-sc-ink-soft">
-            {query
-              ? `Không tìm thấy bạn nào khớp “${query}”.`
-              : "Bạn đã nhận xét hết cả lớp rồi — bỏ lọc “Chưa nhận xét” để xem lại."}
-          </p>
+          <div className="mt-6 rounded-2xl border border-dashed border-sc-brass/40 p-8 text-center text-sm text-sc-ink-soft">
+            <p>
+              {query
+                ? `Không tìm thấy bạn nào khớp “${query}”.`
+                : "Bạn đã nhận xét hết cả lớp rồi — bỏ lọc “Chưa nhận xét” để xem lại."}
+            </p>
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-sc-brass/50 bg-sc-brass-soft px-4 py-1.5 text-xs font-medium text-sc-brass hover:bg-sc-brass/20 transition-colors"
+              >
+                ✕ Xóa tìm kiếm
+              </button>
+            )}
+          </div>
         ) : layout === "list" ? (
           <ul className="mt-6 space-y-2">
             {visible.map((p) => (
