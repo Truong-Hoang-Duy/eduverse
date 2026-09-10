@@ -30,6 +30,7 @@ import {
   enableShowcase,
   rotateShowcaseToken,
   saveShowcaseSettings,
+  setSpotlightProject,
 } from "@/lib/actions/showcase";
 import {
   DEFAULT_EXPIRY_PRESET,
@@ -53,6 +54,7 @@ export interface ShowcaseRow {
   show_rating_results: boolean;
   hidden_student_ids: string[];
   view_count: number;
+  spotlight_project_id?: string | null;
 }
 
 /** Một lượt phụ huynh chấm — ẨN DANH, không có tên người gửi và sẽ không bao giờ có. */
@@ -87,6 +89,7 @@ export function ShowcasePanel({
   loadError,
   students,
   ratings,
+  projects = [],
 }: {
   classId: string;
   classCode: string;
@@ -95,6 +98,7 @@ export function ShowcasePanel({
   loadError?: string | null;
   students: { id: string; fullName: string }[];
   ratings: ShowcaseRatingRow[];
+  projects?: { id: string; name: string; authorName: string }[];
   /** @deprecated Đã bỏ tính năng thả tim */
   heartCount?: number;
 }) {
@@ -106,6 +110,27 @@ export function ShowcasePanel({
     ActionResult,
     FormData
   >(saveShowcaseSettings, {});
+
+  const [currentSpotlight, setCurrentSpotlight] = useState<string | null>(
+    showcase?.spotlight_project_id ?? null
+  );
+  const [spotlightPending, setSpotlightPending] = useState(false);
+
+  useEffect(() => {
+    setCurrentSpotlight(showcase?.spotlight_project_id ?? null);
+  }, [showcase?.spotlight_project_id]);
+
+  async function handleSelectSpotlight(projectId: string | null) {
+    const prev = currentSpotlight;
+    setCurrentSpotlight(projectId);
+    setSpotlightPending(true);
+    const res = await setSpotlightProject(classId, projectId);
+    setSpotlightPending(false);
+    if (res.error) {
+      setCurrentSpotlight(prev);
+      alert(res.error ?? "Không thể cập nhật thuyết trình");
+    }
+  }
 
   const [expiry, setExpiry] = useState<ExpiryPreset>(DEFAULT_EXPIRY_PRESET);
   const [copied, setCopied] = useState(false);
@@ -288,6 +313,67 @@ export function ShowcasePanel({
             )}
           </div>
 
+          {/* Chế độ Live: Đang thuyết trình */}
+          <div className="space-y-3 rounded-xl border-2 border-red-500/20 bg-red-500/5 p-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="relative flex size-3">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex size-3 rounded-full bg-red-500" />
+                </span>
+                <span className="text-sm font-semibold text-foreground">
+                  Chế độ Live: Học viên đang thuyết trình
+                </span>
+              </div>
+              {currentSpotlight && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={spotlightPending}
+                  onClick={() => handleSelectSpotlight(null)}
+                  className="h-7 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  ✕ Dừng thuyết trình
+                </Button>
+              )}
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Bấm chọn em đang thuyết trình trên sân khấu. Màn hình điện thoại của phụ huynh sẽ tự động hiện thông báo nổi:{" "}
+              <strong className="text-foreground">🔴 Đang thuyết trình: Em [Tên] — Bấm để xem</strong> để mở ngay sản phẩm của em đó.
+            </p>
+
+            {projects.length === 0 ? (
+              <p className="text-xs italic text-muted-foreground">
+                Chưa có sản phẩm nào được khai báo trong lớp.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {projects.map((p) => {
+                  const isSpotlight = currentSpotlight === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={spotlightPending}
+                      onClick={() => handleSelectSpotlight(isSpotlight ? null : p.id)}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all ${
+                        isSpotlight
+                          ? "bg-red-600 text-white shadow-md ring-2 ring-red-600/30 scale-105"
+                          : "border border-border bg-background text-foreground hover:border-red-400 hover:bg-red-50/50 dark:hover:bg-red-950/20"
+                      }`}
+                    >
+                      {isSpotlight && <span className="text-[10px]">🔴</span>}
+                      <span>{p.authorName}</span>
+                      <span className="opacity-75 font-normal">({p.name})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           {/* Thiết lập nội dung trang */}
           <form action={settingsAction} className="space-y-4 rounded-xl border p-3">
             <input type="hidden" name="class_id" value={classId} />
@@ -405,7 +491,7 @@ export function ShowcasePanel({
           {/* Nhận xét chữ — hiện ngay trên trang phụ huynh, giáo viên gỡ được ở đây */}
           <div className="space-y-2">
             <p className="text-sm font-medium">
-              💬 Nhận xét của phụ huynh ({withComment.length})
+              💬 Nhận xét cuối khóa ({withComment.length})
             </p>
             {withComment.length === 0 ? (
               <p className="text-sm text-muted-foreground">
@@ -423,7 +509,7 @@ export function ShowcasePanel({
                       <span className="text-xs text-muted-foreground">
                         {" · "}
                         {new Date(r.created_at).toLocaleString("vi-VN")}
-                        {" · phụ huynh ẩn danh"}
+                        {" · nhận xét ẩn danh"}
                       </span>
                       <p className="whitespace-pre-wrap text-muted-foreground">
                         {r.comment}

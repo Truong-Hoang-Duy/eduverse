@@ -8,17 +8,32 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-10, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng:
-1. **Khóa zoom toàn diện trên trang Showcase & Popup trên điện thoại (Mobile Zoom Lock):**
-   - Nâng cấp hook `usePreventZoom` (`web/src/lib/use-prevent-zoom.ts`): khóa viewport `<meta name="viewport" content="...maximum-scale=1.0, user-scalable=no">`; chặn sự kiện `touchmove` đa điểm (`touches.length > 1`), cử chỉ `gesturestart/change/end` của Safari/WebKit, và double-tap zoom ngoài các phần tử tương tác.
-   - Thêm `export const viewport: Viewport` vào `web/src/app/showcase/layout.tsx` để render meta viewport userScalable: false ngay từ server.
-   - Thêm `style={{ touchAction: "manipulation" }}` trên layout và main của Showcase.
-   - **Xử lý triệt để ô tìm kiếm và sắp xếp:** Đổi font-size ô `<input>` tìm kiếm và `<select>` sắp xếp trong `showcase-view.tsx` và `project-grid.tsx` thành `text-base sm:text-sm` (16px trên mobile). Điều này ngăn 100% việc iOS Safari tự động phóng to toàn bộ trang khi người dùng bấm vào ô tìm kiếm.
-2. **Xóa hoàn toàn chế độ Thả tim (Hearts/Reactions):**
-   - Bỏ toàn bộ UI và logic thả tim trên Showcase, Panel giáo viên và chi tiết lớp.
-3. Unit tests pass 264/264, typecheck và lint sạch 100% không lỗi. Nhánh hiện tại: `feature/showcase-full-zoom-lock`.
+**Đang làm:** Đã hoàn thành 2 tính năng Showcase sản phẩm cuối khóa:
+1. **Chế độ Live "Đang thuyết trình" (Live Spotlight):**
+   - **Phía Giáo viên (`showcase-panel.tsx`):**
+     - Thêm khối điều khiển Live: chấm đỏ pulse, nút "✕ Dừng thuyết trình", và danh sách các chip học viên trong lớp.
+     - Giáo viên bấm chọn em đang thuyết trình trên sân khấu, chip chuyển sang màu đỏ nổi bật `🔴 [Tên em] ([Tên dự án])`.
+     - Server Action `setSpotlightProject(classId, projectId)` cập nhật `spotlight_project_id` vào bảng `class_showcases`.
+   - **Phía Phụ huynh (`showcase-view.tsx`):**
+     - Polling nhẹ mỗi 4s qua Server Action / RPC `get_showcase_spotlight(token)` để cập nhật học sinh đang thuyết trình.
+     - Hiện **Thanh thông báo nổi (Floating Spotlight Banner)** ở đáy màn hình điện thoại: `🔴 Đang thuyết trình: Em [Tên em] — Bấm để xem`. Chạm vào sẽ mở ngay popup chi tiết sản phẩm của em đó. Banner tự ẩn khi đang xem đúng bài của em đó.
+     - Thẻ bài của em trên lưới / danh sách / slide tự động có huy hiệu động `🔴 Đang thuyết trình` và hiệu ứng viền đỏ / glow nổi bật.
+2. **Tách riêng 2 khối Nhận xét rõ ràng & Tinh gọn giao diện:**
+   - **Khối "Nhận xét cuối khóa · {số lượng}"**: Dành cho học sinh và phụ huynh gửi nhận xét, lời chúc và động viên trực tiếp trong buổi tổng kết qua link showcase. Form gửi nhận xét hướng dẫn thân thiện cho cả phụ huynh và các bạn trong lớp.
+   - **Khối "Nhận xét bài làm ban đầu · {số lượng}"**: Giữ riêng biệt các bình luận/nhận xét của các bạn cùng lớp được ghi nhận trong quá trình học và làm dự án trước đó.
+   - Phía giáo viên (`showcase-panel.tsx`): Đổi tiêu đề thành "💬 Nhận xét cuối khóa ({số lượng})" để quản lý nhận xét buổi hôm đó.
+   - **Bỏ thanh tiến độ**: Đã gỡ bỏ khối "Bạn đã nhận xét X/Y bạn" và thanh tiến độ khỏi trang showcase để giao diện thông thoáng, tập trung vào tìm kiếm và trải nghiệm xem sản phẩm.
+3. **Database & Types:**
+   - Migration mới: `supabase/migrations/20260910000000_showcase_spotlight.sql` (thêm cột `spotlight_project_id`, cập nhật `get_showcase`, tạo RPC `get_showcase_spotlight`).
+   - Cập nhật `database.types.ts`, `showcase.ts`, `actions/showcase.ts`, `actions/showcase-public.ts`.
+4. **Kiểm thử chất lượng:**
+   - `pnpm typecheck`: Clean 100% (0 errors).
+   - `pnpm lint`: Clean 100% (0 errors).
+   - `pnpm test`: 22 test files passed (264/264 tests).
+   - `pnpm build`: Next.js 15 Turbopack production build thành công 100%.
+   - Nhánh Git hiện tại: `feature/showcase-spotlight-comments` (chưa commit/push theo quy định).
 
-**`main` = `origin/main` = `c9ee8f4`** (khóa mobile zoom toàn diện trên trang showcase + chống auto-zoom ô tìm kiếm + xóa hoàn toàn chế độ thả tim).
+**`main` = `origin/main` = `c9ee8f4`**
 `ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.
 ⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp
 commit mới") chưa từng được xác nhận đã kiểm trong session nào — máy dev
