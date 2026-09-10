@@ -18,7 +18,7 @@
    - Bỏ toàn bộ UI và logic thả tim trên Showcase, Panel giáo viên và chi tiết lớp.
 3. Unit tests pass 264/264, typecheck và lint sạch 100% không lỗi. Nhánh hiện tại: `feature/showcase-full-zoom-lock`.
 
-**`main` = `origin/main` = `d516d16`** (khóa mobile zoom khi mở popup + xóa hoàn toàn chế độ thả tim).
+**`main` = `origin/main` = `c9ee8f4`** (khóa mobile zoom toàn diện trên trang showcase + chống auto-zoom ô tìm kiếm + xóa hoàn toàn chế độ thả tim).
 `ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.
 ⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp
 commit mới") chưa từng được xác nhận đã kiểm trong session nào — máy dev
