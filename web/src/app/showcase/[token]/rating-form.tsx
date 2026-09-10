@@ -117,7 +117,7 @@ export function RatingForm({
           onChange={(e) => setComment(e.target.value)}
           maxLength={SHOWCASE_COMMENT_MAX}
           placeholder={`Điều gì ở sản phẩm của em ${studentName} làm bạn ấn tượng nhất?`}
-          className="sc-ruled w-full resize-none rounded-xl border border-sc-line bg-transparent px-3 py-1 text-sm leading-7 text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
+          className="sc-ruled w-full resize-none rounded-xl border border-sc-line bg-transparent px-3 py-1 text-base sm:text-sm leading-7 text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
         />
       </label>
 

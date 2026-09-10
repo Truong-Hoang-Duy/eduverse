@@ -233,15 +233,13 @@ export type ShowcaseSort = "name" | "recent" | "hearts";
 export const SHOWCASE_SORTS: { value: ShowcaseSort; label: string }[] = [
   { value: "name", label: "Tên A → Z" },
   { value: "recent", label: "Mới cập nhật" },
-  { value: "hearts", label: "Nhiều tim nhất" },
 ];
 
 export interface ArrangeShowcaseOptions {
   query: string;
   sort: ShowcaseSort;
-  /** Lượt tim ĐANG hiện trên máy này (state client), không phải `reaction_count`
-   *  lúc tải trang — phụ huynh vừa bấm tim là thứ tự phải phản ánh ngay. */
-  hearts: Record<string, number>;
+  /** @deprecated Đã bỏ tính năng thả tim */
+  hearts?: Record<string, number>;
   /** Chỉ giữ những bạn máy này chưa chấm — "còn bạn nào mình chưa nhận xét". */
   onlyUnrated: boolean;
   ratedIds: string[];
@@ -250,10 +248,6 @@ export interface ArrangeShowcaseOptions {
 /**
  * Lọc + sắp xếp danh sách sản phẩm cho trang phụ huynh. Tách khỏi component vì
  * là logic thuần và là thứ quyết định thứ tự phụ huynh nhìn thấy giữa buổi lễ.
- *
- * ⚠️ Sắp "nhiều tim nhất" là lựa chọn của CHÍNH người xem, không phải bảng xếp
- * hạng bày sẵn — trang vẫn không hiện thứ hạng, và điểm trung bình vẫn ẩn theo
- * `show_rating_results` (xem DECISIONS.md).
  */
 export function arrangeShowcaseProjects(
   projects: ShowcaseProject[],
@@ -276,10 +270,8 @@ export function arrangeShowcaseProjects(
 
   return kept.sort((a, b) => {
     if (sort === "recent") return b.updated_at.localeCompare(a.updated_at);
-    if (sort === "hearts") {
+    if (sort === "hearts" && hearts) {
       const diff = (hearts[b.id] ?? 0) - (hearts[a.id] ?? 0);
-      // Hòa tim thì về tên: nếu không, mỗi lượt tim mới lại xáo tung thứ tự
-      // của những bạn đang bằng điểm nhau.
       return diff !== 0 ? diff : byName(a, b);
     }
     return byName(a, b);

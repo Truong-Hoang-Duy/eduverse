@@ -170,21 +170,14 @@ export default async function ClassDetailPage({
   const authorByProject = new Map(projects.map((p) => [p.id, p.authorName]));
 
   let showcaseRatings: ShowcaseRatingRow[] = [];
-  let heartCount = 0;
   if (showcase) {
-    const [{ data: ratingRows }, { data: heartRows }] = await Promise.all([
-      supabase
-        .from("showcase_ratings")
-        .select(
-          "id, project_id, score_product, score_presentation, score_creativity, comment, created_at"
-        )
-        .eq("showcase_id", showcase.id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("showcase_reactions")
-        .select("id")
-        .eq("showcase_id", showcase.id),
-    ]);
+    const { data: ratingRows } = await supabase
+      .from("showcase_ratings")
+      .select(
+        "id, project_id, score_product, score_presentation, score_creativity, comment, created_at"
+      )
+      .eq("showcase_id", showcase.id)
+      .order("created_at", { ascending: false });
     // Bài chấm ẩn danh: dòng KHÔNG có tên người gửi. `studentName` là tên em
     // ĐƯỢC CHẤM, lấy từ chính danh sách sản phẩm phía trên.
     showcaseRatings = (ratingRows ?? []).map((r) => ({
@@ -196,7 +189,6 @@ export default async function ClassDetailPage({
       comment: r.comment,
       created_at: r.created_at,
     }));
-    heartCount = (heartRows ?? []).length;
   }
 
   return (
@@ -340,7 +332,6 @@ export default async function ClassDetailPage({
             fullName: s.fullName,
           }))}
           ratings={showcaseRatings}
-          heartCount={heartCount}
         />
       </CollapsibleCard>
 

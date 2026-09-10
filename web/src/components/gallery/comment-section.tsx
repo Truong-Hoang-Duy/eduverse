@@ -92,7 +92,7 @@ export function CommentSection({
           name="content"
           placeholder={placeholder}
           maxLength={PROJECT_COMMENT_MAX}
-          className="h-9"
+          className="h-9 text-base sm:text-sm"
         />
         {/* h-9 khớp đúng chiều cao Input. `size="sm"` của Button là h-7 nên
             trước đây nút thấp hơn ô nhập một khoảng thấy rõ. */}
