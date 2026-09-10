@@ -33,7 +33,7 @@
    - `pnpm build`: Next.js 15 Turbopack production build thành công 100%.
    - Nhánh Git hiện tại: `feature/showcase-spotlight-comments` (chưa commit/push theo quy định).
 
-**`main` = `origin/main` = `c9ee8f4`**
+**`main` = `origin/main` = `09686db`**
 `ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.
 ⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp
 commit mới") chưa từng được xác nhận đã kiểm trong session nào — máy dev
