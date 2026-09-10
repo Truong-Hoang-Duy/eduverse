@@ -142,3 +142,17 @@ export async function trackShowcaseView(token: string): Promise<void> {
   const supabase = await createClient();
   await supabase.rpc("bump_showcase_view", { p_token: token });
 }
+
+/** Đọc nhanh id học sinh đang thuyết trình (dùng cho polling nhẹ từ điện thoại phụ huynh). */
+export async function getShowcaseSpotlight(token: string): Promise<string | null> {
+  if (!isShowcaseToken(token)) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_showcase_spotlight", {
+    p_token: token,
+  });
+
+  if (error || !data || typeof data !== "object") return null;
+  const row = data as { spotlight_project_id?: string | null };
+  return row.spotlight_project_id ?? null;
+}

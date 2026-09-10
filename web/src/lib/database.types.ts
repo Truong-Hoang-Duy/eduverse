@@ -140,6 +140,7 @@ export type Database = {
           token: string
           updated_at: string
           view_count: number
+          spotlight_project_id: string | null
         }
         Insert: {
           allow_ratings?: boolean
@@ -155,6 +156,7 @@ export type Database = {
           token: string
           updated_at?: string
           view_count?: number
+          spotlight_project_id?: string | null
         }
         Update: {
           allow_ratings?: boolean
@@ -170,6 +172,7 @@ export type Database = {
           token?: string
           updated_at?: string
           view_count?: number
+          spotlight_project_id?: string | null
         }
         Relationships: [
           {
@@ -787,6 +790,7 @@ export type Database = {
         Returns: Json
       }
       get_showcase: { Args: { p_token: string }; Returns: Json }
+      get_showcase_spotlight: { Args: { p_token: string }; Returns: Json }
       is_enrolled: { Args: { p_class_id: string }; Returns: boolean }
       is_teacher: { Args: never; Returns: boolean }
       is_teacher_of_class: { Args: { p_class_id: string }; Returns: boolean }

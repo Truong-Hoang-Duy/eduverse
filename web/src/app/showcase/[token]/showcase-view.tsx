@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { isSafeHttpUrl } from "@/lib/drive-url";
 import {
+  getShowcaseSpotlight,
   loadMyShowcaseRatings,
   trackShowcaseView,
 } from "@/lib/actions/showcase-public";
@@ -181,6 +182,27 @@ export function ShowcaseView({
     Object.fromEntries(projects.map((p) => [p.id, p.guest_notes]))
   );
   const [visitorId, setVisitorId] = useState("");
+  const [spotlightId, setSpotlightId] = useState<string | null>(
+    showcase.spotlight_project_id ?? null
+  );
+
+  useEffect(() => {
+    // Polling nhẹ mỗi 4s để cập nhật bạn đang thuyết trình từ giáo viên
+    const interval = setInterval(async () => {
+      try {
+        const id = await getShowcaseSpotlight(token);
+        setSpotlightId(id);
+      } catch {
+        // Bỏ qua lỗi mạng chập chờn
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [token]);
+
+  const spotlightProject = useMemo(
+    () => (spotlightId ? projects.find((p) => p.id === spotlightId) ?? null : null),
+    [projects, spotlightId]
+  );
 
   usePreventZoom(true);
 
@@ -295,8 +317,6 @@ export function ShowcaseView({
     });
   }, []);
 
-  const ratedCount = ratedIds.length;
-
   // Lọc/sắp xếp làm danh sách ngắn lại — kẹp lại để không trỏ ra ngoài mảng.
   const slideIndex = Math.min(slide, Math.max(visible.length - 1, 0));
   const slideProject = visible[slideIndex];
@@ -332,32 +352,6 @@ export function ShowcaseView({
             </p>
           )}
         </header>
-
-        {/* Thanh tiến độ: phụ huynh biết còn bạn nào mình chưa nhận xét. */}
-        {showcase.allow_ratings && projects.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-sc-line bg-sc-raised p-4">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="text-sm">
-                Bạn đã nhận xét{" "}
-                <span className="font-display text-lg font-semibold text-sc-brass">
-                  {ratedCount}/{projects.length}
-                </span>{" "}
-                bạn
-              </p>
-              <p className="text-xs text-sc-ink-soft">
-                Bấm vào từng bạn để xem và chấm điểm
-              </p>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-sc-line">
-              <div
-                className="h-full rounded-full bg-sc-brass transition-all"
-                style={{
-                  width: `${projects.length ? (ratedCount / projects.length) * 100 : 0}%`,
-                }}
-              />
-            </div>
-          </div>
-        )}
 
         {/* Tìm kiếm hoặc chọn học viên */}
         {projects.length > 0 && (
@@ -615,6 +609,7 @@ export function ShowcaseView({
                 key={p.id}
                 project={p}
                 rated={hasRated(myRatings[p.id])}
+                isSpotlight={p.id === spotlightId}
                 onOpen={() => setOpenId(p.id)}
               />
             ))}
@@ -625,6 +620,7 @@ export function ShowcaseView({
               <ProjectCardTile
                 project={slideProject}
                 rated={hasRated(myRatings[slideProject.id])}
+                isSpotlight={slideProject.id === spotlightId}
                 showResults={showcase.show_rating_results}
                 onOpen={() => setOpenId(slideProject.id)}
               />
@@ -656,6 +652,7 @@ export function ShowcaseView({
                 key={p.id}
                 project={p}
                 rated={hasRated(myRatings[p.id])}
+                isSpotlight={p.id === spotlightId}
                 showResults={showcase.show_rating_results}
                 onOpen={() => setOpenId(p.id)}
               />
@@ -702,6 +699,41 @@ export function ShowcaseView({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Floating Spotlight Banner: Thông báo nổi khi có bạn đang thuyết trình */}
+      {spotlightProject && openId !== spotlightProject.id && (
+        <aside
+          aria-label="Đang thuyết trình"
+          className="fixed bottom-4 inset-x-0 z-30 mx-auto max-w-md px-4 pointer-events-none animate-in fade-in slide-in-from-bottom-5 duration-300"
+        >
+          <button
+            type="button"
+            onClick={() => setOpenId(spotlightProject.id)}
+            className="pointer-events-auto w-full flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 bg-[length:200%_auto] text-white p-3.5 shadow-2xl hover:brightness-110 transition-all border border-white/25 active:scale-[0.98] text-left"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="relative flex size-3.5 shrink-0">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                <span className="relative inline-flex size-3.5 rounded-full bg-white shadow-xs" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-red-100">
+                  🔴 Đang thuyết trình
+                </p>
+                <p className="font-display font-semibold text-sm sm:text-base truncate">
+                  Em {spotlightProject.author_name}
+                  <span className="font-normal text-xs text-red-100/90 ml-1.5 truncate">
+                    — {spotlightProject.name}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <span className="shrink-0 rounded-full bg-white/20 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-xs whitespace-nowrap shadow-xs">
+              Bấm để xem →
+            </span>
+          </button>
+        </aside>
+      )}
     </main>
   );
 }
@@ -738,10 +770,12 @@ function SlideNavButton({
 function ProjectListRow({
   project,
   rated,
+  isSpotlight,
   onOpen,
 }: {
   project: ShowcaseProject;
   rated: boolean;
+  isSpotlight?: boolean;
   onOpen: () => void;
 }) {
   return (
@@ -749,12 +783,21 @@ function ProjectListRow({
       <button
         type="button"
         onClick={onOpen}
-        className="flex w-full items-center gap-3 rounded-xl border border-sc-line bg-sc-raised p-2.5 text-left transition-colors hover:border-sc-brass/50"
+        className={`flex w-full items-center gap-3 rounded-xl border bg-sc-raised p-2.5 text-left transition-all ${
+          isSpotlight
+            ? "border-red-500 ring-2 ring-red-500/30 bg-red-500/5 shadow-sm"
+            : "border-sc-line hover:border-sc-brass/50"
+        }`}
       >
         <SealAvatar name={project.author_name} size={40} />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-display text-base font-semibold">
-            {project.author_name}
+          <span className="flex items-center gap-2 truncate font-display text-base font-semibold">
+            <span>{project.author_name}</span>
+            {isSpotlight && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider animate-pulse">
+                🔴 Đang thuyết trình
+              </span>
+            )}
           </span>
           <span className="block truncate text-sm text-sc-ink-soft">
             {project.name}
@@ -770,11 +813,13 @@ function ProjectListRow({
 function ProjectCardTile({
   project,
   rated,
+  isSpotlight,
   showResults,
   onOpen,
 }: {
   project: ShowcaseProject;
   rated: boolean;
+  isSpotlight?: boolean;
   showResults: boolean;
   onOpen: () => void;
 }) {
@@ -793,8 +838,19 @@ function ProjectCardTile({
           onOpen();
         }
       }}
-      className="sc-rule cursor-pointer rounded-2xl bg-sc-raised p-3 text-left transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_color-mix(in_oklab,var(--sc-brass)_30%,transparent)]"
+      className={`sc-rule relative cursor-pointer rounded-2xl bg-sc-raised p-3 text-left transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_color-mix(in_oklab,var(--sc-brass)_30%,transparent)] ${
+        isSpotlight
+          ? "ring-2 ring-red-500 shadow-[0_0_25px_rgba(239,68,68,0.25)]"
+          : ""
+      }`}
     >
+      {isSpotlight && (
+        <div className="absolute -top-2.5 right-4 z-10">
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md animate-pulse">
+            🔴 Đang thuyết trình
+          </span>
+        </div>
+      )}
       {project.image_urls.length > 0 && (
         <div className="relative mb-3">
           <SafeImage
@@ -978,34 +1034,48 @@ function ProjectDetail({
         )}
 
         {guestNotes.length > 0 && (
-          <div className="space-y-2 rounded-xl border border-sc-line p-3">
-            <Eyebrow>Nhận xét của phụ huynh · {guestNotes.length}</Eyebrow>
-            {guestNotes.map((n) => (
-              <blockquote
-                key={n.id}
-                className="border-l-2 border-sc-brass/40 pl-3 text-sm"
-              >
-                <p className="whitespace-pre-wrap">{n.comment}</p>
-                <footer className="mt-0.5 text-xs text-sc-ink-soft">
-                  Phụ huynh ẩn danh · {formatDateTime(n.created_at)}
-                </footer>
-              </blockquote>
-            ))}
+          <div className="space-y-2.5 rounded-xl border border-sc-line bg-sc-paper/40 p-3.5">
+            <Eyebrow>Nhận xét cuối khóa · {guestNotes.length}</Eyebrow>
+            <div className="space-y-3 divide-y divide-sc-line/60">
+              {guestNotes.map((n) => (
+                <div key={n.id} className="pt-2.5 first:pt-0 text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex items-center rounded-md bg-sc-brass-soft px-2 py-0.5 text-[11px] font-medium text-sc-brass">
+                      Nhận xét & lời chúc
+                    </span>
+                    <span className="text-xs text-sc-ink-soft">
+                      · {formatDateTime(n.created_at)}
+                    </span>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap leading-relaxed text-sc-ink">
+                    {n.comment}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
         {project.comments.length > 0 && (
-          <div className="space-y-2 rounded-xl border border-sc-line p-3">
-            <Eyebrow>Các bạn cùng lớp nhận xét · {project.comments.length}</Eyebrow>
-            {project.comments.map((c) => (
-              <div key={c.id} className="text-sm">
-                <span className="font-medium">{c.author_name}</span>{" "}
-                <span className="text-xs text-sc-ink-soft">
-                  {formatDateTime(c.created_at)}
-                </span>
-                <p className="whitespace-pre-wrap text-sc-ink-soft">{c.content}</p>
-              </div>
-            ))}
+          <div className="space-y-2.5 rounded-xl border border-sc-line bg-sc-paper/40 p-3.5">
+            <Eyebrow>Nhận xét bài làm ban đầu · {project.comments.length}</Eyebrow>
+            <div className="space-y-3 divide-y divide-sc-line/60">
+              {project.comments.map((c) => (
+                <div key={c.id} className="pt-2.5 first:pt-0 text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex items-center rounded-md border border-sc-line bg-sc-raised px-2 py-0.5 text-[11px] font-medium text-sc-ink">
+                      Bạn cùng lớp · {c.author_name}
+                    </span>
+                    <span className="text-xs text-sc-ink-soft">
+                      · {formatDateTime(c.created_at)}
+                    </span>
+                  </div>
+                  <p className="mt-1 whitespace-pre-wrap leading-relaxed text-sc-ink-soft">
+                    {c.content}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

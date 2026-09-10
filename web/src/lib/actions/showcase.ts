@@ -175,3 +175,28 @@ export async function deleteShowcaseRating(formData: FormData): Promise<void> {
 
   if (classId) revalidateClass(classId);
 }
+
+/**
+ * Ghi nhận hoặc hủy học sinh đang thuyết trình trên sân khấu (Live Spotlight).
+ */
+export async function setSpotlightProject(
+  classId: string,
+  projectId: string | null
+): Promise<ActionResult> {
+  if (!classId) return { error: "Thiếu lớp." };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("class_showcases")
+    .update({
+      spotlight_project_id: projectId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("class_id", classId);
+
+  if (error) {
+    return { error: `Không thể cập nhật: ${error.message}` };
+  }
+
+  revalidateClass(classId);
+  return { success: projectId ? "Đã bật thuyết trình." : "Đã tắt thuyết trình." };
+}

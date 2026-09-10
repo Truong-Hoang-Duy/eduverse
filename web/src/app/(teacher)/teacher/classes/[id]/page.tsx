@@ -155,7 +155,7 @@ export default async function ClassDetailPage({
   const { data: showcaseData, error: showcaseError } = await supabase
     .from("class_showcases")
     .select(
-      "id, token, is_enabled, expires_at, intro, allow_ratings, allow_reactions, show_rating_results, hidden_student_ids, view_count"
+      "id, token, is_enabled, expires_at, intro, allow_ratings, allow_reactions, show_rating_results, hidden_student_ids, view_count, spotlight_project_id"
     )
     .eq("class_id", id)
     .maybeSingle();
@@ -332,6 +332,11 @@ export default async function ClassDetailPage({
             fullName: s.fullName,
           }))}
           ratings={showcaseRatings}
+          projects={projects.map((p) => ({
+            id: p.id,
+            name: p.name,
+            authorName: p.authorName,
+          }))}
         />
       </CollapsibleCard>
 
