@@ -1,4 +1,13 @@
+import type { Viewport } from "next";
+
 import { showcaseFontClass } from "@/components/showcase/fonts";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
 
 /**
  * Bản sắc riêng của khu triển lãm phụ huynh — concept "Bảng vàng" (giấy khen +
@@ -16,6 +25,7 @@ export default function ShowcaseLayout({
 }) {
   return (
     <div
+      style={{ touchAction: "manipulation" }}
       className={`${showcaseFontClass} showcase-theme showcase-surface min-h-dvh`}
     >
       {children}
