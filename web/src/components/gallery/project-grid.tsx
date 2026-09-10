@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { normalizeVi } from "@/lib/showcase";
+import { usePreventZoomWhenOpen } from "@/lib/use-prevent-zoom";
 
 import { CommentSection, type CommentItem } from "./comment-section";
 
@@ -51,6 +52,8 @@ export function ProjectGrid({
   const [query, setQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  usePreventZoomWhenOpen(openId !== null);
 
   const needle = normalizeVi(query);
 
@@ -376,7 +379,10 @@ export function ProjectGrid({
       )}
 
       <Dialog open={openId !== null} onOpenChange={(o) => !o && setOpenId(null)}>
-        <DialogContent className="scrollbar-slim max-h-[85vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl">
+        <DialogContent
+          style={{ touchAction: "pan-y" }}
+          className="scrollbar-slim max-h-[85vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl"
+        >
           {selected && (
             <>
               <DialogHeader>

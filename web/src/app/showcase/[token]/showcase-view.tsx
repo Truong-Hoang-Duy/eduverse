@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { SafeImage } from "@/components/safe-image";
-import { CheckMark, GraduationSeal, HeartIcon } from "@/components/showcase/emblem";
+import { CheckMark, GraduationSeal } from "@/components/showcase/emblem";
 import { SealAvatar } from "@/components/showcase/seal-avatar";
 import {
   Dialog,
@@ -15,9 +15,9 @@ import {
 import { isSafeHttpUrl } from "@/lib/drive-url";
 import {
   loadMyShowcaseRatings,
-  toggleShowcaseHeart,
   trackShowcaseView,
 } from "@/lib/actions/showcase-public";
+import { usePreventZoomWhenOpen } from "@/lib/use-prevent-zoom";
 import {
   RATING_CRITERIA,
   SHOWCASE_LAYOUTS,
@@ -68,23 +68,6 @@ function readVisitorId(): string {
   }
 }
 
-function readMyHearts(token: string): string[] {
-  try {
-    const raw = localStorage.getItem(`eduverse.showcase.hearts.${token}`);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveMyHearts(token: string, ids: string[]): void {
-  try {
-    localStorage.setItem(`eduverse.showcase.hearts.${token}`, JSON.stringify(ids));
-  } catch {
-    // Không lưu được thì thôi — trạng thái tim chỉ là tiện nghi.
-  }
-}
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("vi-VN", {
@@ -133,38 +116,6 @@ function BigLink({ href, label }: { href: string | null; label: string }) {
   );
 }
 
-function HeartButton({
-  count,
-  hearted,
-  onClick,
-  size = "sm",
-}: {
-  count: number;
-  hearted: boolean;
-  onClick: () => void;
-  size?: "sm" | "lg";
-}) {
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        // Thẻ sản phẩm cũng bấm được — đừng mở popup khi người ta thả tim.
-        e.stopPropagation();
-        onClick();
-      }}
-      aria-pressed={hearted}
-      aria-label={hearted ? "Bỏ thả tim" : "Thả tim cho sản phẩm này"}
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border text-sc-terracotta transition-colors ${size === "lg" ? "px-4 py-2 text-base" : "px-2.5 py-1.5 text-sm"
-        } ${hearted
-          ? "border-sc-terracotta/50 bg-sc-terracotta/10"
-          : "border-sc-line hover:bg-sc-terracotta/10"
-        }`}
-    >
-      <HeartIcon filled={hearted} className={size === "lg" ? "size-5" : "size-4"} />
-      <span className="font-medium">{count}</span>
-    </button>
-  );
-}
 
 /** Danh sách chức năng dạng THÀNH TÍCH có dấu tick, không phải hàng tag rời rạc. */
 function FeatureList({
@@ -225,16 +176,13 @@ export function ShowcaseView({
   const [sort, setSort] = useState<ShowcaseSort>("name");
   const [onlyUnrated, setOnlyUnrated] = useState(false);
   const [slide, setSlide] = useState(0);
-  const [hearts, setHearts] = useState<Record<string, number>>(() =>
-    Object.fromEntries(projects.map((p) => [p.id, p.reaction_count]))
-  );
-  const [myHearts, setMyHearts] = useState<string[]>([]);
   const [myRatings, setMyRatings] = useState<Record<string, MyRating>>({});
   const [guestNotes, setGuestNotes] = useState(() =>
     Object.fromEntries(projects.map((p) => [p.id, p.guest_notes]))
   );
   const [visitorId, setVisitorId] = useState("");
-  const [heartError, setHeartError] = useState("");
+
+  usePreventZoomWhenOpen(openId !== null);
 
   const students = useMemo(() => {
     return [...projects]
@@ -272,7 +220,6 @@ export function ShowcaseView({
   useEffect(() => {
     const id = readVisitorId();
     setVisitorId(id);
-    setMyHearts(readMyHearts(token));
 
     // Bài chấm cũ của chính máy này — mở lại trang vẫn thấy mình đã chấm những
     // em nào và sửa được. Đọc theo `visitorId` nên không ai thấy của người khác.
@@ -306,11 +253,10 @@ export function ShowcaseView({
       arrangeShowcaseProjects(projects, {
         query,
         sort,
-        hearts,
         onlyUnrated,
         ratedIds,
       }),
-    [projects, query, sort, hearts, onlyUnrated, ratedIds]
+    [projects, query, sort, onlyUnrated, ratedIds]
   );
 
   const openIndex = visible.findIndex((p) => p.id === openId);
@@ -348,42 +294,6 @@ export function ShowcaseView({
       return { ...prev, [rating.project_id]: next };
     });
   }, []);
-
-  async function toggleHeart(projectId: string) {
-    if (!visitorId) return;
-    setHeartError("");
-
-    // Đổi giao diện trước rồi mới gọi server: giữa buổi lễ mạng 4G có thể chậm,
-    // bấm tim mà đợi mới đổi màu thì phụ huynh bấm liên tục.
-    const wasMine = myHearts.includes(projectId);
-    const optimistic = wasMine
-      ? myHearts.filter((id) => id !== projectId)
-      : [...myHearts, projectId];
-    setMyHearts(optimistic);
-    setHearts((prev) => ({
-      ...prev,
-      [projectId]: Math.max((prev[projectId] ?? 0) + (wasMine ? -1 : 1), 0),
-    }));
-
-    const res = await toggleShowcaseHeart({ token, projectId, visitorId });
-    if (res.error) {
-      // Trả lại như cũ để con số không nói dối.
-      setMyHearts(myHearts);
-      setHearts((prev) => ({
-        ...prev,
-        [projectId]: Math.max((prev[projectId] ?? 0) + (wasMine ? 1 : -1), 0),
-      }));
-      setHeartError(res.error);
-      return;
-    }
-
-    const confirmed = res.reacted
-      ? Array.from(new Set([...optimistic, projectId]))
-      : optimistic.filter((id) => id !== projectId);
-    setMyHearts(confirmed);
-    saveMyHearts(token, confirmed);
-    setHearts((prev) => ({ ...prev, [projectId]: res.count ?? prev[projectId] }));
-  }
 
   const ratedCount = ratedIds.length;
 
@@ -531,11 +441,10 @@ export function ShowcaseView({
                       setQuery("");
                       setIsDropdownOpen(false);
                     }}
-                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors ${
-                      !query
+                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors ${!query
                         ? "bg-sc-brass-soft font-semibold text-sc-brass"
                         : "text-sc-ink hover:bg-sc-brass-soft/50"
-                    }`}
+                      }`}
                   >
                     <span>Tất cả học viên ({students.length})</span>
                     {!query && <span className="text-xs text-sc-brass">✓</span>}
@@ -555,11 +464,10 @@ export function ShowcaseView({
                             setQuery(s.name);
                             setIsDropdownOpen(false);
                           }}
-                          className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors ${
-                            isSelected
+                          className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors ${isSelected
                               ? "bg-sc-brass-soft font-semibold text-sc-brass"
                               : "text-sc-ink hover:bg-sc-brass-soft/50"
-                          }`}
+                            }`}
                         >
                           <div className="min-w-0 flex-1 pr-2">
                             <p className="font-medium truncate">{s.name}</p>
@@ -589,11 +497,10 @@ export function ShowcaseView({
                   setQuery("");
                   setIsDropdownOpen(false);
                 }}
-                className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
-                  !query
+                className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${!query
                     ? "bg-sc-brass font-semibold text-sc-paper shadow-xs"
                     : "border border-sc-line bg-sc-raised text-sc-ink hover:border-sc-brass/50 hover:bg-sc-brass-soft"
-                }`}
+                  }`}
               >
                 Tất cả ({students.length})
               </button>
@@ -611,11 +518,10 @@ export function ShowcaseView({
                       }
                       setIsDropdownOpen(false);
                     }}
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${
-                      isSelected
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${isSelected
                         ? "bg-sc-brass font-semibold text-sc-paper shadow-xs"
                         : "border border-sc-line bg-sc-raised text-sc-ink hover:border-sc-brass/50 hover:bg-sc-brass-soft"
-                    }`}
+                      }`}
                   >
                     {s.name}
                   </button>
@@ -639,11 +545,10 @@ export function ShowcaseView({
                   type="button"
                   onClick={() => setLayout(opt.value)}
                   aria-pressed={layout === opt.value}
-                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
-                    layout === opt.value
+                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${layout === opt.value
                       ? "bg-sc-brass-soft font-medium text-sc-brass"
                       : "text-sc-ink-soft hover:text-sc-ink"
-                  }`}
+                    }`}
                 >
                   {opt.label}
                 </button>
@@ -656,10 +561,7 @@ export function ShowcaseView({
               aria-label="Sắp xếp"
               className="rounded-full border border-sc-line bg-sc-raised px-3 py-1.5 text-sm text-sc-ink focus:border-sc-brass focus:outline-none"
             >
-              {SHOWCASE_SORTS.filter(
-                // Không có tim thì "nhiều tim nhất" là lựa chọn vô nghĩa.
-                (opt) => opt.value !== "hearts" || showcase.allow_reactions
-              ).map((opt) => (
+              {SHOWCASE_SORTS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -671,20 +573,15 @@ export function ShowcaseView({
                 type="button"
                 onClick={() => setOnlyUnrated((v) => !v)}
                 aria-pressed={onlyUnrated}
-                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                  onlyUnrated
+                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${onlyUnrated
                     ? "border-sc-brass bg-sc-brass-soft font-medium text-sc-brass"
                     : "border-sc-line bg-sc-raised text-sc-ink-soft hover:text-sc-ink"
-                }`}
+                  }`}
               >
                 Chưa nhận xét
               </button>
             )}
           </div>
-        )}
-
-        {heartError && (
-          <p className="mt-4 text-center text-sm text-sc-terracotta">{heartError}</p>
         )}
 
         {projects.length === 0 ? (
@@ -717,9 +614,7 @@ export function ShowcaseView({
               <ProjectListRow
                 key={p.id}
                 project={p}
-                hearts={hearts[p.id] ?? 0}
                 rated={hasRated(myRatings[p.id])}
-                allowReactions={showcase.allow_reactions}
                 onOpen={() => setOpenId(p.id)}
               />
             ))}
@@ -729,13 +624,9 @@ export function ShowcaseView({
             <div className="mx-auto max-w-md">
               <ProjectCardTile
                 project={slideProject}
-                hearts={hearts[slideProject.id] ?? 0}
-                hearted={myHearts.includes(slideProject.id)}
                 rated={hasRated(myRatings[slideProject.id])}
                 showResults={showcase.show_rating_results}
-                allowReactions={showcase.allow_reactions}
                 onOpen={() => setOpenId(slideProject.id)}
-                onHeart={() => toggleHeart(slideProject.id)}
               />
             </div>
             <div className="flex items-center justify-center gap-3">
@@ -764,13 +655,9 @@ export function ShowcaseView({
               <ProjectCardTile
                 key={p.id}
                 project={p}
-                hearts={hearts[p.id] ?? 0}
-                hearted={myHearts.includes(p.id)}
                 rated={hasRated(myRatings[p.id])}
                 showResults={showcase.show_rating_results}
-                allowReactions={showcase.allow_reactions}
                 onOpen={() => setOpenId(p.id)}
-                onHeart={() => toggleHeart(p.id)}
               />
             ))}
           </div>
@@ -791,6 +678,7 @@ export function ShowcaseView({
             Trên điện thoại: gần như toàn màn hình. Chỉ THÂN popup cuộn — tên em
             luôn thấy ở đầu, hai nút chuyển bạn luôn thấy ở chân. */}
         <DialogContent
+          style={{ touchAction: "pan-y" }}
           className={`${fontClass} showcase-theme grid max-h-[92dvh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden border border-sc-line bg-sc-raised p-0 text-sc-ink ring-0 sm:max-w-2xl`}
         >
           {current && (
@@ -800,14 +688,10 @@ export function ShowcaseView({
               guestNotes={guestNotes[current.id] ?? []}
               position={openIndex + 1}
               total={visible.length}
-              hearts={hearts[current.id] ?? 0}
-              hearted={myHearts.includes(current.id)}
               visitorId={visitorId}
               myRating={myRatings[current.id]}
               allowRatings={showcase.allow_ratings}
-              allowReactions={showcase.allow_reactions}
               showResults={showcase.show_rating_results}
-              onHeart={() => toggleHeart(current.id)}
               onPrev={() => openIndex > 0 && setOpenId(visible[openIndex - 1].id)}
               onNext={() =>
                 openIndex < visible.length - 1 &&
@@ -853,15 +737,11 @@ function SlideNavButton({
  */
 function ProjectListRow({
   project,
-  hearts,
   rated,
-  allowReactions,
   onOpen,
 }: {
   project: ShowcaseProject;
-  hearts: number;
   rated: boolean;
-  allowReactions: boolean;
   onOpen: () => void;
 }) {
   return (
@@ -881,12 +761,6 @@ function ProjectListRow({
           </span>
         </span>
         {rated && <CheckMark className="size-5 shrink-0 text-sc-terracotta" />}
-        {allowReactions && hearts > 0 && (
-          <span className="flex shrink-0 items-center gap-1 text-sm text-sc-brass">
-            <HeartIcon filled className="size-4" />
-            {hearts}
-          </span>
-        )}
         <span className="shrink-0 text-sm text-sc-brass">→</span>
       </button>
     </li>
@@ -895,22 +769,14 @@ function ProjectListRow({
 
 function ProjectCardTile({
   project,
-  hearts,
-  hearted,
   rated,
   showResults,
-  allowReactions,
   onOpen,
-  onHeart,
 }: {
   project: ShowcaseProject;
-  hearts: number;
-  hearted: boolean;
   rated: boolean;
   showResults: boolean;
-  allowReactions: boolean;
   onOpen: () => void;
-  onHeart: () => void;
 }) {
   const average = showResults ? overallScore(project.rating_avg) : null;
 
@@ -961,9 +827,6 @@ function ProjectCardTile({
             </span>
           )}
           {average !== null && <StarDisplay score={average} />}
-          {allowReactions && (
-            <HeartButton count={hearts} hearted={hearted} onClick={onHeart} />
-          )}
           <span className="ml-auto text-sm font-medium text-sc-brass">Xem →</span>
         </div>
       </div>
@@ -977,14 +840,10 @@ function ProjectDetail({
   guestNotes,
   position,
   total,
-  hearts,
-  hearted,
   visitorId,
   myRating,
   allowRatings,
-  allowReactions,
   showResults,
-  onHeart,
   onPrev,
   onNext,
   onRated,
@@ -994,14 +853,10 @@ function ProjectDetail({
   guestNotes: { id: string; comment: string; created_at: string }[];
   position: number;
   total: number;
-  hearts: number;
-  hearted: boolean;
   visitorId: string;
   myRating: MyRating | undefined;
   allowRatings: boolean;
-  allowReactions: boolean;
   showResults: boolean;
-  onHeart: () => void;
   onPrev: () => void;
   onNext: () => void;
   onRated: (rating: MyRating) => void;
@@ -1026,21 +881,11 @@ function ProjectDetail({
       </DialogHeader>
 
       <div className="scrollbar-slim space-y-4 overflow-x-hidden overflow-y-auto p-4">
-        {(allowReactions || project.rating_count > 0) && (
+        {project.rating_count > 0 && (
           <div className="flex flex-wrap items-center gap-3">
-            {allowReactions && (
-              <HeartButton
-                count={hearts}
-                hearted={hearted}
-                onClick={onHeart}
-                size="lg"
-              />
-            )}
-            {project.rating_count > 0 && (
-              <span className="text-sm text-sc-ink-soft">
-                {project.rating_count} phụ huynh đã chấm điểm
-              </span>
-            )}
+            <span className="text-sm text-sc-ink-soft">
+              {project.rating_count} phụ huynh đã chấm điểm
+            </span>
           </div>
         )}
 

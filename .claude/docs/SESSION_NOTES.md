@@ -9,9 +9,15 @@
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-10, bởi: Gemini)
 
 **Đang làm:** Đã hoàn thành tính năng:
-1. Thêm bộ lọc tìm kiếm & chọn học viên ("vừa nhập hoặc vừa chọn") trên trang Showcase phụ huynh (`/showcase/[token]`): bỏ điều kiện ẩn ô tìm kiếm khi lớp <= 6 bạn, combobox dropdown danh sách học sinh của lớp, hàng nút chọn nhanh (quick chips) tên từng em tiện lợi trên điện thoại, nút xóa nhanh (✕), nút khôi phục ở empty state.
-2. Thêm thanh tìm kiếm & chọn học viên trên trang Thư viện của học viên (`/student/classes/[classId]/gallery`) và Thư viện giáo viên (`/teacher/gallery`) qua component `ProjectGrid` và `GalleryView`.
-3. Unit tests pass 264/264, typecheck và lint đều sạch 100%. Nhánh hiện tại: `feature/showcase-name-filter`.
+1. **Khóa zoom khi mở popup trên điện thoại (Mobile Zoom Lock):**
+   - Tạo hook `usePreventZoomWhenOpen` (`web/src/lib/use-prevent-zoom.ts`): khóa viewport `<meta name="viewport" content="...maximum-scale=1.0, user-scalable=no">` khi dialog mở, khôi phục khi đóng; chặn sự kiện `touchmove` đa điểm (`touches.length > 1`) và cử chỉ `gesturestart/change/end` của Safari/WebKit.
+   - Thêm `style={{ touchAction: "pan-y" }}` trên `DialogContent` của Showcase (`showcase-view.tsx`) và Gallery (`project-grid.tsx`) để chặn double-tap zoom và pinch zoom cấp container mà vẫn cho phép cuộn dọc mượt mà.
+   - Điều chỉnh font-size ô nhập liệu (`textarea` trong `rating-form.tsx` và `input` trong `comment-section.tsx`) thành `text-base sm:text-sm` (16px trên mobile) để ngăn iOS Safari tự kích hoạt auto-zoom khi focus.
+2. **Xóa hoàn toàn chế độ Thả tim (Hearts/Reactions):**
+   - Bỏ toàn bộ UI và logic thả tim (`HeartButton`, `HeartIcon`, state `hearts`, `myHearts`, hàm `toggleHeart`, `readMyHearts`, `saveMyHearts`) trên trang Showcase phụ huynh (`showcase-view.tsx`).
+   - Bỏ checkbox "Cho thả tim" trên ShowcasePanel của giáo viên (thay bằng hidden input `value="false"` để tương thích Server Action), bỏ hiển thị `{heartCount} lượt thả tim` và bỏ query `showcase_reactions` trong `teacher/classes/[id]/page.tsx` giúp tối ưu tốc độ tải trang.
+   - Cập nhật `showcase.ts` và `showcase.test.ts`.
+3. Unit tests pass 264/264, typecheck và lint sạch 100% không lỗi. Nhánh hiện tại: `feature/showcase-no-hearts-zoom-lock`.
 
 **`main` = `origin/main` = `d72ee42`** (tính năng vừa nhập vừa chọn học viên trên Showcase và Gallery).
 `ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.

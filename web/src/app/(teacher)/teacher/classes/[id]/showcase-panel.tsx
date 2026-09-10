@@ -87,7 +87,6 @@ export function ShowcasePanel({
   loadError,
   students,
   ratings,
-  heartCount,
 }: {
   classId: string;
   classCode: string;
@@ -96,7 +95,8 @@ export function ShowcasePanel({
   loadError?: string | null;
   students: { id: string; fullName: string }[];
   ratings: ShowcaseRatingRow[];
-  heartCount: number;
+  /** @deprecated Đã bỏ tính năng thả tim */
+  heartCount?: number;
 }) {
   const [enableState, enableAction, enablePending] = useActionState<
     ActionResult,
@@ -192,8 +192,7 @@ export function ShowcasePanel({
         )}
         {showcase && (
           <span className="text-sm text-muted-foreground">
-            {showcase.view_count} lượt xem · {heartCount} lượt thả tim ·{" "}
-            {ratings.length} lượt chấm
+            {showcase.view_count} lượt xem · {ratings.length} lượt chấm
           </span>
         )}
       </div>
@@ -264,7 +263,7 @@ export function ShowcasePanel({
                 </Button>
               }
               title="Đổi sang link mới?"
-              description="Link cũ sẽ chết ngay lập tức — ai đã nhận link cũ sẽ không xem được nữa. Bài chấm và lượt thả tim vẫn giữ nguyên. Dùng khi link bị chia sẻ ra ngoài phạm vi mong muốn."
+              description="Link cũ sẽ chết ngay lập tức — ai đã nhận link cũ sẽ không xem được nữa. Bài chấm vẫn giữ nguyên. Dùng khi link bị chia sẻ ra ngoài phạm vi mong muốn."
               confirmLabel="Đổi link"
               action={rotateShowcaseToken}
               fields={{ class_id: classId }}
@@ -281,7 +280,7 @@ export function ShowcasePanel({
                   </Button>
                 }
                 title="Tắt link cho phụ huynh?"
-                description="Phụ huynh mở link sẽ thấy thông báo hết hiệu lực. Bài chấm và lượt thả tim vẫn được giữ, bật lại là hiện đủ như cũ."
+                description="Phụ huynh mở link sẽ thấy thông báo hết hiệu lực. Bài chấm vẫn được giữ, bật lại là hiện đủ như cũ."
                 confirmLabel="Tắt link"
                 action={disableShowcase}
                 fields={{ class_id: classId }}
@@ -317,15 +316,7 @@ export function ShowcasePanel({
                 />
                 Cho phụ huynh chấm điểm + nhận xét (ẩn danh)
               </label>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  name="allow_reactions"
-                  defaultChecked={showcase.allow_reactions}
-                  className="size-4"
-                />
-                Cho thả tim
-              </label>
+              <input type="hidden" name="allow_reactions" value="false" />
               <label className="flex items-start gap-2 text-sm">
                 <input
                   type="checkbox"

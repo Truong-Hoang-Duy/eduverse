@@ -212,7 +212,6 @@ describe("arrangeShowcaseProjects", () => {
   const opts = {
     query: "",
     sort: "name" as const,
-    hearts: {} as Record<string, number>,
     onlyUnrated: false,
     ratedIds: [] as string[],
   };
