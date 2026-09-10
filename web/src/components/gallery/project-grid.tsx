@@ -134,7 +134,7 @@ export function ProjectGrid({
               onFocus={() => setIsDropdownOpen(true)}
               placeholder="Nhập hoặc chọn học viên / sản phẩm..."
               aria-label="Tìm hoặc chọn học viên"
-              className="h-9 pl-9 pr-16"
+              className="h-9 pl-9 pr-16 text-base sm:text-sm"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
               {query && (

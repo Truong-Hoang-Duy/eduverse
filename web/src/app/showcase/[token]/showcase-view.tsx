@@ -17,7 +17,7 @@ import {
   loadMyShowcaseRatings,
   trackShowcaseView,
 } from "@/lib/actions/showcase-public";
-import { usePreventZoomWhenOpen } from "@/lib/use-prevent-zoom";
+import { usePreventZoom } from "@/lib/use-prevent-zoom";
 import {
   RATING_CRITERIA,
   SHOWCASE_LAYOUTS,
@@ -182,7 +182,7 @@ export function ShowcaseView({
   );
   const [visitorId, setVisitorId] = useState("");
 
-  usePreventZoomWhenOpen(openId !== null);
+  usePreventZoom(true);
 
   const students = useMemo(() => {
     return [...projects]
@@ -302,7 +302,7 @@ export function ShowcaseView({
   const slideProject = visible[slideIndex];
 
   return (
-    <main className="pb-16">
+    <main className="pb-16" style={{ touchAction: "manipulation" }}>
       <div className="mx-auto max-w-5xl px-4 py-5 sm:px-6">
         <div className="flex justify-end">
           <ThemeSwitch />
@@ -390,7 +390,7 @@ export function ShowcaseView({
                 onFocus={() => setIsDropdownOpen(true)}
                 placeholder="Nhập hoặc chọn học sinh / sản phẩm..."
                 aria-label="Tìm hoặc chọn học sinh"
-                className="w-full rounded-full border border-sc-line bg-sc-raised py-2.5 pr-16 pl-10 text-sm text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
+                className="w-full rounded-full border border-sc-line bg-sc-raised py-2.5 pr-16 pl-10 text-base sm:text-sm text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
               />
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-1">
                 {query && (
@@ -559,7 +559,7 @@ export function ShowcaseView({
               value={sort}
               onChange={(e) => setSort(e.target.value as ShowcaseSort)}
               aria-label="Sắp xếp"
-              className="rounded-full border border-sc-line bg-sc-raised px-3 py-1.5 text-sm text-sc-ink focus:border-sc-brass focus:outline-none"
+              className="rounded-full border border-sc-line bg-sc-raised px-3 py-1.5 text-base sm:text-sm text-sc-ink focus:border-sc-brass focus:outline-none"
             >
               {SHOWCASE_SORTS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
