@@ -13,10 +13,8 @@
 2. Thêm thanh tìm kiếm & chọn học viên trên trang Thư viện của học viên (`/student/classes/[classId]/gallery`) và Thư viện giáo viên (`/teacher/gallery`) qua component `ProjectGrid` và `GalleryView`.
 3. Unit tests pass 264/264, typecheck và lint đều sạch 100%. Nhánh hiện tại: `feature/showcase-name-filter`.
 
-**`main` = `origin/main`** đã bao gồm Đợt 60 (xem
-`git log --oneline -1 main` để lấy hash mới nhất).
-chậm hơn merge thật một nhịp, theo đúng nếp cũ của file này).
-`ai-service/` KHÔNG đổi ở Đợt 58 — không cần deploy lại Render cho đợt này.
+**`main` = `origin/main` = `d72ee42`** (tính năng vừa nhập vừa chọn học viên trên Showcase và Gallery).
+`ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.
 ⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp
 commit mới") chưa từng được xác nhận đã kiểm trong session nào — máy dev
 không vào được `onrender.com`, nhờ user tự mở kiểm tra nếu chưa làm.
