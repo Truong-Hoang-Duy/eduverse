@@ -198,15 +198,6 @@ export function formatFullEvaluationText(
     `[NHẬN XÉT TỔNG KẾT KHÓA HỌC GỬI PHỤ HUYNH]`,
     data.comment,
     "",
-    `[ĐIỂM TỔNG KẾT: ${data.demo_score.total}/10.0 (TỰ ĐỘNG CHIA ĐỀU KHÔNG DƯỚI 6.0)]`,
-    `- Điểm kiến thức (Demo2024 | CSI): ${data.demo_score.knowledge_score}/5.0 điểm`,
-    `- Điểm demo sản phẩm: ${data.demo_score.demo_total}/5.0 điểm`,
-    `  + Tư duy máy tính, thuật toán: ${data.demo_score.computational_thinking}/2.0 điểm`,
-    `  + Tư duy sáng tạo: ${data.demo_score.creative_thinking}/0.5 điểm`,
-    `  + Kỹ năng giao tiếp, hợp tác: ${data.demo_score.communication}/1.0 điểm`,
-    `  + Giải quyết vấn đề: ${data.demo_score.problem_solving}/1.0 điểm`,
-    `  + Kỹ năng sử dụng máy tính: ${data.demo_score.computer_skills}/0.5 điểm`,
-    "",
     `[ĐÁNH GIÁ NĂNG LỰC - ĐNL (9 TIÊU CHÍ)]`,
   ];
 
@@ -228,6 +219,18 @@ export function formatFullEvaluationText(
       lines.push(`- ${criterion.name}: (Chưa có nhận xét)`);
     }
   }
+
+  lines.push(
+    "",
+    `[ĐIỂM TỔNG KẾT: ${data.demo_score.total}/10.0 (TỰ ĐỘNG CHIA ĐỀU KHÔNG DƯỚI 6.0)]`,
+    `- Điểm kiến thức (Demo2024 | CSI): ${data.demo_score.knowledge_score}/5.0 điểm`,
+    `- Điểm demo sản phẩm: ${data.demo_score.demo_total}/5.0 điểm`,
+    `  + Tư duy máy tính, thuật toán: ${data.demo_score.computational_thinking}/2.0 điểm`,
+    `  + Tư duy sáng tạo: ${data.demo_score.creative_thinking}/0.5 điểm`,
+    `  + Kỹ năng giao tiếp, hợp tác: ${data.demo_score.communication}/1.0 điểm`,
+    `  + Giải quyết vấn đề: ${data.demo_score.problem_solving}/1.0 điểm`,
+    `  + Kỹ năng sử dụng máy tính: ${data.demo_score.computer_skills}/0.5 điểm`
+  );
 
   return lines.join("\n");
 }

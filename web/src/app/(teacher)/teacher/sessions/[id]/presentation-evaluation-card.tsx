@@ -170,141 +170,7 @@ export function PresentationEvaluationCard({
         </Button>
       </div>
 
-      {/* --- PHẦN 1: TỔNG CẢ ĐIỂM KIẾN THỨC + DEMO SẢN PHẨM (Khớp Image 5) --- */}
-      <div className="space-y-3.5 rounded-lg border border-dashed bg-card p-3 sm:p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <span className="text-base font-bold text-primary">
-              Demo Score: {grandTotal} / 10.0
-            </span>
-            <Badge variant="secondary" className="text-xs">
-              Kiến thức: {knowledgeScore}/5.0
-            </Badge>
-            <Badge variant="secondary" className="text-xs">
-              Demo SP: {demoTotal}/5.0
-            </Badge>
-          </div>
-          <span className="text-xs text-muted-foreground">Thang điểm 10.0</span>
-        </div>
-
-        {/* Cảnh báo nếu tổng điểm dưới 6.0 */}
-        {grandTotal < 6.0 && (
-          <div className="flex items-center justify-between gap-2 rounded-md bg-amber-500/10 border border-amber-500/30 p-2.5 text-xs text-amber-700 dark:text-amber-400">
-            <span>
-              ⚠️ Điểm tổng kết hiện tại ({grandTotal}/10.0) đang dưới 6.0 điểm. Theo quy chế điểm tổng kết không dưới 6.0.
-            </span>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => handleAutoDistribute(6.0)}
-              className="h-6 text-[11px] font-semibold border-amber-500/40 hover:bg-amber-500/20 cursor-pointer"
-            >
-              🎯 Chia đều 6.0đ
-            </Button>
-          </div>
-        )}
-
-        {/* Thanh công cụ chia đều điểm nhanh */}
-        <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-muted/40 p-2 text-xs">
-          <span className="font-medium text-foreground">🎯 Chia đều điểm (≥ 6.0):</span>
-          {[6.0, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0].map((pts) => (
-            <Button
-              key={pts}
-              type="button"
-              variant={grandTotal === pts ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleAutoDistribute(pts)}
-              className="h-6 px-2 text-[11px] cursor-pointer"
-            >
-              {pts.toFixed(1)}đ
-            </Button>
-          ))}
-        </div>
-
-        {/* Bảng nhập điểm chi tiết khớp ảnh Denise LMS */}
-        <div className="space-y-2 pt-1">
-          {/* Hàng 1: Demo2024 | CSI -> Điểm kiến thức */}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5 text-sm bg-primary/5 -mx-2 px-2 py-1.5 rounded">
-            <div className="flex items-center gap-3">
-              <span className="w-28 text-xs font-bold tracking-wider text-primary uppercase">
-                Demo2024 | CSI
-              </span>
-              <Input
-                type="number"
-                step="0.1"
-                min="0"
-                max="5.0"
-                value={knowledgeScore}
-                onChange={(e) => handleKnowledgeScoreChange(e.target.value)}
-                className="h-8 w-20 text-center font-bold text-primary border-primary/40"
-              />
-              <span className="font-semibold text-foreground">
-                Điểm kiến thức lý thuyết / trên lớp (tối đa 5 điểm)
-              </span>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                handleCopyText("knowledge_score", String(knowledgeScore))
-              }
-              className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              {copiedKeys["knowledge_score"] ? "✓ Đã chép" : "📋 Copy điểm"}
-            </Button>
-          </div>
-
-          {/* 5 Hàng Demo sản phẩm */}
-          {DEMO_SCORE_CRITERIA.map((criterion) => {
-            const scoreVal =
-              data.demo_score[
-                criterion.key as keyof typeof data.demo_score
-              ] ?? 0;
-            return (
-              <div
-                key={criterion.key}
-                className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2 text-sm last:border-b-0 last:pb-0"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-28 text-xs text-muted-foreground hidden sm:block">
-                    Demo sản phẩm
-                  </div>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max={criterion.maxScore}
-                    value={scoreVal}
-                    onChange={(e) =>
-                      handleDemoScoreChange(criterion.key, e.target.value)
-                    }
-                    className="h-8 w-20 text-center font-semibold text-foreground"
-                  />
-                  <span className="font-medium text-foreground">
-                    {criterion.name}
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    handleCopyText(criterion.key, String(scoreVal))
-                  }
-                  className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  {copiedKeys[criterion.key] ? "✓ Đã chép" : "📋 Copy điểm"}
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-
-      {/* --- PHẦN 2: 9 TIÊU CHÍ ĐNL THEO 3 NHÓM (Image 1, 2, 3, 4) --- */}
+      {/* --- PHẦN 1: 9 TIÊU CHÍ ĐNL THEO 3 NHÓM (Image 1, 2, 3, 4) --- */}
       <div className="space-y-6">
         {groups.map((grp) => {
           const criteriaInGroup = DNL_CRITERIA.filter((c) => c.group === grp);
@@ -436,6 +302,139 @@ export function PresentationEvaluationCard({
             </div>
           );
         })}
+      </div>
+
+      {/* --- PHẦN 2: TỔNG CẢ ĐIỂM KIẾN THỨC + DEMO SẢN PHẨM Ở CUỐI (Khớp Image 5) --- */}
+      <div className="space-y-3.5 rounded-lg border border-dashed bg-card p-3 sm:p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5">
+            <span className="text-base font-bold text-primary">
+              Demo Score: {grandTotal} / 10.0
+            </span>
+            <Badge variant="secondary" className="text-xs">
+              Kiến thức: {knowledgeScore}/5.0
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              Demo SP: {demoTotal}/5.0
+            </Badge>
+          </div>
+          <span className="text-xs text-muted-foreground">Thang điểm 10.0</span>
+        </div>
+
+        {/* Cảnh báo nếu tổng điểm dưới 6.0 */}
+        {grandTotal < 6.0 && (
+          <div className="flex items-center justify-between gap-2 rounded-md bg-amber-500/10 border border-amber-500/30 p-2.5 text-xs text-amber-700 dark:text-amber-400">
+            <span>
+              ⚠️ Điểm tổng kết hiện tại ({grandTotal}/10.0) đang dưới 6.0 điểm. Theo quy chế điểm tổng kết không dưới 6.0.
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => handleAutoDistribute(6.0)}
+              className="h-6 text-[11px] font-semibold border-amber-500/40 hover:bg-amber-500/20 cursor-pointer"
+            >
+              🎯 Chia đều 6.0đ
+            </Button>
+          </div>
+        )}
+
+        {/* Thanh công cụ chia đều điểm nhanh */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-muted/40 p-2 text-xs">
+          <span className="font-medium text-foreground">🎯 Chia đều điểm (≥ 6.0):</span>
+          {[6.0, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0].map((pts) => (
+            <Button
+              key={pts}
+              type="button"
+              variant={grandTotal === pts ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleAutoDistribute(pts)}
+              className="h-6 px-2 text-[11px] cursor-pointer"
+            >
+              {pts.toFixed(1)}đ
+            </Button>
+          ))}
+        </div>
+
+        {/* Bảng nhập điểm chi tiết khớp ảnh Denise LMS */}
+        <div className="space-y-2 pt-1">
+          {/* Hàng 1: Demo2024 | CSI -> Điểm kiến thức */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5 text-sm bg-primary/5 -mx-2 px-2 py-1.5 rounded">
+            <div className="flex items-center gap-3">
+              <span className="w-28 text-xs font-bold tracking-wider text-primary uppercase">
+                Demo2024 | CSI
+              </span>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                max="5.0"
+                value={knowledgeScore}
+                onChange={(e) => handleKnowledgeScoreChange(e.target.value)}
+                className="h-8 w-20 text-center font-bold text-primary border-primary/40"
+              />
+              <span className="font-semibold text-foreground">
+                Điểm kiến thức lý thuyết / trên lớp (tối đa 5 điểm)
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                handleCopyText("knowledge_score", String(knowledgeScore))
+              }
+              className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              {copiedKeys["knowledge_score"] ? "✓ Đã chép" : "📋 Copy điểm"}
+            </Button>
+          </div>
+
+          {/* 5 Hàng Demo sản phẩm */}
+          {DEMO_SCORE_CRITERIA.map((criterion) => {
+            const scoreVal =
+              data.demo_score[
+                criterion.key as keyof typeof data.demo_score
+              ] ?? 0;
+            return (
+              <div
+                key={criterion.key}
+                className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2 text-sm last:border-b-0 last:pb-0"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-28 text-xs text-muted-foreground hidden sm:block">
+                    Demo sản phẩm
+                  </div>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max={criterion.maxScore}
+                    value={scoreVal}
+                    onChange={(e) =>
+                      handleDemoScoreChange(criterion.key, e.target.value)
+                    }
+                    className="h-8 w-20 text-center font-semibold text-foreground"
+                  />
+                  <span className="font-medium text-foreground">
+                    {criterion.name}
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    handleCopyText(criterion.key, String(scoreVal))
+                  }
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  {copiedKeys[criterion.key] ? "✓ Đã chép" : "📋 Copy điểm"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
