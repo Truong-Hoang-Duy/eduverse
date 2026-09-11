@@ -18,6 +18,7 @@ export async function updateSession(
   const reviewContext = String(formData.get("review_context") ?? "").trim();
   const isPeriodicTest = formData.get("is_periodic_test") === "true";
   const isProjectPeriod = formData.get("is_project_period") === "true";
+  const isFinalPresentation = formData.get("is_final_presentation") === "true";
   const sessionDate = String(formData.get("session_date") ?? "").trim();
   // Rỗng = GV không chọn áp nhận xét từ buổi nào (mặc định).
   const copyFromSessionId = String(
@@ -29,7 +30,7 @@ export async function updateSession(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  let { error } = await supabase
     .from("sessions")
     .update({
       title: title || null,
@@ -37,9 +38,26 @@ export async function updateSession(
       review_context: reviewContext || null,
       is_periodic_test: isPeriodicTest,
       is_project_period: isProjectPeriod,
+      is_final_presentation: isFinalPresentation,
       session_date: sessionDate || null,
     })
     .eq("id", id);
+
+  if (error && error.message?.includes("is_final_presentation")) {
+    // Migration chưa dán trên DB -> fallback bỏ cột này để không chặn việc lưu
+    const retry = await supabase
+      .from("sessions")
+      .update({
+        title: title || null,
+        content: content || null,
+        review_context: reviewContext || null,
+        is_periodic_test: isPeriodicTest,
+        is_project_period: isProjectPeriod,
+        session_date: sessionDate || null,
+      })
+      .eq("id", id);
+    error = retry.error;
+  }
   if (error) {
     return { error: `Không lưu được: ${error.message}` };
   }

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { academicLevelLabel } from "@/lib/academic-levels";
 import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import type { FinalPresentationEvaluation } from "@/lib/presentation-evaluation";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
@@ -513,5 +514,75 @@ export async function generateAiReview(
       return { error: err.message };
     }
     return { error: "Không kết nối được AI service (thử lại sau 30 giây nếu server vừa thức dậy)." };
+  }
+}
+
+export interface PriorReviewHistoryItem {
+  session_number: number;
+  session_title: string;
+  strengths: string[];
+  improvements: string[];
+  comment?: string | null;
+}
+
+export interface GenerateFinalPresentationReviewInput {
+  studentName: string;
+  classCode: string;
+  courseName: string;
+  academicLevel?: string;
+  projectName?: string;
+  projectDescription?: string;
+  projectFeatures?: string[];
+  presentationNotes?: string;
+  priorReviews?: PriorReviewHistoryItem[];
+  currentStrengths?: string[];
+  currentImprovements?: string[];
+}
+
+/** Gọi AI tổng kết toàn khóa học và đánh giá buổi thuyết trình (Buổi 14 / Demo Day). */
+export async function generateFinalPresentationReview(
+  input: GenerateFinalPresentationReviewInput
+): Promise<{ evaluation?: FinalPresentationEvaluation; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
+  try {
+    const data = await callAiService<FinalPresentationEvaluation>(
+      "/generate-final-presentation-review",
+      {
+        api_key: aiConfig.api_key,
+        provider: aiConfig.provider,
+        student_name: input.studentName,
+        class_code: input.classCode,
+        course_name: input.courseName,
+        academic_level: input.academicLevel || null,
+        project_name: input.projectName || null,
+        project_description: input.projectDescription || null,
+        project_features: input.projectFeatures ?? [],
+        presentation_notes: input.presentationNotes || null,
+        prior_reviews: input.priorReviews ?? [],
+        current_strengths: input.currentStrengths ?? [],
+        current_improvements: input.currentImprovements ?? [],
+      }
+    );
+    return { evaluation: data };
+  } catch (err) {
+    if (err instanceof AiServiceError) {
+      return { error: err.message };
+    }
+    return {
+      error:
+        "Không kết nối được AI service (thử lại sau 30 giây nếu server vừa thức dậy).",
+    };
   }
 }

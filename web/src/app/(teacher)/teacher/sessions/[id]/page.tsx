@@ -13,6 +13,8 @@ import { listMyCombos } from "@/lib/actions/review-combos";
 import { requireProfile } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
+import type { PriorReviewHistoryItem } from "@/lib/actions/reviews";
+
 import { ReviewList } from "./review-list";
 import {
   type ExistingReview,
@@ -31,8 +33,13 @@ interface SessionRow {
   review_context: string | null;
   is_periodic_test: boolean;
   is_project_period: boolean;
+  is_final_presentation?: boolean;
   session_date: string | null;
-  classes: { class_code: string; courses: { name: string } | null } | null;
+  classes: {
+    class_code: string;
+    total_sessions?: number;
+    courses: { name: string; code?: string } | null;
+  } | null;
 }
 
 interface EnrollmentRow {
@@ -50,7 +57,7 @@ interface PriorReviewRow {
   strengths: string[];
   improvements: string[];
   is_absent: boolean;
-  sessions: { id: string; session_number: number } | null;
+  sessions: { id: string; session_number: number; title?: string | null } | null;
 }
 
 /**
@@ -77,7 +84,7 @@ export default async function SessionDetailPage({
   const { data: sessionData } = await supabase
     .from("sessions")
     .select(
-      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, session_date, classes(class_code, courses(name))"
+      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, session_date, classes(class_code, total_sessions, courses(name, code))"
     )
     .eq("id", id)
     .single();
@@ -93,6 +100,7 @@ export default async function SessionDetailPage({
     { data: optionsData },
     { data: templatesData },
     { data: priorReviewsData },
+    { data: projectsData },
     combos,
   ] = await Promise.all([
     supabase
@@ -116,17 +124,19 @@ export default async function SessionDetailPage({
       .select("id, name")
       .eq("teacher_id", profile.id)
       .order("name"),
-    // Nhận xét các buổi TRƯỚC (cùng lớp) — phục vụ 2 việc: (1) cho AI biết đã
-    // viết gì để tránh lặp lời văn, (2) copy điểm mạnh/cải thiện từ buổi trước.
-    // KHÔNG lọc theo ai_generated_comment nữa vì buổi trước có thể có tích chọn
-    // mà chưa lưu câu nhận xét — vẫn cần cho việc copy.
+    // Nhận xét các buổi TRƯỚC (cùng lớp) — phục vụ: (1) AI tránh lặp lời văn,
+    // (2) copy điểm mạnh/cải thiện, (3) tổng hợp toàn khóa cho buổi thuyết trình.
     supabase
       .from("student_reviews")
       .select(
-        "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, class_id)"
+        "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id)"
       )
       .eq("sessions.class_id", session.class_id)
       .lt("sessions.session_number", session.session_number),
+    supabase
+      .from("projects")
+      .select("id, student_id, name, description, features")
+      .eq("class_id", session.class_id),
     listMyCombos(),
   ]);
 
@@ -143,9 +153,29 @@ export default async function SessionDetailPage({
     isHandled(reviewByStudentId.get(s.id) ?? null)
   ).length;
 
+  const isFinalPresentation =
+    Boolean(
+      (sessionData as unknown as { is_final_presentation?: boolean })
+        ?.is_final_presentation
+    ) ||
+    session.session_number === 14 ||
+    (session.classes?.total_sessions !== undefined &&
+      session.session_number === session.classes?.total_sessions);
+
+  const projects = (projectsData ?? []) as {
+    id: string;
+    student_id: string;
+    name: string;
+    description: string | null;
+    features: string[] | null;
+  }[];
+  const projectByStudentId = new Map(projects.map((p) => [p.student_id, p]));
+
   const priorReviews = (priorReviewsData ?? []) as unknown as PriorReviewRow[];
   const priorCommentsByStudentId = new Map<string, string[]>();
   const priorSelectionsByStudentId = new Map<string, PriorSelection[]>();
+  const allPriorReviewsByStudentId = new Map<string, PriorReviewHistoryItem[]>();
+
   for (const studentId of new Set(priorReviews.map((r) => r.student_id))) {
     const mine = priorReviews
       .filter((r) => r.student_id === studentId)
@@ -175,6 +205,20 @@ export default async function SessionDetailPage({
         improvements: r.improvements,
       }));
     priorSelectionsByStudentId.set(studentId, selections);
+
+    // (3) Toàn bộ lịch sử các buổi trước (1..13) để AI tổng kết buổi 14
+    const chronological = [...mine].reverse();
+    allPriorReviewsByStudentId.set(
+      studentId,
+      chronological.map((r) => ({
+        session_number: r.sessions?.session_number ?? 0,
+        session_title:
+          r.sessions?.title ?? `Buổi ${r.sessions?.session_number ?? 0}`,
+        strengths: r.strengths,
+        improvements: r.improvements,
+        comment: r.ai_generated_comment,
+      }))
+    );
   }
 
   // Buổi trước có thể ÁP SANG cả lớp: chỉ buổi đã tích chọn cho ít nhất 1 em
@@ -217,7 +261,10 @@ export default async function SessionDetailPage({
           <CardTitle className="text-base">Nội dung buổi học</CardTitle>
         </CardHeader>
         <CardContent>
-          <SessionForm session={session} copyFromSessions={copyFromSessions} />
+          <SessionForm
+            session={{ ...session, is_final_presentation: isFinalPresentation }}
+            copyFromSessions={copyFromSessions}
+          />
         </CardContent>
       </Card>
 
@@ -227,7 +274,9 @@ export default async function SessionDetailPage({
             Nhận xét học viên ({handledCount}/{students.length})
           </CardTitle>
           <CardDescription>
-            Áp bộ combo điểm mạnh/cần cải thiện rồi bấm &quot;AI tạo nhận xét&quot;.
+            {isFinalPresentation
+              ? "Buổi thuyết trình sản phẩm cuối khóa: Bấm 'AI tổng kết Buổi 14' để tổng hợp toàn khóa và chấm ĐNL / Demo Score."
+              : "Áp bộ combo điểm mạnh/cần cải thiện rồi bấm \"AI tạo nhận xét\"."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -253,11 +302,16 @@ export default async function SessionDetailPage({
               sessionContext={session.review_context ?? ""}
               isPeriodicTest={session.is_periodic_test}
               isProjectPeriod={session.is_project_period}
+              isFinalPresentation={isFinalPresentation}
+              classCode={session.classes?.class_code ?? ""}
+              courseName={session.classes?.courses?.name ?? ""}
               students={students}
               options={options}
               reviewByStudentId={reviewByStudentId}
               priorCommentsByStudentId={priorCommentsByStudentId}
               priorSelectionsByStudentId={priorSelectionsByStudentId}
+              allPriorReviewsByStudentId={allPriorReviewsByStudentId}
+              projectsByStudentId={projectByStudentId}
               combos={combos}
             />
           )}

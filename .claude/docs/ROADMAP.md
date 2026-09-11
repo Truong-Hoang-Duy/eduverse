@@ -912,7 +912,20 @@
 - [x] Zalo: Sinh lời chào Buổi 1 bằng AI (Gemini hoặc ChatGPT lấy theo API Key cá nhân) thay vì gán cứng. Văn phong trang trọng, chuẩn mực học đường, không emoji và chuẩn format Zalo. Đóng gói riêng qua endpoint `/generate-greeting`.
 - [x] Cập nhật lại tài liệu `ROADMAP.md` và `SESSION_NOTES.md` sau khi hoàn thành phiên.
 
+### Đợt 62 (`feature/final-presentation-review`) — Tổng kết Buổi 14 & Rubric ĐNL/Demo Score chuẩn Denise LMS
+- [x] **AI Service (`ai-service/`):** Endpoint `POST /generate-final-presentation-review` tổng hợp toàn bộ 13 buổi học trước của từng học viên + đề tài SPCK + ghi chú thuyết trình của giáo viên. Sinh nhận xét tổng kết cho phụ huynh kèm bảng đánh giá năng lực chi tiết.
+- [x] **Tổng cả điểm kiến thức + demo sản phẩm (tự động chia đều không dưới 6.0):**
+  - Điểm kiến thức (`Demo2024 | CSI`): tối đa 5.0 điểm.
+  - Điểm demo sản phẩm: 5 tiêu chí (Tư duy máy tính 2đ, Sáng tạo 0.5đ, Giao tiếp 1đ, Giải quyết vấn đề 1đ, Máy tính 0.5đ) - tối đa 5.0 điểm.
+  - Tổng điểm `Demo Score` thang 10.0: quy định tự động chia đều cân đối 50/50 và các tiêu chí con theo trọng số chuẩn, bảo đảm tuyệt đối không dưới 6.0 điểm.
+  - 9 Tiêu chí ĐNL: KIẾN THỨC (tự học, trên lớp), KỸ NĂNG (giao tiếp hợp tác, sử dụng máy tính, giải quyết vấn đề, tư duy sáng tạo, tư duy máy tính), THÁI ĐỘ (trên lớp, về nhà), điểm số >= 3 (từ Khá trở lên).
+  - Thanh công cụ chia điểm nhanh: presets 6.0đ (chuẩn tối thiểu), 7.0đ, 7.5đ, 8.0đ, 8.5đ, 9.0đ, 9.5đ, 10.0đ. Cảnh báo thông minh nếu dưới 6.0đ.
+- [x] **UI Buổi 14:** Tự động nhận diện buổi 14/buổi cuối, banner chuyên biệt, thẻ thông tin sản phẩm của học viên, ô ghi chú thuyết trình kèm quick chips, cache cục bộ `localStorage` tránh mất dữ liệu.
+- [x] **Migration & Graceful Fallback:** Migration `20260911000000_final_presentation_session.sql` (thêm `is_final_presentation`), có fallback tự động theo số thứ tự buổi 14 nếu DB chưa dán migration.
+- [x] Kiểm thử toàn bộ: 86/86 pytest PASS, 270/270 vitest PASS, typecheck & lint sạch 0 lỗi.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
   lớp xem, kết quả không lưu nữa
+

@@ -111,6 +111,45 @@ class StudentSummaryResponse(BaseModel):
     kho_khan: str
 
 
+# ---------- /generate-final-presentation-review ----------
+class DnlCriterionEvaluation(BaseModel):
+    score: int  # 1..5
+    level: str  # "TB" | "Khá" | "Giỏi"
+    comment: str
+
+
+class DemoScoreBreakdown(BaseModel):
+    knowledge_score: float = 3.5  # Điểm kiến thức (tối đa 5.0)
+    computational_thinking: float  # max 2.0
+    creative_thinking: float  # max 0.5
+    communication: float  # max 1.0
+    problem_solving: float  # max 1.0
+    computer_skills: float  # max 0.5
+    demo_total: float = 3.5  # Tổng điểm 5 tiêu chí demo (tối đa 5.0)
+    total: float  # Tổng cả điểm kiến thức + demo sản phẩm (tối đa 10.0, không dưới 6.0)
+
+
+
+class FinalPresentationReviewRequest(AiRequest):
+    student_name: str
+    class_code: str = ""
+    course_name: str = ""
+    academic_level: str | None = None
+    project_name: str | None = None
+    project_description: str | None = None
+    project_features: list[str] = []
+    presentation_notes: str | None = None
+    prior_reviews: list[SessionReviewItem] = []
+    current_strengths: list[str] = []
+    current_improvements: list[str] = []
+
+
+class FinalPresentationReviewResponse(BaseModel):
+    comment: str
+    demo_score: DemoScoreBreakdown
+    dnl_evaluations: dict[str, DnlCriterionEvaluation]
+
+
 # ---------- /suggest-session-content ----------
 class PriorSessionItem(BaseModel):
     session_number: int
