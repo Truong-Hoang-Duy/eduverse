@@ -27,9 +27,9 @@
    - `pnpm lint`: Clean 100% (0 errors).
    - `pnpm test`: 22 test files passed (264/264 tests).
    - `pnpm build`: Next.js 15 Turbopack production build thành công 100%.
-   - Nhánh Git hiện tại: `feature/showcase-welcome-tv-screen`.
+    - Nhánh Git: Đã merge sạch vào `develop` và `main`, sẵn sàng cho phiên tiếp theo.
 
-**`main` = `origin/main` = `bd7eabd`**
+**`main` = `origin/main` = `efb0758`**
 `ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.
 ⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp
 commit mới") chưa từng được xác nhận đã kiểm trong session nào — máy dev
