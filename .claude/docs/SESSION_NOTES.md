@@ -8,26 +8,31 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-11, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Màn hình chờ đón tiếp buổi lễ tổng kết (Welcome & Pre-show TV Screen)** trên TV/máy chiếu:
-1. **Bố cục Split-Screen hiện đại trên màn hình lớn ([showcase-tv-screen.tsx](file:///d:/Project/Eduverse/web/src/components/showcase/showcase-tv-screen.tsx)):**
-   - **Nền & Độ tương phản (Đã khắc phục lỗi chói mắt):** Chuyển hoàn toàn sang giao diện Cinema Dark Luxury (`#070a12`), gỡ bỏ class `showcase-surface` (tránh bị đè màu kem sáng giấy ngà). Toàn bộ chữ và thẻ sản phẩm đạt độ tương phản cực cao, chống lóa khi chiếu máy chiếu/TV.
-   - **Cột trái:** Huy hiệu Lễ tổng kết + Tiêu đề trang trọng **"Xem sản phẩm học viên và gửi đôi lời chia sẻ"** + Khung QR nền trắng viền tỏa sáng vàng kim + Dòng thông điệp kết nối thời gian thực **Realtime 100% theo lượt truy cập thực tế (mặc định ban đầu 0 thiết bị)**: hiển thị `"Đang chờ khán giả quét mã · 0 thiết bị đang kết nối"`. Khi khách quét QR và điện thoại tải vào tới website thành công, RPC `bump_showcase_view` tăng `view_count` trong DB, màn hình TV (polling mỗi 2.5s) ngay lập tức phát hiện và nhảy số kèm hiệu ứng phát sáng pop/ping chúc mừng: `"🟢 Một khán giả vừa tham gia · {liveCount} thiết bị đang kết nối"`. Có nút `"🔄 Đặt lại 0"` trên thanh công cụ.
-   - **Đồng bộ từ ngữ Showcase (chuẩn hóa thuật ngữ):** Thay thế toàn bộ các từ "nhận xét", "lời chúc", "nhận xét & lời chúc" trong toàn bộ Showcase (màn hình TV, form gửi, popup chi tiết, con dấu, filter tab, danh sách panel giáo viên) thành **"Cảm nghĩ & Góp ý"**.
-   - **Cột phải:** Khung trình chiếu tự động (Auto-Reel) nổi khối sang trọng xoay vòng sản phẩm các con mỗi 6.5s: hiển thị ảnh demo lớn, tên học viên, tên đề tài, các tính năng nổi bật em đã lập trình, dots phân trang và nút chuyển slide thủ công. Khi chưa có sản phẩm: hiện thiệp chào mừng trang trọng.
-2. **Hiệu ứng hạt ánh sáng sao vàng (Ambient Starlight Particles):**
-   - Canvas hạt ánh sáng bay lơ lửng chuyển động chậm trên nền tối, tạo không khí sự kiện công nghệ sống động, tránh cảm giác màn hình tĩnh bị đơ.
-3. **Đồng hồ đếm ngược giờ khai mạc (Pre-show Countdown):**
-   - Giáo viên có thể bật hẹn giờ đếm ngược 5 / 10 / 15 phút, hiển thị đồng hồ đếm ngược phong cách sự kiện: `"⏱️ Khai mạc sau: MM:SS"`.
-4. **Nhạc nền đón khách du dương (Ambient BGM):**
-   - Tích hợp Web Audio API Synthesizer tạo các hợp âm lofi / ambient pad êm ái, thư giãn (0 byte file ngoài, không lo bản quyền), có nút bật/tắt (🔊/🔇) và thanh trượt âm lượng mượt mà.
-5. **Thanh công cụ giáo viên tự động ẩn (Auto-hide Control Ribbon):**
-   - Nằm ở đáy màn hình, tự động ẩn sau 3.5s không rê chuột để màn chiếu luôn sạch đẹp; có nút Toàn màn hình (Fullscreen) và nút đóng màn chiếu.
-6. **Kiểm thử chất lượng:**
-   - `pnpm typecheck`: Clean 100% (0 errors).
-   - `pnpm lint`: Clean 100% (0 errors).
-   - `pnpm test`: 22 test files passed (264/264 tests).
-   - `pnpm build`: Next.js 15 Turbopack production build thành công 100%.
-    - Nhánh Git: Đã merge sạch vào `develop` và `main`, sẵn sàng cho phiên tiếp theo.
+**Đang làm:** Đã hoàn thành tính năng **Tổng kết Buổi 14 (Thuyết trình sản phẩm cuối khóa - Demo Day) & Bảng đánh giá năng lực chuẩn Denise LMS Rubric (Đợt 62)** trên nhánh `feature/final-presentation-review`:
+1. **AI Service (`ai-service/`):**
+   - Thêm schema `FinalPresentationReviewRequest`, `FinalPresentationReviewResponse`, `DemoScoreBreakdown` (bao gồm `knowledge_score`, `demo_total`, `total` thang 10), `DnlCriterionEvaluation`.
+   - Viết prompt `build_final_presentation_review_prompt` tổng hợp toàn bộ 13 buổi học trước (buổi 1-13), thông tin đề tài SPCK của học viên và ghi chú buổi thuyết trình để sinh nhận xét tổng kết gửi phụ huynh cùng bộ điểm ĐNL & Demo Score.
+   - **Quy tắc chia đều không dưới 6.0:** Tổng cả điểm kiến thức (thang 5.0) + demo sản phẩm (thang 5.0) được bảo đảm **không dưới 6.0 điểm** (thang 10), tự động chia đều cân đối 50/50 và chia đều 5 tiêu chí demo theo tỷ lệ trọng số chuẩn (40%, 10%, 20%, 20%, 10%). Đồng bộ 9 tiêu chí ĐNL đạt từ Khá trở lên (score >= 3).
+   - Endpoint `POST /generate-final-presentation-review` (hỗ trợ cả Gemini và OpenAI). Pytest: 86/86 test xanh (100%).
+2. **Frontend Web App (`web/`):**
+   - **Tự động nhận diện Buổi 14 / Buổi cuối:** Checkbox "Buổi này là Thuyết trình sản phẩm cuối khóa (Demo Day / Buổi 14)" trong form buổi học (tự động bật nếu số thứ tự là 14 hoặc buổi cuối của lớp).
+   - **Giao diện thẻ đánh giá Denise LMS ([presentation-evaluation-card.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/presentation-evaluation-card.tsx)):**
+     - Khớp giao diện Denise LMS Image 5: Hàng 1 là nhãn `Demo2024 | CSI` kèm ô nhập Điểm kiến thức (tối đa 5.0đ). 5 hàng tiếp theo cho 5 tiêu chí Demo sản phẩm (tổng 5.0đ).
+     - Hiển thị `Demo Score: {total} / 10.0` kèm huy hiệu tóm tắt `Kiến thức: {k}/5.0` và `Demo SP: {d}/5.0`.
+     - Thanh công cụ chọn nhanh mức điểm: `6.0đ (Tối thiểu)`, `7.0đ`, `7.5đ`, `8.0đ`, `8.5đ`, `9.0đ`, `9.5đ`, `10.0đ` tự động chia đều toàn bộ bảng điểm trong 1 click.
+     - Cảnh báo nếu điểm tổng dưới 6.0đ kèm nút sửa nhanh.
+     - 9 Tiêu chí ĐNL: KIẾN THỨC (Tự học, Tại lớp), KỸ NĂNG (Giao tiếp hợp tác, Sử dụng máy tính, Giải quyết vấn đề, Tư duy sáng tạo, Tư duy máy tính), THÁI ĐỘ (Trên lớp, Về nhà).
+     - Radio 1-5, badge mức độ (TB/Khá/Giỏi) đổi màu tự động, ô nhận xét chỉnh sửa trực tiếp, nút 📋 Sao chép từng ô và nút 📋 "Sao chép toàn bộ bảng đánh giá Denise LMS".
+   - **Editor Buổi 14 ([review-editor.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/review-editor.tsx)):**
+     - Banner tím/indigo Buổi 14, thẻ đề tài SPCK của học viên, ô ghi chú thuyết trình kèm quick chips gợi ý. Nút "✨ AI tổng kết Buổi 14 & Đánh giá năng lực".
+     - Cache kết quả rubric vào `localStorage` theo key `eduverse_rubric_${sessionId}_${studentId}` không lo mất khi reload trang.
+3. **Database Migration:**
+   - Migration `20260911000000_final_presentation_session.sql`: thêm cột `is_final_presentation` vào bảng `sessions`.
+   - Có cơ chế graceful fallback trong Server Action: Nếu user chưa kịp dán migration vào Supabase, hệ thống vẫn tự nhận diện theo `session_number === 14` và lưu bình thường không crash.
+4. **Kiểm thử chất lượng:**
+   - `ai-service`: `.venv/Scripts/python -m pytest` → 86/86 tests PASSED (100%).
+   - `web/`: `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm test` (270/270 tests PASSED - 23 test files).
+   - Nhánh Git: `feature/final-presentation-review` sẵn sàng commit. Sẽ xin ý kiến user trước khi merge vào develop/main.
 
 **`main` = `origin/main` = `efb0758`**
 `ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.

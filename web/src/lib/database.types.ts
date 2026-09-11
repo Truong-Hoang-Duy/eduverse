@@ -497,6 +497,7 @@ export type Database = {
           class_id: string
           content: string | null
           id: string
+          is_final_presentation: boolean
           is_periodic_test: boolean
           is_project_period: boolean
           review_context: string | null
@@ -508,6 +509,7 @@ export type Database = {
           class_id: string
           content?: string | null
           id?: string
+          is_final_presentation?: boolean
           is_periodic_test?: boolean
           is_project_period?: boolean
           review_context?: string | null
@@ -519,6 +521,7 @@ export type Database = {
           class_id?: string
           content?: string | null
           id?: string
+          is_final_presentation?: boolean
           is_periodic_test?: boolean
           is_project_period?: boolean
           review_context?: string | null

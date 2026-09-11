@@ -289,6 +289,97 @@ def build_student_summary_prompt(
     )
 
 
+def build_final_presentation_review_prompt(
+    student_name: str,
+    class_code: str,
+    course_name: str,
+    academic_level: str | None,
+    project_name: str | None,
+    project_description: str | None,
+    project_features: list[str],
+    presentation_notes: str | None,
+    prior_reviews_text: str,
+    current_strengths: list[str],
+    current_improvements: list[str],
+) -> str:
+    """Xây dựng prompt tổng kết toàn khóa học và buổi thuyết trình sản phẩm cuối khóa (Buổi 14 / Demo Day).
+    Đánh giá theo đúng cấu trúc rubric của hệ thống LMS:
+    - Điểm Demo Score (thang 5.0 gồm 5 tiêu chí)
+    - 9 tiêu chí ĐNL (Đo lường Năng Lực: Kiến thức, Kỹ năng, Thái độ)
+    - Nhận xét tổng kết toàn diện gửi phụ huynh.
+    """
+    parts = [
+        SYSTEM_ROLE,
+        TONE_RULE,
+        "Nhiệm vụ: Bạn đang hỗ trợ giáo viên tổng kết toàn khóa học và đánh giá buổi THUYẾT TRÌNH SẢN PHẨM CUỐI KHÓA (Buổi 14 / Demo Day) cho một học viên.",
+        f"Học viên: {student_name}",
+        f"Lớp: {class_code} — Khóa học: {course_name}",
+    ]
+
+    if academic_level:
+        parts.append(
+            f"Trình độ học lực của em do giáo viên xếp loại: {academic_level}. "
+            "Dùng thông tin này để cân đối thang điểm và giọng điệu nhận xét sao cho vừa tầm trình độ của em."
+        )
+
+    if project_name:
+        parts.append(f"Tên sản phẩm cuối khóa (SPCK): {project_name}")
+    if project_description:
+        parts.append(f"Mô tả sản phẩm: {project_description}")
+    if project_features:
+        parts.append(f"Các tính năng chính của sản phẩm: {', '.join(project_features)}")
+
+    if presentation_notes:
+        parts.append(
+            f"Quan sát của giáo viên về phần thuyết trình của em hôm nay: {presentation_notes}"
+        )
+    if current_strengths:
+        parts.append(f"Điểm mạnh giáo viên ghi nhận trong buổi thuyết trình: {', '.join(current_strengths)}")
+    if current_improvements:
+        parts.append(f"Điểm cần cải thiện trong buổi thuyết trình: {', '.join(current_improvements)}")
+
+    parts.append(
+        "LỊCH SỬ HỌC TẬP QUA CÁC BUỔI TRƯỚC ĐÓ CỦA EM (TỪ BUỔI 1 ĐẾN BUỔI 13):\n"
+        f"{prior_reviews_text or '(Chưa có dữ liệu nhận xét chi tiết các buổi trước — dựa vào thông tin hiện có)'}"
+    )
+
+    parts.append(
+        "YÊU CẦU ĐÁNH GIÁ (TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON YÊU CẦU):\n"
+        "1. 'comment': Đoạn văn nhận xét tổng kết toàn khóa gửi phụ huynh (120-180 từ, liền mạch, trang trọng, chân thành, giàu tính khích lệ, chuẩn mực học đường). Cần nêu được:\n"
+        "   - Quá trình học tập và sự tiến bộ, nỗ lực của em suốt khóa học.\n"
+        "   - Đánh giá sản phẩm cuối khóa và phần thuyết trình, tự tin trong buổi hôm nay.\n"
+        "   - Lời khen ngợi thế mạnh nổi bật, điểm cần lưu ý tiếp tục phát huy, lời động viên và định hướng học tập tiếp theo.\n"
+        "2. 'demo_score': Đánh giá điểm tổng kết gồm Điểm kiến thức (thang 5.0) và Điểm demo sản phẩm (thang 5.0):\n"
+        "   - QUY TẮC BẮT BUỘC: Tổng cả điểm kiến thức + demo sản phẩm ('total') TUYỆT ĐỐI KHÔNG ĐƯỢC DƯỚI 6.0 ĐIỂM (thang điểm 10). "
+        "     Tự động chia đều điểm giữa kiến thức và demo sản phẩm sao cho cân đối, phù hợp với năng lực của học viên (ví dụ: tổng 7.0 thì Kiến thức 3.5, Demo 3.5).\n"
+        "   - knowledge_score (Điểm kiến thức): tối đa 5.0 điểm (được chia đều cân đối, tối thiểu 3.0 điểm để tổng không dưới 6.0).\n"
+        "   - Các tiêu chí thành phần của Demo sản phẩm (tổng tối đa 5.0 điểm, chia đều theo tỷ lệ tương ứng, tối thiểu demo_total >= 3.0 điểm):\n"
+        "     + computational_thinking (Tư duy máy tính, thuật toán): tối đa 2.0 điểm (tỷ lệ 40% của demo_total).\n"
+        "     + creative_thinking (Tư duy sáng tạo): tối đa 0.5 điểm (tỷ lệ 10% của demo_total).\n"
+        "     + communication (Kỹ năng giao tiếp, hợp tác): tối đa 1.0 điểm (tỷ lệ 20% của demo_total).\n"
+        "     + problem_solving (Giải quyết vấn đề): tối đa 1.0 điểm (tỷ lệ 20% của demo_total).\n"
+        "     + computer_skills (Kỹ năng sử dụng máy tính): tối đa 0.5 điểm (tỷ lệ 10% của demo_total).\n"
+        "   - demo_total: Tổng điểm của 5 tiêu chí demo ở trên (tối đa 5.0, làm tròn 1 chữ số thập phân, tối thiểu 3.0).\n"
+        "   - total: Tổng cả điểm kiến thức + demo sản phẩm = knowledge_score + demo_total (thang 10, TUYỆT ĐỐI >= 6.0, ví dụ: 7.0, 7.5, 8.0, 8.5).\n"
+        "3. 'dnl_evaluations': Đánh giá 9 tiêu chí ĐNL (Đo lường Năng Lực). Để đồng bộ với điểm tổng kết không dưới 6.0, các tiêu chí đều có điểm từ 3 đến 5 (tương đương Khá hoặc Giỏi, điểm số >= 3):\n"
+        "   - 'score': số nguyên từ 3 đến 5 (3-4: Khá, 5: Giỏi; không dưới 3).\n"
+        "   - 'level': 'Khá' | 'Giỏi' tương ứng với score (nếu 3-4 là 'Khá', 5 là 'Giỏi', không đánh giá 'TB' nếu điểm >= 6).\n"
+        "   - 'comment': đoạn nhận xét ngắn gọn, súc tích (1-2 câu, 15-30 từ) trực tiếp vào tiêu chí đó để giáo viên điền vào hệ thống LMS.\n"
+        "   Danh sách 9 tiêu chí bắt buộc gồm:\n"
+        "   - kien_thuc_tu_hoc: [ĐNL] Kiến thức học viên tự học (khả năng tự tìm hiểu, tò mò khám phá).\n"
+        "   - kien_thuc_tai_lop: [ĐNL] Kiến thức học viên đã được học tại lớp (khả năng tiếp thu và áp dụng bài học).\n"
+        "   - ky_nang_giao_tiep: [ĐNL] Kỹ năng giao tiếp, hợp tác (trao đổi với thầy cô, bạn bè, thuyết trình).\n"
+        "   - ky_nang_may_tinh: [ĐNL] Kỹ năng sử dụng máy tính (thao tác phần mềm, gõ phím, xử lý file).\n"
+        "   - ky_nang_giai_quyet_van_de: [ĐNL] Kỹ năng giải quyết vấn đề (tự debug, tư duy vượt qua trở ngại khi viết code).\n"
+        "   - tu_duy_sang_tao: [ĐNL] Tư duy sáng tạo (ý tưởng khác biệt, tính năng mới lạ, thẩm mỹ giao diện).\n"
+        "   - tu_duy_may_tinh: [ĐNL] Tư duy máy tính (tư duy logic lập trình, thuật toán, cấu trúc chương trình).\n"
+        "   - thai_do_tai_lop: [ĐNL] Thái độ học tập trên lớp (chăm chú, kỷ luật, tương tác tích cực).\n"
+        "   - thai_do_ve_nha: [ĐNL] Thái độ luyện tập về nhà (hoàn thành bài tập về nhà, chuẩn bị bài tốt)."
+    )
+
+    return "\n".join(parts)
+
+
 def build_suggest_features_prompt(
     project_name: str,
     description: str,
