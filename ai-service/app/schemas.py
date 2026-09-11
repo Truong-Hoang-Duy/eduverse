@@ -111,6 +111,42 @@ class StudentSummaryResponse(BaseModel):
     kho_khan: str
 
 
+# ---------- /generate-final-presentation-review ----------
+class DnlCriterionEvaluation(BaseModel):
+    score: int  # 1..5
+    level: str  # "TB" | "Khá" | "Giỏi"
+    comment: str
+
+
+class DemoScoreBreakdown(BaseModel):
+    computational_thinking: float
+    creative_thinking: float
+    communication: float
+    problem_solving: float
+    computer_skills: float
+    total: float
+
+
+class FinalPresentationReviewRequest(AiRequest):
+    student_name: str
+    class_code: str = ""
+    course_name: str = ""
+    academic_level: str | None = None
+    project_name: str | None = None
+    project_description: str | None = None
+    project_features: list[str] = []
+    presentation_notes: str | None = None
+    prior_reviews: list[SessionReviewItem] = []
+    current_strengths: list[str] = []
+    current_improvements: list[str] = []
+
+
+class FinalPresentationReviewResponse(BaseModel):
+    comment: str
+    demo_score: DemoScoreBreakdown
+    dnl_evaluations: dict[str, DnlCriterionEvaluation]
+
+
 # ---------- /suggest-session-content ----------
 class PriorSessionItem(BaseModel):
     session_number: int

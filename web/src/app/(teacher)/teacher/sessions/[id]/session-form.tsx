@@ -40,6 +40,7 @@ export interface SessionData {
   review_context: string | null;
   is_periodic_test: boolean;
   is_project_period: boolean;
+  is_final_presentation?: boolean;
   session_date: string | null;
 }
 
@@ -71,6 +72,9 @@ export function SessionForm({
   );
   const [isProjectPeriod, setIsProjectPeriod] = useState(
     session.is_project_period
+  );
+  const [isFinalPresentation, setIsFinalPresentation] = useState(
+    session.is_final_presentation ?? session.session_number === 14
   );
   // "" = không áp nhận xét từ buổi nào. Reset sau mỗi lần lưu để bấm Lưu lần
   // sau (VD sửa lại nội dung) không vô tình áp lại lần nữa.
@@ -177,6 +181,23 @@ export function SessionForm({
         <p className="text-xs text-muted-foreground">
           Bật lên thì khi nhận xét từng em sẽ hiện thêm ô quan sát quá trình
           làm SPCK (thường buổi 9-13), dùng làm ngữ cảnh cho AI.
+        </p>
+      </div>
+      <div className="space-y-1.5">
+        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            name="is_final_presentation"
+            value="true"
+            checked={isFinalPresentation}
+            onChange={(e) => setIsFinalPresentation(e.target.checked)}
+            className="size-4"
+          />
+          🎤 Buổi này là Thuyết trình sản phẩm cuối khóa (Demo Day / Buổi 14)
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Bật lên thì khi nhận xét từng em sẽ mở chế độ tổng hợp toàn khóa học
+          (từ Buổi 1 đến 13) và Bảng Đánh Giá Năng Lực (ĐNL) &amp; Demo Score chuẩn Denise LMS.
         </p>
       </div>
       {copyFromSessions.length > 0 && (

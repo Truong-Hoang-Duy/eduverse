@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
+import type { PriorReviewHistoryItem } from "@/lib/actions/reviews";
 
 import {
   type CopySource,
@@ -48,11 +49,16 @@ export function ReviewList({
   sessionContext,
   isPeriodicTest,
   isProjectPeriod,
+  isFinalPresentation,
+  classCode,
+  courseName,
   students,
   options,
   reviewByStudentId,
   priorCommentsByStudentId,
   priorSelectionsByStudentId,
+  allPriorReviewsByStudentId,
+  projectsByStudentId,
   combos,
 }: {
   sessionId: string;
@@ -67,6 +73,10 @@ export function ReviewList({
   /** Buổi có làm sản phẩm cuối khóa (SPCK, thường buổi 9-13) — bật thì hiện ô
    *  chọn "quan sát quá trình làm SPCK", giống cơ chế `isPeriodicTest`. */
   isProjectPeriod: boolean;
+  /** Buổi thuyết trình sản phẩm cuối khóa & Tổng kết (Demo Day / Buổi 14). */
+  isFinalPresentation?: boolean;
+  classCode?: string;
+  courseName?: string;
   students: StudentForReview[];
   options: ReviewOptionItem[];
   reviewByStudentId: Map<string, ExistingReview>;
@@ -74,6 +84,13 @@ export function ReviewList({
   priorCommentsByStudentId: Map<string, string[]>;
   /** Điểm mạnh/cải thiện các buổi trước của từng học viên — để copy sang. */
   priorSelectionsByStudentId: Map<string, PriorSelection[]>;
+  /** Toàn bộ lịch sử nhận xét các buổi trước (1..13) để tổng kết khóa học. */
+  allPriorReviewsByStudentId?: Map<string, PriorReviewHistoryItem[]>;
+  /** Dự án sản phẩm cuối khóa của từng học viên. */
+  projectsByStudentId?: Map<
+    string,
+    { id: string; name: string; description: string | null; features: string[] | null }
+  >;
   /** Bộ combo lưu sẵn của GV (dùng chung mọi học viên). */
   combos: ReviewCombo[];
 }) {
@@ -160,6 +177,11 @@ export function ReviewList({
             sessionContext={sessionContext}
             isPeriodicTest={isPeriodicTest}
             isProjectPeriod={isProjectPeriod}
+            isFinalPresentation={isFinalPresentation}
+            classCode={classCode}
+            courseName={courseName}
+            project={projectsByStudentId?.get(student.id) ?? null}
+            allPriorReviews={allPriorReviewsByStudentId?.get(student.id) ?? []}
             studentId={student.id}
             studentName={student.full_name}
             academicLevel={student.academic_level}

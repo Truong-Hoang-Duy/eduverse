@@ -3,6 +3,8 @@ from fastapi import APIRouter
 from app import prompts
 from app.llm import generate_json
 from app.schemas import (
+    FinalPresentationReviewRequest,
+    FinalPresentationReviewResponse,
     GenerateGreetingRequest,
     GenerateGreetingResponse,
     GenerateReviewRequest,
@@ -107,6 +109,108 @@ def generate_student_summary(body: StudentSummaryRequest) -> StudentSummaryRespo
         provider=body.provider,
     )
     return StudentSummaryResponse(**data)
+
+
+@router.post(
+    "/generate-final-presentation-review",
+    response_model=FinalPresentationReviewResponse,
+)
+def generate_final_presentation_review(
+    body: FinalPresentationReviewRequest,
+) -> FinalPresentationReviewResponse:
+    prior_reviews_text = "\n".join(
+        f"- Buổi {r.session_number} ({r.session_title or 'chưa có tiêu đề'}): "
+        f"mạnh [{', '.join(r.strengths) or 'chưa ghi'}]; "
+        f"cần cải thiện [{', '.join(r.improvements) or 'chưa ghi'}]"
+        + (f"; nhận xét: {r.comment}" if r.comment else "")
+        for r in body.prior_reviews
+    )
+
+    prompt = prompts.build_final_presentation_review_prompt(
+        student_name=body.student_name,
+        class_code=body.class_code,
+        course_name=body.course_name,
+        academic_level=body.academic_level,
+        project_name=body.project_name,
+        project_description=body.project_description,
+        project_features=body.project_features,
+        presentation_notes=body.presentation_notes,
+        prior_reviews_text=prior_reviews_text,
+        current_strengths=body.current_strengths,
+        current_improvements=body.current_improvements,
+    )
+
+    criterion_schema = {
+        "type": "object",
+        "properties": {
+            "score": {"type": "integer"},
+            "level": {"type": "string", "enum": ["TB", "Khá", "Giỏi"]},
+            "comment": {"type": "string"},
+        },
+        "required": ["score", "level", "comment"],
+    }
+
+    demo_score_schema = {
+        "type": "object",
+        "properties": {
+            "computational_thinking": {"type": "number"},
+            "creative_thinking": {"type": "number"},
+            "communication": {"type": "number"},
+            "problem_solving": {"type": "number"},
+            "computer_skills": {"type": "number"},
+            "total": {"type": "number"},
+        },
+        "required": [
+            "computational_thinking",
+            "creative_thinking",
+            "communication",
+            "problem_solving",
+            "computer_skills",
+            "total",
+        ],
+    }
+
+    dnl_evaluations_schema = {
+        "type": "object",
+        "properties": {
+            "kien_thuc_tu_hoc": criterion_schema,
+            "kien_thuc_tai_lop": criterion_schema,
+            "ky_nang_giao_tiep": criterion_schema,
+            "ky_nang_may_tinh": criterion_schema,
+            "ky_nang_giai_quyet_van_de": criterion_schema,
+            "tu_duy_sang_tao": criterion_schema,
+            "tu_duy_may_tinh": criterion_schema,
+            "thai_do_tai_lop": criterion_schema,
+            "thai_do_ve_nha": criterion_schema,
+        },
+        "required": [
+            "kien_thuc_tu_hoc",
+            "kien_thuc_tai_lop",
+            "ky_nang_giao_tiep",
+            "ky_nang_may_tinh",
+            "ky_nang_giai_quyet_van_de",
+            "tu_duy_sang_tao",
+            "tu_duy_may_tinh",
+            "thai_do_tai_lop",
+            "thai_do_ve_nha",
+        ],
+    }
+
+    data = generate_json(
+        prompt,
+        response_schema={
+            "type": "object",
+            "properties": {
+                "comment": {"type": "string"},
+                "demo_score": demo_score_schema,
+                "dnl_evaluations": dnl_evaluations_schema,
+            },
+            "required": ["comment", "demo_score", "dnl_evaluations"],
+        },
+        api_key=body.api_key,
+        provider=body.provider,
+    )
+    return FinalPresentationReviewResponse(**data)
 
 
 @router.post("/suggest-session-content", response_model=SuggestSessionContentResponse)
