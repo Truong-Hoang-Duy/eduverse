@@ -46,12 +46,14 @@ def test_final_presentation_review_prompt_includes_all_rubric_criteria() -> None
 
 def test_final_presentation_review_response_schema_validation() -> None:
     demo = DemoScoreBreakdown(
+        knowledge_score=4.0,
         computational_thinking=1.8,
         creative_thinking=0.4,
         communication=0.9,
         problem_solving=0.9,
         computer_skills=0.5,
-        total=4.5,
+        demo_total=4.5,
+        total=8.5,
     )
     dnl_item = DnlCriterionEvaluation(
         score=5,
@@ -74,6 +76,10 @@ def test_final_presentation_review_response_schema_validation() -> None:
         demo_score=demo,
         dnl_evaluations=dnl_evals,
     )
-    assert resp.demo_score.total == 4.5
+    assert resp.demo_score.knowledge_score == 4.0
+    assert resp.demo_score.demo_total == 4.5
+    assert resp.demo_score.total == 8.5
+    assert resp.demo_score.total >= 6.0
     assert len(resp.dnl_evaluations) == 9
     assert resp.dnl_evaluations["kien_thuc_tu_hoc"].score == 5
+

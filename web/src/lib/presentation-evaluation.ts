@@ -12,13 +12,16 @@ export interface DnlCriterionEvaluation {
 }
 
 export interface DemoScoreBreakdown {
+  knowledge_score: number; // max 5.0 (Điểm kiến thức Demo2024 | CSI)
   computational_thinking: number; // max 2.0
   creative_thinking: number; // max 0.5
   communication: number; // max 1.0
   problem_solving: number; // max 1.0
   computer_skills: number; // max 0.5
-  total: number; // max 5.0
+  demo_total: number; // max 5.0 (Tổng 5 tiêu chí demo sản phẩm)
+  total: number; // max 10.0 (Tổng cả điểm kiến thức + demo sản phẩm, tự động chia đều không dưới 6.0)
 }
+
 
 export interface FinalPresentationEvaluation {
   comment: string;
@@ -123,7 +126,7 @@ export function scoreToLevel(score: number): "TB" | "Khá" | "Giỏi" {
 
 /** Tính tổng điểm Demo từ 5 tiêu chí thành phần (tối đa 5.0 điểm). */
 export function calculateDemoTotal(
-  scores: Omit<DemoScoreBreakdown, "total">
+  scores: Partial<DemoScoreBreakdown>
 ): number {
   const sum =
     Number(scores.computational_thinking || 0) +
@@ -132,6 +135,57 @@ export function calculateDemoTotal(
     Number(scores.problem_solving || 0) +
     Number(scores.computer_skills || 0);
   return Math.round(sum * 10) / 10;
+}
+
+/** Tính tổng cả điểm kiến thức + demo sản phẩm (tối đa 10.0 điểm). */
+export function calculateGrandTotal(
+  knowledgeScore: number,
+  demoTotal: number
+): number {
+  const sum = Number(knowledgeScore || 0) + Number(demoTotal || 0);
+  return Math.round(sum * 10) / 10;
+}
+
+/**
+ * Tự động chia đều điểm giữa Kiến thức và Demo sản phẩm, bảo đảm tổng điểm không dưới 6.0 điểm.
+ * @param targetTotal Điểm tổng mục tiêu (thang điểm 10, tối thiểu 6.0, tối đa 10.0)
+ */
+export function distributeScores(targetTotal = 7.0): DemoScoreBreakdown {
+  // Ràng buộc quy định: tổng điểm không dưới 6.0
+  const safeTotal = Math.min(
+    10.0,
+    Math.max(6.0, Math.round(targetTotal * 10) / 10)
+  );
+
+  // Chia đều 50/50: Kiến thức và Demo sản phẩm
+  const knowledgeScore = Math.round((safeTotal / 2) * 10) / 10;
+  const demoTotal = Math.round((safeTotal - knowledgeScore) * 10) / 10;
+
+  // Phân bổ 5 tiêu chí demo theo tỷ lệ chuẩn (2.0 : 0.5 : 1.0 : 1.0 : 0.5 / 5.0)
+  const computationalThinking = Math.round(demoTotal * 0.4 * 10) / 10;
+  const creativeThinking = Math.round(demoTotal * 0.1 * 10) / 10;
+  const communication = Math.round(demoTotal * 0.2 * 10) / 10;
+  const problemSolving = Math.round(demoTotal * 0.2 * 10) / 10;
+  const subSum =
+    computationalThinking +
+    creativeThinking +
+    communication +
+    problemSolving;
+  const computerSkills = Math.max(
+    0,
+    Math.round((demoTotal - subSum) * 10) / 10
+  );
+
+  return {
+    knowledge_score: knowledgeScore,
+    computational_thinking: computationalThinking,
+    creative_thinking: creativeThinking,
+    communication: communication,
+    problem_solving: problemSolving,
+    computer_skills: computerSkills,
+    demo_total: demoTotal,
+    total: safeTotal,
+  };
 }
 
 /** Định dạng toàn bộ bảng đánh giá thành văn bản hoàn chỉnh để copy 1 lần. */
@@ -144,12 +198,14 @@ export function formatFullEvaluationText(
     `[NHẬN XÉT TỔNG KẾT KHÓA HỌC GỬI PHỤ HUYNH]`,
     data.comment,
     "",
-    `[ĐIỂM THUYẾT TRÌNH - DEMO SCORE: ${data.demo_score.total}/5.0]`,
-    `- Tư duy máy tính, tư duy thuật toán: ${data.demo_score.computational_thinking}/2.0 điểm`,
-    `- Tư duy sáng tạo: ${data.demo_score.creative_thinking}/0.5 điểm`,
-    `- Kỹ năng giao tiếp, hợp tác: ${data.demo_score.communication}/1.0 điểm`,
-    `- Giải quyết vấn đề: ${data.demo_score.problem_solving}/1.0 điểm`,
-    `- Kỹ năng sử dụng máy tính: ${data.demo_score.computer_skills}/0.5 điểm`,
+    `[ĐIỂM TỔNG KẾT: ${data.demo_score.total}/10.0 (TỰ ĐỘNG CHIA ĐỀU KHÔNG DƯỚI 6.0)]`,
+    `- Điểm kiến thức (Demo2024 | CSI): ${data.demo_score.knowledge_score}/5.0 điểm`,
+    `- Điểm demo sản phẩm: ${data.demo_score.demo_total}/5.0 điểm`,
+    `  + Tư duy máy tính, thuật toán: ${data.demo_score.computational_thinking}/2.0 điểm`,
+    `  + Tư duy sáng tạo: ${data.demo_score.creative_thinking}/0.5 điểm`,
+    `  + Kỹ năng giao tiếp, hợp tác: ${data.demo_score.communication}/1.0 điểm`,
+    `  + Giải quyết vấn đề: ${data.demo_score.problem_solving}/1.0 điểm`,
+    `  + Kỹ năng sử dụng máy tính: ${data.demo_score.computer_skills}/0.5 điểm`,
     "",
     `[ĐÁNH GIÁ NĂNG LỰC - ĐNL (9 TIÊU CHÍ)]`,
   ];
@@ -175,3 +231,4 @@ export function formatFullEvaluationText(
 
   return lines.join("\n");
 }
+

@@ -119,12 +119,15 @@ class DnlCriterionEvaluation(BaseModel):
 
 
 class DemoScoreBreakdown(BaseModel):
-    computational_thinking: float
-    creative_thinking: float
-    communication: float
-    problem_solving: float
-    computer_skills: float
-    total: float
+    knowledge_score: float = 3.5  # Điểm kiến thức (tối đa 5.0)
+    computational_thinking: float  # max 2.0
+    creative_thinking: float  # max 0.5
+    communication: float  # max 1.0
+    problem_solving: float  # max 1.0
+    computer_skills: float  # max 0.5
+    demo_total: float = 3.5  # Tổng điểm 5 tiêu chí demo (tối đa 5.0)
+    total: float  # Tổng cả điểm kiến thức + demo sản phẩm (tối đa 10.0, không dưới 6.0)
+
 
 
 class FinalPresentationReviewRequest(AiRequest):

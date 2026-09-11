@@ -153,19 +153,23 @@ def generate_final_presentation_review(
     demo_score_schema = {
         "type": "object",
         "properties": {
+            "knowledge_score": {"type": "number"},
             "computational_thinking": {"type": "number"},
             "creative_thinking": {"type": "number"},
             "communication": {"type": "number"},
             "problem_solving": {"type": "number"},
             "computer_skills": {"type": "number"},
+            "demo_total": {"type": "number"},
             "total": {"type": "number"},
         },
         "required": [
+            "knowledge_score",
             "computational_thinking",
             "creative_thinking",
             "communication",
             "problem_solving",
             "computer_skills",
+            "demo_total",
             "total",
         ],
     }
@@ -210,6 +214,36 @@ def generate_final_presentation_review(
         api_key=body.api_key,
         provider=body.provider,
     )
+
+    # Bảo đảm tổng cả điểm kiến thức + demo sản phẩm tự động chia đều không dưới 6.0
+    if isinstance(data, dict) and "demo_score" in data:
+        ds = data["demo_score"]
+        k = float(ds.get("knowledge_score", 3.5))
+        d_sub = (
+            float(ds.get("computational_thinking", 0))
+            + float(ds.get("creative_thinking", 0))
+            + float(ds.get("communication", 0))
+            + float(ds.get("problem_solving", 0))
+            + float(ds.get("computer_skills", 0))
+        )
+        demo_total = round(d_sub, 1)
+        total = round(k + demo_total, 1)
+
+        if total < 6.0:
+            # Tự động nâng lên tối thiểu 6.0 và chia đều
+            total = 6.0
+            k = 3.0
+            demo_total = 3.0
+            ds["computational_thinking"] = 1.2
+            ds["creative_thinking"] = 0.3
+            ds["communication"] = 0.6
+            ds["problem_solving"] = 0.6
+            ds["computer_skills"] = 0.3
+
+        ds["knowledge_score"] = k
+        ds["demo_total"] = demo_total
+        ds["total"] = total
+
     return FinalPresentationReviewResponse(**data)
 
 

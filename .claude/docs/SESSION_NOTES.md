@@ -10,13 +10,17 @@
 
 **Đang làm:** Đã hoàn thành tính năng **Tổng kết Buổi 14 (Thuyết trình sản phẩm cuối khóa - Demo Day) & Bảng đánh giá năng lực chuẩn Denise LMS Rubric (Đợt 62)** trên nhánh `feature/final-presentation-review`:
 1. **AI Service (`ai-service/`):**
-   - Thêm schema `FinalPresentationReviewRequest`, `FinalPresentationReviewResponse`, `DemoScoreBreakdown`, `DnlCriterionEvaluation`.
+   - Thêm schema `FinalPresentationReviewRequest`, `FinalPresentationReviewResponse`, `DemoScoreBreakdown` (bao gồm `knowledge_score`, `demo_total`, `total` thang 10), `DnlCriterionEvaluation`.
    - Viết prompt `build_final_presentation_review_prompt` tổng hợp toàn bộ 13 buổi học trước (buổi 1-13), thông tin đề tài SPCK của học viên và ghi chú buổi thuyết trình để sinh nhận xét tổng kết gửi phụ huynh cùng bộ điểm ĐNL & Demo Score.
+   - **Quy tắc chia đều không dưới 6.0:** Tổng cả điểm kiến thức (thang 5.0) + demo sản phẩm (thang 5.0) được bảo đảm **không dưới 6.0 điểm** (thang 10), tự động chia đều cân đối 50/50 và chia đều 5 tiêu chí demo theo tỷ lệ trọng số chuẩn (40%, 10%, 20%, 20%, 10%). Đồng bộ 9 tiêu chí ĐNL đạt từ Khá trở lên (score >= 3).
    - Endpoint `POST /generate-final-presentation-review` (hỗ trợ cả Gemini và OpenAI). Pytest: 86/86 test xanh (100%).
 2. **Frontend Web App (`web/`):**
    - **Tự động nhận diện Buổi 14 / Buổi cuối:** Checkbox "Buổi này là Thuyết trình sản phẩm cuối khóa (Demo Day / Buổi 14)" trong form buổi học (tự động bật nếu số thứ tự là 14 hoặc buổi cuối của lớp).
    - **Giao diện thẻ đánh giá Denise LMS ([presentation-evaluation-card.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/presentation-evaluation-card.tsx)):**
-     - Demo Score (/5.0đ): Tư duy máy tính (2.0đ), Tư duy sáng tạo (0.5đ), Giao tiếp hợp tác (1.0đ), Giải quyết vấn đề (1.0đ), Kỹ năng máy tính (0.5đ).
+     - Khớp giao diện Denise LMS Image 5: Hàng 1 là nhãn `Demo2024 | CSI` kèm ô nhập Điểm kiến thức (tối đa 5.0đ). 5 hàng tiếp theo cho 5 tiêu chí Demo sản phẩm (tổng 5.0đ).
+     - Hiển thị `Demo Score: {total} / 10.0` kèm huy hiệu tóm tắt `Kiến thức: {k}/5.0` và `Demo SP: {d}/5.0`.
+     - Thanh công cụ chọn nhanh mức điểm: `6.0đ (Tối thiểu)`, `7.0đ`, `7.5đ`, `8.0đ`, `8.5đ`, `9.0đ`, `9.5đ`, `10.0đ` tự động chia đều toàn bộ bảng điểm trong 1 click.
+     - Cảnh báo nếu điểm tổng dưới 6.0đ kèm nút sửa nhanh.
      - 9 Tiêu chí ĐNL: KIẾN THỨC (Tự học, Tại lớp), KỸ NĂNG (Giao tiếp hợp tác, Sử dụng máy tính, Giải quyết vấn đề, Tư duy sáng tạo, Tư duy máy tính), THÁI ĐỘ (Trên lớp, Về nhà).
      - Radio 1-5, badge mức độ (TB/Khá/Giỏi) đổi màu tự động, ô nhận xét chỉnh sửa trực tiếp, nút 📋 Sao chép từng ô và nút 📋 "Sao chép toàn bộ bảng đánh giá Denise LMS".
    - **Editor Buổi 14 ([review-editor.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/review-editor.tsx)):**
@@ -27,7 +31,7 @@
    - Có cơ chế graceful fallback trong Server Action: Nếu user chưa kịp dán migration vào Supabase, hệ thống vẫn tự nhận diện theo `session_number === 14` và lưu bình thường không crash.
 4. **Kiểm thử chất lượng:**
    - `ai-service`: `.venv/Scripts/python -m pytest` → 86/86 tests PASSED (100%).
-   - `web/`: `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm test` (268/268 tests PASSED - 23 test files).
+   - `web/`: `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm test` (270/270 tests PASSED - 23 test files).
    - Nhánh Git: `feature/final-presentation-review` sẵn sàng commit. Sẽ xin ý kiến user trước khi merge vào develop/main.
 
 **`main` = `origin/main` = `efb0758`**
