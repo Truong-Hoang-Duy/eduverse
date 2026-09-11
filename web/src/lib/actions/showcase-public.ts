@@ -48,12 +48,12 @@ export async function rateShowcaseProject(input: {
 
   const comment = input.comment.trim();
   if (comment.length > SHOWCASE_COMMENT_MAX) {
-    return { error: `Nhận xét tối đa ${SHOWCASE_COMMENT_MAX} ký tự.` };
+    return { error: `Cảm nghĩ & góp ý tối đa ${SHOWCASE_COMMENT_MAX} ký tự.` };
   }
 
   const scores = [input.product, input.presentation, input.creativity];
   if (scores.every((s) => s === null) && !comment) {
-    return { error: "Hãy chấm ít nhất một tiêu chí hoặc viết một dòng nhận xét." };
+    return { error: "Hãy chấm ít nhất một tiêu chí hoặc viết cảm nghĩ & góp ý." };
   }
   if (scores.some((s) => s !== null && (s < 1 || s > 5))) {
     return { error: "Điểm phải từ 1 đến 5 sao." };
@@ -71,7 +71,7 @@ export async function rateShowcaseProject(input: {
   });
 
   if (error) {
-    return { error: rpcErrorMessage(error.message, "Không gửi được nhận xét.") };
+    return { error: rpcErrorMessage(error.message, "Không gửi được cảm nghĩ & góp ý.") };
   }
   return { rating: data as unknown as MyRating };
 }

@@ -200,3 +200,41 @@ export async function setSpotlightProject(
   revalidateClass(classId);
   return { success: projectId ? "Đã bật thuyết trình." : "Đã tắt thuyết trình." };
 }
+
+/**
+ * Lấy số lượng thiết bị thực tế đang xem triển lãm theo thời gian thực (dành cho màn hình TV).
+ */
+export async function getShowcaseLiveViewCount(
+  classId: string
+): Promise<number | null> {
+  if (!classId) return null;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("class_showcases")
+    .select("view_count")
+    .eq("class_id", classId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data.view_count;
+}
+
+/**
+ * Đặt lại số lượt kết nối về 0 khi bắt đầu phiên chiếu TV đón tiếp phụ huynh.
+ */
+export async function resetShowcaseViewCount(
+  classId: string
+): Promise<ActionResult> {
+  if (!classId) return { error: "Thiếu lớp." };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("class_showcases")
+    .update({ view_count: 0 })
+    .eq("class_id", classId);
+
+  if (error) {
+    return { error: `Không thể đặt lại bộ đếm: ${error.message}` };
+  }
+
+  return { success: "Đã đặt lại số thiết bị kết nối về 0." };
+}
