@@ -249,12 +249,12 @@ export function ShowcaseView({
       setMyRatings(Object.fromEntries(rows.map((r) => [r.project_id, r])));
     });
 
-    // Đếm MỘT lần cho mỗi trình duyệt: mỗi lần F5 cộng thêm một thì con số giáo
-    // viên nhìn thấy chẳng nói lên điều gì.
+    // Đếm MỘT lần cho mỗi phiên mở trang của khán giả: vào tới website là tính một
+    // lượt kết nối, F5 trong cùng phiên không bị cộng trùng.
     const key = `eduverse.showcase.viewed.${token}`;
     try {
-      if (!localStorage.getItem(key)) {
-        localStorage.setItem(key, "1");
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
         void trackShowcaseView(token);
       }
     } catch {
@@ -572,7 +572,7 @@ export function ShowcaseView({
                     : "border-sc-line bg-sc-raised text-sc-ink-soft hover:text-sc-ink"
                   }`}
               >
-                Chưa nhận xét
+                Chưa có Cảm nghĩ & Góp ý
               </button>
             )}
           </div>
@@ -590,7 +590,7 @@ export function ShowcaseView({
             <p>
               {query
                 ? `Không tìm thấy bạn nào khớp “${query}”.`
-                : "Bạn đã nhận xét hết cả lớp rồi — bỏ lọc “Chưa nhận xét” để xem lại."}
+                : "Bạn đã gửi cảm nghĩ & góp ý cho cả lớp rồi — bỏ lọc để xem lại."}
             </p>
             {query && (
               <button
@@ -879,7 +879,7 @@ function ProjectCardTile({
         <div className="flex flex-wrap items-center gap-2 border-t border-sc-line pt-3">
           {rated && (
             <span className="sc-stamp inline-flex rounded-md border-2 border-sc-terracotta/60 px-2 py-0.5 text-[10px] font-bold tracking-[0.14em] text-sc-terracotta uppercase">
-              Đã nhận xét
+              Đã góp ý
             </span>
           )}
           {average !== null && <StarDisplay score={average} />}
@@ -1035,17 +1035,12 @@ function ProjectDetail({
 
         {guestNotes.length > 0 && (
           <div className="space-y-2.5 rounded-xl border border-sc-line bg-sc-paper/40 p-3.5">
-            <Eyebrow>Nhận xét cuối khóa · {guestNotes.length}</Eyebrow>
+            <Eyebrow>Cảm nghĩ & Góp ý · {guestNotes.length}</Eyebrow>
             <div className="space-y-3 divide-y divide-sc-line/60">
               {guestNotes.map((n) => (
                 <div key={n.id} className="pt-2.5 first:pt-0 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-flex items-center rounded-md bg-sc-brass-soft px-2 py-0.5 text-[11px] font-medium text-sc-brass">
-                      Nhận xét & lời chúc
-                    </span>
-                    <span className="text-xs text-sc-ink-soft">
-                      · {formatDateTime(n.created_at)}
-                    </span>
+                  <div className="flex items-center gap-1.5 text-xs text-sc-ink-soft">
+                    <span>{formatDateTime(n.created_at)}</span>
                   </div>
                   <p className="mt-1 whitespace-pre-wrap leading-relaxed text-sc-ink">
                     {n.comment}
@@ -1058,7 +1053,7 @@ function ProjectDetail({
 
         {project.comments.length > 0 && (
           <div className="space-y-2.5 rounded-xl border border-sc-line bg-sc-paper/40 p-3.5">
-            <Eyebrow>Nhận xét bài làm ban đầu · {project.comments.length}</Eyebrow>
+            <Eyebrow>Góp ý bài làm ban đầu · {project.comments.length}</Eyebrow>
             <div className="space-y-3 divide-y divide-sc-line/60">
               {project.comments.map((c) => (
                 <div key={c.id} className="pt-2.5 first:pt-0 text-sm">

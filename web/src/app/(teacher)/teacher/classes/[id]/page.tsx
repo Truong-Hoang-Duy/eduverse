@@ -336,6 +336,9 @@ export default async function ClassDetailPage({
             id: p.id,
             name: p.name,
             authorName: p.authorName,
+            imageUrls: p.image_urls,
+            features: p.features,
+            description: p.description,
           }))}
         />
       </CollapsibleCard>

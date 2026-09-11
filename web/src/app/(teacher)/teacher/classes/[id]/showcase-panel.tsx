@@ -4,10 +4,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
-import { QrCode } from "@/components/qr-code";
-import { GraduationSeal } from "@/components/showcase/emblem";
-import { showcaseFontClass } from "@/components/showcase/fonts";
-import { TvNavButton } from "@/components/showcase/tv-nav-button";
+import { ShowcaseTvScreen } from "@/components/showcase/showcase-tv-screen";
 import {
   TvOverlay,
   enterBrowserFullscreen,
@@ -98,7 +95,14 @@ export function ShowcasePanel({
   loadError?: string | null;
   students: { id: string; fullName: string }[];
   ratings: ShowcaseRatingRow[];
-  projects?: { id: string; name: string; authorName: string }[];
+  projects?: {
+    id: string;
+    name: string;
+    authorName: string;
+    imageUrls?: string[];
+    features?: string[];
+    description?: string | null;
+  }[];
   /** @deprecated Đã bỏ tính năng thả tim */
   heartCount?: number;
 }) {
@@ -269,8 +273,8 @@ export function ShowcasePanel({
               <Button type="button" variant="outline" onClick={copyLink}>
                 {copied ? "✓ Đã copy" : "📋 Copy"}
               </Button>
-              <Button type="button" variant="outline" onClick={openTv}>
-                QR Code
+              <Button type="button" variant="outline" onClick={openTv} className="gap-1.5 font-medium">
+                📺 Chiếu TV / QR
               </Button>
             </div>
             {status !== "live" && (
@@ -488,14 +492,14 @@ export function ShowcasePanel({
             </div>
           )}
 
-          {/* Nhận xét chữ — hiện ngay trên trang phụ huynh, giáo viên gỡ được ở đây */}
+          {/* Cảm nghĩ & Góp ý — hiện ngay trên trang phụ huynh, giáo viên gỡ được ở đây */}
           <div className="space-y-2">
             <p className="text-sm font-medium">
-              💬 Nhận xét cuối khóa ({withComment.length})
+              💬 Cảm nghĩ & Góp ý ({withComment.length})
             </p>
             {withComment.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Chưa có nhận xét nào.
+                Chưa có cảm nghĩ & góp ý nào.
               </p>
             ) : (
               <ul className="space-y-2">
@@ -509,7 +513,7 @@ export function ShowcasePanel({
                       <span className="text-xs text-muted-foreground">
                         {" · "}
                         {new Date(r.created_at).toLocaleString("vi-VN")}
-                        {" · nhận xét ẩn danh"}
+                        {" · cảm nghĩ & góp ý ẩn danh"}
                       </span>
                       <p className="whitespace-pre-wrap text-muted-foreground">
                         {r.comment}
@@ -527,7 +531,7 @@ export function ShowcasePanel({
                         </Button>
                       }
                       title="Gỡ lượt chấm này?"
-                      description="Cả nhận xét lẫn điểm của lượt này sẽ biến mất khỏi trang phụ huynh ngay lập tức và không khôi phục được."
+                      description="Cả cảm nghĩ & góp ý lẫn điểm của lượt này sẽ biến mất khỏi trang phụ huynh ngay lập tức và không khôi phục được."
                       confirmLabel="Gỡ"
                       action={deleteShowcaseRating}
                       fields={{ id: r.id, class_id: classId }}
@@ -542,41 +546,21 @@ export function ShowcasePanel({
 
       {tvOpen && showcase && (
         <TvOverlay onClose={closeTv} fullBleed>
-          <div
-            className={`${showcaseFontClass} showcase-theme showcase-surface relative flex h-full w-full flex-col items-center justify-center gap-[min(3.5vh,1.75rem)] overflow-hidden px-8 py-8 text-center`}
-          >
-            <div className="absolute top-6 right-6">
-              <TvNavButton onClick={closeTv} variant="ghost" ariaLabel="Thoát chế độ chiếu">
-                ✕ Thoát
-              </TvNavButton>
-            </div>
-
-            <GraduationSeal size={76} withRibbon className="text-sc-brass" />
-
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold tracking-[0.22em] text-sc-brass uppercase">
-                Lễ tổng kết khóa học
-              </p>
-              <h2 className="max-w-4xl font-display text-[clamp(1.75rem,4.2vh,3rem)] leading-tight font-semibold text-sc-ink">
-                📱 Quý phụ huynh quét mã để xem sản phẩm các con
-              </h2>
-              <p className="font-display text-[clamp(1.25rem,3vh,1.75rem)] text-sc-brass">
-                Lớp {classCode}
-              </p>
-            </div>
-
-            <div className="sc-rule rounded-3xl bg-white p-6 shadow-lg">
-              <QrCode
-                value={fullUrl}
-                size={420}
-                className="block h-[clamp(190px,32vh,420px)] w-[clamp(190px,32vh,420px)]"
-              />
-            </div>
-
-            <p className="max-w-3xl truncate rounded-full border border-sc-line bg-sc-raised px-5 py-2 font-mono text-sm text-sc-ink-soft">
-              {fullUrl}
-            </p>
-          </div>
+          <ShowcaseTvScreen
+            classId={classId}
+            classCode={classCode}
+            fullUrl={fullUrl}
+            viewCount={showcase.view_count}
+            projects={projects.map((p) => ({
+              id: p.id,
+              name: p.name,
+              authorName: p.authorName,
+              imageUrls: p.imageUrls ?? [],
+              features: p.features ?? [],
+              description: p.description ?? null,
+            }))}
+            onClose={closeTv}
+          />
         </TvOverlay>
       )}
     </div>
