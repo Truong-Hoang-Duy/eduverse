@@ -32,13 +32,12 @@
 4. **Kiểm thử chất lượng:**
    - `ai-service`: `.venv/Scripts/python -m pytest` → 86/86 tests PASSED (100%).
    - `web/`: `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm test` (270/270 tests PASSED - 23 test files).
-   - Nhánh Git: `feature/final-presentation-review` sẵn sàng commit. Sẽ xin ý kiến user trước khi merge vào develop/main.
+   - Nhánh Git: Đã commit và merge sạch từ `feature/final-presentation-review` vào `develop` và `main`, push lên `origin` thành công.
 
-**`main` = `origin/main` = `efb0758`**
-`ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.
-⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp
-commit mới") chưa từng được xác nhận đã kiểm trong session nào — máy dev
-không vào được `onrender.com`, nhờ user tự mở kiểm tra nếu chưa làm.
+**`main` = `origin/main` = `f35fc30`**
+`ai-service/` CÓ đổi ở đợt này (thêm endpoint `/generate-final-presentation-review` và schema rubric ĐNL/Demo Score) — Render tự động build/deploy theo webhook push `main`.
+Kiểm tra `/health` khớp commit mới trên Render dashboard nếu cần.
+
 
 🔴 **Phát hiện đầu phiên: `develop` bị BỎ SÓT một commit chỉ-sửa-docs trên
 `main`** (`b8e8a1a`, không phải merge commit — có vẻ soạn trực tiếp trên
