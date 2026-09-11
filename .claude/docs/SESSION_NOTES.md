@@ -6,34 +6,30 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-10, bởi: Gemini)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-11, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành 2 tính năng Showcase sản phẩm cuối khóa:
-1. **Chế độ Live "Đang thuyết trình" (Live Spotlight):**
-   - **Phía Giáo viên (`showcase-panel.tsx`):**
-     - Thêm khối điều khiển Live: chấm đỏ pulse, nút "✕ Dừng thuyết trình", và danh sách các chip học viên trong lớp.
-     - Giáo viên bấm chọn em đang thuyết trình trên sân khấu, chip chuyển sang màu đỏ nổi bật `🔴 [Tên em] ([Tên dự án])`.
-     - Server Action `setSpotlightProject(classId, projectId)` cập nhật `spotlight_project_id` vào bảng `class_showcases`.
-   - **Phía Phụ huynh (`showcase-view.tsx`):**
-     - Polling nhẹ mỗi 4s qua Server Action / RPC `get_showcase_spotlight(token)` để cập nhật học sinh đang thuyết trình.
-     - Hiện **Thanh thông báo nổi (Floating Spotlight Banner)** ở đáy màn hình điện thoại: `🔴 Đang thuyết trình: Em [Tên em] — Bấm để xem`. Chạm vào sẽ mở ngay popup chi tiết sản phẩm của em đó. Banner tự ẩn khi đang xem đúng bài của em đó.
-     - Thẻ bài của em trên lưới / danh sách / slide tự động có huy hiệu động `🔴 Đang thuyết trình` và hiệu ứng viền đỏ / glow nổi bật.
-2. **Tách riêng 2 khối Nhận xét rõ ràng & Tinh gọn giao diện:**
-   - **Khối "Nhận xét cuối khóa · {số lượng}"**: Dành cho học sinh và phụ huynh gửi nhận xét, lời chúc và động viên trực tiếp trong buổi tổng kết qua link showcase. Form gửi nhận xét hướng dẫn thân thiện cho cả phụ huynh và các bạn trong lớp.
-   - **Khối "Nhận xét bài làm ban đầu · {số lượng}"**: Giữ riêng biệt các bình luận/nhận xét của các bạn cùng lớp được ghi nhận trong quá trình học và làm dự án trước đó.
-   - Phía giáo viên (`showcase-panel.tsx`): Đổi tiêu đề thành "💬 Nhận xét cuối khóa ({số lượng})" để quản lý nhận xét buổi hôm đó.
-   - **Bỏ thanh tiến độ**: Đã gỡ bỏ khối "Bạn đã nhận xét X/Y bạn" và thanh tiến độ khỏi trang showcase để giao diện thông thoáng, tập trung vào tìm kiếm và trải nghiệm xem sản phẩm.
-3. **Database & Types:**
-   - Migration mới: `supabase/migrations/20260910000000_showcase_spotlight.sql` (thêm cột `spotlight_project_id`, cập nhật `get_showcase`, tạo RPC `get_showcase_spotlight`).
-   - Cập nhật `database.types.ts`, `showcase.ts`, `actions/showcase.ts`, `actions/showcase-public.ts`.
-4. **Kiểm thử chất lượng:**
+**Đang làm:** Đã hoàn thành tính năng **Màn hình chờ đón tiếp buổi lễ tổng kết (Welcome & Pre-show TV Screen)** trên TV/máy chiếu:
+1. **Bố cục Split-Screen hiện đại trên màn hình lớn ([showcase-tv-screen.tsx](file:///d:/Project/Eduverse/web/src/components/showcase/showcase-tv-screen.tsx)):**
+   - **Nền & Độ tương phản (Đã khắc phục lỗi chói mắt):** Chuyển hoàn toàn sang giao diện Cinema Dark Luxury (`#070a12`), gỡ bỏ class `showcase-surface` (tránh bị đè màu kem sáng giấy ngà). Toàn bộ chữ và thẻ sản phẩm đạt độ tương phản cực cao, chống lóa khi chiếu máy chiếu/TV.
+   - **Cột trái:** Huy hiệu Lễ tổng kết + Tiêu đề trang trọng **"Xem sản phẩm học viên và gửi đôi lời chia sẻ"** + Khung QR nền trắng viền tỏa sáng vàng kim + Dòng thông điệp kết nối thời gian thực **Realtime 100% theo lượt truy cập thực tế (mặc định ban đầu 0 thiết bị)**: hiển thị `"Đang chờ khán giả quét mã · 0 thiết bị đang kết nối"`. Khi khách quét QR và điện thoại tải vào tới website thành công, RPC `bump_showcase_view` tăng `view_count` trong DB, màn hình TV (polling mỗi 2.5s) ngay lập tức phát hiện và nhảy số kèm hiệu ứng phát sáng pop/ping chúc mừng: `"🟢 Một khán giả vừa tham gia · {liveCount} thiết bị đang kết nối"`. Có nút `"🔄 Đặt lại 0"` trên thanh công cụ.
+   - **Đồng bộ từ ngữ Showcase (chuẩn hóa thuật ngữ):** Thay thế toàn bộ các từ "nhận xét", "lời chúc", "nhận xét & lời chúc" trong toàn bộ Showcase (màn hình TV, form gửi, popup chi tiết, con dấu, filter tab, danh sách panel giáo viên) thành **"Cảm nghĩ & Góp ý"**.
+   - **Cột phải:** Khung trình chiếu tự động (Auto-Reel) nổi khối sang trọng xoay vòng sản phẩm các con mỗi 6.5s: hiển thị ảnh demo lớn, tên học viên, tên đề tài, các tính năng nổi bật em đã lập trình, dots phân trang và nút chuyển slide thủ công. Khi chưa có sản phẩm: hiện thiệp chào mừng trang trọng.
+2. **Hiệu ứng hạt ánh sáng sao vàng (Ambient Starlight Particles):**
+   - Canvas hạt ánh sáng bay lơ lửng chuyển động chậm trên nền tối, tạo không khí sự kiện công nghệ sống động, tránh cảm giác màn hình tĩnh bị đơ.
+3. **Đồng hồ đếm ngược giờ khai mạc (Pre-show Countdown):**
+   - Giáo viên có thể bật hẹn giờ đếm ngược 5 / 10 / 15 phút, hiển thị đồng hồ đếm ngược phong cách sự kiện: `"⏱️ Khai mạc sau: MM:SS"`.
+4. **Nhạc nền đón khách du dương (Ambient BGM):**
+   - Tích hợp Web Audio API Synthesizer tạo các hợp âm lofi / ambient pad êm ái, thư giãn (0 byte file ngoài, không lo bản quyền), có nút bật/tắt (🔊/🔇) và thanh trượt âm lượng mượt mà.
+5. **Thanh công cụ giáo viên tự động ẩn (Auto-hide Control Ribbon):**
+   - Nằm ở đáy màn hình, tự động ẩn sau 3.5s không rê chuột để màn chiếu luôn sạch đẹp; có nút Toàn màn hình (Fullscreen) và nút đóng màn chiếu.
+6. **Kiểm thử chất lượng:**
    - `pnpm typecheck`: Clean 100% (0 errors).
    - `pnpm lint`: Clean 100% (0 errors).
    - `pnpm test`: 22 test files passed (264/264 tests).
    - `pnpm build`: Next.js 15 Turbopack production build thành công 100%.
-   - Nhánh Git hiện tại: `feature/showcase-spotlight-comments` (chưa commit/push theo quy định).
+   - Nhánh Git hiện tại: `feature/showcase-welcome-tv-screen`.
 
-**`main` = `origin/main` = `09686db`**
+**`main` = `origin/main` = `bd7eabd`**
 `ai-service/` KHÔNG đổi ở đợt này — không cần deploy lại Render.
 ⚠️ Cảnh báo Render còn treo từ Đợt 57 ("`ai-service/` đổi, kiểm `/health` khớp
 commit mới") chưa từng được xác nhận đã kiểm trong session nào — máy dev

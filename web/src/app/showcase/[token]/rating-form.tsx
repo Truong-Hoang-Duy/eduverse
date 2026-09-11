@@ -70,14 +70,14 @@ export function RatingForm({
         comment,
       });
       if (res.error || !res.rating) {
-        setError(res.error ?? "Không gửi được nhận xét.");
+        setError(res.error ?? "Không gửi được cảm nghĩ & góp ý.");
         return;
       }
       onSaved(res.rating);
       setMessage(
         existing
-          ? "Đã cập nhật nhận xét của bạn."
-          : "Cảm ơn bạn đã gửi nhận xét và lời chúc!"
+          ? "Đã cập nhật cảm nghĩ & góp ý của bạn."
+          : "Cảm ơn bạn đã gửi cảm nghĩ & góp ý!"
       );
     });
   }
@@ -88,10 +88,10 @@ export function RatingForm({
         <GraduationSeal size={34} className="mt-0.5 shrink-0 text-sc-brass" />
         <div className="min-w-0">
           <h3 className="font-display text-lg leading-tight">
-            Gửi nhận xét cho em {studentName}
+            Gửi cảm nghĩ và góp ý cho em {studentName}
           </h3>
           <p className="text-xs text-sc-ink-soft">
-            Ẩn danh — Phụ huynh và các bạn cùng gửi lời chúc, động viên cho bài thuyết trình hôm nay.
+            Ẩn danh — Phụ huynh và các bạn cùng gửi cảm nghĩ & góp ý, động viên cho bài thuyết trình hôm nay.
           </p>
         </div>
       </header>
@@ -111,13 +111,13 @@ export function RatingForm({
       {/* Giấy kẻ dòng: `leading-7` = 28px, khớp đúng nhịp kẻ của `.sc-ruled` nên
           chữ nằm TRÊN dòng kẻ chứ không cắt ngang. */}
       <label className="mt-3 block">
-        <span className="sr-only">Lời nhận xét cho em {studentName}</span>
+        <span className="sr-only">Cảm nghĩ & góp ý cho em {studentName}</span>
         <textarea
           rows={3}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           maxLength={SHOWCASE_COMMENT_MAX}
-          placeholder={`Viết nhận xét, lời chúc hoặc điều bạn ấn tượng nhất về sản phẩm của em ${studentName}...`}
+          placeholder={`Viết cảm nghĩ & góp ý hoặc điều bạn ấn tượng nhất về sản phẩm của em ${studentName}...`}
           className="sc-ruled w-full resize-none rounded-xl border border-sc-line bg-transparent px-3 py-1 text-base sm:text-sm leading-7 text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
         />
       </label>
@@ -132,8 +132,8 @@ export function RatingForm({
           {pending
             ? "Đang gửi..."
             : existing
-              ? "Cập nhật nhận xét"
-              : "Gửi nhận xét"}
+              ? "Cập nhật cảm nghĩ & góp ý"
+              : "Gửi cảm nghĩ & góp ý"}
         </button>
         {message && <p className="text-sm font-medium text-sc-brass">{message}</p>}
         {error && <p className="text-sm font-medium text-sc-terracotta">{error}</p>}
