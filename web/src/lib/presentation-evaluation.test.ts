@@ -178,5 +178,14 @@ describe("presentation-evaluation", () => {
       }
     }
   });
+
+  it("should have correct display order for KIẾN THỨC criteria (tại lớp before tự học)", () => {
+    const knowledgeCriteria = DNL_CRITERIA.filter((c) => c.group === "KIẾN THỨC");
+    expect(knowledgeCriteria).toHaveLength(2);
+    expect(knowledgeCriteria[0].key).toBe("kien_thuc_tai_lop");
+    expect(knowledgeCriteria[0].name).toBe("[ĐNL] Kiến thức học viên đã được học tại lớp");
+    expect(knowledgeCriteria[1].key).toBe("kien_thuc_tu_hoc");
+    expect(knowledgeCriteria[1].name).toBe("[ĐNL] Kiến thức học viên tự học");
+  });
 });
 

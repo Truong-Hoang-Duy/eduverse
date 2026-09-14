@@ -8,8 +8,11 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Thu gọn ô chọn quan sát bài kiểm tra cuối khóa bằng Tab cấp bậc học lực & Tối ưu UI/UX Buổi 14 (Đợt 66)** trên nhánh `feature/session-format-selector`:
-1. **Thu gọn ô chọn quan sát bài thi cuối khóa (`review-editor.tsx`):**
+**Đang làm:** Đã hoàn thành tính năng **Đảo thứ tự tiêu chí KIẾN THỨC ĐNL & Tối ưu UI/UX Buổi 14 (Đợt 67)** trên nhánh `feature/session-format-selector`:
+1. **Đổi thứ tự hiển thị tiêu chí KIẾN THỨC trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
+   - Đảo vị trí trong `DNL_CRITERIA` để mục **`[ĐNL] Kiến thức học viên đã được học tại lớp`** hiển thị trước mục **`[ĐNL] Kiến thức học viên tự học`**.
+   - Áp dụng đồng bộ cho giao diện thẻ đánh giá ([presentation-evaluation-card.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/presentation-evaluation-card.tsx)), văn bản sao chép toàn bộ bảng đánh giá (`formatFullEvaluationText`), và prompt AI Service (`build_final_presentation_review_prompt`).
+2. **Thu gọn ô chọn quan sát bài thi cuối khóa (`review-editor.tsx`):**
    - Thay thế việc hiển thị đồng thời 40 tiêu chí xòe dài hơn 1000px gây rối mắt bằng hệ thống **Tab Filter cấp bậc học lực**: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
    - **Tự động trỏ đúng học lực:** Khởi tạo tab mặc định theo xếp loại học lực thực tế của học viên (`academicLevelLabel(academicLevel)`), mở lên là đúng ngay nhóm cần chọn.
    - **Gọn gàng tối đa:** Ở mỗi tab cấp bậc, 2 cột chỉ hiển thị đúng 5 tiêu chí của cấp bậc đó, chiều cao giảm từ >1000px xuống ~120px, loại bỏ hoàn toàn cảm giác rối mắt.

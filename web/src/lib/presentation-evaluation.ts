@@ -236,16 +236,16 @@ export const FINAL_EXAM_OBSERVATION_GROUPS: ObservationGroup[] = [
 export const DNL_CRITERIA: DnlCriterion[] = [
   // KIẾN THỨC
   {
-    key: "kien_thuc_tu_hoc",
-    name: "[ĐNL] Kiến thức học viên tự học",
-    group: "KIẾN THỨC",
-    description: "Khả năng tự tìm hiểu, tò mò khám phá kiến thức ngoài giờ học",
-  },
-  {
     key: "kien_thuc_tai_lop",
     name: "[ĐNL] Kiến thức học viên đã được học tại lớp",
     group: "KIẾN THỨC",
     description: "Mức độ tiếp thu và vận dụng kiến thức đã học trên lớp",
+  },
+  {
+    key: "kien_thuc_tu_hoc",
+    name: "[ĐNL] Kiến thức học viên tự học",
+    group: "KIẾN THỨC",
+    description: "Khả năng tự tìm hiểu, tò mò khám phá kiến thức ngoài giờ học",
   },
   // KỸ NĂNG
   {

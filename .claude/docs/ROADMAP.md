@@ -980,7 +980,10 @@
 - [x] **Đưa Bảng Đánh Giá Năng Lực & Tổng Điểm vào Dialog Popup:**
   - Thay thế card inline dài hàng trăm pixel bằng Banner tóm tắt tinh gọn với trạng thái dữ liệu `✓ Đã có dữ liệu` / `Chưa khởi tạo` và tổng điểm.
   - Bấm nút mở popup `Dialog` (Radix UI) `max-w-4xl`, scroll độc lập, có nút Đóng tiện lợi. Tự động mở popup sau khi AI hoàn tất tổng kết để giáo viên xem và chấm nhanh.
-### Đợt 66 (`feature/session-format-selector`) — Thu gọn bộ chọn quan sát bài thi cuối khóa bằng Tab cấp bậc học lực
+### Đợt 66 (`feature/session-format-selector`) — Thu gọn bộ chọn quan sát bài thi cuối khóa bằng Tab cấp bậc học lực & Đổi thứ tự tiêu chí Kiến thức ĐNL
+- [x] **Đổi thứ tự tiêu chí KIẾN THỨC trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
+  - Đảo vị trí hiển thị: `[ĐNL] Kiến thức học viên đã được học tại lớp` lên trước `[ĐNL] Kiến thức học viên tự học`.
+  - Đồng bộ trên cả giao diện form đánh giá, text copy bảng tổng kết, và AI Service prompt.
 - [x] **Tab Filter theo cấp bậc học lực cho bài kiểm tra cuối khóa (`review-editor.tsx`):**
   - Khắc phục triệt để tình trạng hiển thị đồng thời 40 tiêu chí dài hơn 1000px gây rối mắt.
   - Thiết kế hệ thống tab cấp bậc tinh gọn: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
@@ -988,7 +991,7 @@
   - Thu gọn chiều cao từ >1000px xuống chỉ còn ~120px (mỗi cột chỉ render 5 chips của cấp bậc đang chọn).
   - Tích hợp huy hiệu đếm số tiêu chí đã chọn trên từng tab (`getExamLevelSelectedCount`), giáo viên chuyển tab thoải mái không sợ mất dữ liệu.
   - Tab "Xem tất cả" có thanh cuộn giới hạn `max-h-[380px] overflow-y-auto` giữ giao diện luôn ổn định.
-- [x] **Kiểm thử chất lượng:** 289/289 vitest PASS, typecheck & lint sạch 0 lỗi.
+- [x] **Kiểm thử chất lượng:** 290/290 vitest PASS (+1 test mới), 87/87 pytest PASS, typecheck & lint sạch 0 lỗi.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
