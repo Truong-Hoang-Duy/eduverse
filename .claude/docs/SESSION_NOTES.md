@@ -8,26 +8,22 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Đánh Giá Năng Lực (9 tiêu chí ĐNL) cho Bài Kiểm Tra Cuối Khóa & Ẩn Demo Score (Đợt 64)** trên nhánh `feature/session-format-selector`:
-1. **Nghiệp vụ:** Tại Buổi 14 (hoặc buổi cuối khóa), dù lớp chọn "Thuyết trình (Demo Day)" hay "Bài kiểm tra", hệ thống đều tổng kết toàn khóa và nhận xét theo khung chấm điểm **Bảng Đánh Giá Năng Lực (9 tiêu chí ĐNL chuẩn Denise LMS)**. Tuy nhiên, khi giáo viên chọn "Bài kiểm tra", phần **Demo Score** (thang điểm 10 gồm CSI và 5 tiêu chí demo sản phẩm) được ẩn đi vì khóa thi không có demo sản phẩm.
-2. **Frontend Web App (`web/`):**
-   - `presentation-evaluation-card.tsx`: Nhận prop `hideDemoScore?: boolean`. Khi bật: đổi tiêu đề thành `📊 Bảng Đánh Giá Năng Lực (Chuẩn Denise LMS)`, ẩn hoàn toàn Phần 2 (toàn bộ khối Demo Score và thanh chia đều điểm), nút "📋 Copy toàn bộ bảng đánh giá" tự động loại trừ Demo Score và chỉ copy nhận xét cùng 9 tiêu chí ĐNL.
-   - `presentation-evaluation.ts`: Bổ sung `options?: { hideDemoScore?: boolean }` cho `formatFullEvaluationText`, thêm helper `createDefaultFinalEvaluation` cho phép giáo viên mở bảng ĐNL thủ công.
-   - `page.tsx` & `review-list.tsx`: Xác định `isFinalSession` (buổi 14 hoặc buổi cuối của lớp) và truyền xuống `ReviewEditor`.
-   - `review-editor.tsx`:
-     - Tính toán `hasFinalEvaluation = isFinalPresentation || (isPeriodicTest && isFinalSession)` và `hideDemoScore = isPeriodicTest && !isFinalPresentation`.
-     - Bổ sung banner thông báo trực quan cho buổi kiểm tra cuối khóa kèm badge `Buổi 14 / Tổng kết`.
-     - Nút AI thông minh: hiển thị `✨ AI tổng kết bài thi & Đánh giá năng lực` khi là bài kiểm tra cuối khóa.
-     - Cho phép mở bảng ĐNL thủ công qua nút `📊 Mở Bảng Đánh Giá Năng Lực (9 tiêu chí)` khi chưa gọi AI.
-     - Tự động lưu cache rubric vào `localStorage` cho cả bài kiểm tra cuối khóa và buổi thuyết trình.
-   - `reviews.ts` (Server Action): Thêm cờ `isExam` vào `GenerateFinalPresentationReviewInput` và gửi sang AI Service.
-3. **AI Service (`ai-service/`):**
-   - `schemas.py`: Thêm trường `is_exam: bool = False` vào `FinalPresentationReviewRequest`.
-   - `prompts.py`: Tinh chỉnh prompt khi `is_exam=True`: chuyển đổi ngữ cảnh sang đánh giá bài kiểm tra cuối khóa, nhận diện quan sát làm bài thi (`testProcessNotes`) và chấm 9 tiêu chí ĐNL chuẩn xác.
-   - `routes/reviews.py`: Chuyển tiếp cờ `is_exam` vào prompt builder.
+**Đang làm:** Đã hoàn thành tính năng **Tối ưu UI/UX Buổi 14 (Tích chọn quan sát, Ẩn điểm mạnh/cải thiện, Rubric Popup Modal - Đợt 65)** trên nhánh `feature/session-format-selector`:
+1. **Tích chọn quan sát phong phú cho Buổi 14:**
+   - Thay vì 1 ô input với các chip rời rạc, thiết kế bộ tích chọn đa chiều phân theo nhóm danh mục:
+     - **Buổi thuyết trình (`isFinalPresentation`):** 3 nhóm (🎤 Kỹ năng thuyết trình & Tác phong, 💻 Sản phẩm & Demo kỹ thuật, 💡 Tư duy & Phản biện) từ `PRESENTATION_OBSERVATION_GROUPS`.
+     - **Buổi bài kiểm tra cuối khóa (`isPeriodicTest && isFinalSession`):** 2 nhóm (📝 Quá trình & Tác phong làm bài, 🧠 Nắm vững kiến thức & Tư duy) từ `FINAL_EXAM_OBSERVATION_GROUPS`.
+   - Các chip toggle `✓`/`+` phản hồi tức thì, có badge đếm số lượng mục đã chọn, nút "✕ Bỏ chọn tất cả", cùng ô nhập "Ghi chú bổ sung (tùy chọn)".
+2. **Ẩn Điểm mạnh & Cần cải thiện ở Buổi 14:**
+   - Ẩn hoàn toàn `ComboBar`, menu copy điểm mạnh, và 2 cột `Điểm mạnh` / `Cần cải thiện` ở Buổi 14 (`hasFinalEvaluation = true`).
+   - AI Service tự động tổng hợp quá trình học tập, điểm mạnh và hạn chế đa chiều từ lịch sử 13 buổi học trước (`allPriorReviews`).
+3. **Bảng Đánh Giá Năng Lực & Tổng Điểm trong Dialog Popup:**
+   - Thay thế việc nhúng toàn bộ component `PresentationEvaluationCard` trực tiếp trong form nhận xét (vốn kéo dài hàng trăm pixel).
+   - Thiết kế Banner tóm tắt thanh lịch: hiển thị trạng thái `✓ Đã có dữ liệu` / `Chưa khởi tạo`, điểm tổng kết và nút `[ 📝 Mở Bảng Đánh Giá (Popup) ]` / `[ 📊 Khởi tạo & Mở Bảng Đánh Giá ]`.
+   - Khi bấm mở, hiển thị trong Radix `Dialog` rộng rãi (`max-w-4xl`), có scrollbar riêng, footer đóng tiện lợi. Khi AI sinh xong nhận xét, tự động mở popup để giáo viên xem và điều chỉnh ngay.
 4. **Kiểm thử chất lượng:**
-   - `web/`: `pnpm test` (288/288 tests PASSED - 24 files, +2 tests mới), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
-   - `ai-service/`: `pytest` (87/87 tests PASSED - +1 test mới).
+   - `web/`: `pnpm test` (289/289 tests PASSED - 24 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
+   - `ai-service/`: `pytest` (87/87 tests PASSED).
 1. **AI Service (`ai-service/`):**
    - Thêm schema `FinalPresentationReviewRequest`, `FinalPresentationReviewResponse`, `DemoScoreBreakdown` (bao gồm `knowledge_score`, `demo_total`, `total` thang 10), `DnlCriterionEvaluation`.
    - Viết prompt `build_final_presentation_review_prompt` tổng hợp toàn bộ 13 buổi học trước (buổi 1-13), thông tin đề tài SPCK của học viên và ghi chú buổi thuyết trình để sinh nhận xét tổng kết gửi phụ huynh cùng bộ điểm ĐNL & Demo Score.

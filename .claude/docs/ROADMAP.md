@@ -960,6 +960,20 @@
   - `routes/reviews.py`: Chuyển tiếp cờ `is_exam` vào prompt builder.
 - [x] **Kiểm thử chất lượng:** 288/288 vitest PASS (+2 unit tests mới), 87/87 pytest PASS (+1 test mới), typecheck & lint sạch 0 lỗi.
 
+### Đợt 65 (`feature/session-format-selector`) — Tối ưu UI/UX Buổi 14: Tích chọn quan sát đa chiều, Ẩn điểm mạnh/cải thiện, Rubric Popup Modal
+- [x] **Tích chọn quan sát đa chiều theo hình thức Buổi 14:**
+  - Định nghĩa nhóm quan sát phong phú trong `presentation-evaluation.ts`:
+    - `PRESENTATION_OBSERVATION_GROUPS` (3 nhóm: Kỹ năng thuyết trình & Tác phong, Sản phẩm & Demo kỹ thuật, Tư duy & Phản biện).
+    - `FINAL_EXAM_OBSERVATION_GROUPS` (2 nhóm: Quá trình & Tác phong làm bài, Nắm vững kiến thức & Tư duy).
+  - Giao diện chip toggle `✓`/`+` tương tác mượt mà, phân chia theo cột grid trực quan, có badge đếm số lượng, nút bỏ chọn và ô nhập ghi chú bổ sung.
+- [x] **Ẩn Điểm mạnh / Cần cải thiện ở Buổi 14:**
+  - Khi `hasFinalEvaluation = true`, ẩn hoàn toàn thanh Combo, menu Copy và 2 cột Điểm mạnh / Cần cải thiện.
+  - Tận dụng cơ chế AI Service tự động tổng hợp quá trình học tập từ 13 buổi học trước (`allPriorReviews`).
+- [x] **Đưa Bảng Đánh Giá Năng Lực & Tổng Điểm vào Dialog Popup:**
+  - Thay thế card inline dài hàng trăm pixel bằng Banner tóm tắt tinh gọn với trạng thái dữ liệu `✓ Đã có dữ liệu` / `Chưa khởi tạo` và tổng điểm.
+  - Bấm nút mở popup `Dialog` (Radix UI) `max-w-4xl`, scroll độc lập, có nút Đóng tiện lợi. Tự động mở popup sau khi AI hoàn tất tổng kết để giáo viên xem và chấm nhanh.
+- [x] **Kiểm thử chất lượng:** 289/289 vitest PASS (+1 test mới), 87/87 pytest PASS, typecheck & lint sạch 0 lỗi.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

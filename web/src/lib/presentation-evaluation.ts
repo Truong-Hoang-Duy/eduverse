@@ -29,6 +29,82 @@ export interface FinalPresentationEvaluation {
   dnl_evaluations: Record<string, DnlCriterionEvaluation>;
 }
 
+export interface ObservationGroup {
+  group: string;
+  icon: string;
+  items: string[];
+}
+
+export const PRESENTATION_OBSERVATION_GROUPS: ObservationGroup[] = [
+  {
+    group: "Kỹ năng thuyết trình & Tác phong",
+    icon: "🎤",
+    items: [
+      "Thuyết trình tự tin, lưu loát",
+      "Phong thái chững chạc, đĩnh đạc",
+      "Nói to, rõ ràng, truyền cảm",
+      "Slide trình bày đẹp, trực quan",
+      "Tương tác tốt với khán giả",
+      "Cần nói to, rõ ràng hơn",
+      "Còn hồi hộp, cần tự tin hơn",
+      "Cần kiểm soát thời gian trình bày",
+    ],
+  },
+  {
+    group: "Sản phẩm & Demo kỹ thuật",
+    icon: "💻",
+    items: [
+      "Demo sản phẩm chạy mượt mà",
+      "Giao diện đẹp mắt, thẩm mỹ cao",
+      "Tính năng phong phú, hoàn thiện tốt",
+      "Đồ án có tính ứng dụng thực tế",
+      "Code sạch sẽ, tổ chức logic",
+      "Demo gặp lỗi nhỏ nhưng tự xử lý được",
+      "Cần hoàn thiện thêm một số tính năng",
+    ],
+  },
+  {
+    group: "Tư duy & Phản biện",
+    icon: "💡",
+    items: [
+      "Ý tưởng sáng tạo, độc đáo",
+      "Nắm rất chắc kiến thức và code",
+      "Trả lời xuất sắc câu hỏi phản biện",
+      "Giải thích thuật toán mạch lạc",
+      "Cần hiểu sâu hơn về luồng code",
+      "Cần rèn luyện thêm kỹ năng phản biện",
+    ],
+  },
+];
+
+export const FINAL_EXAM_OBSERVATION_GROUPS: ObservationGroup[] = [
+  {
+    group: "Quá trình & Tác phong làm bài",
+    icon: "📝",
+    items: [
+      "Làm bài nghiêm túc, tập trung cao",
+      "Hoàn thành bài sớm, làm bài nhanh nhẹn",
+      "Tự giác kiểm tra lại bài trước khi nộp",
+      "Thao tác máy tính thành thạo",
+      "Chủ động debug và sửa lỗi code",
+      "Cần cẩn thận hơn, tránh lỗi cơ bản",
+      "Cần phân bổ thời gian hợp lý hơn",
+    ],
+  },
+  {
+    group: "Nắm vững kiến thức & Tư duy",
+    icon: "🧠",
+    items: [
+      "Nắm rất vững kiến thức toàn khóa",
+      "Tư duy logic giải thuật tốt",
+      "Áp dụng chính xác các cú pháp đã học",
+      "Tự giải quyết được các câu hỏi khó",
+      "Còn nhầm lẫn ở kiến thức nâng cao",
+      "Cần ôn luyện thêm về logic thuật toán",
+    ],
+  },
+];
+
 export const DNL_CRITERIA: DnlCriterion[] = [
   // KIẾN THỨC
   {

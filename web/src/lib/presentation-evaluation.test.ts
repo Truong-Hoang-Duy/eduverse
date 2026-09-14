@@ -6,8 +6,10 @@ import {
   createDefaultFinalEvaluation,
   distributeScores,
   DNL_CRITERIA,
+  FINAL_EXAM_OBSERVATION_GROUPS,
   type FinalPresentationEvaluation,
   formatFullEvaluationText,
+  PRESENTATION_OBSERVATION_GROUPS,
   scoreToLevel,
 } from "./presentation-evaluation";
 
@@ -151,6 +153,22 @@ describe("presentation-evaluation", () => {
       expect(defaultEval.dnl_evaluations[c.key]).toBeDefined();
       expect(defaultEval.dnl_evaluations[c.key].score).toBe(4);
       expect(defaultEval.dnl_evaluations[c.key].level).toBe("Khá");
+    }
+  });
+
+  it("should have comprehensive presentation and exam observation groups", () => {
+    expect(PRESENTATION_OBSERVATION_GROUPS.length).toBeGreaterThanOrEqual(3);
+    for (const grp of PRESENTATION_OBSERVATION_GROUPS) {
+      expect(grp.group).toBeTruthy();
+      expect(grp.icon).toBeTruthy();
+      expect(grp.items.length).toBeGreaterThanOrEqual(5);
+    }
+
+    expect(FINAL_EXAM_OBSERVATION_GROUPS.length).toBeGreaterThanOrEqual(2);
+    for (const grp of FINAL_EXAM_OBSERVATION_GROUPS) {
+      expect(grp.group).toBeTruthy();
+      expect(grp.icon).toBeTruthy();
+      expect(grp.items.length).toBeGreaterThanOrEqual(5);
     }
   });
 });
