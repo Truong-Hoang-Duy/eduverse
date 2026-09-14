@@ -48,6 +48,7 @@ import {
   createDefaultFinalEvaluation,
   FINAL_EXAM_OBSERVATION_GROUPS,
   type FinalPresentationEvaluation,
+  type ObservationLevel,
   PRESENTATION_OBSERVATION_GROUPS,
 } from "@/lib/presentation-evaluation";
 import type { ActionResult } from "@/lib/types";
@@ -73,6 +74,42 @@ export interface CopySource {
   strengths: string[];
   improvements: string[];
 }
+
+const EXAM_LEVEL_CONFIG: {
+  level: ObservationLevel;
+  label: string;
+  icon: string;
+  activeClass: string;
+}[] = [
+  {
+    level: "Giỏi",
+    label: "Giỏi",
+    icon: "🌟",
+    activeClass:
+      "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 font-semibold shadow-2xs",
+  },
+  {
+    level: "Khá",
+    label: "Khá",
+    icon: "👍",
+    activeClass:
+      "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/40 font-semibold shadow-2xs",
+  },
+  {
+    level: "Trung bình",
+    label: "Trung bình",
+    icon: "⚖️",
+    activeClass:
+      "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40 font-semibold shadow-2xs",
+  },
+  {
+    level: "Cần cố gắng",
+    label: "Cần cố gắng",
+    icon: "⚠️",
+    activeClass:
+      "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/40 font-semibold shadow-2xs",
+  },
+];
 
 export function ReviewEditor({
   sessionId,
@@ -160,10 +197,31 @@ export function ReviewEditor({
     Boolean(isFinalPresentation) || Boolean(isPeriodicTest && isFinalSession);
   const hideDemoScore = Boolean(isPeriodicTest && !isFinalPresentation);
 
+  const defaultExamLevel: ObservationLevel | "all" =
+    academicLevelLabel(academicLevel) === "Giỏi"
+      ? "Giỏi"
+      : academicLevelLabel(academicLevel) === "Trung bình"
+        ? "Trung bình"
+        : academicLevelLabel(academicLevel) === "Cần cố gắng"
+          ? "Cần cố gắng"
+          : "Khá";
+
+  const [selectedExamLevel, setSelectedExamLevel] = useState<
+    ObservationLevel | "all"
+  >(defaultExamLevel);
+
   function toggleObservation(item: string) {
     setSelectedObservations((prev) =>
       prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
     );
+  }
+
+  function getExamLevelSelectedCount(level: ObservationLevel): number {
+    return FINAL_EXAM_OBSERVATION_GROUPS.reduce((sum, grp) => {
+      const sec = grp.sections?.find((s) => s.level === level);
+      if (!sec) return sum;
+      return sum + sec.items.filter((it) => selectedObservations.includes(it)).length;
+    }, 0);
   }
 
   const observationGroups = isFinalPresentation
@@ -558,6 +616,63 @@ export function ReviewEditor({
                     )}
                   </div>
 
+                  {/* Thanh lọc theo cấp bậc học lực cho Bài kiểm tra cuối khóa */}
+                  {!isFinalPresentation && (
+                    <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 rounded-lg bg-muted/40 border border-border/50">
+                      <div className="flex flex-wrap items-center gap-1">
+                        <span className="text-[11px] font-medium text-muted-foreground px-1 hidden sm:inline">
+                          Mức đánh giá:
+                        </span>
+                        {EXAM_LEVEL_CONFIG.map((lvl) => {
+                          const count = getExamLevelSelectedCount(lvl.level);
+                          const isActive = selectedExamLevel === lvl.level;
+                          return (
+                            <button
+                              key={lvl.level}
+                              type="button"
+                              onClick={() => setSelectedExamLevel(lvl.level)}
+                              className={cn(
+                                "px-2.5 py-1 text-xs rounded-md border transition-all flex items-center gap-1.5 cursor-pointer select-none",
+                                isActive
+                                  ? lvl.activeClass
+                                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-background/80"
+                              )}
+                            >
+                              <span>{lvl.icon}</span>
+                              <span>{lvl.label}</span>
+                              {count > 0 && (
+                                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-primary/20 text-primary">
+                                  {count}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedExamLevel("all")}
+                          className={cn(
+                            "px-2.5 py-1 text-xs rounded-md border transition-all flex items-center gap-1 cursor-pointer select-none",
+                            selectedExamLevel === "all"
+                              ? "bg-background text-foreground border-border shadow-2xs font-semibold"
+                              : "border-transparent text-muted-foreground hover:text-foreground hover:bg-background/80"
+                          )}
+                        >
+                          <span>📋 Xem tất cả</span>
+                        </button>
+                      </div>
+
+                      {academicLevel && (
+                        <span className="text-[11px] text-muted-foreground px-2 py-0.5 rounded bg-background/70 border border-border/40">
+                          Xếp loại học lực:{" "}
+                          <strong className="text-foreground font-medium">
+                            {academicLevelLabel(academicLevel)}
+                          </strong>
+                        </span>
+                      )}
+                    </div>
+                  )}
+
                   <div
                     className={cn(
                       "grid gap-2.5",
@@ -592,58 +707,91 @@ export function ReviewEditor({
                             </div>
 
                             {grp.sections && grp.sections.length > 0 ? (
-                              <div className="space-y-3 pt-2">
-                                {grp.sections.map((sec) => {
-                                  const levelColorClass =
-                                    sec.level === "Giỏi"
-                                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
-                                      : sec.level === "Khá"
-                                        ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30"
-                                        : sec.level === "Trung bình"
-                                          ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
-                                          : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30";
+                              selectedExamLevel === "all" ? (
+                                <div className="space-y-3 pt-2 max-h-[380px] overflow-y-auto pr-1">
+                                  {grp.sections.map((sec) => {
+                                    const levelColorClass =
+                                      sec.level === "Giỏi"
+                                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                        : sec.level === "Khá"
+                                          ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30"
+                                          : sec.level === "Trung bình"
+                                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                                            : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30";
 
-                                  return (
-                                    <div key={sec.level} className="space-y-1.5">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-xs">{sec.icon}</span>
-                                        <span
+                                    return (
+                                      <div key={sec.level} className="space-y-1.5">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-xs">{sec.icon}</span>
+                                          <span
+                                            className={cn(
+                                              "text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border",
+                                              levelColorClass
+                                            )}
+                                          >
+                                            {sec.level}
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {sec.items.map((item) => {
+                                            const isSelected =
+                                              selectedObservations.includes(item);
+                                            return (
+                                              <button
+                                                key={item}
+                                                type="button"
+                                                onClick={() => toggleObservation(item)}
+                                                className={cn(
+                                                  "text-[11px] px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none",
+                                                  isSelected
+                                                    ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
+                                                    : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
+                                                )}
+                                              >
+                                                <span className="text-[10px] font-bold">
+                                                  {isSelected ? "✓" : "+"}
+                                                </span>
+                                                <span>{item}</span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="flex flex-wrap gap-1.5 pt-2">
+                                  {(() => {
+                                    const activeSec = grp.sections.find(
+                                      (s) => s.level === selectedExamLevel
+                                    );
+                                    if (!activeSec) return null;
+                                    return activeSec.items.map((item) => {
+                                      const isSelected =
+                                        selectedObservations.includes(item);
+                                      return (
+                                        <button
+                                          key={item}
+                                          type="button"
+                                          onClick={() => toggleObservation(item)}
                                           className={cn(
-                                            "text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border",
-                                            levelColorClass
+                                            "text-[11px] px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none",
+                                            isSelected
+                                              ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
+                                              : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
                                           )}
                                         >
-                                          {sec.level}
-                                        </span>
-                                      </div>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {sec.items.map((item) => {
-                                          const isSelected =
-                                            selectedObservations.includes(item);
-                                          return (
-                                            <button
-                                              key={item}
-                                              type="button"
-                                              onClick={() => toggleObservation(item)}
-                                              className={cn(
-                                                "text-[11px] px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none",
-                                                isSelected
-                                                  ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
-                                                  : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
-                                              )}
-                                            >
-                                              <span className="text-[10px] font-bold">
-                                                {isSelected ? "✓" : "+"}
-                                              </span>
-                                              <span>{item}</span>
-                                            </button>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                                          <span className="text-[10px] font-bold">
+                                            {isSelected ? "✓" : "+"}
+                                          </span>
+                                          <span>{item}</span>
+                                        </button>
+                                      );
+                                    });
+                                  })()}
+                                </div>
+                              )
                             ) : (
                               <div className="flex flex-wrap gap-1.5 pt-2">
                                 {grp.items.map((item) => {

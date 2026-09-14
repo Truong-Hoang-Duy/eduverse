@@ -8,11 +8,16 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Tối ưu UI/UX Buổi 14, Tự động đóng nhận xét khi bấm Lưu & Bổ sung phân cấp quan sát thi cuối khóa (Đợt 65)** trên nhánh `feature/session-format-selector`:
-1. **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts` & `review-editor.tsx`):**
-   - Mở rộng đáng kể ngân hàng nhận xét của 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy` (lên 40 mục nhận xét thực tế).
+**Đang làm:** Đã hoàn thành tính năng **Thu gọn ô chọn quan sát bài kiểm tra cuối khóa bằng Tab cấp bậc học lực & Tối ưu UI/UX Buổi 14 (Đợt 66)** trên nhánh `feature/session-format-selector`:
+1. **Thu gọn ô chọn quan sát bài thi cuối khóa (`review-editor.tsx`):**
+   - Thay thế việc hiển thị đồng thời 40 tiêu chí xòe dài hơn 1000px gây rối mắt bằng hệ thống **Tab Filter cấp bậc học lực**: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
+   - **Tự động trỏ đúng học lực:** Khởi tạo tab mặc định theo xếp loại học lực thực tế của học viên (`academicLevelLabel(academicLevel)`), mở lên là đúng ngay nhóm cần chọn.
+   - **Gọn gàng tối đa:** Ở mỗi tab cấp bậc, 2 cột chỉ hiển thị đúng 5 tiêu chí của cấp bậc đó, chiều cao giảm từ >1000px xuống ~120px, loại bỏ hoàn toàn cảm giác rối mắt.
+   - **Đếm số lượng theo cấp bậc:** Mỗi nút tab tự động hiển thị huy hiệu số lượng tiêu chí đã chọn ở cấp bậc đó (`getExamLevelSelectedCount`), giáo viên chuyển đổi linh hoạt giữa các tab mà không lo mất dữ liệu đã chọn.
+   - Tab `[ 📋 Xem tất cả ]` có thanh cuộn mượt mà `max-h-[380px] overflow-y-auto` giúp giáo viên có thể tra cứu toàn diện khi cần mà không làm vỡ layout trang.
+2. **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts`):**
+   - Mở rộng ngân hàng nhận xét của 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy` (lên 40 mục nhận xét thực tế).
    - Chia thành 4 cấp bậc rõ rệt: 🌟 **Giỏi / Xuất sắc** (xanh lá), 👍 **Khá** (xanh dương), ⚖️ **Trung bình** (vàng hổ phách), ⚠️ **Cần cố gắng** (đỏ hồng).
-   - Giao diện nhóm con trực quan với huy hiệu màu sắc tương ứng, giúp giáo viên chọn nhanh các tiêu chí phù hợp đúng năng lực của từng học viên.
 2. **Sửa lỗi tràn mép dưới popup Rubric (`review-editor.tsx`):**
    - Ghi đè triệt để negative margin `-mx-4 -mb-4` mặc định của `DialogFooter` bằng `m-0 mx-0 mb-0 px-4 py-3 shrink-0 rounded-b-xl border-t bg-muted/30`.
    - Chữ và icon thông báo tự động lưu cùng nút "Đóng" hiển thị hoàn chỉnh, an toàn, không còn bị cắt lẹm mép trái/phải.
