@@ -8,20 +8,23 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Tối ưu UI/UX Buổi 14 (Tích chọn quan sát, Ẩn điểm mạnh/cải thiện, Rubric Popup Modal - Đợt 65)** trên nhánh `feature/session-format-selector`:
-1. **Tích chọn quan sát phong phú cho Buổi 14:**
+**Đang làm:** Đã hoàn thành tính năng **Tối ưu UI/UX Buổi 14 & Tự động đóng nhận xét khi bấm Lưu (Đợt 65)** trên nhánh `feature/session-format-selector`:
+1. **Tự động đóng nhận xét khi bấm Lưu (`review-editor.tsx`):**
+   - Thêm `detailsRef` vào `<details>` và handler `onSubmit` trên form nhận xét: khi giáo viên bấm nút "Lưu nhận xét", card nhận xét của học viên tự động gập lại ngay lập tức mà không cần bấm thủ công.
+   - Thêm `useEffect`: nếu lưu thành công (`state?.success`), giữ card đóng và hiển thị badge xanh `✓ Đã lưu nhận xét.` trên thanh summary; nếu xảy ra lỗi (`state?.error`), tự động bung card ra để giáo viên xem thông báo lỗi.
+2. **Tích chọn quan sát phong phú cho Buổi 14:**
    - Thay vì 1 ô input với các chip rời rạc, thiết kế bộ tích chọn đa chiều phân theo nhóm danh mục:
      - **Buổi thuyết trình (`isFinalPresentation`):** 3 nhóm (🎤 Kỹ năng thuyết trình & Tác phong, 💻 Sản phẩm & Demo kỹ thuật, 💡 Tư duy & Phản biện) từ `PRESENTATION_OBSERVATION_GROUPS`.
      - **Buổi bài kiểm tra cuối khóa (`isPeriodicTest && isFinalSession`):** 2 nhóm (📝 Quá trình & Tác phong làm bài, 🧠 Nắm vững kiến thức & Tư duy) từ `FINAL_EXAM_OBSERVATION_GROUPS`.
    - Các chip toggle `✓`/`+` phản hồi tức thì, có badge đếm số lượng mục đã chọn, nút "✕ Bỏ chọn tất cả", cùng ô nhập "Ghi chú bổ sung (tùy chọn)".
-2. **Ẩn Điểm mạnh & Cần cải thiện ở Buổi 14:**
+3. **Ẩn Điểm mạnh & Cần cải thiện ở Buổi 14:**
    - Ẩn hoàn toàn `ComboBar`, menu copy điểm mạnh, và 2 cột `Điểm mạnh` / `Cần cải thiện` ở Buổi 14 (`hasFinalEvaluation = true`).
    - AI Service tự động tổng hợp quá trình học tập, điểm mạnh và hạn chế đa chiều từ lịch sử 13 buổi học trước (`allPriorReviews`).
-3. **Bảng Đánh Giá Năng Lực & Tổng Điểm trong Dialog Popup:**
+4. **Bảng Đánh Giá Năng Lực & Tổng Điểm trong Dialog Popup:**
    - Thay thế việc nhúng toàn bộ component `PresentationEvaluationCard` trực tiếp trong form nhận xét (vốn kéo dài hàng trăm pixel).
    - Thiết kế Banner tóm tắt thanh lịch: hiển thị trạng thái `✓ Đã có dữ liệu` / `Chưa khởi tạo`, điểm tổng kết và nút `[ 📝 Mở Bảng Đánh Giá (Popup) ]` / `[ 📊 Khởi tạo & Mở Bảng Đánh Giá ]`.
    - Khi bấm mở, hiển thị trong Radix `Dialog` rộng rãi (`max-w-4xl`), có scrollbar riêng, footer đóng tiện lợi. Khi AI sinh xong nhận xét, tự động mở popup để giáo viên xem và điều chỉnh ngay.
-4. **Kiểm thử chất lượng:**
+5. **Kiểm thử chất lượng:**
    - `web/`: `pnpm test` (289/289 tests PASSED - 24 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
    - `ai-service/`: `pytest` (87/87 tests PASSED).
 1. **AI Service (`ai-service/`):**

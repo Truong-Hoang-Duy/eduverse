@@ -184,9 +184,22 @@ export function ReviewEditor({
   }, [hasFinalEvaluation, sessionId, studentId]);
 
   const formRef = useRef<HTMLFormElement>(null);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
   const [aiError, setAiError] = useState("");
   const [aiPending, startAi] = useTransition();
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (state?.error && detailsRef.current) {
+      detailsRef.current.open = true;
+    }
+  }, [state?.error]);
+
+  useEffect(() => {
+    if (state?.success && detailsRef.current) {
+      detailsRef.current.open = false;
+    }
+  }, [state?.success]);
 
   // Gộp (union, bỏ trùng không phân biệt hoa/thường) lựa chọn của bạn khác vào
   // em này — "copy vào" chứ không ghi đè, để không mất thứ GV đã tick.
@@ -382,7 +395,7 @@ export function ReviewEditor({
         : "grid gap-4 sm:grid-cols-2 lg:grid-cols-4";
 
   return (
-    <details className="group rounded-lg border bg-card">
+    <details ref={detailsRef} className="group rounded-lg border bg-card">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-2 font-medium">
           {studentName}
@@ -394,6 +407,13 @@ export function ReviewEditor({
           {isAbsent ? (
             <Badge variant="outline" className="text-xs">
               Vắng
+            </Badge>
+          ) : state?.success ? (
+            <Badge
+              variant="outline"
+              className="text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+            >
+              ✓ {state.success}
             </Badge>
           ) : (
             reviewed && (
@@ -408,7 +428,16 @@ export function ReviewEditor({
         </span>
       </summary>
 
-      <form ref={formRef} action={formAction} className="space-y-4 border-t p-4">
+      <form
+        ref={formRef}
+        action={formAction}
+        onSubmit={() => {
+          if (detailsRef.current) {
+            detailsRef.current.open = false;
+          }
+        }}
+        className="space-y-4 border-t p-4"
+      >
         <input type="hidden" name="session_id" value={sessionId} />
         <input type="hidden" name="student_id" value={studentId} />
         <input type="hidden" name="is_absent" value={String(isAbsent)} />

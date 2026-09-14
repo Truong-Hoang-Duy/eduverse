@@ -960,7 +960,10 @@
   - `routes/reviews.py`: Chuyển tiếp cờ `is_exam` vào prompt builder.
 - [x] **Kiểm thử chất lượng:** 288/288 vitest PASS (+2 unit tests mới), 87/87 pytest PASS (+1 test mới), typecheck & lint sạch 0 lỗi.
 
-### Đợt 65 (`feature/session-format-selector`) — Tối ưu UI/UX Buổi 14: Tích chọn quan sát đa chiều, Ẩn điểm mạnh/cải thiện, Rubric Popup Modal
+### Đợt 65 (`feature/session-format-selector`) — Tối ưu UI/UX Buổi 14 & Tự động đóng nhận xét khi bấm Lưu
+- [x] **Tự động đóng nhận xét khi bấm Lưu (`review-editor.tsx`):**
+  - Thêm `detailsRef` vào `<details>` và `onSubmit` trên `<form>`: Khi bấm nút "Lưu nhận xét", card nhận xét của học viên tự động gập lại ngay lập tức.
+  - Tự động hiển thị badge `✓ Đã lưu nhận xét.` trên thanh summary; nếu xảy ra lỗi lưu (`state?.error`), tự động bung card ra trở lại để giáo viên xem thông báo lỗi.
 - [x] **Tích chọn quan sát đa chiều theo hình thức Buổi 14:**
   - Định nghĩa nhóm quan sát phong phú trong `presentation-evaluation.ts`:
     - `PRESENTATION_OBSERVATION_GROUPS` (3 nhóm: Kỹ năng thuyết trình & Tác phong, Sản phẩm & Demo kỹ thuật, Tư duy & Phản biện).
