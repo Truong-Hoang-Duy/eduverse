@@ -118,12 +118,37 @@ def generate_student_summary(body: StudentSummaryRequest) -> StudentSummaryRespo
 def generate_final_presentation_review(
     body: FinalPresentationReviewRequest,
 ) -> FinalPresentationReviewResponse:
-    prior_reviews_text = "\n".join(
+    absent_sessions = [r.session_number for r in body.prior_reviews if r.is_absent]
+    total_prior = len(body.prior_reviews)
+    if total_prior > 0:
+        if absent_sessions:
+            attendance_summary = (
+                f"Có vắng {len(absent_sessions)}/{total_prior} buổi học trước "
+                f"(vắng ở Buổi: {', '.join(str(s) for s in absent_sessions)}). "
+                f"Việc vắng học này có thể làm gián đoạn kiến thức và ảnh hưởng đến kết quả của em."
+            )
+        else:
+            attendance_summary = (
+                f"Đi học đầy đủ {total_prior}/{total_prior} buổi học trước "
+                f"(100% chuyên cần, không nghỉ buổi nào). "
+                f"Việc đi học chuyên cần, đúng giờ giúp em tiếp thu bài học liền mạch và đạt kết quả tốt."
+            )
+    else:
+        attendance_summary = "Chưa có dữ liệu điểm danh các buổi trước."
+
+    reviews_lines = [
         f"- Buổi {r.session_number} ({r.session_title or 'chưa có tiêu đề'}): "
-        f"mạnh [{', '.join(r.strengths) or 'chưa ghi'}]; "
+        + ("[VẮNG HỌC]; " if r.is_absent else "")
+        + f"mạnh [{', '.join(r.strengths) or 'chưa ghi'}]; "
         f"cần cải thiện [{', '.join(r.improvements) or 'chưa ghi'}]"
         + (f"; nhận xét: {r.comment}" if r.comment else "")
         for r in body.prior_reviews
+    ]
+
+    prior_reviews_text = (
+        f"THỐNG KÊ CHUYÊN CẦN: {attendance_summary}\n\n"
+        + "CHI TIẾT LỊCH SỬ TỪNG BUỔI:\n"
+        + "\n".join(reviews_lines)
     )
 
     prompt = prompts.build_final_presentation_review_prompt(
@@ -139,7 +164,10 @@ def generate_final_presentation_review(
         current_strengths=body.current_strengths,
         current_improvements=body.current_improvements,
         is_exam=body.is_exam,
+        is_periodic_exam=body.is_periodic_exam,
+        session_number=body.session_number,
     )
+
 
     criterion_schema = {
         "type": "object",

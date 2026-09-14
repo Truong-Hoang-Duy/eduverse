@@ -119,7 +119,8 @@ export default async function SessionDetailPage({
       .from("enrollments")
       .select("profiles(id, full_name), academic_level")
       .eq("class_id", session.class_id)
-      .order("joined_at"),
+      .order("sort_order", { ascending: true })
+      .order("joined_at", { ascending: true }),
     supabase
       .from("student_reviews")
       .select(
@@ -152,7 +153,18 @@ export default async function SessionDetailPage({
     listMyCombos(),
   ]);
 
-  const students = ((enrollments ?? []) as unknown as EnrollmentRow[])
+  let enrollmentRows = enrollments;
+  if (!enrollments) {
+    // Graceful fallback nếu DB chưa có cột sort_order
+    const { data: fallbackEnrollments } = await supabase
+      .from("enrollments")
+      .select("profiles(id, full_name), academic_level")
+      .eq("class_id", session.class_id)
+      .order("joined_at");
+    enrollmentRows = fallbackEnrollments;
+  }
+
+  const students = ((enrollmentRows ?? []) as unknown as EnrollmentRow[])
     .filter((e) => e.profiles !== null)
     .map((e) => ({ ...e.profiles!, academic_level: e.academic_level }));
   const reviews = (reviewsData ?? []) as ReviewRow[];
@@ -234,6 +246,7 @@ export default async function SessionDetailPage({
         strengths: r.strengths,
         improvements: r.improvements,
         comment: r.ai_generated_comment,
+        is_absent: Boolean(r.is_absent),
       }))
     );
   }
@@ -296,7 +309,7 @@ export default async function SessionDetailPage({
               : session.is_periodic_test && isFinalSession
                 ? "Buổi kiểm tra cuối khóa: Bấm 'AI tổng kết bài thi' để tổng hợp toàn khóa và chấm 9 tiêu chí Đánh Giá Năng Lực."
                 : session.is_periodic_test
-                  ? "Buổi kiểm tra: Điền quan sát làm bài rồi bấm 'AI tạo nhận xét' để tách 2 phần (học tập / kết quả kiểm tra)."
+                  ? "Buổi kiểm tra định kỳ: Chọn quan sát làm bài rồi bấm 'AI đánh giá bài kiểm tra' để chấm Đánh Giá Năng Lực."
                   : session.is_project_period
                     ? "Giai đoạn làm sản phẩm cuối khóa: Điền quan sát tiến độ SPCK rồi bấm 'AI tạo nhận xét'."
                     : "Áp bộ combo điểm mạnh/cần cải thiện rồi bấm \"AI tạo nhận xét\"."}
@@ -320,6 +333,7 @@ export default async function SessionDetailPage({
           {students.length > 0 && (
             <ReviewList
               sessionId={session.id}
+              sessionNumber={session.session_number}
               sessionTitle={sessionTitle}
               sessionContent={session.content ?? ""}
               sessionContext={session.review_context ?? ""}

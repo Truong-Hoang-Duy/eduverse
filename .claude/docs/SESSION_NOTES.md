@@ -8,22 +8,29 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Mở rộng ngân hàng quan sát bài thi cuối khóa thực tế (64 tiêu chí), loại bỏ từ nói quá & Đảo thứ tự tiêu chí ĐNL (Đợt 68)** trên nhánh `feature/session-format-selector`:
-1. **Mở rộng ngân hàng nhận xét bài thi cuối khóa thực tế (`presentation-evaluation.ts`):**
-   - Tăng số lượng tiêu chí ở mỗi cấp bậc từ 5 lên 8 mục (tổng cộng 64 tiêu chí cho 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy`).
-   - **Chuẩn hóa ngôn ngữ sư phạm khách quan:** Rà soát và loại bỏ hoàn toàn các từ mang tính phóng đại hoặc tuyệt đối hóa ("xuất sắc", "hiểu hết", "toàn bộ", "hoàn hảo").
-   - Tập trung vào các hành động, kỹ năng cụ thể, sự tự giác, mức độ tự tin, khả năng phân bổ thời gian, tư duy gãy gọn, sự chủ động hỏi bài và thói quen kiểm thử code thực tế của học sinh học lập trình.
-   - Trải rộng đồng đều từ khung 🌟 **Giỏi** ➜ 👍 **Khá** ➜ ⚖️ **Trung bình** ➜ ⚠️ **Cần cố gắng**.
-2. **Đổi thứ tự hiển thị tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
-   - **KIẾN THỨC:** Đảo để **`[ĐNL] Kiến thức học viên đã được học tại lớp`** đứng trước **`[ĐNL] Kiến thức học viên tự học`**.
-   - **THÁI ĐỘ:** Đảo để **`[ĐNL] Thái độ luyện tập về nhà`** đứng trước **`[ĐNL] Thái độ học tập trên lớp`**.
-   - Áp dụng đồng bộ cho giao diện thẻ đánh giá ([presentation-evaluation-card.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/presentation-evaluation-card.tsx)), văn bản sao chép toàn bộ bảng đánh giá (`formatFullEvaluationText`), và prompt AI Service (`build_final_presentation_review_prompt`).
-3. **Thu gọn ô chọn quan sát bài thi cuối khóa (`review-editor.tsx`):**
-   - Thay thế việc hiển thị đồng thời hàng chục tiêu chí xòe dài hơn 1000px gây rối mắt bằng hệ thống **Tab Filter cấp bậc học lực**: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
-   - **Tự động trỏ đúng học lực:** Khởi tạo tab mặc định theo xếp loại học lực thực tế của học viên (`academicLevelLabel(academicLevel)`), mở lên là đúng ngay nhóm cần chọn.
-   - **Gọn gàng tối đa:** Ở mỗi tab cấp bậc, 2 cột chỉ hiển thị đúng các tiêu chí của cấp bậc đó, chiều cao luôn ổn định, loại bỏ hoàn toàn cảm giác rối mắt.
-   - **Đếm số lượng theo cấp bậc:** Mỗi nút tab tự động hiển thị huy hiệu số lượng tiêu chí đã chọn ở cấp bậc đó (`getExamLevelSelectedCount`), giáo viên chuyển đổi linh hoạt giữa các tab mà không lo mất dữ liệu đã chọn.
-   - Tab `[ 📋 Xem tất cả ]` có thanh cuộn mượt mà `max-h-[380px] overflow-y-auto` giúp giáo viên có thể tra cứu toàn diện khi cần mà không làm vỡ layout trang.
+**Đang làm:** Đã hoàn thành tính năng **Chuyển 2 Nhóm Quan Sát Bài Kiểm Tra Thành Dropdown Độc Lập & Bổ Sung Nhận Xét Cải Thiện 4 Cấp Bậc (Đợt 72)**:
+1. **Dropdown nổi lên bề mặt (Floating Overlay Popover) cho 2 nhóm quan sát (`review-editor.tsx`):**
+   - Loại bỏ hoàn toàn nút gập/mở chung (`▲ Thu gọn danh sách` / `▼ Mở rộng danh sách`).
+   - Chuyển `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy` thành 2 khối Dropdown nổi độc lập:
+     + **Không chiếm vị trí - Không giật mở rộng trang:** Khi bấm "Xổ xuống", menu quan sát hiển thị dưới dạng **Floating Popover** (`absolute top-full mt-1.5 z-50`), nổi lơ lửng trên bề mặt với bóng đổ `shadow-2xl` và viền sắc nét, đè lên các phần tử bên dưới mà **hoàn toàn không chiếm diện tích document flow, không làm giãn card và không giật nhảy giao diện**.
+     + **Đóng/mở linh hoạt:** Tự động bắt click bên ngoài (`backdrop fixed inset-0 z-40`) hoặc bấm nút `[ ✓ Xong ]` trên header menu để đóng êm ái.
+     + **Cố định chiều cao 100% (h-11) & Giao diện tối giản:** Không hiển thị danh sách chip ra ngoài làm nhảy chiều cao thẻ; thanh trigger cố định chính xác 44px (`h-11`) với huy hiệu `✓ Đã chọn {count}`. Bên trong dropdown hiển thị trực tiếp danh sách tiêu chí (các mục đã chọn được highlight checkmark `✓` rõ nét ngay trên danh sách), lược bỏ khối tóm tắt chip thừa.
+     + **Cuộn mượt mà:** Danh sách bên trong floating menu có thanh cuộn riêng `max-h-[250px] overflow-y-auto`.
+2. **Bổ sung nhận xét cải thiện 4 cấp bậc & Phân tách trực quan (`presentation-evaluation.ts`):**
+   - Mở rộng ngân hàng nhận xét bài kiểm tra lên 12 items/cấp bậc (tổng 96 items cho cả 2 nhóm), bảo đảm mọi cấp bậc (Giỏi, Khá, Trung bình, Cần cố gắng) đều có đầy đủ cả điểm làm tốt và điểm cần lưu ý/cải thiện.
+   - Thêm hàm `isImprovementObservation(text: string): boolean` nhận diện các từ khóa sư phạm (`cần`, `nên`, `đôi lúc`, `còn`, `chưa`, `dễ`, `lưu ý`...).
+   - Trong dropdown, tự động phân nhóm thành 2 tiểu mục trực quan:
+     * `✨ Điểm làm tốt` (chip màu xanh primary / emerald nhẹ).
+     * `💡 Cần lưu ý & cải thiện` (chip màu hổ phách amber nhẹ `border-amber-500/30 bg-amber-500/5`).
+   - Tuân thủ quy tắc không dùng từ "xuất sắc", "hiểu hết" trong toàn bộ ngân hàng quan sát.
+3. **Siết Prompt AI Service (`ai-service/app/prompts.py`):**
+   - Cập nhật `TONE_RULE`: Cấm tuyệt đối việc khen một chiều 100%, bắt buộc chỉ ra ít nhất 1-2 điểm cần lưu ý cải thiện (về kỹ năng tự kiểm thử, đọc kỹ đề bài, tính cẩn thận, tối ưu mã nguồn...).
+   - Cập nhật `build_review_prompt` và `build_final_presentation_review_prompt` để mọi nhận xét gửi phụ huynh đều có tính xây dựng, chân thực và cân bằng.
+4. **Kiểm thử chất lượng:**
+   - `web/`: `pnpm test` (296/296 tests PASSED - 25 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
+   - `ai-service/`: `python -m pytest` (89/89 tests PASSED).
+
+
 2. **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts`):**
    - Mở rộng ngân hàng nhận xét của 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy` (lên 40 mục nhận xét thực tế).
    - Chia thành 4 cấp bậc rõ rệt: 🌟 **Giỏi / Xuất sắc** (xanh lá), 👍 **Khá** (xanh dương), ⚖️ **Trung bình** (vàng hổ phách), ⚠️ **Cần cố gắng** (đỏ hồng).

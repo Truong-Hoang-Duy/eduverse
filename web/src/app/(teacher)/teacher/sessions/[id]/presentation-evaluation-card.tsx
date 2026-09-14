@@ -18,38 +18,72 @@ import {
   scoreToLevel,
 } from "@/lib/presentation-evaluation";
 
+const GROUP_CONFIG = {
+  "KIẾN THỨC": {
+    label: "Kiến thức",
+    icon: "📚",
+    badgeClass: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
+    indexBadgeClass: "bg-blue-600 text-white dark:bg-blue-500",
+    accentBorder: "border-l-4 border-l-blue-500/70",
+  },
+  "KỸ NĂNG": {
+    label: "Kỹ năng",
+    icon: "⚡",
+    badgeClass: "bg-purple-500/10 text-purple-700 dark:text-purple-300",
+    indexBadgeClass: "bg-purple-600 text-white dark:bg-purple-500",
+    accentBorder: "border-l-4 border-l-purple-500/70",
+  },
+  "THÁI ĐỘ": {
+    label: "Thái độ",
+    icon: "🌟",
+    badgeClass: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+    indexBadgeClass: "bg-amber-600 text-white dark:bg-amber-500",
+    accentBorder: "border-l-4 border-l-amber-500/70",
+  },
+} as const;
+
 export function PresentationEvaluationCard({
   studentName,
   data,
   onChange,
   hideDemoScore = false,
+  isPeriodicExam = false,
 }: {
   studentName: string;
   data: FinalPresentationEvaluation;
   onChange: (updated: FinalPresentationEvaluation) => void;
   hideDemoScore?: boolean;
+  isPeriodicExam?: boolean;
 }) {
   const [copiedAll, setCopiedAll] = useState(false);
-  const [copiedKeys, setCopiedKeys] = useState<Record<string, boolean>>({});
-
-  function setCopiedKey(key: string) {
-    setCopiedKeys((prev) => ({ ...prev, [key]: true }));
-    setTimeout(() => {
-      setCopiedKeys((prev) => ({ ...prev, [key]: false }));
-    }, 2000);
-  }
+  const [activeCopiedKey, setActiveCopiedKey] = useState<string | null>(null);
+  const [copiedHistory, setCopiedHistory] = useState<Record<string, boolean>>({});
 
   async function handleCopyText(key: string, text: string) {
+    if (!text.trim()) return;
     await navigator.clipboard.writeText(text);
-    setCopiedKey(key);
+    setActiveCopiedKey(key);
+    setCopiedHistory((prev) => ({ ...prev, [key]: true }));
+    setTimeout(() => {
+      setActiveCopiedKey((curr) => (curr === key ? null : curr));
+    }, 2500);
   }
 
   async function handleCopyAll() {
     const fullText = formatFullEvaluationText(studentName, data, {
       hideDemoScore,
+      isPeriodicExam,
     });
     await navigator.clipboard.writeText(fullText);
     setCopiedAll(true);
+    // Đánh dấu tất cả các key DNL đã copy
+    const allCopied: Record<string, boolean> = {};
+    for (const c of DNL_CRITERIA) {
+      if (data.dnl_evaluations[c.key]?.comment?.trim()) {
+        allCopied[c.key] = true;
+      }
+    }
+    setCopiedHistory((prev) => ({ ...prev, ...allCopied }));
     setTimeout(() => setCopiedAll(false), 2500);
   }
 
@@ -92,7 +126,6 @@ export function PresentationEvaluationCard({
 
   function handleAutoDistribute(targetScore: number) {
     const distributed = distributeScores(targetScore);
-    // Đồng bộ DNL nếu có tiêu chí nào dưới 3
     const targetDnlScore = targetScore >= 8.5 ? 5 : targetScore >= 7.0 ? 4 : 3;
     const targetDnlLevel = scoreToLevel(targetDnlScore);
     const updatedDnl = { ...data.dnl_evaluations };
@@ -152,104 +185,173 @@ export function PresentationEvaluationCard({
 
   const groups = ["KIẾN THỨC", "KỸ NĂNG", "THÁI ĐỘ"] as const;
 
+  // Thống kê tiến độ
+  const filledDnlCount = DNL_CRITERIA.filter(
+    (c) => Boolean(data.dnl_evaluations[c.key]?.comment?.trim())
+  ).length;
+  const copiedDnlCount = DNL_CRITERIA.filter((c) => Boolean(copiedHistory[c.key])).length;
+
   return (
-    <div className="space-y-5 rounded-xl border border-primary/20 bg-muted/20 p-4 sm:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
-        <div>
-          <h4 className="text-sm font-semibold tracking-wide text-foreground uppercase">
-            {hideDemoScore
-              ? "📊 Bảng Đánh Giá Năng Lực (Chuẩn Denise LMS)"
-              : "📊 Bảng Đánh Giá Năng Lực & Tổng Điểm (Chuẩn Denise LMS)"}
-          </h4>
-          <p className="text-xs text-muted-foreground">
-            {hideDemoScore
-              ? "Đánh giá 9 tiêu chí năng lực Kiến thức, Kỹ năng và Thái độ cho bài kiểm tra cuối khóa."
-              : "Tổng hợp cả điểm kiến thức + demo sản phẩm (thang 10), tự động chia đều không dưới 6.0 điểm."}
-          </p>
+    <div className="space-y-6">
+      {/* Top Banner Toolbar: Tinh gọn, tối giản viền, chống copy nhầm */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/40 p-3.5 sm:p-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📊</span>
+            <h4 className="text-sm font-semibold tracking-tight text-foreground">
+              {hideDemoScore
+                ? "Bảng Đánh Giá Năng Lực 9 Tiêu Chí (Denise LMS)"
+                : "Bảng Đánh Giá Năng Lực & Tổng Điểm (Denise LMS)"}
+            </h4>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1 font-medium text-foreground">
+              <span>Học viên:</span>
+              <span className="text-primary font-semibold">{studentName}</span>
+            </span>
+            <span>•</span>
+            <span className="inline-flex items-center gap-1">
+              <span>Đã có nhận xét:</span>
+              <span className="font-semibold text-foreground">
+                {filledDnlCount}/9
+              </span>
+            </span>
+            {copiedDnlCount > 0 && (
+              <>
+                <span>•</span>
+                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                  <span>Đã copy:</span>
+                  <span className="font-semibold">{copiedDnlCount}/9</span>
+                </span>
+              </>
+            )}
+          </div>
         </div>
+
         <Button
           type="button"
-          variant="outline"
+          variant={copiedAll ? "default" : "outline"}
           size="sm"
           onClick={handleCopyAll}
-          className="cursor-pointer text-xs"
+          className={`h-8 px-3 text-xs font-semibold cursor-pointer transition-all shadow-xs ${
+            copiedAll
+              ? "bg-emerald-600 hover:bg-emerald-600 text-white border-transparent"
+              : "hover:bg-primary hover:text-primary-foreground"
+          }`}
         >
-          {copiedAll ? "✓ Đã copy toàn bộ bảng" : "📋 Copy toàn bộ bảng đánh giá"}
+          {copiedAll ? "✓ Đã copy toàn bộ bảng" : "📋 Copy toàn bộ 9 nhận xét"}
         </Button>
       </div>
 
-      {/* --- PHẦN 1: 9 TIÊU CHÍ ĐNL THEO 3 NHÓM (Image 1, 2, 3, 4) --- */}
+      {/* --- PHẦN 1: 9 TIÊU CHÍ ĐNL THEO 3 NHÓM (Hạn chế tối đa border, có số thứ tự 01..09) --- */}
       <div className="space-y-6">
         {groups.map((grp) => {
           const criteriaInGroup = DNL_CRITERIA.filter((c) => c.group === grp);
+          const config = GROUP_CONFIG[grp];
+
           return (
             <div key={grp} className="space-y-3">
-              <h5 className="text-xs font-bold tracking-wider text-muted-foreground uppercase border-b pb-1">
-                {grp}
-              </h5>
+              {/* Header Nhóm: Thoáng, hiện đại, không kẻ vạch thô cứng */}
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{config.icon}</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    {grp}
+                  </span>
+                  <Badge variant="secondary" className={`text-[10px] font-medium border-0 ${config.badgeClass}`}>
+                    {criteriaInGroup.length} tiêu chí
+                  </Badge>
+                </div>
+              </div>
 
-              <div className="space-y-4">
+              {/* Danh sách tiêu chí trong nhóm: Nền mềm phẳng, vạch màu nhấn nhẹ, nút copy gắn liền tiêu đề */}
+              <div className="space-y-3">
                 {criteriaInGroup.map((criterion) => {
+                  const globalIndex =
+                    DNL_CRITERIA.findIndex((c) => c.key === criterion.key) + 1;
+                  const formattedIndex = globalIndex < 10 ? `0${globalIndex}` : String(globalIndex);
+
                   const evalItem = data.dnl_evaluations[criterion.key] ?? {
                     score: 4,
                     level: "Khá",
                     comment: "",
                   };
 
+                  const isCurrentlyActive = activeCopiedKey === criterion.key;
+                  const hasBeenCopied = Boolean(copiedHistory[criterion.key]);
+                  const hasComment = Boolean(evalItem.comment.trim());
+
                   return (
                     <div
                       key={criterion.key}
-                      className="space-y-2 rounded-lg border bg-card p-3 sm:p-4"
+                      className={`relative space-y-3 rounded-xl p-3.5 sm:p-4 transition-all duration-300 ${
+                        config.accentBorder
+                      } ${
+                        isCurrentlyActive
+                          ? "bg-emerald-500/10 ring-2 ring-emerald-500/60 shadow-sm"
+                          : hasBeenCopied
+                          ? "bg-muted/30 hover:bg-muted/50"
+                          : "bg-muted/20 hover:bg-muted/40"
+                      }`}
                     >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <Label className="text-sm font-semibold text-foreground">
-                          {criterion.name}
-                        </Label>
+                      {/* Tiêu đề tiêu chí + Bộ chọn điểm 1..5 + Nút Copy trực quan */}
+                      <div className="flex flex-wrap items-center justify-between gap-2.5">
+                        {/* Cột trái: Số thứ tự to bản + Tên tiêu chí */}
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <span
+                            className={`flex size-6 shrink-0 items-center justify-center rounded-md font-mono text-xs font-bold shadow-xs ${
+                              hasBeenCopied
+                                ? "bg-emerald-600 text-white dark:bg-emerald-500"
+                                : config.indexBadgeClass
+                            }`}
+                            title={`Tiêu chí số ${formattedIndex}`}
+                          >
+                            {hasBeenCopied ? "✓" : formattedIndex}
+                          </span>
 
-                        {/* Điểm 1..5 và Xếp loại TB/Khá/Giỏi */}
-                        <div className="flex items-center gap-2">
-                          {/* Badge Level */}
-                          <div className="flex items-center gap-1">
-                            <Badge
-                              variant={
-                                evalItem.level === "TB" ? "default" : "outline"
-                              }
-                              className={`text-[10px] ${
-                                evalItem.level === "TB"
-                                  ? "bg-amber-600 hover:bg-amber-600 text-white"
-                                  : "text-muted-foreground opacity-60"
-                              }`}
-                            >
-                              TB
-                            </Badge>
-                            <Badge
-                              variant={
-                                evalItem.level === "Khá" ? "default" : "outline"
-                              }
-                              className={`text-[10px] ${
-                                evalItem.level === "Khá"
-                                  ? "bg-emerald-600 hover:bg-emerald-600 text-white"
-                                  : "text-muted-foreground opacity-60"
-                              }`}
-                            >
-                              Khá
-                            </Badge>
-                            <Badge
-                              variant={
-                                evalItem.level === "Giỏi" ? "default" : "outline"
-                              }
-                              className={`text-[10px] ${
-                                evalItem.level === "Giỏi"
-                                  ? "bg-blue-600 hover:bg-blue-600 text-white"
-                                  : "text-muted-foreground opacity-60"
-                              }`}
-                            >
-                              Giỏi
-                            </Badge>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Label className="text-sm font-semibold tracking-tight text-foreground">
+                                {criterion.name}
+                              </Label>
+                              {hasBeenCopied && !isCurrentlyActive && (
+                                <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                  Đã chép
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground/80 line-clamp-1">
+                              {criterion.description}
+                            </p>
                           </div>
+                        </div>
 
-                          {/* 1..5 Radio buttons */}
-                          <div className="flex items-center gap-1.5 pl-2 border-l">
+                        {/* Cột phải: Segmented 1..5 + Badge Level + Nút Copy đặt cạnh nhau */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {/* Badge Level động duy nhất (không render thừa 3 cái) */}
+                          <Badge
+                            variant="secondary"
+                            className={`text-[10px] font-semibold border-0 px-2 py-0.5 ${
+                              evalItem.score === 5
+                                ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                                : evalItem.score === 4
+                                ? "bg-blue-500/20 text-blue-700 dark:text-blue-300"
+                                : evalItem.score === 3
+                                ? "bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                                : "bg-rose-500/20 text-rose-700 dark:text-rose-300"
+                            }`}
+                          >
+                            {evalItem.score >= 5
+                              ? "Giỏi"
+                              : evalItem.score === 4
+                              ? "Khá"
+                              : evalItem.score === 3
+                              ? "TB"
+                              : "Cần cố gắng"}
+                          </Badge>
+
+                          {/* Segmented Pill chọn điểm 1..5 liền khối, không viền rườm rà */}
+                          <div className="inline-flex items-center rounded-lg bg-background/80 dark:bg-background/40 p-0.5 shadow-xs">
                             {[1, 2, 3, 4, 5].map((num) => (
                               <button
                                 key={num}
@@ -257,51 +359,73 @@ export function PresentationEvaluationCard({
                                 onClick={() =>
                                   handleDnlScoreChange(criterion.key, num)
                                 }
-                                className={`size-6 rounded-full border text-xs font-semibold transition-all cursor-pointer ${
+                                className={`size-6 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                                   evalItem.score === num
-                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                    : "border-border bg-background text-muted-foreground hover:border-primary/50"
+                                    ? "bg-primary text-primary-foreground font-bold shadow-xs scale-105"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                                 }`}
+                                title={`Chọn mức ${num}/5 điểm`}
                               >
                                 {num}
                               </button>
                             ))}
                           </div>
+
+                          {/* NÚT COPY ĐẶT NGAY TRÊN HEADER: Tránh hoàn toàn việc click nhầm sang tiêu chí khác */}
+                          <Button
+                            type="button"
+                            variant={isCurrentlyActive ? "default" : "outline"}
+                            size="sm"
+                            onClick={() =>
+                              handleCopyText(criterion.key, evalItem.comment)
+                            }
+                            disabled={!hasComment}
+                            className={`h-7 px-2.5 text-xs font-medium cursor-pointer transition-all shadow-xs ${
+                              isCurrentlyActive
+                                ? "bg-emerald-600 hover:bg-emerald-600 text-white border-transparent"
+                                : hasBeenCopied
+                                ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20"
+                                : "hover:bg-primary/10 hover:text-primary hover:border-primary/40 text-muted-foreground"
+                            }`}
+                            title={
+                              !hasComment
+                                ? "Chưa có nội dung để copy"
+                                : `Sao chép nhận xét tiêu chí ${formattedIndex}`
+                            }
+                          >
+                            {isCurrentlyActive ? (
+                              <span className="flex items-center gap-1 font-semibold">
+                                <span>✓</span> Đã copy
+                              </span>
+                            ) : hasBeenCopied ? (
+                              <span className="flex items-center gap-1 font-medium">
+                                <span>✓</span> Chép lại
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <span>📋</span> Copy
+                              </span>
+                            )}
+                          </Button>
                         </div>
                       </div>
 
-                      {/* Textarea comment */}
-                      <Textarea
-                        rows={2}
-                        value={evalItem.comment}
-                        onChange={(e) =>
-                          handleDnlCommentChange(
-                            criterion.key,
-                            e.target.value
-                          )
-                        }
-                        placeholder={`Nhận xét về ${criterion.description.toLowerCase()}...`}
-                        className="text-xs resize-y"
-                      />
-
-                      <div className="flex justify-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            handleCopyText(
-                              criterion.key,
-                              evalItem.comment
-                            )
+                      {/* Textarea comment: Đường nét phẳng, focus mềm mại, không viền hộp thô */}
+                      <div className="relative">
+                        <Textarea
+                          rows={2}
+                          value={evalItem.comment}
+                          onChange={(e) =>
+                            handleDnlCommentChange(criterion.key, e.target.value)
                           }
-                          disabled={!evalItem.comment.trim()}
-                          className="h-6 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
-                        >
-                          {copiedKeys[criterion.key]
-                            ? "✓ Đã copy nhận xét"
-                            : "📋 Copy nhận xét ô này"}
-                        </Button>
+                          placeholder={`Nhập hoặc tạo nhận xét cho tiêu chí ${formattedIndex}: ${criterion.description.toLowerCase()}...`}
+                          className="text-xs sm:text-sm bg-background/90 focus-visible:ring-1 focus-visible:ring-primary/50 resize-y rounded-lg border-muted-foreground/20 leading-relaxed"
+                        />
+                        {hasComment && (
+                          <span className="absolute bottom-1.5 right-2 text-[10px] text-muted-foreground/50 pointer-events-none">
+                            {evalItem.comment.length} ký tự
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -312,18 +436,19 @@ export function PresentationEvaluationCard({
         })}
       </div>
 
-      {/* --- PHẦN 2: TỔNG CẢ ĐIỂM KIẾN THỨC + DEMO SẢN PHẨM Ở CUỐI (Khớp Image 5) --- */}
+      {/* --- PHẦN 2: TỔNG ĐIỂM KIẾN THỨC + DEMO SẢN PHẨM (Clean, Minimalist Border) --- */}
       {!hideDemoScore && (
-        <div className="space-y-3.5 rounded-lg border border-dashed bg-card p-3 sm:p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="space-y-4 rounded-xl bg-muted/20 p-4 sm:p-5">
+          {/* Header tổng điểm */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
             <div className="flex items-center gap-2.5">
               <span className="text-base font-bold text-primary">
                 Demo Score: {grandTotal} / 10.0
               </span>
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs border-0 bg-primary/10 text-primary font-medium">
                 Kiến thức: {knowledgeScore}/5.0
               </Badge>
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs border-0 bg-primary/10 text-primary font-medium">
                 Demo SP: {demoTotal}/5.0
               </Badge>
             </div>
@@ -332,7 +457,7 @@ export function PresentationEvaluationCard({
 
           {/* Cảnh báo nếu tổng điểm dưới 6.0 */}
           {grandTotal < 6.0 && (
-            <div className="flex items-center justify-between gap-2 rounded-md bg-amber-500/10 border border-amber-500/30 p-2.5 text-xs text-amber-700 dark:text-amber-400">
+            <div className="flex items-center justify-between gap-2 rounded-lg bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300">
               <span>
                 ⚠️ Điểm tổng kết hiện tại ({grandTotal}/10.0) đang dưới 6.0 điểm. Theo quy chế điểm tổng kết không dưới 6.0.
               </span>
@@ -341,34 +466,38 @@ export function PresentationEvaluationCard({
                 size="sm"
                 variant="outline"
                 onClick={() => handleAutoDistribute(6.0)}
-                className="h-6 text-[11px] font-semibold border-amber-500/40 hover:bg-amber-500/20 cursor-pointer"
+                className="h-6 text-[11px] font-semibold border-amber-500/40 hover:bg-amber-500/20 cursor-pointer text-amber-800 dark:text-amber-200"
               >
                 🎯 Chia đều 6.0đ
               </Button>
             </div>
           )}
 
-          {/* Thanh công cụ chia đều điểm nhanh */}
-          <div className="flex flex-wrap items-center gap-1.5 rounded-md bg-muted/40 p-2 text-xs">
-            <span className="font-medium text-foreground">🎯 Chia đều điểm (≥ 6.0):</span>
+          {/* Thanh chia đều điểm nhanh: Dạng Segmented Pills mượt mà */}
+          <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-background/60 dark:bg-background/40 p-2 text-xs">
+            <span className="font-semibold text-foreground mr-1">🎯 Chia đều điểm:</span>
             {[6.0, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0].map((pts) => (
               <Button
                 key={pts}
                 type="button"
-                variant={grandTotal === pts ? "default" : "outline"}
+                variant={grandTotal === pts ? "default" : "ghost"}
                 size="sm"
                 onClick={() => handleAutoDistribute(pts)}
-                className="h-6 px-2 text-[11px] cursor-pointer"
+                className={`h-6 px-2 text-[11px] cursor-pointer rounded-md transition-all ${
+                  grandTotal === pts
+                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
               >
                 {pts.toFixed(1)}đ
               </Button>
             ))}
           </div>
 
-          {/* Bảng nhập điểm chi tiết khớp ảnh Denise LMS */}
-          <div className="space-y-2 pt-1">
+          {/* Bảng nhập điểm chi tiết chuẩn Denise LMS */}
+          <div className="space-y-1.5 pt-1">
             {/* Hàng 1: Demo2024 | CSI -> Điểm kiến thức */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5 text-sm bg-primary/5 -mx-2 px-2 py-1.5 rounded">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm bg-primary/5 rounded-lg p-2 sm:px-3">
               <div className="flex items-center gap-3">
                 <span className="w-28 text-xs font-bold tracking-wider text-primary uppercase">
                   Demo2024 | CSI
@@ -380,10 +509,10 @@ export function PresentationEvaluationCard({
                   max="5.0"
                   value={knowledgeScore}
                   onChange={(e) => handleKnowledgeScoreChange(e.target.value)}
-                  className="h-8 w-20 text-center font-bold text-primary border-primary/40"
+                  className="h-8 w-20 text-center font-bold text-primary bg-background border-primary/30"
                 />
-                <span className="font-semibold text-foreground">
-                  Điểm kiến thức lý thuyết / trên lớp (tối đa 5 điểm)
+                <span className="font-semibold text-foreground text-xs sm:text-sm">
+                  Điểm kiến thức lý thuyết / trên lớp (tối đa 5.0đ)
                 </span>
               </div>
               <Button
@@ -393,27 +522,40 @@ export function PresentationEvaluationCard({
                 onClick={() =>
                   handleCopyText("knowledge_score", String(knowledgeScore))
                 }
-                className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                className={`h-7 px-2.5 text-xs cursor-pointer transition-all ${
+                  activeCopiedKey === "knowledge_score"
+                    ? "bg-emerald-600 text-white hover:bg-emerald-600 font-semibold"
+                    : copiedHistory["knowledge_score"]
+                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
               >
-                {copiedKeys["knowledge_score"] ? "✓ Đã chép" : "📋 Copy điểm"}
+                {activeCopiedKey === "knowledge_score"
+                  ? "✓ Đã chép"
+                  : copiedHistory["knowledge_score"]
+                  ? "✓ Chép lại"
+                  : "📋 Copy điểm"}
               </Button>
             </div>
 
             {/* 5 Hàng Demo sản phẩm */}
-            {DEMO_SCORE_CRITERIA.map((criterion) => {
+            {DEMO_SCORE_CRITERIA.map((criterion, idx) => {
               const scoreVal =
                 data.demo_score[
                   criterion.key as keyof typeof data.demo_score
                 ] ?? 0;
+              const isCopied = activeCopiedKey === criterion.key;
+              const wasCopied = Boolean(copiedHistory[criterion.key]);
+
               return (
                 <div
                   key={criterion.key}
-                  className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-2 text-sm last:border-b-0 last:pb-0"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg p-2 sm:px-3 text-sm hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-28 text-xs text-muted-foreground hidden sm:block">
-                      Demo sản phẩm
-                    </div>
+                    <span className="w-28 text-xs text-muted-foreground hidden sm:inline-block">
+                      Demo tiêu chí {idx + 1}
+                    </span>
                     <Input
                       type="number"
                       step="0.1"
@@ -423,9 +565,9 @@ export function PresentationEvaluationCard({
                       onChange={(e) =>
                         handleDemoScoreChange(criterion.key, e.target.value)
                       }
-                      className="h-8 w-20 text-center font-semibold text-foreground"
+                      className="h-8 w-20 text-center font-semibold text-foreground bg-background border-muted-foreground/20"
                     />
-                    <span className="font-medium text-foreground">
+                    <span className="font-medium text-foreground text-xs sm:text-sm">
                       {criterion.name}
                     </span>
                   </div>
@@ -436,9 +578,19 @@ export function PresentationEvaluationCard({
                     onClick={() =>
                       handleCopyText(criterion.key, String(scoreVal))
                     }
-                    className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                    className={`h-7 px-2.5 text-xs cursor-pointer transition-all ${
+                      isCopied
+                        ? "bg-emerald-600 text-white hover:bg-emerald-600 font-semibold"
+                        : wasCopied
+                        ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    {copiedKeys[criterion.key] ? "✓ Đã chép" : "📋 Copy điểm"}
+                    {isCopied
+                      ? "✓ Đã chép"
+                      : wasCopied
+                      ? "✓ Chép lại"
+                      : "📋 Copy điểm"}
                   </Button>
                 </div>
               );
@@ -446,7 +598,6 @@ export function PresentationEvaluationCard({
           </div>
         </div>
       )}
-
     </div>
   );
 }

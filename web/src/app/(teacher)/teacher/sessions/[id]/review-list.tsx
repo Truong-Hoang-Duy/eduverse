@@ -2,15 +2,10 @@
 
 import { useState } from "react";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
 import type { PriorReviewHistoryItem } from "@/lib/actions/reviews";
+import { cn } from "@/lib/utils";
 
 import {
   type CopySource,
@@ -26,12 +21,6 @@ import {
 
 type StatusFilter = "all" | "done" | "pending";
 
-const STATUS_LABELS: Record<StatusFilter, string> = {
-  all: "Tất cả",
-  done: "Đã hoàn thành",
-  pending: "Chưa hoàn thành",
-};
-
 export interface StudentForReview {
   id: string;
   full_name: string;
@@ -40,10 +29,10 @@ export interface StudentForReview {
   academic_level: string | null;
 }
 
-/** Danh sách nhận xét từng học viên trong buổi + bộ lọc theo trạng thái —
- *  tách khỏi Server Component vì cần state client để lọc. */
+/** Danh sách nhận xét từng học viên trong buổi + bộ lọc theo trạng thái + thanh tiến độ trực quan. */
 export function ReviewList({
   sessionId,
+  sessionNumber,
   sessionTitle,
   sessionContent,
   sessionContext,
@@ -63,45 +52,45 @@ export function ReviewList({
   combos,
 }: {
   sessionId: string;
+  sessionNumber?: number;
   sessionTitle: string;
   sessionContent: string;
-  /** Bối cảnh buổi học GV gõ 1 lần (VD: hôm nay kiểm tra) — chỉ để AI tham
-   *  khảo khi viết nhận xét, dùng chung cho mọi học viên trong buổi. */
   sessionContext: string;
-  /** Buổi có kiểm tra định kỳ — bật thì nhận xét AI tách 2 phần (học tập /
-   *  kiểm tra) và hiện thêm ô chọn "quá trình làm bài". */
   isPeriodicTest: boolean;
-  /** Buổi có làm sản phẩm cuối khóa (SPCK, thường buổi 9-13) — bật thì hiện ô
-   *  chọn "quan sát quá trình làm SPCK", giống cơ chế `isPeriodicTest`. */
   isProjectPeriod: boolean;
-  /** Buổi thuyết trình sản phẩm cuối khóa & Tổng kết (Demo Day / Buổi 14). */
   isFinalPresentation?: boolean;
-  /** Buổi 14 hoặc buổi cuối khóa học (dù là bài kiểm tra hay thuyết trình). */
   isFinalSession?: boolean;
   classCode?: string;
   courseName?: string;
   students: StudentForReview[];
   options: ReviewOptionItem[];
   reviewByStudentId: Map<string, ExistingReview>;
-  /** Nhận xét các buổi trước của từng học viên — cho AI tránh lặp lời văn. */
   priorCommentsByStudentId: Map<string, string[]>;
-  /** Điểm mạnh/cải thiện các buổi trước của từng học viên — để copy sang. */
   priorSelectionsByStudentId: Map<string, PriorSelection[]>;
-  /** Toàn bộ lịch sử nhận xét các buổi trước (1..13) để tổng kết khóa học. */
   allPriorReviewsByStudentId?: Map<string, PriorReviewHistoryItem[]>;
-  /** Dự án sản phẩm cuối khóa của từng học viên. */
   projectsByStudentId?: Map<
     string,
     { id: string; name: string; description: string | null; features: string[] | null }
   >;
-  /** Bộ combo lưu sẵn của GV (dùng chung mọi học viên). */
   combos: ReviewCombo[];
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
 
+  const totalCount = students.length;
+  const doneCount = students.filter((s) =>
+    isHandled(reviewByStudentId.get(s.id) ?? null)
+  ).length;
+  const pendingCount = totalCount - doneCount;
+  const percent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+  // Map số thứ tự cố định theo danh sách lớp
+  const studentIndexMap = new Map<string, number>();
+  students.forEach((s, idx) => {
+    studentIndexMap.set(s.id, idx + 1);
+  });
+
   const filtered = students.filter((student) => {
     if (status === "all") return true;
-    // "Đã hoàn thành" tính cả đánh vắng — buổi coi như xong với em đó.
     const done = isHandled(reviewByStudentId.get(student.id) ?? null);
     return status === "done" ? done : !done;
   });
@@ -146,56 +135,156 @@ export function ReviewList({
     return [...mates, ...priors];
   }
 
+  function handleExpandAll(open: boolean) {
+    const detailsEls = document.querySelectorAll<HTMLDetailsElement>("details.review-editor-item");
+    detailsEls.forEach((el) => {
+      el.open = open;
+    });
+  }
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-end">
-        <Select value={status} onValueChange={(v) => setStatus(v as StatusFilter)}>
-          <SelectTrigger size="sm" className="w-[170px]" aria-label="Lọc theo trạng thái">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.keys(STATUS_LABELS) as StatusFilter[]).map((key) => (
-              <SelectItem key={key} value={key}>
-                {STATUS_LABELS[key]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="space-y-4">
+      {/* Toolbar thông minh: Thống kê tiến độ + Tabs lọc 1 chạm + Thao tác Bung/Thu gọn */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/40 p-3 sm:px-4 border border-slate-300 dark:border-slate-700 shadow-2xs">
+        {/* Khối tiến độ */}
+        <div className="flex items-center gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-foreground">
+                Tiến độ nhận xét:
+              </span>
+              <span className="text-xs font-bold text-primary">
+                {doneCount}/{totalCount} học viên ({percent}%)
+              </span>
+              {percent === 100 && totalCount > 0 && (
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                  ✓ Hoàn thành
+                </span>
+              )}
+            </div>
+            {/* Thanh Progress Bar trực quan */}
+            <div className="h-1.5 w-32 sm:w-44 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-emerald-500 transition-all duration-300 rounded-full"
+                style={{ width: `${percent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Bộ lọc Tabs Pills 1 chạm */}
+          <div className="flex items-center gap-1 bg-background/90 dark:bg-background/40 p-1 rounded-lg border border-slate-300 dark:border-slate-700 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setStatus("all")}
+              className={cn(
+                "px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer select-none",
+                status === "all"
+                  ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              )}
+            >
+              Tất cả ({totalCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatus("done")}
+              className={cn(
+                "px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer flex items-center gap-1 select-none",
+                status === "done"
+                  ? "bg-emerald-600 text-white font-bold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              )}
+            >
+              <span>✓</span> Đã xong ({doneCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatus("pending")}
+              className={cn(
+                "px-2.5 py-1 text-xs rounded-md transition-all cursor-pointer flex items-center gap-1 select-none",
+                status === "pending"
+                  ? "bg-amber-600 text-white font-bold shadow-xs"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+              )}
+            >
+              <span>⏳</span> Chưa xong ({pendingCount})
+            </button>
+          </div>
+
+          {/* Thao tác Bung / Thu gọn tất cả */}
+          <div className="flex items-center gap-1 border-l border-border/50 pl-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => handleExpandAll(true)}
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Bung mở tất cả thẻ nhận xét"
+            >
+              📂 Mở hết
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => handleExpandAll(false)}
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+              title="Thu gọn tất cả thẻ nhận xét"
+            >
+              📁 Thu gọn
+            </Button>
+          </div>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-          Không có học viên nào khớp bộ lọc.
-        </p>
+        <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground bg-muted/10">
+          Không có học viên nào khớp bộ lọc &ldquo;
+          {status === "done"
+            ? "Đã hoàn thành"
+            : status === "pending"
+            ? "Chưa hoàn thành"
+            : "Tất cả"}
+          &rdquo;.
+        </div>
       ) : (
-        filtered.map((student) => (
-          <ReviewEditor
-            // Chữ ký dữ liệu đã lưu nằm trong key — xem `reviewSignature`.
-            key={`${student.id}:${reviewSignature(
-              reviewByStudentId.get(student.id) ?? null
-            )}`}
-            sessionId={sessionId}
-            sessionTitle={sessionTitle}
-            sessionContent={sessionContent}
-            sessionContext={sessionContext}
-            isPeriodicTest={isPeriodicTest}
-            isProjectPeriod={isProjectPeriod}
-            isFinalPresentation={isFinalPresentation}
-            isFinalSession={isFinalSession}
-            classCode={classCode}
-            courseName={courseName}
-            project={projectsByStudentId?.get(student.id) ?? null}
-            allPriorReviews={allPriorReviewsByStudentId?.get(student.id) ?? []}
-            studentId={student.id}
-            studentName={student.full_name}
-            academicLevel={student.academic_level}
-            options={options}
-            existing={reviewByStudentId.get(student.id) ?? null}
-            priorComments={priorCommentsByStudentId.get(student.id) ?? []}
-            copySources={copySourcesFor(student.id)}
-            combos={combos}
-          />
-        ))
+        <div className="space-y-3">
+          {filtered.map((student) => {
+            const studentIndex = studentIndexMap.get(student.id) ?? 1;
+            return (
+              <ReviewEditor
+                // Chữ ký dữ liệu đã lưu nằm trong key — xem `reviewSignature`.
+                key={`${student.id}:${reviewSignature(
+                  reviewByStudentId.get(student.id) ?? null
+                )}`}
+                index={studentIndex}
+                sessionId={sessionId}
+                sessionNumber={sessionNumber}
+                sessionTitle={sessionTitle}
+                sessionContent={sessionContent}
+                sessionContext={sessionContext}
+                isPeriodicTest={isPeriodicTest}
+                isProjectPeriod={isProjectPeriod}
+                isFinalPresentation={isFinalPresentation}
+                isFinalSession={isFinalSession}
+                classCode={classCode}
+                courseName={courseName}
+                project={projectsByStudentId?.get(student.id) ?? null}
+                allPriorReviews={allPriorReviewsByStudentId?.get(student.id) ?? []}
+                studentId={student.id}
+                studentName={student.full_name}
+                academicLevel={student.academic_level}
+                options={options}
+                existing={reviewByStudentId.get(student.id) ?? null}
+                priorComments={priorCommentsByStudentId.get(student.id) ?? []}
+                copySources={copySourcesFor(student.id)}
+                combos={combos}
+              />
+            );
+          })}
+        </div>
       )}
     </div>
   );

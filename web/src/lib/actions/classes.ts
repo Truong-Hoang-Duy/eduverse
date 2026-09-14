@@ -322,3 +322,37 @@ export async function removeStudent(formData: FormData): Promise<void> {
   await supabase.from("enrollments").delete().eq("id", enrollmentId);
   revalidatePath(`/teacher/classes/${classId}`);
 }
+
+/** Cập nhật thứ tự sắp xếp học viên trong lớp (sort_order). */
+export async function updateStudentsOrder(input: {
+  classId: string;
+  orderedEnrollmentIds: string[];
+}): Promise<ActionResult> {
+  if (
+    !input.classId ||
+    !input.orderedEnrollmentIds ||
+    input.orderedEnrollmentIds.length === 0
+  ) {
+    return { error: "Dữ liệu không hợp lệ." };
+  }
+
+  const supabase = await createClient();
+
+  const updates = input.orderedEnrollmentIds.map((enrollmentId, index) =>
+    supabase
+      .from("enrollments")
+      .update({ sort_order: index })
+      .eq("id", enrollmentId)
+      .eq("class_id", input.classId)
+  );
+
+  const results = await Promise.all(updates);
+  const failed = results.find((r) => r.error);
+  if (failed && failed.error) {
+    return { error: `Không lưu được thứ tự: ${failed.error.message}` };
+  }
+
+  revalidatePath(`/teacher/classes/${input.classId}`);
+  return { success: "Đã cập nhật thứ tự học viên." };
+}
+

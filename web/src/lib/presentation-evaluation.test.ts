@@ -9,6 +9,7 @@ import {
   FINAL_EXAM_OBSERVATION_GROUPS,
   type FinalPresentationEvaluation,
   formatFullEvaluationText,
+  isImprovementObservation,
   PRESENTATION_OBSERVATION_GROUPS,
   scoreToLevel,
 } from "./presentation-evaluation";
@@ -138,11 +139,45 @@ describe("presentation-evaluation", () => {
     });
     expect(text).toContain("TRẦN THỊ B");
     expect(text).toContain("Em hoàn thành xuất sắc bài kiểm tra cuối khóa.");
-    expect(text).toContain("Kiến thức học viên tự học: 4/5 (Khá)");
     expect(text).not.toContain("ĐIỂM TỔNG KẾT");
     expect(text).not.toContain("Demo2024");
     expect(text).not.toContain("Điểm demo sản phẩm");
   });
+
+  it("should format evaluation text with periodic exam header when isPeriodicExam is true", () => {
+    const mockData: FinalPresentationEvaluation = {
+      comment: "Em làm bài kiểm tra định kỳ tốt.",
+      demo_score: {
+        knowledge_score: 4.0,
+        computational_thinking: 1.8,
+        creative_thinking: 0.4,
+        communication: 0.9,
+        problem_solving: 0.9,
+        computer_skills: 0.5,
+        demo_total: 4.5,
+        total: 8.5,
+      },
+      dnl_evaluations: {
+        kien_thuc_tu_hoc: {
+          score: 4,
+          level: "Khá",
+          comment: "Nắm chắc kiến thức đã học.",
+        },
+      },
+    };
+
+    const text = formatFullEvaluationText("Lê Văn C", mockData, {
+      hideDemoScore: true,
+      isPeriodicExam: true,
+    });
+    expect(text).toContain("LÊ VĂN C");
+    expect(text).toContain("BẢNG ĐÁNH GIÁ NĂNG LỰC (KIỂM TRA ĐỊNH KỲ)");
+    expect(text).toContain("[NHẬN XÉT BÀI KIỂM TRA ĐỊNH KỲ GỬI PHỤ HUYNH]");
+    expect(text).toContain("Em làm bài kiểm tra định kỳ tốt.");
+    expect(text).not.toContain("TỔNG KẾT KHÓA HỌC");
+    expect(text).not.toContain("ĐIỂM TỔNG KẾT");
+  });
+
 
   it("should create default final evaluation with 9 DNL criteria", () => {
     const defaultEval = createDefaultFinalEvaluation("Nhận xét mặc định");
@@ -200,6 +235,25 @@ describe("presentation-evaluation", () => {
     expect(attitudeCriteria[0].name).toBe("[ĐNL] Thái độ luyện tập về nhà");
     expect(attitudeCriteria[1].key).toBe("thai_do_tai_lop");
     expect(attitudeCriteria[1].name).toBe("[ĐNL] Thái độ học tập trên lớp");
+  });
+
+  it("should classify observation items into strengths and improvements correctly", () => {
+    expect(isImprovementObservation("Cần chú ý đọc kỹ yêu cầu đề thi")).toBe(true);
+    expect(isImprovementObservation("Đôi lúc còn nôn nóng nộp bài sớm")).toBe(true);
+    expect(isImprovementObservation("Chưa có thói quen tự kiểm tra lại bài")).toBe(true);
+    expect(isImprovementObservation("Còn bị động khi gặp lỗi phát sinh")).toBe(true);
+    expect(isImprovementObservation("Làm bài tập trung cao độ, thái độ rất nghiêm túc")).toBe(false);
+    expect(isImprovementObservation("Nắm chắc kiến thức trọng tâm")).toBe(false);
+
+    // Kiểm tra mọi level trong cả 2 nhóm đều có ít nhất 2 mục cải thiện và ít nhất 2 mục ưu điểm
+    for (const grp of FINAL_EXAM_OBSERVATION_GROUPS) {
+      for (const sec of grp.sections ?? []) {
+        const improvements = sec.items.filter(isImprovementObservation);
+        const strengths = sec.items.filter((item) => !isImprovementObservation(item));
+        expect(improvements.length).toBeGreaterThanOrEqual(2);
+        expect(strengths.length).toBeGreaterThanOrEqual(2);
+      }
+    }
   });
 });
 

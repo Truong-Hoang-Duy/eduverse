@@ -7,13 +7,17 @@ SYSTEM_ROLE = (
 )
 
 # Áp cho mọi prompt viết NHẬN XÉT (review / tổng hợp HV / tin Zalo) — yêu cầu
-# user 2026-07-18: không đại ngôn làm lố nhận xét.
+# user 2026-07-18: không đại ngôn làm lố nhận xét; yêu cầu user 2026-09-14: không khen một chiều, bắt buộc có điểm cải thiện.
 TONE_RULE = (
     "Giọng điệu nhận xét phải ĐÚNG MỰC, không phóng đại: TUYỆT ĐỐI tránh các từ "
     "đại ngôn như 'tuyệt vời', 'xuất sắc', 'hoàn hảo', 'đỉnh', 'siêu', 'thiên tài', "
     "'phi thường'. Thay vào đó dùng thang từ vừa phải: 'tốt', 'khá', 'ổn', "
     "'chưa tốt', 'cần cố gắng thêm'. Khen phải kèm căn cứ cụ thể; góp ý nhẹ nhàng, "
-    "mang tính xây dựng."
+    "mang tính xây dựng. "
+    "QUY TẮC CHỐNG KHEN MỘT CHIỀU: TUYỆT ĐỐI KHÔNG khen ngợi một chiều 100%. "
+    "Trong MỌI nhận xét (kể cả học sinh xếp loại Giỏi), BẮT BUỘC PHẢI chỉ ra ít nhất 1-2 điểm "
+    "học sinh cần lưu ý cải thiện (về kỹ năng tự kiểm thử/debug, đọc kỹ đề, tính cẩn thận, "
+    "phân bổ thời gian, hoặc tối ưu code...) kèm lời khuyên chân thành, xây dựng để giúp em tiếp tục tiến bộ."
 )
 
 # Áp cho prompt DUY NHẤT mà HỌC VIÊN là người đọc (`build_student_help_prompt`).
@@ -74,8 +78,9 @@ def build_review_prompt(
     else:
         instruction = (
             "Hãy viết nhận xét 3-5 câu cho một học viên sau buổi học, theo thứ "
-            "tự: điểm mạnh trước, điểm cần cải thiện sau, chốt bằng một lời "
-            "khuyên cụ thể."
+            "tự: điểm mạnh trước, ĐIỂM CẦN CẢI THIỆN/LƯU Ý sau (bắt buộc phải có, "
+            "không khen một chiều dù học viên giỏi), chốt bằng một lời "
+            "khuyên cụ thể mang tính xây dựng."
         )
     parts = [
         SYSTEM_ROLE,
@@ -302,18 +307,26 @@ def build_final_presentation_review_prompt(
     current_strengths: list[str],
     current_improvements: list[str],
     is_exam: bool = False,
+    is_periodic_exam: bool = False,
+    session_number: int | None = None,
 ) -> str:
-    """Xây dựng prompt tổng kết toàn khóa học (Buổi 14 / Demo Day hoặc Bài kiểm tra cuối khóa).
+    """Xây dựng prompt tổng kết toàn khóa học (Buổi 14 / Demo Day hoặc Bài kiểm tra cuối khóa)
+    hoặc đánh giá bài kiểm tra định kỳ (Buổi 5, 9...).
     Đánh giá theo đúng cấu trúc rubric của hệ thống LMS:
     - Điểm Demo Score (thang 5.0 gồm 5 tiêu chí)
     - 9 tiêu chí ĐNL (Đo lường Năng Lực: Kiến thức, Kỹ năng, Thái độ)
-    - Nhận xét tổng kết toàn diện gửi phụ huynh.
+    - Nhận xét bài kiểm tra định kỳ hoặc tổng kết gửi phụ huynh.
     """
-    mission_text = (
-        "Nhiệm vụ: Bạn đang hỗ trợ giáo viên tổng kết toàn khóa học và đánh giá BÀI KIỂM TRA CUỐI KHÓA (Buổi 14) cho một học viên."
-        if is_exam
-        else "Nhiệm vụ: Bạn đang hỗ trợ giáo viên tổng kết toàn khóa học và đánh giá buổi THUYẾT TRÌNH SẢN PHẨM CUỐI KHÓA (Buổi 14 / Demo Day) cho một học viên."
-    )
+    if is_periodic_exam:
+        sess_str = f"Buổi {session_number}" if session_number else "định kỳ"
+        mission_text = (
+            f"Nhiệm vụ: Bạn đang hỗ trợ giáo viên đánh giá BÀI KIỂM TRA ĐỊNH KỲ ({sess_str}) cho một học viên."
+            " Lưu ý quan trọng: Đây là bài kiểm tra định kỳ trong quá trình học, CHƯA PHẢI kết thúc khóa học hay tổng kết toàn khóa."
+        )
+    elif is_exam:
+        mission_text = "Nhiệm vụ: Bạn đang hỗ trợ giáo viên tổng kết toàn khóa học và đánh giá BÀI KIỂM TRA CUỐI KHÓA (Buổi 14) cho một học viên."
+    else:
+        mission_text = "Nhiệm vụ: Bạn đang hỗ trợ giáo viên tổng kết toàn khóa học và đánh giá buổi THUYẾT TRÌNH SẢN PHẨM CUỐI KHÓA (Buổi 14 / Demo Day) cho một học viên."
 
     parts = [
         SYSTEM_ROLE,
@@ -338,11 +351,12 @@ def build_final_presentation_review_prompt(
             parts.append(f"Các tính năng chính của sản phẩm: {', '.join(project_features)}")
 
     if presentation_notes:
-        note_intro = (
-            "Quan sát của giáo viên về quá trình làm bài kiểm tra cuối khóa hôm nay:"
-            if is_exam
-            else "Quan sát của giáo viên về phần thuyết trình của em hôm nay:"
-        )
+        if is_periodic_exam:
+            note_intro = "Quan sát của giáo viên về quá trình làm bài kiểm tra định kỳ hôm nay:"
+        elif is_exam:
+            note_intro = "Quan sát của giáo viên về quá trình làm bài kiểm tra cuối khóa hôm nay:"
+        else:
+            note_intro = "Quan sát của giáo viên về phần thuyết trình của em hôm nay:"
         parts.append(f"{note_intro} {presentation_notes}")
 
     occasion = "buổi kiểm tra" if is_exam else "buổi thuyết trình"
@@ -351,24 +365,41 @@ def build_final_presentation_review_prompt(
     if current_improvements:
         parts.append(f"Điểm cần cải thiện trong {occasion}: {', '.join(current_improvements)}")
 
+    prior_title = (
+        "LỊCH SỬ HỌC TẬP QUA CÁC BUỔI TRƯỚC ĐÓ CỦA EM:\n"
+        if is_periodic_exam
+        else "LỊCH SỬ HỌC TẬP QUA CÁC BUỔI TRƯỚC ĐÓ CỦA EM (TỪ BUỔI 1 ĐẾN BUỔI 13):\n"
+    )
     parts.append(
-        "LỊCH SỬ HỌC TẬP QUA CÁC BUỔI TRƯỚC ĐÓ CỦA EM (TỪ BUỔI 1 ĐẾN BUỔI 13):\n"
+        f"{prior_title}"
         f"{prior_reviews_text or '(Chưa có dữ liệu nhận xét chi tiết các buổi trước — dựa vào thông tin hiện có)'}"
     )
 
-    comment_bullets = (
-        "   - Quá trình học tập và sự tiến bộ, nỗ lực của em suốt khóa học.\n"
-        "   - Đánh giá quá trình làm bài kiểm tra cuối khóa hôm nay (sự tập trung, cẩn thận, nắm vững kiến thức).\n"
-        "   - Lời khen ngợi thế mạnh nổi bật, điểm cần lưu ý tiếp tục phát huy, lời động viên và định hướng học tập tiếp theo.\n"
-        if is_exam
-        else "   - Quá trình học tập và sự tiến bộ, nỗ lực của em suốt khóa học.\n"
-        "   - Đánh giá sản phẩm cuối khóa và phần thuyết trình, tự tin trong buổi hôm nay.\n"
-        "   - Lời khen ngợi thế mạnh nổi bật, điểm cần lưu ý tiếp tục phát huy, lời động viên và định hướng học tập tiếp theo.\n"
-    )
+    if is_periodic_exam:
+        comment_bullets = (
+            "   - Nhận xét quá trình học tập và tính chuyên cần của em từ đầu khóa đến thời điểm bài kiểm tra này (ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học nếu có).\n"
+            "   - Đánh giá cụ thể bài làm kiểm tra định kỳ hôm nay (tác phong làm bài, mức độ hiểu bài, khả năng vận dụng kiến thức).\n"
+            "   - Khen ngợi điểm làm tốt, CHỈ RÕ CỤ THỂ ĐIỂM CẦN LƯU Ý CẢI THIỆN (tác phong, tính cẩn thận, tự kiểm thử, đọc kỹ đề hoặc tối ưu thuật toán) — TUYỆT ĐỐI KHÔNG khen một chiều 100%, kèm lời khuyên/động viên cho các buổi học tiếp theo của khóa.\n"
+        )
+        req_comment_title = "1. 'comment': Đoạn văn nhận xét bài kiểm tra định kỳ gửi phụ huynh (100-160 từ, liền mạch, trang trọng, chân thành, giàu tính khích lệ, chuẩn mực học đường). Cần nêu được:\n"
+    elif is_exam:
+        comment_bullets = (
+            "   - Quá trình học tập, sự tiến bộ và tính chuyên cần của em suốt khóa học (ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học có thể ảnh hưởng đến kết quả nếu có buổi vắng).\n"
+            "   - Đánh giá quá trình làm bài kiểm tra cuối khóa hôm nay (sự tập trung, cẩn thận, nắm vững kiến thức).\n"
+            "   - Nêu rõ thế mạnh nổi bật, ĐỒNG THỜI CHỈ RA RÕ ĐIỂM CẦN LƯU Ý CẢI THIỆN (về kỹ năng tự kiểm thử, đọc kỹ đề, hoặc tối ưu thuật toán...) để em tiếp tục hoàn thiện — TUYỆT ĐỐI KHÔNG chỉ toàn khen ngợi, kèm lời động viên và định hướng học tập tiếp theo.\n"
+        )
+        req_comment_title = "1. 'comment': Đoạn văn nhận xét tổng kết toàn khóa gửi phụ huynh (120-180 từ, liền mạch, trang trọng, chân thành, giàu tính khích lệ, chuẩn mực học đường). Cần nêu được:\n"
+    else:
+        comment_bullets = (
+            "   - Quá trình học tập, sự tiến bộ và tính chuyên cần của em suốt khóa học (ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học có thể ảnh hưởng đến kết quả nếu có buổi vắng).\n"
+            "   - Đánh giá sản phẩm cuối khóa và phần thuyết trình, tự tin trong buổi hôm nay.\n"
+            "   - Nêu rõ thế mạnh nổi bật, ĐỒNG THỜI CHỈ RA RÕ ĐIỂM CẦN LƯU Ý CẢI THIỆN (về kỹ năng thuyết trình, tương tác, hoặc hoàn thiện tính năng...) để em tiếp tục phát triển — TUYỆT ĐỐI KHÔNG chỉ toàn khen ngợi, kèm lời động viên và định hướng học tập tiếp theo.\n"
+        )
+        req_comment_title = "1. 'comment': Đoạn văn nhận xét tổng kết toàn khóa gửi phụ huynh (120-180 từ, liền mạch, trang trọng, chân thành, giàu tính khích lệ, chuẩn mực học đường). Cần nêu được:\n"
 
     parts.append(
         "YÊU CẦU ĐÁNH GIÁ (TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON YÊU CẦU):\n"
-        "1. 'comment': Đoạn văn nhận xét tổng kết toàn khóa gửi phụ huynh (120-180 từ, liền mạch, trang trọng, chân thành, giàu tính khích lệ, chuẩn mực học đường). Cần nêu được:\n"
+        f"{req_comment_title}"
         f"{comment_bullets}"
         "2. 'demo_score': Đánh giá điểm tổng kết gồm Điểm kiến thức (thang 5.0) và Điểm demo sản phẩm (thang 5.0):\n"
         "   - QUY TẮC BẮT BUỘC: Tổng cả điểm kiến thức + demo sản phẩm ('total') TUYỆT ĐỐI KHÔNG ĐƯỢC DƯỚI 6.0 ĐIỂM (thang điểm 10). "
@@ -385,7 +416,7 @@ def build_final_presentation_review_prompt(
         "3. 'dnl_evaluations': Đánh giá 9 tiêu chí ĐNL (Đo lường Năng Lực). Để đồng bộ với điểm tổng kết không dưới 6.0, các tiêu chí đều có điểm từ 3 đến 5 (tương đương Khá hoặc Giỏi, điểm số >= 3):\n"
         "   - 'score': số nguyên từ 3 đến 5 (3-4: Khá, 5: Giỏi; không dưới 3).\n"
         "   - 'level': 'Khá' | 'Giỏi' tương ứng với score (nếu 3-4 là 'Khá', 5 là 'Giỏi', không đánh giá 'TB' nếu điểm >= 6).\n"
-        "   - 'comment': đoạn nhận xét ngắn gọn, súc tích (1-2 câu, 15-30 từ) trực tiếp vào tiêu chí đó để giáo viên điền vào hệ thống LMS.\n"
+        "   - 'comment': đoạn nhận xét ngắn gọn, súc tích (1-2 câu, 15-30 từ) trực tiếp vào tiêu chí đó để giáo viên điền vào hệ thống LMS. LƯU Ý: Không chỉ khen ngợi một chiều, hãy xen kẽ những lưu ý cụ thể về điểm em cần rèn luyện hoặc cải thiện thêm (ví dụ: cần kiên nhẫn hơn khi debug lỗi, cần cẩn thận hơn khi nộp bài, cần chú ý đọc kỹ đề...).\n"
         "   Danh sách 9 tiêu chí bắt buộc gồm:\n"
         "   - kien_thuc_tai_lop: [ĐNL] Kiến thức học viên đã được học tại lớp (khả năng tiếp thu và áp dụng bài học).\n"
         "   - kien_thuc_tu_hoc: [ĐNL] Kiến thức học viên tự học (khả năng tự tìm hiểu, tò mò khám phá).\n"
@@ -395,7 +426,9 @@ def build_final_presentation_review_prompt(
         "   - tu_duy_sang_tao: [ĐNL] Tư duy sáng tạo (ý tưởng khác biệt, tính năng mới lạ, thẩm mỹ giao diện).\n"
         "   - tu_duy_may_tinh: [ĐNL] Tư duy máy tính (tư duy logic lập trình, thuật toán, cấu trúc chương trình).\n"
         "   - thai_do_ve_nha: [ĐNL] Thái độ luyện tập về nhà (hoàn thành bài tập về nhà, chuẩn bị bài tốt).\n"
-        "   - thai_do_tai_lop: [ĐNL] Thái độ học tập trên lớp (chăm chú, kỷ luật, tương tác tích cực)."
+        "   - thai_do_tai_lop: [ĐNL] Thái độ học tập trên lớp (thái độ, sự tập trung, kỷ luật và CHUYÊN CẦN / ĐI HỌC). BẮT BUỘC ĐÁNH GIÁ TÌNH HÌNH ĐI HỌC DỰA VÀO 'THỐNG KÊ CHUYÊN CẦN' TRONG LỊCH SỬ:\n"
+        "     + NẾU EM ĐI HỌC ĐẦY ĐỦ (không vắng buổi nào): Nhận xét PHẢI ghi nhận và khen ngợi tính chuyên cần, đi học đầy đủ, đúng giờ, thái độ học tập tích cực, là yếu tố quan trọng giúp em tiếp thu kiến thức liền mạch và đạt kết quả tốt.\n"
+        "     + NẾU EM CÓ VẮNG HỌC (dù chỉ 1-2 buổi): Nhận xét PHẢI nêu rõ em có vắng buổi học (nêu rõ số buổi vắng nếu có), nhắc nhở việc nghỉ học làm gián đoạn bài học và có thể dẫn đến ảnh hưởng đến kết quả làm bài, đồng thời động viên em cố gắng sắp xếp đi học đầy đủ hơn."
     )
 
     return "\n".join(parts)

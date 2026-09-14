@@ -225,6 +225,7 @@ export type Database = {
           class_id: string
           id: string
           joined_at: string
+          sort_order: number
           student_id: string
         }
         Insert: {
@@ -232,6 +233,7 @@ export type Database = {
           class_id: string
           id?: string
           joined_at?: string
+          sort_order?: number
           student_id: string
         }
         Update: {
@@ -239,6 +241,7 @@ export type Database = {
           class_id?: string
           id?: string
           joined_at?: string
+          sort_order?: number
           student_id?: string
         }
         Relationships: [

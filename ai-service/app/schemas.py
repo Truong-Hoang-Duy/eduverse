@@ -94,6 +94,7 @@ class SessionReviewItem(BaseModel):
     strengths: list[str] = []
     improvements: list[str] = []
     comment: str | None = None
+    is_absent: bool = False
 
 
 class StudentSummaryRequest(AiRequest):
@@ -143,6 +144,8 @@ class FinalPresentationReviewRequest(AiRequest):
     current_strengths: list[str] = []
     current_improvements: list[str] = []
     is_exam: bool = False
+    is_periodic_exam: bool = False
+    session_number: int | None = None
 
 
 class FinalPresentationReviewResponse(BaseModel):

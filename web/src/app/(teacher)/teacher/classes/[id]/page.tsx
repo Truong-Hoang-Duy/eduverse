@@ -58,7 +58,8 @@ export default async function ClassDetailPage({
       .from("enrollments")
       .select("*, profiles(id, full_name, username)")
       .eq("class_id", id)
-      .order("joined_at"),
+      .order("sort_order", { ascending: true })
+      .order("joined_at", { ascending: true }),
     supabase
       .from("classes")
       .select("id, class_code, total_sessions")
@@ -85,7 +86,18 @@ export default async function ClassDetailPage({
   }
 
   const cls = classData as ClassWithCourse;
-  const enrollments = (enrollmentsData ?? []) as EnrollmentWithStudent[];
+  let enrollments = (enrollmentsData ?? []) as EnrollmentWithStudent[];
+  if (!enrollmentsData) {
+    // Graceful fallback nếu DB chưa có cột sort_order
+    const { data: fallbackEnrollments } = await supabase
+      .from("enrollments")
+      .select("*, profiles(id, full_name, username)")
+      .eq("class_id", id)
+      .order("joined_at");
+    if (fallbackEnrollments) {
+      enrollments = fallbackEnrollments as EnrollmentWithStudent[];
+    }
+  }
 
   // Link Drive nộp bài của từng em (RLS: chỉ GV của lớp này đọc được).
   const driveLinks = await driveLinksOfClass(id);
@@ -99,6 +111,7 @@ export default async function ClassDetailPage({
       username: e.profiles!.username,
       driveUrl: driveLinks[e.profiles!.id] ?? null,
       academicLevel: e.academic_level,
+      sortOrder: e.sort_order,
     }));
 
   const allClassRows = (allClasses ?? []) as {
