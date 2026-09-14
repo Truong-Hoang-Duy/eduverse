@@ -402,7 +402,7 @@ export function ReviewEditor({
           <div className="rounded-lg border border-primary/25 bg-primary/5 p-3.5 space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm font-bold text-primary flex items-center gap-1.5">
-                🎓 Buổi 14: Thuyết trình sản phẩm cuối khóa &amp; Tổng kết
+                🎓 {sessionTitle}: Thuyết trình sản phẩm cuối khóa &amp; Tổng kết
               </span>
               {project ? (
                 <Badge variant="outline" className="text-xs bg-background">

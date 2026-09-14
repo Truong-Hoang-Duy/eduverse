@@ -6,9 +6,18 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-11, bởi: Gemini)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Tổng kết Buổi 14 (Thuyết trình sản phẩm cuối khóa - Demo Day) & Bảng đánh giá năng lực chuẩn Denise LMS Rubric (Đợt 62)** trên nhánh `feature/final-presentation-review`:
+**Đang làm:** Đã hoàn thành tính năng **Tái thiết kế bộ chọn hình thức buổi học (Session Format Selector) dạng Radio Cards (Đợt 63)** trên nhánh `feature/session-format-selector`:
+1. **Frontend Web App (`web/`):**
+   - **Tạo module `session-format.ts` & `session-format.test.ts`:** Định nghĩa 4 hình thức buổi học chuẩn hóa: `standard` (Buổi học tiêu chuẩn), `periodic_test` (Bài kiểm tra định kỳ / cuối khóa), `project_period` (Làm đồ án SPCK), `final_presentation` (Thuyết trình Demo Day & Rubric Denise LMS).
+   - **Thay thế checkbox cũ bằng `SessionFormatSelector` trong [session-form.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/session-form.tsx):** Lưới thẻ Radio 2x2 trực quan, có badge ngữ cảnh, gợi ý riêng cho Buổi 14 (khóa thi vs khóa thuyết trình) và hộp thông tin động giải thích chi tiết. Đồng bộ 100% qua hidden inputs mà không cần sửa DB schema.
+   - **Khắc phục triệt để lỗi ép cứng Buổi 14 thành Thuyết trình trong [page.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/page.tsx):** Thêm `is_final_presentation` vào SELECT query; đọc `Boolean(session.is_final_presentation)` thay vì ép `|| session.session_number === 14`. Khóa học chỉ làm bài kiểm tra cuối khóa giờ đây hoạt động chính xác với ô nhận xét kiểm tra và AI tách 2 phần.
+   - **Badge hình thức buổi học trên danh sách lớp ([classes/[id]/page.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/classes/[id]/page.tsx)):** Hiển thị `📝 Thi cuối khóa / Kiểm tra`, `🎤 Demo Day`, `💻 SPCK` trực tiếp trên từng thẻ buổi học.
+   - **Tiêu đề động trong [review-editor.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/review-editor.tsx):** Banner thuyết trình dùng `{sessionTitle}` thay vì cố định chữ "Buổi 14".
+2. **Kiểm thử chất lượng:**
+   - `web/`: `pnpm test` (285/285 tests PASSED - 24 files, +15 tests mới), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm build` (production build thành công).
+   - `ai-service/`: `pytest` (86/86 tests PASSED).
 1. **AI Service (`ai-service/`):**
    - Thêm schema `FinalPresentationReviewRequest`, `FinalPresentationReviewResponse`, `DemoScoreBreakdown` (bao gồm `knowledge_score`, `demo_total`, `total` thang 10), `DnlCriterionEvaluation`.
    - Viết prompt `build_final_presentation_review_prompt` tổng hợp toàn bộ 13 buổi học trước (buổi 1-13), thông tin đề tài SPCK của học viên và ghi chú buổi thuyết trình để sinh nhận xét tổng kết gửi phụ huynh cùng bộ điểm ĐNL & Demo Score.

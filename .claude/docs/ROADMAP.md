@@ -924,6 +924,23 @@
 - [x] **Migration & Graceful Fallback:** Migration `20260911000000_final_presentation_session.sql` (thêm `is_final_presentation`), có fallback tự động theo số thứ tự buổi 14 nếu DB chưa dán migration.
 - [x] Kiểm thử toàn bộ: 86/86 pytest PASS, 270/270 vitest PASS, typecheck & lint sạch 0 lỗi.
 
+### Đợt 63 (`feature/session-format-selector`) — Tái thiết kế bộ chọn hình thức buổi học (Session Format Selector)
+- [x] **Module quản lý hình thức buổi học (`web/src/lib/session-format.ts`):**
+  - Định nghĩa 4 hình thức chuẩn: `standard` (Buổi học tiêu chuẩn), `periodic_test` (Bài kiểm tra định kỳ / cuối khóa), `project_period` (Làm đồ án SPCK), `final_presentation` (Thuyết trình Demo Day & Rubric Denise LMS).
+  - Helper `resolveSessionFormat`, `formatToFlags`, `getSessionFormatBadge`.
+  - Unit test 15 ca (`session-format.test.ts`): 100% PASS.
+- [x] **Giao diện Form Buổi học (`session-form.tsx`):**
+  - Thay thế 3 checkbox rời rạc bằng `SessionFormatSelector` dạng lưới thẻ Radio trực quan 2x2.
+  - Phân định rõ ràng từng hình thức: thẻ được chọn có viền `primary`, ring focus, badge ngữ cảnh và hộp thông tin động (Dynamic Info Callout) giải thích chi tiết.
+  - Hỗ trợ gợi ý riêng cho Buổi 14 (khóa chỉ thi vs khóa có đồ án SPCK).
+  - Đồng bộ ngầm qua hidden inputs mà không cần sửa DB schema.
+- [x] **Khắc phục triệt để lỗi ép cứng Buổi 14 thành Thuyết trình (`sessions/[id]/page.tsx`):**
+  - Thêm `is_final_presentation` vào SELECT query; đọc `Boolean(session.is_final_presentation)` thay vì ép `|| session.session_number === 14`.
+  - Khóa học chỉ làm bài kiểm tra cuối khóa khi chọn "📝 Bài kiểm tra" tại Buổi 14 sẽ hiển thị đúng ô quan sát làm bài kiểm tra và nút "✨ AI tạo nhận xét" (tách 2 phần: quá trình học tập / kết quả kiểm tra), KHÔNG còn bị ép hiện bảng Denise LMS hay đòi đề tài SPCK.
+- [x] **Badge trực quan trên danh sách buổi học của lớp (`classes/[id]/page.tsx`):**
+  - Hiển thị badge `📝 Thi cuối khóa / Kiểm tra`, `🎤 Demo Day`, `💻 SPCK` ngay trên thẻ buổi học ở trang chi tiết lớp.
+- [x] **Kiểm thử chất lượng:** 285/285 vitest PASS, 86/86 pytest PASS, typecheck & lint sạch 0 lỗi, production build thành công.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

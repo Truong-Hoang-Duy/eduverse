@@ -7,6 +7,10 @@ import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { driveLinksOfClass } from "@/lib/actions/drive-link";
+import {
+  getSessionFormatBadge,
+  resolveSessionFormat,
+} from "@/lib/session-format";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 
@@ -61,7 +65,9 @@ export default async function ClassDetailPage({
       .order("class_code"),
     supabase
       .from("sessions")
-      .select("id, session_number, title, content, session_date")
+      .select(
+        "id, session_number, title, content, session_date, is_periodic_test, is_project_period, is_final_presentation"
+      )
       .eq("class_id", id)
       .order("session_number"),
     supabase
@@ -259,6 +265,11 @@ export default async function ClassDetailPage({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {sessions.map((session) => {
             const filled = Boolean(session.content);
+            const badge = getSessionFormatBadge(
+              resolveSessionFormat(session),
+              session.session_number,
+              cls.total_sessions
+            );
             return (
               <Link key={session.id} href={`/teacher/sessions/${session.id}`}>
                 <div className="group flex h-full items-start gap-3 rounded-lg border p-3 transition-all hover:border-primary/40 hover:shadow-sm">
@@ -270,10 +281,19 @@ export default async function ClassDetailPage({
                   >
                     {session.session_number}
                   </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {session.title ?? `Buổi ${session.session_number}`}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="truncate text-sm font-medium">
+                        {session.title ?? `Buổi ${session.session_number}`}
+                      </p>
+                      {badge && (
+                        <span
+                          className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium leading-none ${badge.className}`}
+                        >
+                          {badge.label}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       {session.session_date
                         ? new Date(session.session_date).toLocaleDateString("vi-VN")

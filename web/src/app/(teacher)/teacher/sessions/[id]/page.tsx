@@ -84,7 +84,7 @@ export default async function SessionDetailPage({
   const { data: sessionData } = await supabase
     .from("sessions")
     .select(
-      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, session_date, classes(class_code, total_sessions, courses(name, code))"
+      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, is_final_presentation, session_date, classes(class_code, total_sessions, courses(name, code))"
     )
     .eq("id", id)
     .single();
@@ -153,14 +153,7 @@ export default async function SessionDetailPage({
     isHandled(reviewByStudentId.get(s.id) ?? null)
   ).length;
 
-  const isFinalPresentation =
-    Boolean(
-      (sessionData as unknown as { is_final_presentation?: boolean })
-        ?.is_final_presentation
-    ) ||
-    session.session_number === 14 ||
-    (session.classes?.total_sessions !== undefined &&
-      session.session_number === session.classes?.total_sessions);
+  const isFinalPresentation = Boolean(session.is_final_presentation);
 
   const projects = (projectsData ?? []) as {
     id: string;
@@ -276,7 +269,11 @@ export default async function SessionDetailPage({
           <CardDescription>
             {isFinalPresentation
               ? "Buổi thuyết trình sản phẩm cuối khóa: Bấm 'AI tổng kết Buổi 14' để tổng hợp toàn khóa và chấm ĐNL / Demo Score."
-              : "Áp bộ combo điểm mạnh/cần cải thiện rồi bấm \"AI tạo nhận xét\"."}
+              : session.is_periodic_test
+                ? "Buổi kiểm tra: Điền quan sát làm bài rồi bấm 'AI tạo nhận xét' để tách 2 phần (học tập / kết quả kiểm tra)."
+                : session.is_project_period
+                  ? "Giai đoạn làm sản phẩm cuối khóa: Điền quan sát tiến độ SPCK rồi bấm 'AI tạo nhận xét'."
+                  : "Áp bộ combo điểm mạnh/cần cải thiện rồi bấm \"AI tạo nhận xét\"."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
