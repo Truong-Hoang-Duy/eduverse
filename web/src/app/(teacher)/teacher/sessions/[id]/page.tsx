@@ -234,6 +234,7 @@ export default async function SessionDetailPage({
         strengths: r.strengths,
         improvements: r.improvements,
         comment: r.ai_generated_comment,
+        is_absent: Boolean(r.is_absent),
       }))
     );
   }

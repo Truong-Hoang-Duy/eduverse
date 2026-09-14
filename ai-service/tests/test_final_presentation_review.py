@@ -106,4 +106,13 @@ def test_final_exam_review_prompt_for_session_14() -> None:
     assert "dnl_evaluations" in prompt
     assert "kien_thuc_tu_hoc" in prompt
     assert "demo_score" in prompt
+    assert "CHUYÊN CẦN / ĐI HỌC" in prompt
+
+
+def test_session_review_item_is_absent_field() -> None:
+    item_present = SessionReviewItem(session_number=1, session_title="Buổi 1")
+    assert item_present.is_absent is False
+
+    item_absent = SessionReviewItem(session_number=2, session_title="Buổi 2", is_absent=True)
+    assert item_absent.is_absent is True
 

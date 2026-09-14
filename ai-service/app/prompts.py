@@ -357,11 +357,11 @@ def build_final_presentation_review_prompt(
     )
 
     comment_bullets = (
-        "   - Quá trình học tập và sự tiến bộ, nỗ lực của em suốt khóa học.\n"
+        "   - Quá trình học tập, sự tiến bộ và tính chuyên cần của em suốt khóa học (ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học có thể ảnh hưởng đến kết quả nếu có buổi vắng).\n"
         "   - Đánh giá quá trình làm bài kiểm tra cuối khóa hôm nay (sự tập trung, cẩn thận, nắm vững kiến thức).\n"
         "   - Lời khen ngợi thế mạnh nổi bật, điểm cần lưu ý tiếp tục phát huy, lời động viên và định hướng học tập tiếp theo.\n"
         if is_exam
-        else "   - Quá trình học tập và sự tiến bộ, nỗ lực của em suốt khóa học.\n"
+        else "   - Quá trình học tập, sự tiến bộ và tính chuyên cần của em suốt khóa học (ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học có thể ảnh hưởng đến kết quả nếu có buổi vắng).\n"
         "   - Đánh giá sản phẩm cuối khóa và phần thuyết trình, tự tin trong buổi hôm nay.\n"
         "   - Lời khen ngợi thế mạnh nổi bật, điểm cần lưu ý tiếp tục phát huy, lời động viên và định hướng học tập tiếp theo.\n"
     )
@@ -395,7 +395,9 @@ def build_final_presentation_review_prompt(
         "   - tu_duy_sang_tao: [ĐNL] Tư duy sáng tạo (ý tưởng khác biệt, tính năng mới lạ, thẩm mỹ giao diện).\n"
         "   - tu_duy_may_tinh: [ĐNL] Tư duy máy tính (tư duy logic lập trình, thuật toán, cấu trúc chương trình).\n"
         "   - thai_do_ve_nha: [ĐNL] Thái độ luyện tập về nhà (hoàn thành bài tập về nhà, chuẩn bị bài tốt).\n"
-        "   - thai_do_tai_lop: [ĐNL] Thái độ học tập trên lớp (chăm chú, kỷ luật, tương tác tích cực)."
+        "   - thai_do_tai_lop: [ĐNL] Thái độ học tập trên lớp (thái độ, sự tập trung, kỷ luật và CHUYÊN CẦN / ĐI HỌC). BẮT BUỘC ĐÁNH GIÁ TÌNH HÌNH ĐI HỌC DỰA VÀO 'THỐNG KÊ CHUYÊN CẦN' TRONG LỊCH SỬ:\n"
+        "     + NẾU EM ĐI HỌC ĐẦY ĐỦ (không vắng buổi nào): Nhận xét PHẢI ghi nhận và khen ngợi tính chuyên cần, đi học đầy đủ, đúng giờ, thái độ học tập tích cực, là yếu tố quan trọng giúp em tiếp thu kiến thức liền mạch và đạt kết quả tốt.\n"
+        "     + NẾU EM CÓ VẮNG HỌC (dù chỉ 1-2 buổi): Nhận xét PHẢI nêu rõ em có vắng buổi học (nêu rõ số buổi vắng nếu có), nhắc nhở việc nghỉ học làm gián đoạn bài học và có thể dẫn đến ảnh hưởng đến kết quả làm bài, đồng thời động viên em cố gắng sắp xếp đi học đầy đủ hơn."
     )
 
     return "\n".join(parts)

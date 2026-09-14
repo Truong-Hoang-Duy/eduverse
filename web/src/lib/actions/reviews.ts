@@ -523,6 +523,7 @@ export interface PriorReviewHistoryItem {
   strengths: string[];
   improvements: string[];
   comment?: string | null;
+  is_absent?: boolean;
 }
 
 export interface GenerateFinalPresentationReviewInput {

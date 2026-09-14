@@ -998,6 +998,16 @@
   - Tab "Xem tất cả" có thanh cuộn giới hạn `max-h-[380px] overflow-y-auto` giữ giao diện luôn ổn định.
 - [x] **Kiểm thử chất lượng:** 291/291 vitest PASS (đã thêm test kiểm tra không chứa từ "xuất sắc", "hiểu hết"), 87/87 pytest PASS, typecheck & lint sạch 0 lỗi.
 
+### Đợt 67 (`feature/attendance-in-rubric-attitude`) — Xét chuyên cần / đi học đầy đủ vào tiêu chí Thái độ học tập ĐNL
+- [x] **Tích hợp chuyên cần vào tiêu chí [ĐNL] Thái độ học tập trên lớp (`page.tsx`, `reviews.ts`, `schemas.py`, `routes/reviews.py`, `prompts.py`):**
+  - Đưa cờ `is_absent` từ lịch sử nhận xét 13 buổi trước (`PriorReviewHistoryItem`) vào request AI Service.
+  - Tự động thống kê số buổi vắng và danh sách các buổi nghỉ học của học viên.
+  - Hướng dẫn AI đánh giá chi tiết tiêu chí `thai_do_tai_lop`:
+    - Nếu đi học đầy đủ: khen ngợi tính chuyên cần, đi học đúng giờ, tiếp thu bài liền mạch và đạt kết quả tốt.
+    - Nếu có vắng học: chỉ rõ em có vắng một số buổi học, nhắc nhở việc nghỉ học làm gián đoạn bài học và ảnh hưởng đến kết quả, khuyên em cố gắng sắp xếp đi học đầy đủ hơn.
+  - Đồng bộ nhắc đến tính chuyên cần trong nhận xét tổng kết toàn khóa gửi phụ huynh (`comment`).
+- [x] **Kiểm thử chất lượng:** 291/291 vitest PASS, 88/88 pytest PASS (+1 test mới), typecheck & lint sạch 0 lỗi.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

@@ -8,16 +8,14 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Mở rộng ngân hàng quan sát bài thi cuối khóa thực tế (64 tiêu chí), loại bỏ từ nói quá & Đảo thứ tự tiêu chí ĐNL (Đợt 68)** trên nhánh `feature/session-format-selector`:
-1. **Mở rộng ngân hàng nhận xét bài thi cuối khóa thực tế (`presentation-evaluation.ts`):**
-   - Tăng số lượng tiêu chí ở mỗi cấp bậc từ 5 lên 8 mục (tổng cộng 64 tiêu chí cho 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy`).
-   - **Chuẩn hóa ngôn ngữ sư phạm khách quan:** Rà soát và loại bỏ hoàn toàn các từ mang tính phóng đại hoặc tuyệt đối hóa ("xuất sắc", "hiểu hết", "toàn bộ", "hoàn hảo").
-   - Tập trung vào các hành động, kỹ năng cụ thể, sự tự giác, mức độ tự tin, khả năng phân bổ thời gian, tư duy gãy gọn, sự chủ động hỏi bài và thói quen kiểm thử code thực tế của học sinh học lập trình.
-   - Trải rộng đồng đều từ khung 🌟 **Giỏi** ➜ 👍 **Khá** ➜ ⚖️ **Trung bình** ➜ ⚠️ **Cần cố gắng**.
-2. **Đổi thứ tự hiển thị tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
-   - **KIẾN THỨC:** Đảo để **`[ĐNL] Kiến thức học viên đã được học tại lớp`** đứng trước **`[ĐNL] Kiến thức học viên tự học`**.
-   - **THÁI ĐỘ:** Đảo để **`[ĐNL] Thái độ luyện tập về nhà`** đứng trước **`[ĐNL] Thái độ học tập trên lớp`**.
-   - Áp dụng đồng bộ cho giao diện thẻ đánh giá ([presentation-evaluation-card.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/presentation-evaluation-card.tsx)), văn bản sao chép toàn bộ bảng đánh giá (`formatFullEvaluationText`), và prompt AI Service (`build_final_presentation_review_prompt`).
+**Đang làm:** Đã hoàn thành tính năng **Tích hợp xét chuyên cần / đi học đầy đủ vào tiêu chí Thái độ học tập trên lớp trong Bảng Đánh Giá Năng Lực (Đợt 69)** trên nhánh `feature/attendance-in-rubric-attitude`:
+1. **Xét chuyên cần & đi học đầy đủ trong Bảng Đánh Giá Năng Lực (`page.tsx`, `reviews.ts`, `schemas.py`, `routes/reviews.py`, `prompts.py`):**
+   - **Truyền trạng thái vắng:** Thêm `is_absent` vào `PriorReviewHistoryItem` và map trong `sessions/[id]/page.tsx`, gửi sang AI Service qua `generateFinalPresentationReview`.
+   - **Tự động phân tích chuyên cần:** AI Service tổng hợp số buổi vắng và danh sách các buổi nghỉ học (nếu có) trong 13 buổi học trước của học viên.
+   - **Đánh giá tiêu chí `thai_do_tai_lop` ([ĐNL] Thái độ học tập trên lớp):**
+     - *Nếu đi học đầy đủ 100%:* Nhận xét ghi nhận và khen ngợi tính chuyên cần, đi học đúng giờ, thái độ học tập tích cực, là yếu tố quan trọng giúp em tiếp thu kiến thức liền mạch và đạt kết quả tốt.
+     - *Nếu có vắng học:* Nhận xét chỉ rõ em có vắng một số buổi học (nêu rõ số buổi vắng), nhắc nhở việc nghỉ học làm gián đoạn bài học và có thể dẫn đến ảnh hưởng đến kết quả làm bài, đồng thời động viên em cố gắng sắp xếp đi học đầy đủ hơn.
+   - **Nhận xét tổng kết gửi phụ huynh (`comment`):** Đồng bộ nhắc đến tính chuyên cần trong quá trình học tập của em suốt khóa.
 3. **Thu gọn ô chọn quan sát bài thi cuối khóa (`review-editor.tsx`):**
    - Thay thế việc hiển thị đồng thời hàng chục tiêu chí xòe dài hơn 1000px gây rối mắt bằng hệ thống **Tab Filter cấp bậc học lực**: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
    - **Tự động trỏ đúng học lực:** Khởi tạo tab mặc định theo xếp loại học lực thực tế của học viên (`academicLevelLabel(academicLevel)`), mở lên là đúng ngay nhóm cần chọn.

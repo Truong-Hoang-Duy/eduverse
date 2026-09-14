@@ -94,6 +94,7 @@ class SessionReviewItem(BaseModel):
     strengths: list[str] = []
     improvements: list[str] = []
     comment: str | None = None
+    is_absent: bool = False
 
 
 class StudentSummaryRequest(AiRequest):
