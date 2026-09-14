@@ -6,9 +6,43 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-11, bởi: Gemini)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Tổng kết Buổi 14 (Thuyết trình sản phẩm cuối khóa - Demo Day) & Bảng đánh giá năng lực chuẩn Denise LMS Rubric (Đợt 62)** trên nhánh `feature/final-presentation-review`:
+**Đang làm:** Đã hoàn thành tính năng **Mở rộng ngân hàng quan sát bài thi cuối khóa thực tế (64 tiêu chí), loại bỏ từ nói quá & Đảo thứ tự tiêu chí ĐNL (Đợt 68)** trên nhánh `feature/session-format-selector`:
+1. **Mở rộng ngân hàng nhận xét bài thi cuối khóa thực tế (`presentation-evaluation.ts`):**
+   - Tăng số lượng tiêu chí ở mỗi cấp bậc từ 5 lên 8 mục (tổng cộng 64 tiêu chí cho 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy`).
+   - **Chuẩn hóa ngôn ngữ sư phạm khách quan:** Rà soát và loại bỏ hoàn toàn các từ mang tính phóng đại hoặc tuyệt đối hóa ("xuất sắc", "hiểu hết", "toàn bộ", "hoàn hảo").
+   - Tập trung vào các hành động, kỹ năng cụ thể, sự tự giác, mức độ tự tin, khả năng phân bổ thời gian, tư duy gãy gọn, sự chủ động hỏi bài và thói quen kiểm thử code thực tế của học sinh học lập trình.
+   - Trải rộng đồng đều từ khung 🌟 **Giỏi** ➜ 👍 **Khá** ➜ ⚖️ **Trung bình** ➜ ⚠️ **Cần cố gắng**.
+2. **Đổi thứ tự hiển thị tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
+   - **KIẾN THỨC:** Đảo để **`[ĐNL] Kiến thức học viên đã được học tại lớp`** đứng trước **`[ĐNL] Kiến thức học viên tự học`**.
+   - **THÁI ĐỘ:** Đảo để **`[ĐNL] Thái độ luyện tập về nhà`** đứng trước **`[ĐNL] Thái độ học tập trên lớp`**.
+   - Áp dụng đồng bộ cho giao diện thẻ đánh giá ([presentation-evaluation-card.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/presentation-evaluation-card.tsx)), văn bản sao chép toàn bộ bảng đánh giá (`formatFullEvaluationText`), và prompt AI Service (`build_final_presentation_review_prompt`).
+3. **Thu gọn ô chọn quan sát bài thi cuối khóa (`review-editor.tsx`):**
+   - Thay thế việc hiển thị đồng thời hàng chục tiêu chí xòe dài hơn 1000px gây rối mắt bằng hệ thống **Tab Filter cấp bậc học lực**: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
+   - **Tự động trỏ đúng học lực:** Khởi tạo tab mặc định theo xếp loại học lực thực tế của học viên (`academicLevelLabel(academicLevel)`), mở lên là đúng ngay nhóm cần chọn.
+   - **Gọn gàng tối đa:** Ở mỗi tab cấp bậc, 2 cột chỉ hiển thị đúng các tiêu chí của cấp bậc đó, chiều cao luôn ổn định, loại bỏ hoàn toàn cảm giác rối mắt.
+   - **Đếm số lượng theo cấp bậc:** Mỗi nút tab tự động hiển thị huy hiệu số lượng tiêu chí đã chọn ở cấp bậc đó (`getExamLevelSelectedCount`), giáo viên chuyển đổi linh hoạt giữa các tab mà không lo mất dữ liệu đã chọn.
+   - Tab `[ 📋 Xem tất cả ]` có thanh cuộn mượt mà `max-h-[380px] overflow-y-auto` giúp giáo viên có thể tra cứu toàn diện khi cần mà không làm vỡ layout trang.
+2. **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts`):**
+   - Mở rộng ngân hàng nhận xét của 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy` (lên 40 mục nhận xét thực tế).
+   - Chia thành 4 cấp bậc rõ rệt: 🌟 **Giỏi / Xuất sắc** (xanh lá), 👍 **Khá** (xanh dương), ⚖️ **Trung bình** (vàng hổ phách), ⚠️ **Cần cố gắng** (đỏ hồng).
+2. **Sửa lỗi tràn mép dưới popup Rubric (`review-editor.tsx`):**
+   - Ghi đè triệt để negative margin `-mx-4 -mb-4` mặc định của `DialogFooter` bằng `m-0 mx-0 mb-0 px-4 py-3 shrink-0 rounded-b-xl border-t bg-muted/30`.
+   - Chữ và icon thông báo tự động lưu cùng nút "Đóng" hiển thị hoàn chỉnh, an toàn, không còn bị cắt lẹm mép trái/phải.
+3. **Tự động đóng nhận xét khi bấm Lưu (`review-editor.tsx`):**
+   - Thêm `detailsRef` vào `<details>` và handler `onSubmit` trên form nhận xét: khi giáo viên bấm nút "Lưu nhận xét", card nhận xét của học viên tự động gập lại ngay lập tức mà không cần bấm thủ công.
+   - Thêm `useEffect`: nếu lưu thành công (`state?.success`), giữ card đóng và hiển thị badge xanh `✓ Đã lưu nhận xét.` trên thanh summary; nếu xảy ra lỗi (`state?.error`), tự động bung card ra để giáo viên xem thông báo lỗi.
+4. **Ẩn Điểm mạnh & Cần cải thiện ở Buổi 14:**
+   - Ẩn hoàn toàn `ComboBar`, menu copy điểm mạnh, và 2 cột `Điểm mạnh` / `Cần cải thiện` ở Buổi 14 (`hasFinalEvaluation = true`).
+   - AI Service tự động tổng hợp quá trình học tập, điểm mạnh và hạn chế đa chiều từ lịch sử 13 buổi học trước (`allPriorReviews`).
+5. **Bảng Đánh Giá Năng Lực & Tổng Điểm trong Dialog Popup:**
+   - Thay thế việc nhúng toàn bộ component `PresentationEvaluationCard` trực tiếp trong form nhận xét (vốn kéo dài hàng trăm pixel).
+   - Thiết kế Banner tóm tắt thanh lịch: hiển thị trạng thái `✓ Đã có dữ liệu` / `Chưa khởi tạo`, điểm tổng kết và nút `[ 📝 Mở Bảng Đánh Giá (Popup) ]` / `[ 📊 Khởi tạo & Mở Bảng Đánh Giá ]`.
+   - Khi bấm mở, hiển thị trong Radix `Dialog` rộng rãi (`max-w-4xl`), có scrollbar riêng, footer đóng tiện lợi. Khi AI sinh xong nhận xét, tự động mở popup để giáo viên xem và điều chỉnh ngay.
+6. **Kiểm thử chất lượng:**
+   - `web/`: `pnpm test` (289/289 tests PASSED - 24 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
+   - `ai-service/`: `pytest` (87/87 tests PASSED).
 1. **AI Service (`ai-service/`):**
    - Thêm schema `FinalPresentationReviewRequest`, `FinalPresentationReviewResponse`, `DemoScoreBreakdown` (bao gồm `knowledge_score`, `demo_total`, `total` thang 10), `DnlCriterionEvaluation`.
    - Viết prompt `build_final_presentation_review_prompt` tổng hợp toàn bộ 13 buổi học trước (buổi 1-13), thông tin đề tài SPCK của học viên và ghi chú buổi thuyết trình để sinh nhận xét tổng kết gửi phụ huynh cùng bộ điểm ĐNL & Demo Score.

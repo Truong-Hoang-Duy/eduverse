@@ -3,10 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   calculateDemoTotal,
   calculateGrandTotal,
+  createDefaultFinalEvaluation,
   distributeScores,
   DNL_CRITERIA,
+  FINAL_EXAM_OBSERVATION_GROUPS,
   type FinalPresentationEvaluation,
   formatFullEvaluationText,
+  PRESENTATION_OBSERVATION_GROUPS,
   scoreToLevel,
 } from "./presentation-evaluation";
 
@@ -106,6 +109,97 @@ describe("presentation-evaluation", () => {
     expect(text).toContain("Điểm demo sản phẩm: 4.5/5.0 điểm");
     expect(text).toContain("Kiến thức học viên tự học: 4/5 (Khá)");
     expect(text).toContain('"Chủ động tìm hiểu thêm."');
+  });
+
+  it("should format evaluation text without demo score when hideDemoScore is true", () => {
+    const mockData: FinalPresentationEvaluation = {
+      comment: "Em hoàn thành xuất sắc bài kiểm tra cuối khóa.",
+      demo_score: {
+        knowledge_score: 4.0,
+        computational_thinking: 1.8,
+        creative_thinking: 0.4,
+        communication: 0.9,
+        problem_solving: 0.9,
+        computer_skills: 0.5,
+        demo_total: 4.5,
+        total: 8.5,
+      },
+      dnl_evaluations: {
+        kien_thuc_tu_hoc: {
+          score: 4,
+          level: "Khá",
+          comment: "Làm bài kiểm tra nghiêm túc, hiểu rõ bản chất.",
+        },
+      },
+    };
+
+    const text = formatFullEvaluationText("Trần Thị B", mockData, {
+      hideDemoScore: true,
+    });
+    expect(text).toContain("TRẦN THỊ B");
+    expect(text).toContain("Em hoàn thành xuất sắc bài kiểm tra cuối khóa.");
+    expect(text).toContain("Kiến thức học viên tự học: 4/5 (Khá)");
+    expect(text).not.toContain("ĐIỂM TỔNG KẾT");
+    expect(text).not.toContain("Demo2024");
+    expect(text).not.toContain("Điểm demo sản phẩm");
+  });
+
+  it("should create default final evaluation with 9 DNL criteria", () => {
+    const defaultEval = createDefaultFinalEvaluation("Nhận xét mặc định");
+    expect(defaultEval.comment).toBe("Nhận xét mặc định");
+    expect(defaultEval.demo_score.total).toBe(7.0);
+    expect(Object.keys(defaultEval.dnl_evaluations)).toHaveLength(9);
+    for (const c of DNL_CRITERIA) {
+      expect(defaultEval.dnl_evaluations[c.key]).toBeDefined();
+      expect(defaultEval.dnl_evaluations[c.key].score).toBe(4);
+      expect(defaultEval.dnl_evaluations[c.key].level).toBe("Khá");
+    }
+  });
+
+  it("should have comprehensive presentation and exam observation groups", () => {
+    expect(PRESENTATION_OBSERVATION_GROUPS.length).toBeGreaterThanOrEqual(3);
+    for (const grp of PRESENTATION_OBSERVATION_GROUPS) {
+      expect(grp.group).toBeTruthy();
+      expect(grp.icon).toBeTruthy();
+      expect(grp.items.length).toBeGreaterThanOrEqual(5);
+    }
+
+    expect(FINAL_EXAM_OBSERVATION_GROUPS.length).toBeGreaterThanOrEqual(2);
+    for (const grp of FINAL_EXAM_OBSERVATION_GROUPS) {
+      expect(grp.group).toBeTruthy();
+      expect(grp.icon).toBeTruthy();
+      expect(grp.items.length).toBeGreaterThanOrEqual(32);
+      expect(grp.sections).toBeDefined();
+      expect(grp.sections?.length).toBe(4);
+      const levels = grp.sections?.map((s) => s.level);
+      expect(levels).toEqual(["Giỏi", "Khá", "Trung bình", "Cần cố gắng"]);
+      for (const sec of grp.sections ?? []) {
+        expect(sec.items.length).toBeGreaterThanOrEqual(8);
+      }
+      // Không dùng các từ quá đà như "xuất sắc", "hiểu hết"
+      for (const item of grp.items) {
+        expect(item.toLowerCase()).not.toContain("xuất sắc");
+        expect(item.toLowerCase()).not.toContain("hiểu hết");
+      }
+    }
+  });
+
+  it("should have correct display order for KIẾN THỨC criteria (tại lớp before tự học)", () => {
+    const knowledgeCriteria = DNL_CRITERIA.filter((c) => c.group === "KIẾN THỨC");
+    expect(knowledgeCriteria).toHaveLength(2);
+    expect(knowledgeCriteria[0].key).toBe("kien_thuc_tai_lop");
+    expect(knowledgeCriteria[0].name).toBe("[ĐNL] Kiến thức học viên đã được học tại lớp");
+    expect(knowledgeCriteria[1].key).toBe("kien_thuc_tu_hoc");
+    expect(knowledgeCriteria[1].name).toBe("[ĐNL] Kiến thức học viên tự học");
+  });
+
+  it("should have correct display order for THÁI ĐỘ criteria (về nhà before tại lớp)", () => {
+    const attitudeCriteria = DNL_CRITERIA.filter((c) => c.group === "THÁI ĐỘ");
+    expect(attitudeCriteria).toHaveLength(2);
+    expect(attitudeCriteria[0].key).toBe("thai_do_ve_nha");
+    expect(attitudeCriteria[0].name).toBe("[ĐNL] Thái độ luyện tập về nhà");
+    expect(attitudeCriteria[1].key).toBe("thai_do_tai_lop");
+    expect(attitudeCriteria[1].name).toBe("[ĐNL] Thái độ học tập trên lớp");
   });
 });
 

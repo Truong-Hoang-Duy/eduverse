@@ -924,6 +924,80 @@
 - [x] **Migration & Graceful Fallback:** Migration `20260911000000_final_presentation_session.sql` (thêm `is_final_presentation`), có fallback tự động theo số thứ tự buổi 14 nếu DB chưa dán migration.
 - [x] Kiểm thử toàn bộ: 86/86 pytest PASS, 270/270 vitest PASS, typecheck & lint sạch 0 lỗi.
 
+### Đợt 63 (`feature/session-format-selector`) — Tái thiết kế bộ chọn hình thức buổi học (Session Format Selector)
+- [x] **Module quản lý hình thức buổi học (`web/src/lib/session-format.ts`):**
+  - Định nghĩa 4 hình thức chuẩn: `standard` (Buổi học tiêu chuẩn), `periodic_test` (Bài kiểm tra định kỳ / cuối khóa), `project_period` (Làm đồ án SPCK), `final_presentation` (Thuyết trình Demo Day & Rubric Denise LMS).
+  - Helper `resolveSessionFormat`, `formatToFlags`, `getSessionFormatBadge`.
+  - Unit test 15 ca (`session-format.test.ts`): 100% PASS.
+- [x] **Giao diện Form Buổi học (`session-form.tsx`):**
+  - Thay thế 3 checkbox rời rạc bằng `SessionFormatSelector` dạng lưới thẻ Radio trực quan 2x2.
+  - Phân định rõ ràng từng hình thức: thẻ được chọn có viền `primary`, ring focus, badge ngữ cảnh và hộp thông tin động (Dynamic Info Callout) giải thích chi tiết.
+  - Hỗ trợ gợi ý riêng cho Buổi 14 (khóa chỉ thi vs khóa có đồ án SPCK).
+  - Đồng bộ ngầm qua hidden inputs mà không cần sửa DB schema.
+- [x] **Khắc phục triệt để lỗi ép cứng Buổi 14 thành Thuyết trình (`sessions/[id]/page.tsx`):**
+  - Thêm `is_final_presentation` vào SELECT query; đọc `Boolean(session.is_final_presentation)` thay vì ép `|| session.session_number === 14`.
+  - Khóa học chỉ làm bài kiểm tra cuối khóa khi chọn "📝 Bài kiểm tra" tại Buổi 14 sẽ hiển thị đúng ô quan sát làm bài kiểm tra và nút "✨ AI tạo nhận xét" (tách 2 phần: quá trình học tập / kết quả kiểm tra), KHÔNG còn bị ép hiện bảng Denise LMS hay đòi đề tài SPCK.
+- [x] **Badge trực quan trên danh sách buổi học của lớp (`classes/[id]/page.tsx`):**
+  - Hiển thị badge `📝 Thi cuối khóa / Kiểm tra`, `🎤 Demo Day`, `💻 SPCK` ngay trên thẻ buổi học ở trang chi tiết lớp.
+- [x] **Kiểm thử chất lượng:** 285/285 vitest PASS, 86/86 pytest PASS, typecheck & lint sạch 0 lỗi, production build thành công.
+
+### Đợt 64 (`feature/session-format-selector`) — Đánh Giá Năng Lực (9 tiêu chí ĐNL) cho Bài Kiểm Tra Cuối Khóa (Buổi 14) & Ẩn Demo Score
+- [x] **Bối cảnh & Nghiệp vụ:** Tại Buổi 14 (hoặc buổi cuối khóa), dù lớp chọn "Thuyết trình (Demo Day)" hay "Bài kiểm tra", hệ thống vẫn tổng kết toàn khóa và nhận xét theo khung chấm điểm **Bảng Đánh Giá Năng Lực (9 tiêu chí ĐNL chuẩn Denise LMS)**. Tuy nhiên, khi giáo viên chọn "Bài kiểm tra", phần **Demo Score** (thang điểm 10 gồm CSI và 5 tiêu chí demo sản phẩm) được ẩn đi vì khóa thi không có demo sản phẩm.
+- [x] **Frontend Web App (`web/`):**
+  - `presentation-evaluation-card.tsx`: Nhận prop `hideDemoScore?: boolean`. Khi bật: đổi tiêu đề thành "📊 Bảng Đánh Giá Năng Lực (Chuẩn Denise LMS)", ẩn hoàn toàn Phần 2 (toàn bộ khối Demo Score và công cụ chia đều điểm), nút copy toàn bộ bảng tự động loại trừ Demo Score.
+  - `presentation-evaluation.ts`: Bổ sung tùy chọn `options?: { hideDemoScore?: boolean }` cho `formatFullEvaluationText`, thêm helper `createDefaultFinalEvaluation` cho phép giáo viên mở bảng ĐNL thủ công.
+  - `page.tsx` & `review-list.tsx`: Xác định `isFinalSession` (buổi 14 hoặc buổi cuối của lớp) và truyền xuống `ReviewEditor`.
+  - `review-editor.tsx`:
+    - Tính toán `hasFinalEvaluation = isFinalPresentation || (isPeriodicTest && isFinalSession)` và `hideDemoScore = isPeriodicTest && !isFinalPresentation`.
+    - Bổ sung banner thông báo trực quan cho buổi kiểm tra cuối khóa kèm badge `Buổi 14 / Tổng kết`.
+    - Nút AI thông minh: hiển thị "✨ AI tổng kết bài thi & Đánh giá năng lực" khi là bài kiểm tra cuối khóa.
+    - Cho phép mở bảng ĐNL thủ công qua nút "📊 Mở Bảng Đánh Giá Năng Lực (9 tiêu chí)" khi chưa gọi AI.
+    - Tự động lưu cache rubric vào `localStorage` cho cả bài kiểm tra cuối khóa và buổi thuyết trình.
+  - `reviews.ts` (Server Action): Thêm cờ `isExam` vào `GenerateFinalPresentationReviewInput` và gửi sang AI Service.
+- [x] **AI Service (`ai-service/`):**
+  - `schemas.py`: Thêm trường `is_exam: bool = False` vào `FinalPresentationReviewRequest`.
+  - `prompts.py`: Tinh chỉnh prompt khi `is_exam=True`: chuyển đổi ngữ cảnh sang đánh giá bài kiểm tra cuối khóa, nhận diện quan sát làm bài thi (`testProcessNotes`) và chấm 9 tiêu chí ĐNL chuẩn xác.
+  - `routes/reviews.py`: Chuyển tiếp cờ `is_exam` vào prompt builder.
+- [x] **Kiểm thử chất lượng:** 288/288 vitest PASS (+2 unit tests mới), 87/87 pytest PASS (+1 test mới), typecheck & lint sạch 0 lỗi.
+
+### Đợt 65 (`feature/session-format-selector`) — Tối ưu UI/UX Buổi 14, Tự động đóng nhận xét khi bấm Lưu & Phân cấp quan sát thi
+- [x] **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts` & `review-editor.tsx`):**
+  - Mở rộng 40 mục nhận xét phong phú cho 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy`.
+  - Phân thành 4 cấp bậc rõ rệt: 🌟 Giỏi / Xuất sắc, 👍 Khá, ⚖️ Trung bình, ⚠️ Cần cố gắng, có huy hiệu màu sắc tương ứng giúp giáo viên chọn nhanh và chính xác.
+- [x] **Sửa lỗi tràn mép dưới popup Rubric (`review-editor.tsx`):**
+  - Triệt tiêu negative margin `-mx-4 -mb-4` trên `DialogFooter` bằng `m-0 mx-0 mb-0 px-4 py-3 shrink-0 rounded-b-xl`, khắc phục hoàn toàn lỗi lẹm chữ "D" và tràn nút Đóng.
+- [x] **Tự động đóng nhận xét khi bấm Lưu (`review-editor.tsx`):**
+  - Thêm `detailsRef` vào `<details>` và `onSubmit` trên `<form>`: Khi bấm nút "Lưu nhận xét", card nhận xét của học viên tự động gập lại ngay lập tức.
+  - Tự động hiển thị badge `✓ Đã lưu nhận xét.` trên thanh summary; nếu xảy ra lỗi lưu (`state?.error`), tự động bung card ra trở lại để giáo viên xem thông báo lỗi.
+- [x] **Tích chọn quan sát đa chiều theo hình thức Buổi 14:**
+  - Định nghĩa nhóm quan sát phong phú trong `presentation-evaluation.ts`:
+    - `PRESENTATION_OBSERVATION_GROUPS` (3 nhóm: Kỹ năng thuyết trình & Tác phong, Sản phẩm & Demo kỹ thuật, Tư duy & Phản biện).
+    - `FINAL_EXAM_OBSERVATION_GROUPS` (2 nhóm: Quá trình & Tác phong làm bài, Nắm vững kiến thức & Tư duy).
+  - Giao diện chip toggle `✓`/`+` tương tác mượt mà, phân chia theo cột grid trực quan, có badge đếm số lượng, nút bỏ chọn và ô nhập ghi chú bổ sung.
+- [x] **Ẩn Điểm mạnh / Cần cải thiện ở Buổi 14:**
+  - Khi `hasFinalEvaluation = true`, ẩn hoàn toàn thanh Combo, menu Copy và 2 cột Điểm mạnh / Cần cải thiện.
+  - Tận dụng cơ chế AI Service tự động tổng hợp quá trình học tập từ 13 buổi học trước (`allPriorReviews`).
+- [x] **Đưa Bảng Đánh Giá Năng Lực & Tổng Điểm vào Dialog Popup:**
+  - Thay thế card inline dài hàng trăm pixel bằng Banner tóm tắt tinh gọn với trạng thái dữ liệu `✓ Đã có dữ liệu` / `Chưa khởi tạo` và tổng điểm.
+  - Bấm nút mở popup `Dialog` (Radix UI) `max-w-4xl`, scroll độc lập, có nút Đóng tiện lợi. Tự động mở popup sau khi AI hoàn tất tổng kết để giáo viên xem và chấm nhanh.
+### Đợt 66 (`feature/session-format-selector`) — Thu gọn bộ chọn quan sát bài thi cuối khóa, Mở rộng 64 nhận xét thực tế & Đổi thứ tự tiêu chí ĐNL
+- [x] **Mở rộng ngân hàng quan sát bài thi cuối khóa thực tế (`presentation-evaluation.ts`):**
+  - Mở rộng thành 64 tiêu chí (8 tiêu chí/cấp độ x 4 cấp x 2 nhóm).
+  - Chuẩn hóa từ ngữ: loại bỏ hoàn toàn các từ ngữ mang tính nói quá, phóng đại ("xuất sắc", "hiểu hết", "toàn bộ").
+  - Diễn đạt khách quan, thực tế với bối cảnh thi lập trình của học sinh từ khung Giỏi ➜ Khá ➜ Trung bình ➜ Cần cố gắng.
+- [x] **Đổi thứ tự tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
+  - **KIẾN THỨC:** Đảo để `[ĐNL] Kiến thức học viên đã được học tại lớp` lên trước `[ĐNL] Kiến thức học viên tự học`.
+  - **THÁI ĐỘ:** Đảo để `[ĐNL] Thái độ luyện tập về nhà` lên trước `[ĐNL] Thái độ học tập trên lớp`.
+  - Đồng bộ trên cả giao diện form đánh giá, text copy bảng tổng kết, và AI Service prompt.
+- [x] **Tab Filter theo cấp bậc học lực cho bài kiểm tra cuối khóa (`review-editor.tsx`):**
+  - Khắc phục triệt để tình trạng hiển thị đồng thời hàng chục tiêu chí dài hơn 1000px gây rối mắt.
+  - Thiết kế hệ thống tab cấp bậc tinh gọn: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
+  - Tự động trỏ đúng tab theo xếp loại học lực của học viên (`academicLevelLabel(academicLevel)`).
+  - Thu gọn chiều cao tối đa, mỗi tab chỉ render các chips trọng tâm.
+  - Tích hợp huy hiệu đếm số tiêu chí đã chọn trên từng tab (`getExamLevelSelectedCount`), giáo viên chuyển tab thoải mái không sợ mất dữ liệu.
+  - Tab "Xem tất cả" có thanh cuộn giới hạn `max-h-[380px] overflow-y-auto` giữ giao diện luôn ổn định.
+- [x] **Kiểm thử chất lượng:** 291/291 vitest PASS (đã thêm test kiểm tra không chứa từ "xuất sắc", "hiểu hết"), 87/87 pytest PASS, typecheck & lint sạch 0 lỗi.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

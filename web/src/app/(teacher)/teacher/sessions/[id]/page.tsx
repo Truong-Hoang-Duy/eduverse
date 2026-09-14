@@ -81,13 +81,25 @@ export default async function SessionDetailPage({
   const supabase = await createClient();
   const { id } = await params;
 
-  const { data: sessionData } = await supabase
+  let { data: sessionData } = await supabase
     .from("sessions")
     .select(
-      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, session_date, classes(class_code, total_sessions, courses(name, code))"
+      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, is_final_presentation, session_date, classes(class_code, total_sessions, courses(name, code))"
     )
     .eq("id", id)
     .single();
+
+  if (!sessionData) {
+    // Graceful fallback nếu DB chưa dán migration 20260911000000 (cột is_final_presentation)
+    const fallback = await supabase
+      .from("sessions")
+      .select(
+        "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, session_date, classes(class_code, total_sessions, courses(name, code))"
+      )
+      .eq("id", id)
+      .single();
+    sessionData = fallback.data as unknown as typeof sessionData;
+  }
 
   if (!sessionData) {
     notFound();
@@ -153,13 +165,18 @@ export default async function SessionDetailPage({
     isHandled(reviewByStudentId.get(s.id) ?? null)
   ).length;
 
-  const isFinalPresentation =
-    Boolean(
-      (sessionData as unknown as { is_final_presentation?: boolean })
-        ?.is_final_presentation
-    ) ||
+  const hasFinalColumn =
+    (sessionData as unknown as { is_final_presentation?: boolean })
+      ?.is_final_presentation !== undefined;
+  const isFinalPresentation = hasFinalColumn
+    ? Boolean(session.is_final_presentation)
+    : !session.is_periodic_test &&
+      !session.is_project_period &&
+      session.session_number === 14;
+
+  const isFinalSession =
     session.session_number === 14 ||
-    (session.classes?.total_sessions !== undefined &&
+    (Boolean(session.classes?.total_sessions) &&
       session.session_number === session.classes?.total_sessions);
 
   const projects = (projectsData ?? []) as {
@@ -276,7 +293,13 @@ export default async function SessionDetailPage({
           <CardDescription>
             {isFinalPresentation
               ? "Buổi thuyết trình sản phẩm cuối khóa: Bấm 'AI tổng kết Buổi 14' để tổng hợp toàn khóa và chấm ĐNL / Demo Score."
-              : "Áp bộ combo điểm mạnh/cần cải thiện rồi bấm \"AI tạo nhận xét\"."}
+              : session.is_periodic_test && isFinalSession
+                ? "Buổi kiểm tra cuối khóa: Bấm 'AI tổng kết bài thi' để tổng hợp toàn khóa và chấm 9 tiêu chí Đánh Giá Năng Lực."
+                : session.is_periodic_test
+                  ? "Buổi kiểm tra: Điền quan sát làm bài rồi bấm 'AI tạo nhận xét' để tách 2 phần (học tập / kết quả kiểm tra)."
+                  : session.is_project_period
+                    ? "Giai đoạn làm sản phẩm cuối khóa: Điền quan sát tiến độ SPCK rồi bấm 'AI tạo nhận xét'."
+                    : "Áp bộ combo điểm mạnh/cần cải thiện rồi bấm \"AI tạo nhận xét\"."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -303,6 +326,7 @@ export default async function SessionDetailPage({
               isPeriodicTest={session.is_periodic_test}
               isProjectPeriod={session.is_project_period}
               isFinalPresentation={isFinalPresentation}
+              isFinalSession={isFinalSession}
               classCode={session.classes?.class_code ?? ""}
               courseName={session.classes?.courses?.name ?? ""}
               students={students}
