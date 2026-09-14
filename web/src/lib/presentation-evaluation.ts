@@ -29,10 +29,19 @@ export interface FinalPresentationEvaluation {
   dnl_evaluations: Record<string, DnlCriterionEvaluation>;
 }
 
+export type ObservationLevel = "Giỏi" | "Khá" | "Trung bình" | "Cần cố gắng";
+
+export interface ObservationLevelSection {
+  level: ObservationLevel;
+  icon: string;
+  items: string[];
+}
+
 export interface ObservationGroup {
   group: string;
   icon: string;
   items: string[];
+  sections?: ObservationLevelSection[];
 }
 
 export const PRESENTATION_OBSERVATION_GROUPS: ObservationGroup[] = [
@@ -81,26 +90,145 @@ export const FINAL_EXAM_OBSERVATION_GROUPS: ObservationGroup[] = [
   {
     group: "Quá trình & Tác phong làm bài",
     icon: "📝",
+    sections: [
+      {
+        level: "Giỏi",
+        icon: "🌟",
+        items: [
+          "Làm bài tập trung cao độ, thái độ rất nghiêm túc",
+          "Hoàn thành bài thi sớm với độ chính xác cao",
+          "Thao tác máy tính và soạn thảo code thành thạo",
+          "Tự giác rà soát, kiểm thử kỹ lại bài trước khi nộp",
+          "Chủ động phát hiện và debug sửa lỗi độc lập",
+        ],
+      },
+      {
+        level: "Khá",
+        icon: "👍",
+        items: [
+          "Thái độ làm bài nghiêm túc, tập trung tốt",
+          "Hoàn thành bài thi đúng thời gian quy định",
+          "Thao tác trên phần mềm lập trình tương đối nhanh",
+          "Biết tự kiểm tra lại các chức năng chính của bài",
+          "Tự xử lý được các lỗi nhỏ phát sinh khi làm bài",
+        ],
+      },
+      {
+        level: "Trung bình",
+        icon: "⚖️",
+        items: [
+          "Có cố gắng làm bài nhưng tốc độ còn hơi chậm",
+          "Đôi lúc còn mất tập trung, cần thầy cô nhắc nhở",
+          "Thao tác gõ code và dùng chuột còn lúng túng",
+          "Chưa có thói quen kiểm tra lại bài trước khi nộp",
+          "Còn bị động khi gặp lỗi phát sinh trong bài làm",
+        ],
+      },
+      {
+        level: "Cần cố gắng",
+        icon: "⚠️",
+        items: [
+          "Còn vội vàng khi nộp bài, chưa đọc kỹ đề thi",
+          "Thường xuyên xao nhãng, thiếu tập trung khi làm bài",
+          "Cần rèn luyện thêm tính cẩn thận và kiên nhẫn",
+          "Phụ thuộc nhiều vào sự hỗ trợ, nhắc nhở của thầy cô",
+          "Chưa phân bổ thời gian hợp lý nên làm thiếu câu",
+        ],
+      },
+    ],
     items: [
-      "Làm bài nghiêm túc, tập trung cao",
-      "Hoàn thành bài sớm, làm bài nhanh nhẹn",
-      "Tự giác kiểm tra lại bài trước khi nộp",
-      "Thao tác máy tính thành thạo",
-      "Chủ động debug và sửa lỗi code",
-      "Cần cẩn thận hơn, tránh lỗi cơ bản",
-      "Cần phân bổ thời gian hợp lý hơn",
+      "Làm bài tập trung cao độ, thái độ rất nghiêm túc",
+      "Hoàn thành bài thi sớm với độ chính xác cao",
+      "Thao tác máy tính và soạn thảo code thành thạo",
+      "Tự giác rà soát, kiểm thử kỹ lại bài trước khi nộp",
+      "Chủ động phát hiện và debug sửa lỗi độc lập",
+      "Thái độ làm bài nghiêm túc, tập trung tốt",
+      "Hoàn thành bài thi đúng thời gian quy định",
+      "Thao tác trên phần mềm lập trình tương đối nhanh",
+      "Biết tự kiểm tra lại các chức năng chính của bài",
+      "Tự xử lý được các lỗi nhỏ phát sinh khi làm bài",
+      "Có cố gắng làm bài nhưng tốc độ còn hơi chậm",
+      "Đôi lúc còn mất tập trung, cần thầy cô nhắc nhở",
+      "Thao tác gõ code và dùng chuột còn lúng túng",
+      "Chưa có thói quen kiểm tra lại bài trước khi nộp",
+      "Còn bị động khi gặp lỗi phát sinh trong bài làm",
+      "Còn vội vàng khi nộp bài, chưa đọc kỹ đề thi",
+      "Thường xuyên xao nhãng, thiếu tập trung khi làm bài",
+      "Cần rèn luyện thêm tính cẩn thận và kiên nhẫn",
+      "Phụ thuộc nhiều vào sự hỗ trợ, nhắc nhở của thầy cô",
+      "Chưa phân bổ thời gian hợp lý nên làm thiếu câu",
     ],
   },
   {
     group: "Nắm vững kiến thức & Tư duy",
     icon: "🧠",
+    sections: [
+      {
+        level: "Giỏi",
+        icon: "🌟",
+        items: [
+          "Nắm rất vững toàn bộ kiến thức và cú pháp khóa học",
+          "Tư duy logic giải thuật xuất sắc, mạch lạc",
+          "Vận dụng linh hoạt các câu lệnh và hàm nâng cao",
+          "Tự giải quyết trọn vẹn các câu hỏi thử thách/nâng cao",
+          "Cấu trúc code sạch sẽ, tối ưu thuật toán tốt",
+        ],
+      },
+      {
+        level: "Khá",
+        icon: "👍",
+        items: [
+          "Nắm chắc các kiến thức cốt lõi và trọng tâm",
+          "Hiểu và áp dụng đúng các cú pháp đã học",
+          "Tư duy giải bài có trình tự, giải tốt bài cơ bản",
+          "Tự hoàn thành được hầu hết các yêu cầu của đề",
+          "Cần tối ưu thuật toán ngắn gọn hơn nữa",
+        ],
+      },
+      {
+        level: "Trung bình",
+        icon: "⚖️",
+        items: [
+          "Nhớ cú pháp cơ bản nhưng vận dụng chưa linh hoạt",
+          "Giải quyết được các bài tập quen thuộc",
+          "Còn nhầm lẫn ở một số khái niệm hoặc câu lệnh",
+          "Khó khăn khi đề bài thay đổi biến hoặc tham số",
+          "Cần ôn tập và củng cố thêm kiến thức nền tảng",
+        ],
+      },
+      {
+        level: "Cần cố gắng",
+        icon: "⚠️",
+        items: [
+          "Chưa nắm vững kiến thức cơ bản đã học",
+          "Chưa hiểu rõ cách dùng vòng lặp và câu lệnh điều kiện",
+          "Tư duy logic còn yếu, chưa định hình được thuật toán",
+          "Gặp nhiều khó khăn ngay từ các bài tập cơ bản",
+          "Cần được phụ đạo và ôn luyện lại từ kiến thức nền tảng",
+        ],
+      },
+    ],
     items: [
-      "Nắm rất vững kiến thức toàn khóa",
-      "Tư duy logic giải thuật tốt",
-      "Áp dụng chính xác các cú pháp đã học",
-      "Tự giải quyết được các câu hỏi khó",
-      "Còn nhầm lẫn ở kiến thức nâng cao",
-      "Cần ôn luyện thêm về logic thuật toán",
+      "Nắm rất vững toàn bộ kiến thức và cú pháp khóa học",
+      "Tư duy logic giải thuật xuất sắc, mạch lạc",
+      "Vận dụng linh hoạt các câu lệnh và hàm nâng cao",
+      "Tự giải quyết trọn vẹn các câu hỏi thử thách/nâng cao",
+      "Cấu trúc code sạch sẽ, tối ưu thuật toán tốt",
+      "Nắm chắc các kiến thức cốt lõi và trọng tâm",
+      "Hiểu và áp dụng đúng các cú pháp đã học",
+      "Tư duy giải bài có trình tự, giải tốt bài cơ bản",
+      "Tự hoàn thành được hầu hết các yêu cầu của đề",
+      "Cần tối ưu thuật toán ngắn gọn hơn nữa",
+      "Nhớ cú pháp cơ bản nhưng vận dụng chưa linh hoạt",
+      "Giải quyết được các bài tập quen thuộc",
+      "Còn nhầm lẫn ở một số khái niệm hoặc câu lệnh",
+      "Khó khăn khi đề bài thay đổi biến hoặc tham số",
+      "Cần ôn tập và củng cố thêm kiến thức nền tảng",
+      "Chưa nắm vững kiến thức cơ bản đã học",
+      "Chưa hiểu rõ cách dùng vòng lặp và câu lệnh điều kiện",
+      "Tư duy logic còn yếu, chưa định hình được thuật toán",
+      "Gặp nhiều khó khăn ngay từ các bài tập cơ bản",
+      "Cần được phụ đạo và ôn luyện lại từ kiến thức nền tảng",
     ],
   },
 ];

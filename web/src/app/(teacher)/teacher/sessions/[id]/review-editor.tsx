@@ -574,11 +574,11 @@ export function ReviewEditor({
                       return (
                         <div
                           key={grp.group}
-                          className="rounded-lg border border-border/60 bg-background/70 p-2.5 space-y-2 flex flex-col justify-between"
+                          className="rounded-lg border border-border/60 bg-background/70 p-3 space-y-2.5 flex flex-col justify-between"
                         >
                           <div>
                             <div className="flex items-center justify-between pb-1.5 border-b border-border/40">
-                              <span className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                              <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                                 <span>{grp.icon}</span> {grp.group}
                               </span>
                               {groupSelectedCount > 0 && (
@@ -591,30 +591,85 @@ export function ReviewEditor({
                               )}
                             </div>
 
-                            <div className="flex flex-wrap gap-1.5 pt-2">
-                              {grp.items.map((item) => {
-                                const isSelected =
-                                  selectedObservations.includes(item);
-                                return (
-                                  <button
-                                    key={item}
-                                    type="button"
-                                    onClick={() => toggleObservation(item)}
-                                    className={cn(
-                                      "text-[11px] px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none",
-                                      isSelected
-                                        ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
-                                        : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
-                                    )}
-                                  >
-                                    <span className="text-[10px] font-bold">
-                                      {isSelected ? "✓" : "+"}
-                                    </span>
-                                    <span>{item}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                            {grp.sections && grp.sections.length > 0 ? (
+                              <div className="space-y-3 pt-2">
+                                {grp.sections.map((sec) => {
+                                  const levelColorClass =
+                                    sec.level === "Giỏi"
+                                      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                      : sec.level === "Khá"
+                                        ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30"
+                                        : sec.level === "Trung bình"
+                                          ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                                          : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30";
+
+                                  return (
+                                    <div key={sec.level} className="space-y-1.5">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-xs">{sec.icon}</span>
+                                        <span
+                                          className={cn(
+                                            "text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border",
+                                            levelColorClass
+                                          )}
+                                        >
+                                          {sec.level}
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {sec.items.map((item) => {
+                                          const isSelected =
+                                            selectedObservations.includes(item);
+                                          return (
+                                            <button
+                                              key={item}
+                                              type="button"
+                                              onClick={() => toggleObservation(item)}
+                                              className={cn(
+                                                "text-[11px] px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none",
+                                                isSelected
+                                                  ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
+                                                  : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
+                                              )}
+                                            >
+                                              <span className="text-[10px] font-bold">
+                                                {isSelected ? "✓" : "+"}
+                                              </span>
+                                              <span>{item}</span>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap gap-1.5 pt-2">
+                                {grp.items.map((item) => {
+                                  const isSelected =
+                                    selectedObservations.includes(item);
+                                  return (
+                                    <button
+                                      key={item}
+                                      type="button"
+                                      onClick={() => toggleObservation(item)}
+                                      className={cn(
+                                        "text-[11px] px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none",
+                                        isSelected
+                                          ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
+                                          : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
+                                      )}
+                                    >
+                                      <span className="text-[10px] font-bold">
+                                        {isSelected ? "✓" : "+"}
+                                      </span>
+                                      <span>{item}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         </div>
                       );

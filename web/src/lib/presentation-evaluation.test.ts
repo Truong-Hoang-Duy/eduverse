@@ -168,7 +168,14 @@ describe("presentation-evaluation", () => {
     for (const grp of FINAL_EXAM_OBSERVATION_GROUPS) {
       expect(grp.group).toBeTruthy();
       expect(grp.icon).toBeTruthy();
-      expect(grp.items.length).toBeGreaterThanOrEqual(5);
+      expect(grp.items.length).toBeGreaterThanOrEqual(20);
+      expect(grp.sections).toBeDefined();
+      expect(grp.sections?.length).toBe(4);
+      const levels = grp.sections?.map((s) => s.level);
+      expect(levels).toEqual(["Giỏi", "Khá", "Trung bình", "Cần cố gắng"]);
+      for (const sec of grp.sections ?? []) {
+        expect(sec.items.length).toBeGreaterThanOrEqual(4);
+      }
     }
   });
 });
