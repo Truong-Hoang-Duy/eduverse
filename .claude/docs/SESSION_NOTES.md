@@ -8,9 +8,10 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Đảo thứ tự tiêu chí KIẾN THỨC ĐNL & Tối ưu UI/UX Buổi 14 (Đợt 67)** trên nhánh `feature/session-format-selector`:
-1. **Đổi thứ tự hiển thị tiêu chí KIẾN THỨC trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
-   - Đảo vị trí trong `DNL_CRITERIA` để mục **`[ĐNL] Kiến thức học viên đã được học tại lớp`** hiển thị trước mục **`[ĐNL] Kiến thức học viên tự học`**.
+**Đang làm:** Đã hoàn thành tính năng **Đảo thứ tự tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL & Tối ưu UI/UX Buổi 14 (Đợt 67)** trên nhánh `feature/session-format-selector`:
+1. **Đổi thứ tự hiển thị tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
+   - **KIẾN THỨC:** Đảo để **`[ĐNL] Kiến thức học viên đã được học tại lớp`** đứng trước **`[ĐNL] Kiến thức học viên tự học`**.
+   - **THÁI ĐỘ:** Đảo để **`[ĐNL] Thái độ luyện tập về nhà`** đứng trước **`[ĐNL] Thái độ học tập trên lớp`**.
    - Áp dụng đồng bộ cho giao diện thẻ đánh giá ([presentation-evaluation-card.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/presentation-evaluation-card.tsx)), văn bản sao chép toàn bộ bảng đánh giá (`formatFullEvaluationText`), và prompt AI Service (`build_final_presentation_review_prompt`).
 2. **Thu gọn ô chọn quan sát bài thi cuối khóa (`review-editor.tsx`):**
    - Thay thế việc hiển thị đồng thời 40 tiêu chí xòe dài hơn 1000px gây rối mắt bằng hệ thống **Tab Filter cấp bậc học lực**: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.

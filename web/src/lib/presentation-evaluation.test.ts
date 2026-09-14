@@ -187,5 +187,14 @@ describe("presentation-evaluation", () => {
     expect(knowledgeCriteria[1].key).toBe("kien_thuc_tu_hoc");
     expect(knowledgeCriteria[1].name).toBe("[ĐNL] Kiến thức học viên tự học");
   });
+
+  it("should have correct display order for THÁI ĐỘ criteria (về nhà before tại lớp)", () => {
+    const attitudeCriteria = DNL_CRITERIA.filter((c) => c.group === "THÁI ĐỘ");
+    expect(attitudeCriteria).toHaveLength(2);
+    expect(attitudeCriteria[0].key).toBe("thai_do_ve_nha");
+    expect(attitudeCriteria[0].name).toBe("[ĐNL] Thái độ luyện tập về nhà");
+    expect(attitudeCriteria[1].key).toBe("thai_do_tai_lop");
+    expect(attitudeCriteria[1].name).toBe("[ĐNL] Thái độ học tập trên lớp");
+  });
 });
 

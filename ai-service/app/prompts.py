@@ -394,8 +394,8 @@ def build_final_presentation_review_prompt(
         "   - ky_nang_giai_quyet_van_de: [ĐNL] Kỹ năng giải quyết vấn đề (tự debug, tư duy vượt qua trở ngại khi viết code).\n"
         "   - tu_duy_sang_tao: [ĐNL] Tư duy sáng tạo (ý tưởng khác biệt, tính năng mới lạ, thẩm mỹ giao diện).\n"
         "   - tu_duy_may_tinh: [ĐNL] Tư duy máy tính (tư duy logic lập trình, thuật toán, cấu trúc chương trình).\n"
-        "   - thai_do_tai_lop: [ĐNL] Thái độ học tập trên lớp (chăm chú, kỷ luật, tương tác tích cực).\n"
-        "   - thai_do_ve_nha: [ĐNL] Thái độ luyện tập về nhà (hoàn thành bài tập về nhà, chuẩn bị bài tốt)."
+        "   - thai_do_ve_nha: [ĐNL] Thái độ luyện tập về nhà (hoàn thành bài tập về nhà, chuẩn bị bài tốt).\n"
+        "   - thai_do_tai_lop: [ĐNL] Thái độ học tập trên lớp (chăm chú, kỷ luật, tương tác tích cực)."
     )
 
     return "\n".join(parts)

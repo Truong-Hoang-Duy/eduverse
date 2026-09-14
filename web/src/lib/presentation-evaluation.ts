@@ -280,16 +280,16 @@ export const DNL_CRITERIA: DnlCriterion[] = [
   },
   // THÁI ĐỘ
   {
-    key: "thai_do_tai_lop",
-    name: "[ĐNL] Thái độ học tập trên lớp",
-    group: "THÁI ĐỘ",
-    description: "Mức độ tập trung, ý thức kỷ luật và tương tác trong giờ học",
-  },
-  {
     key: "thai_do_ve_nha",
     name: "[ĐNL] Thái độ luyện tập về nhà",
     group: "THÁI ĐỘ",
     description: "Ý thức hoàn thành bài tập về nhà và tự giác ôn luyện",
+  },
+  {
+    key: "thai_do_tai_lop",
+    name: "[ĐNL] Thái độ học tập trên lớp",
+    group: "THÁI ĐỘ",
+    description: "Mức độ tập trung, ý thức kỷ luật và tương tác trong giờ học",
   },
 ];
 
