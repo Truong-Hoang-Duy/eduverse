@@ -29,19 +29,271 @@ export interface FinalPresentationEvaluation {
   dnl_evaluations: Record<string, DnlCriterionEvaluation>;
 }
 
+export type ObservationLevel = "Giỏi" | "Khá" | "Trung bình" | "Cần cố gắng";
+
+export interface ObservationLevelSection {
+  level: ObservationLevel;
+  icon: string;
+  items: string[];
+}
+
+export interface ObservationGroup {
+  group: string;
+  icon: string;
+  items: string[];
+  sections?: ObservationLevelSection[];
+}
+
+export const PRESENTATION_OBSERVATION_GROUPS: ObservationGroup[] = [
+  {
+    group: "Kỹ năng thuyết trình & Tác phong",
+    icon: "🎤",
+    items: [
+      "Thuyết trình tự tin, lưu loát",
+      "Phong thái chững chạc, đĩnh đạc",
+      "Nói to, rõ ràng, truyền cảm",
+      "Slide trình bày đẹp, trực quan",
+      "Tương tác tốt với khán giả",
+      "Cần nói to, rõ ràng hơn",
+      "Còn hồi hộp, cần tự tin hơn",
+      "Cần kiểm soát thời gian trình bày",
+    ],
+  },
+  {
+    group: "Sản phẩm & Demo kỹ thuật",
+    icon: "💻",
+    items: [
+      "Demo sản phẩm chạy mượt mà",
+      "Giao diện đẹp mắt, thẩm mỹ cao",
+      "Tính năng phong phú, hoàn thiện tốt",
+      "Đồ án có tính ứng dụng thực tế",
+      "Code sạch sẽ, tổ chức logic",
+      "Demo gặp lỗi nhỏ nhưng tự xử lý được",
+      "Cần hoàn thiện thêm một số tính năng",
+    ],
+  },
+  {
+    group: "Tư duy & Phản biện",
+    icon: "💡",
+    items: [
+      "Ý tưởng sáng tạo, độc đáo",
+      "Nắm rất chắc kiến thức và code",
+      "Trả lời xuất sắc câu hỏi phản biện",
+      "Giải thích thuật toán mạch lạc",
+      "Cần hiểu sâu hơn về luồng code",
+      "Cần rèn luyện thêm kỹ năng phản biện",
+    ],
+  },
+];
+
+export const FINAL_EXAM_OBSERVATION_GROUPS: ObservationGroup[] = [
+  {
+    group: "Quá trình & Tác phong làm bài",
+    icon: "📝",
+    sections: [
+      {
+        level: "Giỏi",
+        icon: "🌟",
+        items: [
+          "Làm bài tập trung cao độ, thái độ rất nghiêm túc",
+          "Hoàn thành bài thi sớm và phân bổ thời gian hợp lý",
+          "Thao tác máy tính và soạn thảo code thành thạo",
+          "Tự giác rà soát, kiểm thử kỹ lại bài trước khi nộp",
+          "Chủ động phát hiện và tự sửa lỗi khi chạy thử",
+          "Tự tin làm bài, không cần giáo viên nhắc nhở",
+          "Trình bày code ngăn nắp, đặt tên biến rõ ràng",
+          "Bình tĩnh, chủ động tìm hướng giải quyết khi gặp bài khó",
+        ],
+      },
+      {
+        level: "Khá",
+        icon: "👍",
+        items: [
+          "Thái độ làm bài nghiêm túc, tập trung tốt",
+          "Hoàn thành bài thi đúng thời gian quy định",
+          "Thao tác trên phần mềm lập trình tương đối nhanh",
+          "Biết tự kiểm tra lại các chức năng chính của bài",
+          "Tự xử lý được các lỗi nhỏ phát sinh khi làm bài",
+          "Chủ động hỏi giáo viên khi gặp phần chưa rõ",
+          "Biết chia nhỏ bài toán để làm từng phần",
+          "Cần chú ý cẩn thận hơn khi định dạng và trình bày code",
+        ],
+      },
+      {
+        level: "Trung bình",
+        icon: "⚖️",
+        items: [
+          "Có cố gắng làm bài nhưng tốc độ còn hơi chậm",
+          "Đôi lúc còn mất tập trung, cần thầy cô nhắc nhở",
+          "Thao tác gõ code và dùng chuột còn lúng túng",
+          "Chưa có thói quen kiểm tra lại bài trước khi nộp",
+          "Còn bị động khi gặp lỗi phát sinh trong bài làm",
+          "Cần thầy cô gợi ý mới tiếp tục các bước tiếp theo",
+          "Phân bổ thời gian làm bài chưa thật sự hợp lý",
+          "Dễ nản khi gặp thông báo lỗi hoặc phần đề bài dài",
+        ],
+      },
+      {
+        level: "Cần cố gắng",
+        icon: "⚠️",
+        items: [
+          "Còn vội vàng khi nộp bài, chưa đọc kỹ đề thi",
+          "Thường xuyên xao nhãng, thiếu tập trung khi làm bài",
+          "Cần rèn luyện thêm tính cẩn thận và kiên nhẫn",
+          "Phụ thuộc nhiều vào sự hỗ trợ, nhắc nhở của thầy cô",
+          "Chưa phân bổ thời gian hợp lý nên làm thiếu câu",
+          "Thao tác máy tính còn chậm, gặp khó khăn khi thao tác phần mềm",
+          "Dễ bỏ cuộc khi gặp bài lạ, chưa chủ động suy nghĩ tìm cách làm",
+          "Cần rèn luyện thêm tính tự giác và kỷ luật trong giờ kiểm tra",
+        ],
+      },
+    ],
+    items: [
+      "Làm bài tập trung cao độ, thái độ rất nghiêm túc",
+      "Hoàn thành bài thi sớm và phân bổ thời gian hợp lý",
+      "Thao tác máy tính và soạn thảo code thành thạo",
+      "Tự giác rà soát, kiểm thử kỹ lại bài trước khi nộp",
+      "Chủ động phát hiện và tự sửa lỗi khi chạy thử",
+      "Tự tin làm bài, không cần giáo viên nhắc nhở",
+      "Trình bày code ngăn nắp, đặt tên biến rõ ràng",
+      "Bình tĩnh, chủ động tìm hướng giải quyết khi gặp bài khó",
+      "Thái độ làm bài nghiêm túc, tập trung tốt",
+      "Hoàn thành bài thi đúng thời gian quy định",
+      "Thao tác trên phần mềm lập trình tương đối nhanh",
+      "Biết tự kiểm tra lại các chức năng chính của bài",
+      "Tự xử lý được các lỗi nhỏ phát sinh khi làm bài",
+      "Chủ động hỏi giáo viên khi gặp phần chưa rõ",
+      "Biết chia nhỏ bài toán để làm từng phần",
+      "Cần chú ý cẩn thận hơn khi định dạng và trình bày code",
+      "Có cố gắng làm bài nhưng tốc độ còn hơi chậm",
+      "Đôi lúc còn mất tập trung, cần thầy cô nhắc nhở",
+      "Thao tác gõ code và dùng chuột còn lúng túng",
+      "Chưa có thói quen kiểm tra lại bài trước khi nộp",
+      "Còn bị động khi gặp lỗi phát sinh trong bài làm",
+      "Cần thầy cô gợi ý mới tiếp tục các bước tiếp theo",
+      "Phân bổ thời gian làm bài chưa thật sự hợp lý",
+      "Dễ nản khi gặp thông báo lỗi hoặc phần đề bài dài",
+      "Còn vội vàng khi nộp bài, chưa đọc kỹ đề thi",
+      "Thường xuyên xao nhãng, thiếu tập trung khi làm bài",
+      "Cần rèn luyện thêm tính cẩn thận và kiên nhẫn",
+      "Phụ thuộc nhiều vào sự hỗ trợ, nhắc nhở của thầy cô",
+      "Chưa phân bổ thời gian hợp lý nên làm thiếu câu",
+      "Thao tác máy tính còn chậm, gặp khó khăn khi thao tác phần mềm",
+      "Dễ bỏ cuộc khi gặp bài lạ, chưa chủ động suy nghĩ tìm cách làm",
+      "Cần rèn luyện thêm tính tự giác và kỷ luật trong giờ kiểm tra",
+    ],
+  },
+  {
+    group: "Nắm vững kiến thức & Tư duy",
+    icon: "🧠",
+    sections: [
+      {
+        level: "Giỏi",
+        icon: "🌟",
+        items: [
+          "Nắm chắc kiến thức trọng tâm và cú pháp các câu lệnh",
+          "Tư duy logic tốt, giải bài có phương pháp rõ ràng",
+          "Vận dụng linh hoạt các câu lệnh và hàm để giải bài toán",
+          "Tự giải quyết được các câu hỏi thử thách trong đề",
+          "Cấu trúc chương trình mạch lạc, thuật toán hợp lý",
+          "Hiểu rõ luồng chạy của chương trình và các khối lệnh",
+          "Biết cách tối ưu các bước xử lý để code ngắn gọn",
+          "Xử lý tốt các điều kiện rẽ nhánh và vòng lặp",
+        ],
+      },
+      {
+        level: "Khá",
+        icon: "👍",
+        items: [
+          "Nắm chắc các kiến thức cốt lõi của khóa học",
+          "Hiểu và áp dụng đúng các cú pháp đã học",
+          "Tư duy giải bài có trình tự, làm tốt các bài cơ bản",
+          "Tự hoàn thành được phần lớn các yêu cầu của đề",
+          "Biết kết hợp các câu lệnh điều kiện và vòng lặp",
+          "Cần rèn luyện thêm để thuật toán ngắn gọn và tối ưu hơn",
+          "Xử lý được các bài toán quen thuộc đã học trên lớp",
+          "Đôi lúc còn cần gợi ý ở các câu mang tính tư duy mở rộng",
+        ],
+      },
+      {
+        level: "Trung bình",
+        icon: "⚖️",
+        items: [
+          "Nhớ cú pháp cơ bản nhưng vận dụng chưa thật sự linh hoạt",
+          "Giải quyết được các bài tập quen thuộc, tương tự bài mẫu",
+          "Còn nhầm lẫn ở một số câu lệnh điều kiện hoặc vòng lặp",
+          "Khó khăn khi đề bài thay đổi biến số hoặc yêu cầu khác đi",
+          "Cần xem lại tài liệu hoặc hỏi thầy cô để nhớ cú pháp",
+          "Thuật toán xử lý còn dài dòng, lặp lại nhiều khối lệnh",
+          "Chưa nắm chắc cách truyền tham số hoặc gọi hàm",
+          "Cần ôn tập và củng cố thêm kiến thức nền tảng",
+        ],
+      },
+      {
+        level: "Cần cố gắng",
+        icon: "⚠️",
+        items: [
+          "Chưa nắm chắc các kiến thức cơ bản đã học trong khóa",
+          "Còn nhầm lẫn nhiều cú pháp, chưa phân biệt được các khối lệnh",
+          "Chưa hiểu rõ cách hoạt động của vòng lặp và câu lệnh rẽ nhánh",
+          "Tư duy logic còn hạn chế, gặp khó khăn khi hình thành thuật toán",
+          "Gặp nhiều khó khăn ngay từ các bài tập cơ bản nhất",
+          "Chưa biết cách kết hợp các câu lệnh để tạo thành bài hoàn chỉnh",
+          "Cần được phụ đạo và ôn luyện lại từ kiến thức nền tảng",
+          "Cần dành nhiều thời gian hơn để thực hành các dạng bài cơ bản",
+        ],
+      },
+    ],
+    items: [
+      "Nắm chắc kiến thức trọng tâm và cú pháp các câu lệnh",
+      "Tư duy logic tốt, giải bài có phương pháp rõ ràng",
+      "Vận dụng linh hoạt các câu lệnh và hàm để giải bài toán",
+      "Tự giải quyết được các câu hỏi thử thách trong đề",
+      "Cấu trúc chương trình mạch lạc, thuật toán hợp lý",
+      "Hiểu rõ luồng chạy của chương trình và các khối lệnh",
+      "Biết cách tối ưu các bước xử lý để code ngắn gọn",
+      "Xử lý tốt các điều kiện rẽ nhánh và vòng lặp",
+      "Nắm chắc các kiến thức cốt lõi của khóa học",
+      "Hiểu và áp dụng đúng các cú pháp đã học",
+      "Tư duy giải bài có trình tự, làm tốt các bài cơ bản",
+      "Tự hoàn thành được phần lớn các yêu cầu của đề",
+      "Biết kết hợp các câu lệnh điều kiện và vòng lặp",
+      "Cần rèn luyện thêm để thuật toán ngắn gọn và tối ưu hơn",
+      "Xử lý được các bài toán quen thuộc đã học trên lớp",
+      "Đôi lúc còn cần gợi ý ở các câu mang tính tư duy mở rộng",
+      "Nhớ cú pháp cơ bản nhưng vận dụng chưa thật sự linh hoạt",
+      "Giải quyết được các bài tập quen thuộc, tương tự bài mẫu",
+      "Còn nhầm lẫn ở một số câu lệnh điều kiện hoặc vòng lặp",
+      "Khó khăn khi đề bài thay đổi biến số hoặc yêu cầu khác đi",
+      "Cần xem lại tài liệu hoặc hỏi thầy cô để nhớ cú pháp",
+      "Thuật toán xử lý còn dài dòng, lặp lại nhiều khối lệnh",
+      "Chưa nắm chắc cách truyền tham số hoặc gọi hàm",
+      "Cần ôn tập và củng cố thêm kiến thức nền tảng",
+      "Chưa nắm chắc các kiến thức cơ bản đã học trong khóa",
+      "Còn nhầm lẫn nhiều cú pháp, chưa phân biệt được các khối lệnh",
+      "Chưa hiểu rõ cách hoạt động của vòng lặp và câu lệnh rẽ nhánh",
+      "Tư duy logic còn hạn chế, gặp khó khăn khi hình thành thuật toán",
+      "Gặp nhiều khó khăn ngay từ các bài tập cơ bản nhất",
+      "Chưa biết cách kết hợp các câu lệnh để tạo thành bài hoàn chỉnh",
+      "Cần được phụ đạo và ôn luyện lại từ kiến thức nền tảng",
+      "Cần dành nhiều thời gian hơn để thực hành các dạng bài cơ bản",
+    ],
+  },
+];
+
 export const DNL_CRITERIA: DnlCriterion[] = [
   // KIẾN THỨC
-  {
-    key: "kien_thuc_tu_hoc",
-    name: "[ĐNL] Kiến thức học viên tự học",
-    group: "KIẾN THỨC",
-    description: "Khả năng tự tìm hiểu, tò mò khám phá kiến thức ngoài giờ học",
-  },
   {
     key: "kien_thuc_tai_lop",
     name: "[ĐNL] Kiến thức học viên đã được học tại lớp",
     group: "KIẾN THỨC",
     description: "Mức độ tiếp thu và vận dụng kiến thức đã học trên lớp",
+  },
+  {
+    key: "kien_thuc_tu_hoc",
+    name: "[ĐNL] Kiến thức học viên tự học",
+    group: "KIẾN THỨC",
+    description: "Khả năng tự tìm hiểu, tò mò khám phá kiến thức ngoài giờ học",
   },
   // KỸ NĂNG
   {
@@ -76,16 +328,16 @@ export const DNL_CRITERIA: DnlCriterion[] = [
   },
   // THÁI ĐỘ
   {
-    key: "thai_do_tai_lop",
-    name: "[ĐNL] Thái độ học tập trên lớp",
-    group: "THÁI ĐỘ",
-    description: "Mức độ tập trung, ý thức kỷ luật và tương tác trong giờ học",
-  },
-  {
     key: "thai_do_ve_nha",
     name: "[ĐNL] Thái độ luyện tập về nhà",
     group: "THÁI ĐỘ",
     description: "Ý thức hoàn thành bài tập về nhà và tự giác ôn luyện",
+  },
+  {
+    key: "thai_do_tai_lop",
+    name: "[ĐNL] Thái độ học tập trên lớp",
+    group: "THÁI ĐỘ",
+    description: "Mức độ tập trung, ý thức kỷ luật và tương tác trong giờ học",
   },
 ];
 
@@ -191,7 +443,8 @@ export function distributeScores(targetTotal = 7.0): DemoScoreBreakdown {
 /** Định dạng toàn bộ bảng đánh giá thành văn bản hoàn chỉnh để copy 1 lần. */
 export function formatFullEvaluationText(
   studentName: string,
-  data: FinalPresentationEvaluation
+  data: FinalPresentationEvaluation,
+  options?: { hideDemoScore?: boolean }
 ): string {
   const lines: string[] = [
     `=== BẢNG TỔNG KẾT & ĐÁNH GIÁ NĂNG LỰC: ${studentName.toUpperCase()} ===\n`,
@@ -220,18 +473,39 @@ export function formatFullEvaluationText(
     }
   }
 
-  lines.push(
-    "",
-    `[ĐIỂM TỔNG KẾT: ${data.demo_score.total}/10.0 (TỰ ĐỘNG CHIA ĐỀU KHÔNG DƯỚI 6.0)]`,
-    `- Điểm kiến thức (Demo2024 | CSI): ${data.demo_score.knowledge_score}/5.0 điểm`,
-    `- Điểm demo sản phẩm: ${data.demo_score.demo_total}/5.0 điểm`,
-    `  + Tư duy máy tính, thuật toán: ${data.demo_score.computational_thinking}/2.0 điểm`,
-    `  + Tư duy sáng tạo: ${data.demo_score.creative_thinking}/0.5 điểm`,
-    `  + Kỹ năng giao tiếp, hợp tác: ${data.demo_score.communication}/1.0 điểm`,
-    `  + Giải quyết vấn đề: ${data.demo_score.problem_solving}/1.0 điểm`,
-    `  + Kỹ năng sử dụng máy tính: ${data.demo_score.computer_skills}/0.5 điểm`
-  );
+  if (!options?.hideDemoScore && data.demo_score) {
+    lines.push(
+      "",
+      `[ĐIỂM TỔNG KẾT: ${data.demo_score.total}/10.0 (TỰ ĐỘNG CHIA ĐỀU KHÔNG DƯỚI 6.0)]`,
+      `- Điểm kiến thức (Demo2024 | CSI): ${data.demo_score.knowledge_score}/5.0 điểm`,
+      `- Điểm demo sản phẩm: ${data.demo_score.demo_total}/5.0 điểm`,
+      `  + Tư duy máy tính, thuật toán: ${data.demo_score.computational_thinking}/2.0 điểm`,
+      `  + Tư duy sáng tạo: ${data.demo_score.creative_thinking}/0.5 điểm`,
+      `  + Kỹ năng giao tiếp, hợp tác: ${data.demo_score.communication}/1.0 điểm`,
+      `  + Giải quyết vấn đề: ${data.demo_score.problem_solving}/1.0 điểm`,
+      `  + Kỹ năng sử dụng máy tính: ${data.demo_score.computer_skills}/0.5 điểm`
+    );
+  }
 
   return lines.join("\n");
+}
+
+/** Tạo bảng đánh giá mặc định (khi giáo viên muốn tự điền mà không cần gọi AI). */
+export function createDefaultFinalEvaluation(
+  comment = ""
+): FinalPresentationEvaluation {
+  const dnl: Record<string, DnlCriterionEvaluation> = {};
+  for (const c of DNL_CRITERIA) {
+    dnl[c.key] = {
+      score: 4,
+      level: "Khá",
+      comment: "",
+    };
+  }
+  return {
+    comment,
+    demo_score: distributeScores(7.0),
+    dnl_evaluations: dnl,
+  };
 }
 

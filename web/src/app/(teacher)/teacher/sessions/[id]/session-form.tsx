@@ -15,10 +15,181 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { updateSession } from "@/lib/actions/sessions";
+import {
+  formatToFlags,
+  resolveSessionFormat,
+  SESSION_FORMATS,
+  type SessionFormat,
+} from "@/lib/session-format";
 import type { ActionResult } from "@/lib/types";
 
 import { SessionContentReferenceDialog } from "./session-content-reference-dialog";
 import { SessionContentSuggestDialog } from "./session-content-suggest-dialog";
+
+const FORMAT_CARDS: {
+  id: SessionFormat;
+  icon: string;
+  title: string;
+  tagline: string;
+  badge?: string;
+  highlightForB14?: string;
+}[] = [
+  {
+    id: "standard",
+    icon: "📘",
+    title: "Buổi học tiêu chuẩn",
+    tagline: "Lý thuyết & bài tập thực hành",
+    badge: "Mặc định",
+  },
+  {
+    id: "periodic_test",
+    icon: "📝",
+    title: "Bài kiểm tra",
+    tagline: "Định kỳ hoặc thi cuối khóa",
+    badge: "Đánh giá kiến thức",
+    highlightForB14: "Dành cho khóa chỉ làm bài thi",
+  },
+  {
+    id: "project_period",
+    icon: "💻",
+    title: "Làm đồ án (SPCK)",
+    tagline: "Giai đoạn thực hiện sản phẩm",
+    badge: "Buổi 9–13",
+  },
+  {
+    id: "final_presentation",
+    icon: "🎤",
+    title: "Thuyết trình (Demo Day)",
+    tagline: "Báo cáo sản phẩm & Denise LMS",
+    badge: "Buổi 14",
+    highlightForB14: "Dành cho khóa có đồ án SPCK",
+  },
+];
+
+function SessionFormatSelector({
+  format,
+  onChange,
+  sessionNumber,
+}: {
+  format: SessionFormat;
+  onChange: (format: SessionFormat) => void;
+  sessionNumber: number;
+}) {
+  const isB14 = sessionNumber === 14;
+
+  return (
+    <div className="space-y-3 rounded-xl border bg-card/60 p-4 shadow-sm">
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+            🎯 Hình thức buổi học
+          </Label>
+          {isB14 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+              ⭐ Buổi 14 (Buổi tổng kết khóa)
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Chọn hình thức để Eduverse tối ưu giao diện nhận xét và trợ lý AI phù hợp:
+        </p>
+      </div>
+
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        {FORMAT_CARDS.map((card) => {
+          const isSelected = format === card.id;
+          return (
+            <button
+              key={card.id}
+              type="button"
+              onClick={() => onChange(card.id)}
+              className={`group relative flex flex-col items-start justify-between rounded-lg border p-3 text-left transition-all cursor-pointer ${
+                isSelected
+                  ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-sm"
+                  : "border-border/60 bg-background hover:border-primary/40 hover:bg-muted/30"
+              }`}
+            >
+              <div className="w-full">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg select-none">{card.icon}</span>
+                    <span
+                      className={`text-sm font-semibold transition-colors ${
+                        isSelected ? "text-primary" : "text-foreground"
+                      }`}
+                    >
+                      {card.title}
+                    </span>
+                  </div>
+                  <div
+                    className={`flex size-4 shrink-0 items-center justify-center rounded-full border transition-all ${
+                      isSelected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/30 group-hover:border-primary/50"
+                    }`}
+                  >
+                    {isSelected && (
+                      <span className="size-1.5 rounded-full bg-primary-foreground" />
+                    )}
+                  </div>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {card.tagline}
+                </p>
+              </div>
+
+              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                {isB14 && card.highlightForB14 ? (
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-[10px] font-medium border ${
+                      isSelected
+                        ? "border-primary/30 bg-primary/10 text-primary"
+                        : "border-border bg-muted/60 text-muted-foreground"
+                    }`}
+                  >
+                    {card.highlightForB14}
+                  </span>
+                ) : (
+                  card.badge && (
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[10px] font-medium border ${
+                        isSelected
+                          ? "border-primary/30 bg-primary/10 text-primary"
+                          : "border-border bg-muted/60 text-muted-foreground"
+                      }`}
+                    >
+                      {card.badge}
+                    </span>
+                  )
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs">
+        <span className="text-base select-none shrink-0">
+          {format === "periodic_test"
+            ? "📝"
+            : format === "final_presentation"
+            ? "🎤"
+            : format === "project_period"
+            ? "💻"
+            : "📘"}
+        </span>
+        <div className="space-y-0.5">
+          <p className="font-semibold text-primary">
+            {SESSION_FORMATS[format].label}
+          </p>
+          <p className="text-muted-foreground leading-relaxed">
+            {SESSION_FORMATS[format].detailHint}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /** Buổi mới chưa có ngày học thường là buổi ĐÃ dạy hôm qua (GV hay điền nhận
  *  xét sau buổi một ngày) — điền sẵn hôm nay trừ 1 để đỡ phải gõ tay mỗi lần,
@@ -67,15 +238,10 @@ export function SessionForm({
   const [reviewContext, setReviewContext] = useState(
     session.review_context ?? ""
   );
-  const [isPeriodicTest, setIsPeriodicTest] = useState(
-    session.is_periodic_test
+  const [format, setFormat] = useState<SessionFormat>(() =>
+    resolveSessionFormat(session)
   );
-  const [isProjectPeriod, setIsProjectPeriod] = useState(
-    session.is_project_period
-  );
-  const [isFinalPresentation, setIsFinalPresentation] = useState(
-    session.is_final_presentation ?? session.session_number === 14
-  );
+  const flags = formatToFlags(format);
   // "" = không áp nhận xét từ buổi nào. Reset sau mỗi lần lưu để bấm Lưu lần
   // sau (VD sửa lại nội dung) không vô tình áp lại lần nữa.
   const [copyFrom, setCopyFrom] = useState("");
@@ -86,6 +252,21 @@ export function SessionForm({
   return (
     <form action={formAction} className="space-y-3">
       <input type="hidden" name="id" value={session.id} />
+      <input
+        type="hidden"
+        name="is_periodic_test"
+        value={String(flags.isPeriodicTest)}
+      />
+      <input
+        type="hidden"
+        name="is_project_period"
+        value={String(flags.isProjectPeriod)}
+      />
+      <input
+        type="hidden"
+        name="is_final_presentation"
+        value={String(flags.isFinalPresentation)}
+      />
       <div className="grid gap-3 sm:grid-cols-[1fr_180px]">
         <div className="space-y-1.5">
           <Label htmlFor="title">Tiêu đề buổi học</Label>
@@ -148,58 +329,11 @@ export function SessionForm({
           khảo khi viết nhận xét từng em bên dưới, không hiện cho phụ huynh.
         </p>
       </div>
-      <div className="space-y-1.5">
-        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium">
-          <input
-            type="checkbox"
-            name="is_periodic_test"
-            value="true"
-            checked={isPeriodicTest}
-            onChange={(e) => setIsPeriodicTest(e.target.checked)}
-            className="size-4"
-          />
-          📝 Buổi này có kiểm tra định kỳ
-        </label>
-        <p className="text-xs text-muted-foreground">
-          Bật lên thì khi bấm &quot;AI tạo nhận xét&quot; cho từng em, nhận xét
-          sẽ tách rõ 2 phần — quá trình học tập / kết quả kiểm tra — thay vì
-          viết chung một đoạn.
-        </p>
-      </div>
-      <div className="space-y-1.5">
-        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium">
-          <input
-            type="checkbox"
-            name="is_project_period"
-            value="true"
-            checked={isProjectPeriod}
-            onChange={(e) => setIsProjectPeriod(e.target.checked)}
-            className="size-4"
-          />
-          🎓 Buổi này có làm sản phẩm cuối khóa (SPCK)
-        </label>
-        <p className="text-xs text-muted-foreground">
-          Bật lên thì khi nhận xét từng em sẽ hiện thêm ô quan sát quá trình
-          làm SPCK (thường buổi 9-13), dùng làm ngữ cảnh cho AI.
-        </p>
-      </div>
-      <div className="space-y-1.5">
-        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium">
-          <input
-            type="checkbox"
-            name="is_final_presentation"
-            value="true"
-            checked={isFinalPresentation}
-            onChange={(e) => setIsFinalPresentation(e.target.checked)}
-            className="size-4"
-          />
-          🎤 Buổi này là Thuyết trình sản phẩm cuối khóa (Demo Day / Buổi 14)
-        </label>
-        <p className="text-xs text-muted-foreground">
-          Bật lên thì khi nhận xét từng em sẽ mở chế độ tổng hợp toàn khóa học
-          (từ Buổi 1 đến 13) và Bảng Đánh Giá Năng Lực (ĐNL) &amp; Demo Score chuẩn Denise LMS.
-        </p>
-      </div>
+      <SessionFormatSelector
+        format={format}
+        onChange={setFormat}
+        sessionNumber={session.session_number}
+      />
       {copyFromSessions.length > 0 && (
         <div className="space-y-1.5 rounded-lg border border-dashed p-3">
           <Label htmlFor="copy_from_session_id">

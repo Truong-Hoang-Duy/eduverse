@@ -142,6 +142,7 @@ class FinalPresentationReviewRequest(AiRequest):
     prior_reviews: list[SessionReviewItem] = []
     current_strengths: list[str] = []
     current_improvements: list[str] = []
+    is_exam: bool = False
 
 
 class FinalPresentationReviewResponse(BaseModel):
