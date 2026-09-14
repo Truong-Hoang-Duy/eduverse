@@ -8,15 +8,20 @@
 
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Đảo thứ tự tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL & Tối ưu UI/UX Buổi 14 (Đợt 67)** trên nhánh `feature/session-format-selector`:
-1. **Đổi thứ tự hiển thị tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
+**Đang làm:** Đã hoàn thành tính năng **Mở rộng ngân hàng quan sát bài thi cuối khóa thực tế (64 tiêu chí), loại bỏ từ nói quá & Đảo thứ tự tiêu chí ĐNL (Đợt 68)** trên nhánh `feature/session-format-selector`:
+1. **Mở rộng ngân hàng nhận xét bài thi cuối khóa thực tế (`presentation-evaluation.ts`):**
+   - Tăng số lượng tiêu chí ở mỗi cấp bậc từ 5 lên 8 mục (tổng cộng 64 tiêu chí cho 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy`).
+   - **Chuẩn hóa ngôn ngữ sư phạm khách quan:** Rà soát và loại bỏ hoàn toàn các từ mang tính phóng đại hoặc tuyệt đối hóa ("xuất sắc", "hiểu hết", "toàn bộ", "hoàn hảo").
+   - Tập trung vào các hành động, kỹ năng cụ thể, sự tự giác, mức độ tự tin, khả năng phân bổ thời gian, tư duy gãy gọn, sự chủ động hỏi bài và thói quen kiểm thử code thực tế của học sinh học lập trình.
+   - Trải rộng đồng đều từ khung 🌟 **Giỏi** ➜ 👍 **Khá** ➜ ⚖️ **Trung bình** ➜ ⚠️ **Cần cố gắng**.
+2. **Đổi thứ tự hiển thị tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
    - **KIẾN THỨC:** Đảo để **`[ĐNL] Kiến thức học viên đã được học tại lớp`** đứng trước **`[ĐNL] Kiến thức học viên tự học`**.
    - **THÁI ĐỘ:** Đảo để **`[ĐNL] Thái độ luyện tập về nhà`** đứng trước **`[ĐNL] Thái độ học tập trên lớp`**.
    - Áp dụng đồng bộ cho giao diện thẻ đánh giá ([presentation-evaluation-card.tsx](file:///d:/Project/Eduverse/web/src/app/(teacher)/teacher/sessions/[id]/presentation-evaluation-card.tsx)), văn bản sao chép toàn bộ bảng đánh giá (`formatFullEvaluationText`), và prompt AI Service (`build_final_presentation_review_prompt`).
-2. **Thu gọn ô chọn quan sát bài thi cuối khóa (`review-editor.tsx`):**
-   - Thay thế việc hiển thị đồng thời 40 tiêu chí xòe dài hơn 1000px gây rối mắt bằng hệ thống **Tab Filter cấp bậc học lực**: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
+3. **Thu gọn ô chọn quan sát bài thi cuối khóa (`review-editor.tsx`):**
+   - Thay thế việc hiển thị đồng thời hàng chục tiêu chí xòe dài hơn 1000px gây rối mắt bằng hệ thống **Tab Filter cấp bậc học lực**: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
    - **Tự động trỏ đúng học lực:** Khởi tạo tab mặc định theo xếp loại học lực thực tế của học viên (`academicLevelLabel(academicLevel)`), mở lên là đúng ngay nhóm cần chọn.
-   - **Gọn gàng tối đa:** Ở mỗi tab cấp bậc, 2 cột chỉ hiển thị đúng 5 tiêu chí của cấp bậc đó, chiều cao giảm từ >1000px xuống ~120px, loại bỏ hoàn toàn cảm giác rối mắt.
+   - **Gọn gàng tối đa:** Ở mỗi tab cấp bậc, 2 cột chỉ hiển thị đúng các tiêu chí của cấp bậc đó, chiều cao luôn ổn định, loại bỏ hoàn toàn cảm giác rối mắt.
    - **Đếm số lượng theo cấp bậc:** Mỗi nút tab tự động hiển thị huy hiệu số lượng tiêu chí đã chọn ở cấp bậc đó (`getExamLevelSelectedCount`), giáo viên chuyển đổi linh hoạt giữa các tab mà không lo mất dữ liệu đã chọn.
    - Tab `[ 📋 Xem tất cả ]` có thanh cuộn mượt mà `max-h-[380px] overflow-y-auto` giúp giáo viên có thể tra cứu toàn diện khi cần mà không làm vỡ layout trang.
 2. **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts`):**

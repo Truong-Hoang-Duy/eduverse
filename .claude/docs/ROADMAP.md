@@ -980,19 +980,23 @@
 - [x] **Đưa Bảng Đánh Giá Năng Lực & Tổng Điểm vào Dialog Popup:**
   - Thay thế card inline dài hàng trăm pixel bằng Banner tóm tắt tinh gọn với trạng thái dữ liệu `✓ Đã có dữ liệu` / `Chưa khởi tạo` và tổng điểm.
   - Bấm nút mở popup `Dialog` (Radix UI) `max-w-4xl`, scroll độc lập, có nút Đóng tiện lợi. Tự động mở popup sau khi AI hoàn tất tổng kết để giáo viên xem và chấm nhanh.
-### Đợt 66 (`feature/session-format-selector`) — Thu gọn bộ chọn quan sát bài thi cuối khóa bằng Tab cấp bậc học lực & Đổi thứ tự tiêu chí Kiến thức, Thái độ ĐNL
+### Đợt 66 (`feature/session-format-selector`) — Thu gọn bộ chọn quan sát bài thi cuối khóa, Mở rộng 64 nhận xét thực tế & Đổi thứ tự tiêu chí ĐNL
+- [x] **Mở rộng ngân hàng quan sát bài thi cuối khóa thực tế (`presentation-evaluation.ts`):**
+  - Mở rộng thành 64 tiêu chí (8 tiêu chí/cấp độ x 4 cấp x 2 nhóm).
+  - Chuẩn hóa từ ngữ: loại bỏ hoàn toàn các từ ngữ mang tính nói quá, phóng đại ("xuất sắc", "hiểu hết", "toàn bộ").
+  - Diễn đạt khách quan, thực tế với bối cảnh thi lập trình của học sinh từ khung Giỏi ➜ Khá ➜ Trung bình ➜ Cần cố gắng.
 - [x] **Đổi thứ tự tiêu chí KIẾN THỨC & THÁI ĐỘ trong ĐNL (`presentation-evaluation.ts`, `ai-service/app/prompts.py`):**
   - **KIẾN THỨC:** Đảo để `[ĐNL] Kiến thức học viên đã được học tại lớp` lên trước `[ĐNL] Kiến thức học viên tự học`.
   - **THÁI ĐỘ:** Đảo để `[ĐNL] Thái độ luyện tập về nhà` lên trước `[ĐNL] Thái độ học tập trên lớp`.
   - Đồng bộ trên cả giao diện form đánh giá, text copy bảng tổng kết, và AI Service prompt.
 - [x] **Tab Filter theo cấp bậc học lực cho bài kiểm tra cuối khóa (`review-editor.tsx`):**
-  - Khắc phục triệt để tình trạng hiển thị đồng thời 40 tiêu chí dài hơn 1000px gây rối mắt.
+  - Khắc phục triệt để tình trạng hiển thị đồng thời hàng chục tiêu chí dài hơn 1000px gây rối mắt.
   - Thiết kế hệ thống tab cấp bậc tinh gọn: `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
   - Tự động trỏ đúng tab theo xếp loại học lực của học viên (`academicLevelLabel(academicLevel)`).
-  - Thu gọn chiều cao từ >1000px xuống chỉ còn ~120px (mỗi cột chỉ render 5 chips của cấp bậc đang chọn).
+  - Thu gọn chiều cao tối đa, mỗi tab chỉ render các chips trọng tâm.
   - Tích hợp huy hiệu đếm số tiêu chí đã chọn trên từng tab (`getExamLevelSelectedCount`), giáo viên chuyển tab thoải mái không sợ mất dữ liệu.
   - Tab "Xem tất cả" có thanh cuộn giới hạn `max-h-[380px] overflow-y-auto` giữ giao diện luôn ổn định.
-- [x] **Kiểm thử chất lượng:** 291/291 vitest PASS (+2 unit tests mới), 87/87 pytest PASS, typecheck & lint sạch 0 lỗi.
+- [x] **Kiểm thử chất lượng:** 291/291 vitest PASS (đã thêm test kiểm tra không chứa từ "xuất sắc", "hiểu hết"), 87/87 pytest PASS, typecheck & lint sạch 0 lỗi.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
