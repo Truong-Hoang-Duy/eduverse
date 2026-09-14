@@ -1005,11 +1005,85 @@
   - Hướng dẫn AI đánh giá chi tiết tiêu chí `thai_do_tai_lop`:
     - Nếu đi học đầy đủ: khen ngợi tính chuyên cần, đi học đúng giờ, tiếp thu bài liền mạch và đạt kết quả tốt.
     - Nếu có vắng học: chỉ rõ em có vắng một số buổi học, nhắc nhở việc nghỉ học làm gián đoạn bài học và ảnh hưởng đến kết quả, khuyên em cố gắng sắp xếp đi học đầy đủ hơn.
-  - Đồng bộ nhắc đến tính chuyên cần trong nhận xét tổng kết toàn khóa gửi phụ huynh (`comment`).
-- [x] **Kiểm thử chất lượng:** 291/291 vitest PASS, 88/88 pytest PASS (+1 test mới), typecheck & lint sạch 0 lỗi.
+### Đợt 68 (`feature/student-sort-order`) — Tự sắp xếp thứ tự học viên trong lớp & Đồng bộ sang nhận xét từng buổi
+- [x] **Cột `sort_order` trong bảng `enrollments` & Graceful Fallback (`supabase/migrations/20260914020000_enrollment_sort_order.sql`):**
+  - Thêm cột `sort_order integer not null default 0` và index `idx_enrollments_class_sort_order` trên `enrollments`.
+  - Cập nhật types trong `database.types.ts`.
+  - Cơ chế Graceful Fallback: nếu môi trường DB chưa áp migration, ứng dụng tự động fallback về `.order("joined_at")` đảm bảo không bao giờ bị gián đoạn hay crash.
+- [x] **Tiện ích sắp xếp tiếng Việt A-Z chuẩn xác (`student-sort.ts`, `student-sort.test.ts`):**
+  - Hàm `splitVietnameseName`, `compareVietnameseNames`, `sortStudentsByVietnameseName`.
+  - Quy tắc: Sắp xếp theo Tên chính (từ cuối cùng) trước bằng bảng chữ cái tiếng Việt (`localeCompare(..., "vi", { sensitivity: "base" })`), nếu trùng tên mới xét Họ & Tên đệm.
+  - Bộ unit test đầy đủ, bao gồm dữ liệu thực tế của lớp học.
+- [x] **Server Action `updateStudentsOrder` (`web/src/lib/actions/classes.ts`):**
+  - Lưu thứ tự mới của học viên (`sort_order = index`) và `revalidatePath` trang chi tiết lớp học.
+- [x] **Giao diện bảng học viên `StudentsTable` (`students-table.tsx`):**
+  - Kéo thả tự do (HTML5 Drag & Drop native, không thêm thư viện ngoài).
+  - Nút bấm mũi tên Lên/Xuống (↑/↓) cho từng học viên, tiện lợi trên cả máy tính lẫn điện thoại/tablet.
+  - Nút bấm "Sắp xếp A-Z" (tự động phân tích tên tiếng Việt và lưu ngay lập tức).
+  - Thanh trạng thái hiển thị "Đang lưu thứ tự...", "Đã lưu thứ tự" kèm huy hiệu rõ ràng.
+- [x] **Đồng bộ thứ tự học viên sang trang Nhận xét từng buổi (`sessions/[id]/page.tsx`):**
+  - Query danh sách học viên theo `sort_order` tăng dần, đảm bảo thứ tự giáo viên đã xếp ở trang chi tiết lớp học được giữ nguyên 100% khi nhận xét học viên theo buổi.
+### Đợt 69 (`feature/periodic-test-rubric-evaluation`) — Giao diện nhận xét bài kiểm tra định kỳ (buổi 5, 9...) & Bảng Đánh Giá Năng Lực
+- [x] **Kích hoạt giao diện nhận xét bài kiểm tra định kỳ (`review-editor.tsx`, `page.tsx`, `review-list.tsx`):**
+  - Mở rộng để mọi buổi có bài kiểm tra (`is_periodic_test`, ví dụ buổi 5, 9) đều kích hoạt bộ chọn quan sát 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy` theo 4 cấp bậc `[ 🌟 Giỏi ] [ 👍 Khá ] [ ⚖️ Trung bình ] [ ⚠️ Cần cố gắng ] [ 📋 Xem tất cả ]`.
+  - Ẩn thanh combo và các cột Điểm mạnh/Cải thiện của buổi học thường.
+  - Phân biệt rõ rệt giữa kiểm tra định kỳ và bài thi cuối khóa: Badge `Kiểm tra định kỳ`, tiêu đề "Bài kiểm tra định kỳ & Đánh giá năng lực", nút `✨ AI đánh giá bài kiểm tra & Năng lực`.
+- [x] **Tích hợp Bảng Đánh Giá Năng Lực (ĐNL) cho bài kiểm tra định kỳ:**
+  - Hiển thị Banner Bảng Đánh Giá Năng Lực kèm Popup Modal `PresentationEvaluationCard`.
+  - Ẩn điểm Demo SPCK (`hideDemoScore = true`), hiển thị và cho phép điều chỉnh 9 tiêu chí ĐNL chuẩn Denise LMS.
+  - Hỗ trợ copy toàn bộ bảng đánh giá Denise LMS cho bài kiểm tra định kỳ.
+- [x] **Prompt AI Service phân biệt bài kiểm tra định kỳ (`prompts.py`, `schemas.py`, `routes/reviews.py`, `reviews.ts`):**
+  - Bổ sung tham số `is_periodic_exam: bool` và `session_number: int`.
+  - AI nhận biết rõ đây là bài kiểm tra định kỳ trong quá trình học (chưa phải kết thúc khóa học hay bế giảng), sinh nhận xét tập trung vào kết quả kiểm tra định kỳ và định hướng học tập các buổi tiếp theo.
+### Đợt 70 (`feature/rubric-ui-ux-optimization`) — Tối ưu UI/UX Bảng Đánh Giá Năng Lực (Giảm Border, Chống Copy Lộn)
+- [x] **Hạn chế tối đa đường viền (Border-free / Minimalist Clean Design):**
+  - Loại bỏ các khung viền cứng (`border bg-card`) bao quanh từng tiêu chí gây cảm giác "hộp lồng trong hộp".
+  - Chuyển sang danh sách phẳng với màu nền dịu nhẹ (`bg-muted/20 hover:bg-muted/40`), có vạch màu nhấn nhẹ bên trái (`border-l-4`) theo nhóm: Xanh dương (Kiến thức), Tím (Kỹ năng), Hổ phách (Thái độ).
+  - Tinh giản bộ chọn điểm 1..5 thành Segmented Pill control liền khối, chỉ hiển thị 1 badge cấp độ tương ứng (Giỏi/Khá/TB/Cần cố gắng) thay vì render cả 3 badge rườm rà.
+- [x] **Hệ thống chống copy nhầm sang Denise LMS (Anti-Miscopy Experience):**
+  - Đánh số thứ tự to rõ `01` đến `09` nổi bật cho từng tiêu chí, tương ứng 1-1 với 9 ô textarea trên Denise LMS.
+  - Đưa nút Copy nhận xét lên thanh Header của tiêu chí (ngang hàng tên tiêu chí & bộ chọn điểm), tách biệt hoàn toàn khỏi tiêu chí tiếp theo, tránh triệt để việc bấm nhầm nút copy của ô trên vào tiêu đề ô dưới.
+  - **Flash Green Highlight:** Khi bấm Copy, toàn bộ khối tiêu chí phát sáng viền xanh ngọc & nền xanh lá nhạt (`ring-2 ring-emerald-500/60 bg-emerald-500/10`) trong 2.5s, đem lại sự xác nhận thị giác tức thì.
+  - **Theo dõi lịch sử Copy trong phiên (`copiedHistory`):** Tự động đánh dấu `✓ Đã chép` bền vững cho các ô đã copy, tránh việc copy nhảy cóc hoặc copy lặp lại.
+  - Header trên cùng bổ sung thống kê tiến độ: `Đã có nhận xét: X/9` và `Đã copy: Y/9`.
+- [x] **Tối ưu Phần 2: Demo Score (thang điểm 10):**
+  - Loại bỏ viền nét đứt (`border-dashed`), dùng card phẳng hiện đại, các hàng điểm được xếp thoáng đãng kèm nút copy điểm có trạng thái `✓ Đã chép` rõ nét.
+- [x] **Kiểm thử chất lượng:** 295/295 vitest PASS, 89/89 pytest PASS, typecheck & eslint 0 lỗi.
+
+### Đợt 71 (`feature/review-editor-ui-ux-optimization`) — Tối ưu UI/UX Hiển Thị Nhận Xét Học Viên (Làm Rõ Đường Kẻ Border, Gọn Gàng Thanh Summary, Toolbar Tiến Độ & Copy Nhanh)
+- [x] **Làm rõ các đường kẻ (Border sắc nét, dứt khoát):**
+  - Viền thẻ học viên được làm đậm và rõ ràng với `border-2` và màu sắc tương phản cao (`border-2 border-emerald-600/70 dark:border-emerald-500/70` khi đã nhận xét, `border-amber-500/70` khi vắng mặt, `border-slate-300 dark:border-slate-700` khi chưa xong), giúp ranh giới từng học viên tách bạch hoàn toàn.
+  - Các đường kẻ phân cách bên trong (ngăn cách summary/form, viền textarea, dải đánh vắng, banner đánh giá năng lực) đều được viền sắc nét với `border-slate-300 dark:border-slate-700`.
+- [x] **Gọn gàng thanh Summary (Không hiện text nhận xét dài ở ngoài):**
+  - Lược bỏ hoàn toàn khối trích dẫn text nhận xét dài ngoằng trên thanh summary để giao diện gọn gàng, thanh thoát và không bị choán màn hình.
+  - Giữ lại nút `[ 📋 Copy ]` nhỏ gọn và icon Chevron ở góc phải, cho phép giáo viên copy nhanh vào clipboard chỉ với 1 click mà không cần mở form.
+  - Cột trái hiển thị số thứ tự to rõ `01`, `02`... kèm icon trạng thái (`✓`, `🚫`), tên học viên, badge học lực và badge trạng thái tươi sáng.
+- [x] **Thanh Toolbar điều khiển thông minh (`review-list.tsx`):**
+  - Thống kê tiến độ trực quan kèm Progress Bar sinh động (`Đã hoàn thành: X/Y học viên (Z%)`).
+  - Bộ lọc Tabs Pills 1 chạm: `[ Tất cả (total) ]` `[ ✓ Đã xong (done) ]` `[ ⏳ Chưa xong (pending) ]` thay thế dropdown mờ mờ.
+  - Thao tác hàng loạt: Nút `[ 📂 Mở hết ]` và `[ 📁 Thu gọn ]` cho phép bung/gập toàn bộ danh sách nhận xét cùng lúc.
+  - Cố định số thứ tự học viên `01`, `02`... theo danh sách lớp đã sắp xếp, không bị nhảy số khi lọc.
+### Đợt 72 (`feature/exam-observation-dropdowns`) — Chuyển 2 Nhóm Quan Sát Thành Dropdown Độc Lập & Bổ Sung Nhận Xét Cải Thiện 4 Cấp Bậc
+- [x] **Loại bỏ nút gập/mở chung "Thu gọn danh sách / Mở rộng" (`review-editor.tsx`):**
+  - Xóa bỏ nút toggle chung gây bất tiện và che khuất thao tác độc lập giữa 2 nhóm.
+- [x] **Hiển thị Dropdown Nổi (Floating Overlay Popover) cho 2 nhóm quan sát (`review-editor.tsx`):**
+  - Chuyển `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy` thành 2 khối Dropdown nổi riêng biệt.
+  - **Không chiếm chỗ - Không giật mở rộng giao diện:** Sử dụng cơ chế Floating Overlay (`absolute top-full mt-1.5 z-50`), menu nổi lơ lửng trên bề mặt trang với bóng đổ `shadow-2xl` và viền sắc nét, hoàn toàn không đẩy hay làm co giãn các phần tử bên dưới.
+  - Tự động đóng khi bấm ra ngoài (`fixed inset-0 z-40`) hoặc bấm `[ ✓ Xong ]`.
+  - **Cố định chiều cao 100% (h-11) & Giao diện tối giản:** Không hiển thị danh sách chip ra ngoài làm nhảy chiều cao thẻ; thanh trigger cố định chính xác 44px (`h-11`) với huy hiệu `✓ Đã chọn {count}`. Bên trong dropdown hiển thị trực tiếp danh sách quan sát, các mục đã chọn được highlight checkmark `✓` trực quan tại chỗ, không cần khối tóm tắt chip thừa.
+  - Khi mở: Menu nổi có thanh cuộn mượt mà `max-h-[250px] overflow-y-auto`.
+- [x] **Bổ sung nhận xét cải thiện 4 cấp bậc & Phân tách trực quan (`presentation-evaluation.ts`):**
+  - Mở rộng ngân hàng nhận xét lên 12 mục/cấp bậc (tổng 96 mục cho cả 2 nhóm), bảo đảm cả 4 cấp bậc (Giỏi, Khá, Trung bình, Cần cố gắng) đều có tỷ lệ cân đối giữa ưu điểm và điểm cần cải thiện/lưu ý.
+  - Phân tách trực quan thành 2 tiểu mục: `✨ Điểm làm tốt` (xanh primary/emerald) và `💡 Cần lưu ý & cải thiện` (vàng hổ phách amber `border-amber-500/30 bg-amber-500/5`).
+  - Tuyệt đối không dùng từ cấm "xuất sắc", "hiểu hết" trong toàn bộ ngân hàng quan sát.
+- [x] **Siết Prompt AI Service chống khen một chiều (`ai-service/app/prompts.py`):**
+  - Bổ sung quy tắc vào `TONE_RULE`: Cấm khen một chiều 100%, bắt buộc chỉ ra ít nhất 1-2 điểm cần lưu ý cải thiện (tự kiểm thử, đọc đề, tính cẩn thận, tối ưu mã nguồn...).
+- [x] **Kiểm thử chất lượng:** 296/296 vitest PASS, 89/89 pytest PASS, typecheck & eslint 0 lỗi.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
   lớp xem, kết quả không lưu nữa
+
+
 

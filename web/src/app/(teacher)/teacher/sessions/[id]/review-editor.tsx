@@ -14,6 +14,7 @@ import { MultiSelect } from "@/components/multi-select";
 import { SelectedBadges } from "@/components/selected-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,7 @@ import {
   createDefaultFinalEvaluation,
   FINAL_EXAM_OBSERVATION_GROUPS,
   type FinalPresentationEvaluation,
+  isImprovementObservation,
   type ObservationLevel,
   PRESENTATION_OBSERVATION_GROUPS,
 } from "@/lib/presentation-evaluation";
@@ -112,7 +114,9 @@ const EXAM_LEVEL_CONFIG: {
 ];
 
 export function ReviewEditor({
+  index,
   sessionId,
+  sessionNumber,
   sessionTitle,
   sessionContent,
   sessionContext,
@@ -133,7 +137,9 @@ export function ReviewEditor({
   copySources,
   combos,
 }: {
+  index?: number;
   sessionId: string;
+  sessionNumber?: number;
   sessionTitle: string;
   sessionContent: string;
   /** Bối cảnh buổi học GV gõ 1 lần (VD: hôm nay kiểm tra) — dùng chung cho
@@ -194,8 +200,12 @@ export function ReviewEditor({
     useState<FinalPresentationEvaluation | null>(null);
 
   const hasFinalEvaluation =
-    Boolean(isFinalPresentation) || Boolean(isPeriodicTest && isFinalSession);
-  const hideDemoScore = Boolean(isPeriodicTest && !isFinalPresentation);
+    Boolean(isFinalPresentation) || Boolean(isPeriodicTest);
+  const isExam = Boolean(isPeriodicTest && !isFinalPresentation);
+  const isPeriodicExam = Boolean(
+    isPeriodicTest && !isFinalSession && !isFinalPresentation
+  );
+  const hideDemoScore = isExam;
 
   const defaultExamLevel: ObservationLevel | "all" =
     academicLevelLabel(academicLevel) === "Giỏi"
@@ -209,6 +219,7 @@ export function ReviewEditor({
   const [selectedExamLevel, setSelectedExamLevel] = useState<
     ObservationLevel | "all"
   >(defaultExamLevel);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   function toggleObservation(item: string) {
     setSelectedObservations((prev) =>
@@ -369,6 +380,8 @@ export function ReviewEditor({
           currentStrengths: [],
           currentImprovements: [],
           isExam: !isFinalPresentation && Boolean(isPeriodicTest),
+          isPeriodicExam,
+          sessionNumber,
         });
         if (res.error) {
           setAiError(res.error);
@@ -443,6 +456,13 @@ export function ReviewEditor({
   const reviewed = isReviewed(existing);
   const levelLabel = academicLevelLabel(academicLevel);
 
+  const formattedIndex =
+    typeof index === "number"
+      ? index < 10
+        ? `0${index}`
+        : String(index)
+      : undefined;
+
   // Số cột grid Điểm mạnh/Cải thiện/Quá trình làm bài/SPCK — tùy 2 cờ buổi.
   const extraCols = (isPeriodicTest ? 1 : 0) + (isProjectPeriod ? 1 : 0);
   const gridColsClass =
@@ -453,37 +473,109 @@ export function ReviewEditor({
         : "grid gap-4 sm:grid-cols-2 lg:grid-cols-4";
 
   return (
-    <details ref={detailsRef} className="group rounded-lg border bg-card">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 [&::-webkit-details-marker]:hidden">
-        <span className="flex items-center gap-2 font-medium">
-          {studentName}
-          {levelLabel && (
-            <Badge variant="outline" className="text-xs font-normal">
-              🏷️ {levelLabel}
-            </Badge>
-          )}
-          {isAbsent ? (
-            <Badge variant="outline" className="text-xs">
-              Vắng
-            </Badge>
-          ) : state?.success ? (
-            <Badge
-              variant="outline"
-              className="text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
-            >
-              ✓ {state.success}
-            </Badge>
-          ) : (
-            reviewed && (
-              <Badge variant="secondary" className="text-xs">
-                Đã nhận xét
+    <details
+      ref={detailsRef}
+      className={cn(
+        "review-editor-item group rounded-xl border-2 transition-all duration-200 shadow-xs overflow-hidden open:overflow-visible",
+        isAbsent
+          ? "border-amber-500/70 dark:border-amber-500/60 bg-card"
+          : state?.success || reviewed
+          ? "border-emerald-600/70 dark:border-emerald-500/70 bg-card hover:border-emerald-600 dark:hover:border-emerald-400"
+          : "border-slate-300 dark:border-slate-700 bg-card hover:border-primary/80 hover:shadow-sm"
+      )}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3.5 sm:p-4 [&::-webkit-details-marker]:hidden select-none hover:bg-muted/30 transition-colors">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <span
+            className={cn(
+              "flex size-7 shrink-0 items-center justify-center rounded-lg font-mono text-xs font-bold shadow-xs transition-colors",
+              isAbsent
+                ? "bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                : state?.success || reviewed
+                ? "bg-emerald-600 text-white dark:bg-emerald-500"
+                : "bg-muted text-muted-foreground"
+            )}
+            title={`Học viên số ${formattedIndex ?? ""}`}
+          >
+            {isAbsent ? "🚫" : state?.success || reviewed ? "✓" : formattedIndex ?? "•"}
+          </span>
+
+          <div className="flex items-center gap-2 min-w-0 flex-wrap">
+            <span className="text-sm font-bold tracking-tight text-foreground">
+              {studentName}
+            </span>
+
+            {levelLabel && (
+              <Badge
+                variant="secondary"
+                className="text-[10px] font-medium border border-border/60 bg-muted/80 text-foreground/80 px-1.5 py-0.5"
+              >
+                🏷️ {levelLabel}
               </Badge>
-            )
+            )}
+
+            {isAbsent ? (
+              <Badge
+                variant="secondary"
+                className="text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 font-medium border border-amber-500/30 px-2"
+              >
+                Vắng mặt
+              </Badge>
+            ) : state?.success ? (
+              <Badge className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/40 px-2">
+                ✓ {state.success}
+              </Badge>
+            ) : reviewed ? (
+              <Badge
+                variant="secondary"
+                className="text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-medium border border-emerald-500/40 px-2"
+              >
+                ✓ Đã nhận xét
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className="text-[10px] text-muted-foreground border-slate-300 dark:border-slate-700 border-dashed px-1.5"
+              >
+                ⏳ Chưa xong
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {comment.trim() && !isAbsent && (
+            <Button
+              type="button"
+              variant={copied ? "default" : "outline"}
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                handleCopyComment();
+              }}
+              className={cn(
+                "h-7 px-2.5 text-xs font-medium cursor-pointer transition-all shadow-2xs",
+                copied
+                  ? "bg-emerald-600 hover:bg-emerald-600 text-white border-transparent"
+                  : "border-slate-300 dark:border-slate-700 hover:bg-muted text-muted-foreground hover:text-foreground"
+              )}
+              title="Copy nhanh nhận xét của em này"
+            >
+              {copied ? (
+                <span className="flex items-center gap-1 font-semibold">
+                  <span>✓</span> Đã copy
+                </span>
+              ) : (
+                <span className="flex items-center gap-1">
+                  <span>📋</span> Copy
+                </span>
+              )}
+            </Button>
           )}
-        </span>
-        <span className="text-sm text-muted-foreground transition-transform group-open:rotate-180">
-          ▼
-        </span>
+
+          <ChevronDown className="size-4 text-muted-foreground transition-transform duration-200 group-open:rotate-180" />
+        </div>
       </summary>
 
       <form
@@ -494,27 +586,40 @@ export function ReviewEditor({
             detailsRef.current.open = false;
           }
         }}
-        className="space-y-4 border-t p-4"
+        className="space-y-4 border-t-2 border-slate-200 dark:border-slate-800 bg-muted/5 p-4 sm:p-5"
       >
         <input type="hidden" name="session_id" value={sessionId} />
         <input type="hidden" name="student_id" value={studentId} />
         <input type="hidden" name="is_absent" value={String(isAbsent)} />
 
-        {/* Đánh vắng — mặc định có đi học. Bật lên thì ẩn toàn bộ phần nhận xét
-            vì em không học buổi này. */}
-        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm font-medium">
-          <input
-            type="checkbox"
-            checked={isAbsent}
-            onChange={(e) => toggleAbsent(e.target.checked)}
-            disabled={pending}
-            className="size-4"
-          />
-          🚫 Vắng mặt buổi này (không cần nhận xét)
+        {/* Đánh vắng — dạng toggle card thanh lịch */}
+        <label
+          className={cn(
+            "flex cursor-pointer items-center justify-between rounded-lg p-2.5 sm:px-3 text-xs sm:text-sm font-medium transition-all shadow-2xs",
+            isAbsent
+              ? "bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/60"
+              : "bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground border border-slate-300 dark:border-slate-700"
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={isAbsent}
+              onChange={(e) => toggleAbsent(e.target.checked)}
+              disabled={pending}
+              className="size-4 rounded accent-primary cursor-pointer"
+            />
+            <span>🚫 Vắng mặt buổi này (không cần nhận xét)</span>
+          </div>
+          {isAbsent && (
+            <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded">
+              ✓ Đã tự động lưu
+            </span>
+          )}
         </label>
 
         {isAbsent && (
-          <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+          <p className="rounded-lg border border-dashed border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-300">
             Đã đánh dấu vắng và LƯU luôn — em được tính là xử lý xong, không còn
             trong bộ lọc &quot;Chưa hoàn thành&quot;, và được bỏ qua khi tổng hợp
             tin Zalo cho phụ huynh. Bỏ tick nếu đánh nhầm.
@@ -537,13 +642,15 @@ export function ReviewEditor({
             {/* --- BUỔI 14 (TỔNG KẾT): THUYẾT TRÌNH HOẶC BÀI KIỂM TRA CUỐI KHÓA --- */}
             {hasFinalEvaluation && (
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3.5">
-                {/* Tiêu đề & Thông tin Buổi 14 */}
+                {/* Tiêu đề & Thông tin Buổi kiểm tra / Buổi 14 */}
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-primary/15 pb-2.5">
                   <span className="text-sm font-bold text-primary flex items-center gap-2">
                     {isFinalPresentation ? "🎓" : "📝"} {sessionTitle}:{" "}
                     {isFinalPresentation
                       ? "Thuyết trình sản phẩm cuối khóa & Tổng kết"
-                      : "Bài kiểm tra cuối khóa & Đánh giá năng lực"}
+                      : isPeriodicExam
+                        ? "Bài kiểm tra định kỳ & Đánh giá năng lực"
+                        : "Bài kiểm tra cuối khóa & Đánh giá năng lực"}
                   </span>
                   {isFinalPresentation ? (
                     project ? (
@@ -558,6 +665,13 @@ export function ReviewEditor({
                         Chưa nộp đề tài trên hệ thống
                       </Badge>
                     )
+                  ) : isPeriodicExam ? (
+                    <Badge
+                      variant="outline"
+                      className="text-xs bg-background text-primary border-primary/30"
+                    >
+                      Kiểm tra định kỳ
+                    </Badge>
                   ) : (
                     <Badge
                       variant="outline"
@@ -586,6 +700,7 @@ export function ReviewEditor({
                 )}
 
                 {/* Khối tích chọn quan sát Buổi 14 (Thuyết trình hoặc Bài kiểm tra) */}
+                {/* Khối tích chọn quan sát (Thuyết trình hoặc Bài kiểm tra) */}
                 <div className="space-y-2.5">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
@@ -593,7 +708,9 @@ export function ReviewEditor({
                       <span>
                         {isFinalPresentation
                           ? "Tích chọn quan sát buổi thuyết trình & sản phẩm của em:"
-                          : "Tích chọn quan sát bài kiểm tra cuối khóa của em:"}
+                          : isPeriodicExam
+                            ? "Tích chọn quan sát bài kiểm tra định kỳ của em:"
+                            : "Tích chọn quan sát bài kiểm tra cuối khóa của em:"}
                       </span>
                     </Label>
                     {selectedObservations.length > 0 && (
@@ -616,7 +733,7 @@ export function ReviewEditor({
                     )}
                   </div>
 
-                  {/* Thanh lọc theo cấp bậc học lực cho Bài kiểm tra cuối khóa */}
+                  {/* Thanh lọc theo cấp bậc học lực cho Bài kiểm tra */}
                   {!isFinalPresentation && (
                     <div className="flex flex-wrap items-center justify-between gap-2 p-1.5 rounded-lg bg-muted/40 border border-border/50">
                       <div className="flex flex-wrap items-center gap-1">
@@ -673,6 +790,7 @@ export function ReviewEditor({
                     </div>
                   )}
 
+                  {/* Danh sách các nhóm quan sát dạng DROPDOWN độc lập */}
                   <div
                     className={cn(
                       "grid gap-2.5",
@@ -681,148 +799,347 @@ export function ReviewEditor({
                         : "grid-cols-1 sm:grid-cols-2"
                     )}
                   >
-                    {observationGroups.map((grp) => {
-                      const groupSelectedCount = grp.items.filter((it) =>
+                    {observationGroups.map((grp, grpIdx) => {
+                      const groupSelectedItems = grp.items.filter((it) =>
                         selectedObservations.includes(it)
-                      ).length;
+                      );
+                      const groupSelectedCount = groupSelectedItems.length;
+                      const isOpen = activeDropdown === grp.group;
 
                       return (
-                        <div
-                          key={grp.group}
-                          className="rounded-lg border border-border/60 bg-background/70 p-3 space-y-2.5 flex flex-col justify-between"
-                        >
-                          <div>
-                            <div className="flex items-center justify-between pb-1.5 border-b border-border/40">
-                              <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                                <span>{grp.icon}</span> {grp.group}
+                        <div key={grp.group} className="relative">
+                          {/* Thanh Header Dropdown Trigger - Chiều cao CỐ ĐỊNH h-11, KHÔNG hiển thị ra ngoài làm giật giao diện */}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveDropdown((prev) =>
+                                prev === grp.group ? null : grp.group
+                              )
+                            }
+                            className={cn(
+                              "w-full h-11 px-3 flex items-center justify-between rounded-lg border transition-all cursor-pointer select-none bg-background",
+                              isOpen
+                                ? "border-primary shadow-xs ring-1 ring-primary/25"
+                                : groupSelectedCount > 0
+                                  ? "border-primary/50 bg-primary/5 hover:border-primary"
+                                  : "border-border/70 hover:border-border hover:bg-muted/20"
+                            )}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-sm shrink-0">{grp.icon}</span>
+                              <span className="text-xs font-semibold text-foreground truncate">
+                                {grp.group}
                               </span>
-                              {groupSelectedCount > 0 && (
+                              {groupSelectedCount > 0 ? (
                                 <Badge
                                   variant="secondary"
-                                  className="text-[10px] px-1.5 py-0 h-4 bg-primary/15 text-primary border-0 font-medium"
+                                  className="text-[10px] px-1.5 py-0.5 h-4.5 bg-primary/15 text-primary border border-primary/30 font-semibold shrink-0"
                                 >
-                                  {groupSelectedCount}
+                                  ✓ Đã chọn {groupSelectedCount}
                                 </Badge>
+                              ) : (
+                                <span className="text-[11px] text-muted-foreground shrink-0 hidden sm:inline">
+                                  (Chưa chọn)
+                                </span>
                               )}
                             </div>
 
-                            {grp.sections && grp.sections.length > 0 ? (
-                              selectedExamLevel === "all" ? (
-                                <div className="space-y-3 pt-2 max-h-[380px] overflow-y-auto pr-1">
-                                  {grp.sections.map((sec) => {
-                                    const levelColorClass =
-                                      sec.level === "Giỏi"
-                                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
-                                        : sec.level === "Khá"
-                                          ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30"
-                                          : sec.level === "Trung bình"
-                                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
-                                            : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30";
+                            <div className="flex items-center gap-1 text-muted-foreground shrink-0 ml-2">
+                              <span className="text-[11px] font-medium text-primary">
+                                {isOpen ? "Thu lại" : "Xổ xuống"}
+                              </span>
+                              <ChevronDown
+                                className={cn(
+                                  "size-3.5 text-primary transition-transform duration-200",
+                                  isOpen && "rotate-180"
+                                )}
+                              />
+                            </div>
+                          </button>
 
-                                    return (
-                                      <div key={sec.level} className="space-y-1.5">
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="text-xs">{sec.icon}</span>
-                                          <span
+                          {/* DROPDOWN NỔI LÊN BỀ MẶT (FLOATING OVERLAY) - Không chiếm vị trí, không đẩy các phần tử khác */}
+                          {isOpen && (
+                            <>
+                              {/* Lớp phủ vô hình bắt click bên ngoài để đóng dropdown */}
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setActiveDropdown(null)}
+                              />
+
+                              {/* Menu nổi có bóng đổ & viền sắc nét */}
+                              <div
+                                className={cn(
+                                  "absolute top-full mt-1.5 z-50 rounded-xl border border-border bg-popover/95 backdrop-blur-md text-popover-foreground shadow-2xl ring-1 ring-black/10 dark:ring-white/10 p-3 space-y-2.5 animate-in fade-in-0 zoom-in-95 duration-150",
+                                  "w-[calc(100vw-3rem)] sm:w-[450px] md:w-[480px] max-w-[520px]",
+                                  grpIdx === 0
+                                    ? "left-0"
+                                    : grpIdx === observationGroups.length - 1
+                                      ? "right-0"
+                                      : "left-0 sm:left-1/2 sm:-translate-x-1/2"
+                                )}
+                              >
+                                {/* Header của Menu nổi */}
+                                <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                                  <div className="flex items-center gap-1.5 min-w-0">
+                                    <span className="text-sm shrink-0">{grp.icon}</span>
+                                    <span className="text-xs font-semibold text-foreground truncate">
+                                      {grp.group}
+                                    </span>
+                                    {groupSelectedCount > 0 && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-[10px] px-1.5 py-0 h-4 bg-primary/15 text-primary border-0 font-medium shrink-0"
+                                      >
+                                        Đã chọn {groupSelectedCount}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {groupSelectedCount > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedObservations((prev) =>
+                                            prev.filter((it) => !grp.items.includes(it))
+                                          );
+                                        }}
+                                        className="text-[11px] text-muted-foreground hover:text-destructive cursor-pointer transition-colors"
+                                      >
+                                        ✕ Bỏ chọn nhóm
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => setActiveDropdown(null)}
+                                      className="text-xs font-medium text-primary hover:text-primary/90 px-2.5 py-0.5 rounded-md bg-primary/10 hover:bg-primary/15 transition-colors cursor-pointer"
+                                    >
+                                      ✓ Xong
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Nội dung danh sách tiêu chí quan sát cuộn mượt */}
+                                <div className="space-y-2">
+                                  {grp.sections && grp.sections.length > 0 ? (
+                                    selectedExamLevel === "all" ? (
+                                      <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                                        {grp.sections.map((sec) => {
+                                          const levelColorClass =
+                                            sec.level === "Giỏi"
+                                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                              : sec.level === "Khá"
+                                                ? "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30"
+                                                : sec.level === "Trung bình"
+                                                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                                                  : "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30";
+
+                                          const strengths = sec.items.filter(
+                                            (it) => !isImprovementObservation(it)
+                                          );
+                                          const improvements = sec.items.filter(
+                                            isImprovementObservation
+                                          );
+
+                                          return (
+                                            <div key={sec.level} className="space-y-1.5">
+                                              <div className="flex items-center gap-1.5">
+                                                <span className="text-xs">{sec.icon}</span>
+                                                <span
+                                                  className={cn(
+                                                    "text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border",
+                                                    levelColorClass
+                                                  )}
+                                                >
+                                                  {sec.level}
+                                                </span>
+                                              </div>
+
+                                              {/* Ưu điểm */}
+                                              {strengths.length > 0 && (
+                                                <div className="flex flex-wrap gap-1">
+                                                  {strengths.map((item) => {
+                                                    const isSelected =
+                                                      selectedObservations.includes(item);
+                                                    return (
+                                                      <button
+                                                        key={item}
+                                                        type="button"
+                                                        onClick={() => toggleObservation(item)}
+                                                        className={cn(
+                                                          "text-[11px] px-2 py-0.5 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none leading-tight",
+                                                          isSelected
+                                                            ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
+                                                            : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
+                                                        )}
+                                                      >
+                                                        <span className="text-[10px] font-bold">
+                                                          {isSelected ? "✓" : "+"}
+                                                        </span>
+                                                        <span>{item}</span>
+                                                      </button>
+                                                    );
+                                                  })}
+                                                </div>
+                                              )}
+
+                                              {/* Cải thiện */}
+                                              {improvements.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 pt-0.5">
+                                                  {improvements.map((item) => {
+                                                    const isSelected =
+                                                      selectedObservations.includes(item);
+                                                    return (
+                                                      <button
+                                                        key={item}
+                                                        type="button"
+                                                        onClick={() => toggleObservation(item)}
+                                                        className={cn(
+                                                          "text-[11px] px-2 py-0.5 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none leading-tight",
+                                                          isSelected
+                                                            ? "border-amber-500/60 bg-amber-500/15 text-amber-800 dark:text-amber-200 font-medium shadow-2xs ring-1 ring-amber-500/30"
+                                                            : "border-amber-500/30 bg-amber-500/5 text-muted-foreground hover:border-amber-500/50 hover:text-foreground hover:bg-amber-500/10"
+                                                        )}
+                                                      >
+                                                        <span className="text-[10px] font-bold">
+                                                          {isSelected ? "✓" : "💡"}
+                                                        </span>
+                                                        <span>{item}</span>
+                                                      </button>
+                                                    );
+                                                  })}
+                                                </div>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    ) : (
+                                      <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                        {(() => {
+                                          const activeSec = grp.sections.find(
+                                            (s) => s.level === selectedExamLevel
+                                          );
+                                          if (!activeSec) return null;
+
+                                          const strengths = activeSec.items.filter(
+                                            (it) => !isImprovementObservation(it)
+                                          );
+                                          const improvements = activeSec.items.filter(
+                                            isImprovementObservation
+                                          );
+
+                                          return (
+                                            <>
+                                              {/* Ưu điểm / Điểm làm tốt */}
+                                              {strengths.length > 0 && (
+                                                <div className="space-y-1">
+                                                  <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                                    <span>✨</span> Điểm làm tốt ({strengths.length})
+                                                  </span>
+                                                  <div className="flex flex-wrap gap-1">
+                                                    {strengths.map((item) => {
+                                                      const isSelected =
+                                                        selectedObservations.includes(item);
+                                                      return (
+                                                        <button
+                                                          key={item}
+                                                          type="button"
+                                                          onClick={() => toggleObservation(item)}
+                                                          className={cn(
+                                                            "text-[11px] px-2 py-0.5 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none leading-tight",
+                                                            isSelected
+                                                              ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
+                                                              : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
+                                                          )}
+                                                        >
+                                                          <span className="text-[10px] font-bold">
+                                                            {isSelected ? "✓" : "+"}
+                                                          </span>
+                                                          <span>{item}</span>
+                                                        </button>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </div>
+                                              )}
+
+                                              {/* Cần cải thiện / Lưu ý */}
+                                              {improvements.length > 0 && (
+                                                <div className="space-y-1 pt-1.5 border-t border-border/30">
+                                                  <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                                                    <span>💡</span> Cần lưu ý & cải thiện ({improvements.length})
+                                                  </span>
+                                                  <div className="flex flex-wrap gap-1">
+                                                    {improvements.map((item) => {
+                                                      const isSelected =
+                                                        selectedObservations.includes(item);
+                                                      return (
+                                                        <button
+                                                          key={item}
+                                                          type="button"
+                                                          onClick={() => toggleObservation(item)}
+                                                          className={cn(
+                                                            "text-[11px] px-2 py-0.5 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none leading-tight",
+                                                            isSelected
+                                                              ? "border-amber-500/60 bg-amber-500/15 text-amber-800 dark:text-amber-200 font-medium shadow-2xs ring-1 ring-amber-500/30"
+                                                              : "border-amber-500/30 bg-amber-500/5 text-muted-foreground hover:border-amber-500/50 hover:text-foreground hover:bg-amber-500/10"
+                                                          )}
+                                                        >
+                                                          <span className="text-[10px] font-bold">
+                                                            {isSelected ? "✓" : "💡"}
+                                                          </span>
+                                                          <span>{item}</span>
+                                                        </button>
+                                                      );
+                                                    })}
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </>
+                                          );
+                                        })()}
+                                      </div>
+                                    )
+                                  ) : (
+                                    <div className="flex flex-wrap gap-1 max-h-[220px] overflow-y-auto pr-1">
+                                      {grp.items.map((item) => {
+                                        const isSelected =
+                                          selectedObservations.includes(item);
+                                        const isImprovement = isImprovementObservation(item);
+                                        return (
+                                          <button
+                                            key={item}
+                                            type="button"
+                                            onClick={() => toggleObservation(item)}
                                             className={cn(
-                                              "text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border",
-                                              levelColorClass
+                                              "text-[11px] px-2 py-0.5 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none leading-tight",
+                                              isSelected
+                                                ? isImprovement
+                                                  ? "border-amber-500/60 bg-amber-500/15 text-amber-800 dark:text-amber-200 font-medium shadow-2xs ring-1 ring-amber-500/30"
+                                                  : "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
+                                                : isImprovement
+                                                  ? "border-amber-500/30 bg-amber-500/5 text-muted-foreground hover:border-amber-500/50 hover:text-foreground hover:bg-amber-500/10"
+                                                  : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
                                             )}
                                           >
-                                            {sec.level}
-                                          </span>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1.5">
-                                          {sec.items.map((item) => {
-                                            const isSelected =
-                                              selectedObservations.includes(item);
-                                            return (
-                                              <button
-                                                key={item}
-                                                type="button"
-                                                onClick={() => toggleObservation(item)}
-                                                className={cn(
-                                                  "text-[11px] px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none",
-                                                  isSelected
-                                                    ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
-                                                    : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
-                                                )}
-                                              >
-                                                <span className="text-[10px] font-bold">
-                                                  {isSelected ? "✓" : "+"}
-                                                </span>
-                                                <span>{item}</span>
-                                              </button>
-                                            );
-                                          })}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
+                                            <span className="text-[10px] font-bold">
+                                              {isSelected ? "✓" : isImprovement ? "💡" : "+"}
+                                            </span>
+                                            <span>{item}</span>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
                                 </div>
-                              ) : (
-                                <div className="flex flex-wrap gap-1.5 pt-2">
-                                  {(() => {
-                                    const activeSec = grp.sections.find(
-                                      (s) => s.level === selectedExamLevel
-                                    );
-                                    if (!activeSec) return null;
-                                    return activeSec.items.map((item) => {
-                                      const isSelected =
-                                        selectedObservations.includes(item);
-                                      return (
-                                        <button
-                                          key={item}
-                                          type="button"
-                                          onClick={() => toggleObservation(item)}
-                                          className={cn(
-                                            "text-[11px] px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none",
-                                            isSelected
-                                              ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
-                                              : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
-                                          )}
-                                        >
-                                          <span className="text-[10px] font-bold">
-                                            {isSelected ? "✓" : "+"}
-                                          </span>
-                                          <span>{item}</span>
-                                        </button>
-                                      );
-                                    });
-                                  })()}
-                                </div>
-                              )
-                            ) : (
-                              <div className="flex flex-wrap gap-1.5 pt-2">
-                                {grp.items.map((item) => {
-                                  const isSelected =
-                                    selectedObservations.includes(item);
-                                  return (
-                                    <button
-                                      key={item}
-                                      type="button"
-                                      onClick={() => toggleObservation(item)}
-                                      className={cn(
-                                        "text-[11px] px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none",
-                                        isSelected
-                                          ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
-                                          : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
-                                      )}
-                                    >
-                                      <span className="text-[10px] font-bold">
-                                        {isSelected ? "✓" : "+"}
-                                      </span>
-                                      <span>{item}</span>
-                                    </button>
-                                  );
-                                })}
                               </div>
-                            )}
-                          </div>
+                            </>
+                          )}
                         </div>
                       );
                     })}
                   </div>
+                </div>
 
                   {/* Ghi chú thêm */}
                   <div className="pt-1 space-y-1">
@@ -840,13 +1157,14 @@ export function ReviewEditor({
                     <p className="text-[11px] text-muted-foreground/80 italic flex items-center gap-1">
                       <span>💡</span>
                       <span>
-                        Điểm mạnh &amp; điểm cần cải thiện được AI tự động phân tích và tổng hợp đa chiều từ lịch sử 13 buổi học trước để đưa vào nhận xét toàn khóa.
+                        {isPeriodicExam
+                          ? "Điểm mạnh & điểm cần cải thiện được AI phân tích từ quá trình học và bài kiểm tra định kỳ để đưa vào nhận xét."
+                          : "Điểm mạnh & điểm cần cải thiện được AI tự động phân tích và tổng hợp đa chiều từ lịch sử 13 buổi học trước để đưa vào nhận xét toàn khóa."}
                       </span>
                     </p>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* --- CÁC BUỔI THƯỜNG (BUỔI 1 - 13): COMBO, ĐIỂM MẠNH, CẦN CẢI THIỆN --- */}
             {!hasFinalEvaluation && (
@@ -924,58 +1242,83 @@ export function ReviewEditor({
             )}
 
             {/* --- NHẬN XÉT GỬI PHỤ HUYNH --- */}
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor={`comment-${studentId}`}>Nhận xét gửi phụ huynh</Label>
+                <Label
+                  htmlFor={`comment-${studentId}`}
+                  className="text-sm font-bold text-foreground flex items-center gap-1.5"
+                >
+                  <span>💬</span> Nhận xét gửi phụ huynh
+                </Label>
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant={copied ? "default" : "outline"}
                     size="sm"
                     onClick={handleCopyComment}
                     disabled={!comment}
+                    className={cn(
+                      "h-8 px-2.5 text-xs font-medium cursor-pointer transition-all shadow-2xs",
+                      copied
+                        ? "bg-emerald-600 hover:bg-emerald-600 text-white border-transparent"
+                        : "border-border/70 hover:bg-muted text-muted-foreground hover:text-foreground"
+                    )}
                   >
                     {copied ? "✓ Đã copy" : "📋 Copy"}
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
                     size="sm"
                     onClick={handleGenerate}
                     disabled={aiPending}
+                    className="h-8 px-3 text-xs font-semibold cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs transition-all flex items-center gap-1.5"
                   >
-                    {aiPending
-                      ? "AI đang viết..."
-                      : isFinalPresentation
-                        ? "✨ AI tổng kết Buổi 14 & Đánh giá năng lực"
-                        : isPeriodicTest && isFinalSession
-                          ? "✨ AI tổng kết bài thi & Đánh giá năng lực"
-                          : "✨ AI tạo nhận xét"}
+                    {aiPending ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className="animate-spin">⏳</span> AI đang viết...
+                      </span>
+                    ) : isFinalPresentation ? (
+                      "✨ AI tổng kết Buổi 14 & Đánh giá năng lực"
+                    ) : isPeriodicExam ? (
+                      "✨ AI đánh giá bài kiểm tra & Năng lực"
+                    ) : (
+                      "✨ AI tạo nhận xét"
+                    )}
                   </Button>
                 </div>
               </div>
-              <Textarea
-                id={`comment-${studentId}`}
-                name="ai_comment"
-                rows={4}
-                value={comment}
-                onChange={(e) => {
-                  setComment(e.target.value);
-                  setCopied(false);
-                }}
-                placeholder={
-                  hasFinalEvaluation
-                    ? hideDemoScore
-                      ? "Bấm 'AI tổng kết bài thi' để sinh nhận xét toàn khóa và bảng Đánh Giá Năng Lực..."
-                      : "Bấm 'AI tổng kết Buổi 14' để sinh nhận xét toàn khóa và bảng ĐNL / Demo Score..."
-                    : "Bấm 'AI tạo nhận xét' rồi chỉnh sửa lại theo ý bạn..."
-                }
-              />
+              <div className="relative">
+                <Textarea
+                  id={`comment-${studentId}`}
+                  name="ai_comment"
+                  rows={4}
+                  value={comment}
+                  onChange={(e) => {
+                    setComment(e.target.value);
+                    setCopied(false);
+                  }}
+                  placeholder={
+                    hasFinalEvaluation
+                      ? hideDemoScore
+                        ? isPeriodicExam
+                          ? "Bấm 'AI đánh giá bài kiểm tra' để sinh nhận xét bài kiểm tra định kỳ và bảng Đánh Giá Năng Lực..."
+                          : "Bấm 'AI tổng kết bài thi' để sinh nhận xét toàn khóa và bảng Đánh Giá Năng Lực..."
+                        : "Bấm 'AI tổng kết Buổi 14' để sinh nhận xét toàn khóa và bảng ĐNL / Demo Score..."
+                      : "Bấm 'AI tạo nhận xét' rồi chỉnh sửa lại theo ý bạn..."
+                  }
+                  className="text-sm leading-relaxed text-foreground bg-background border border-slate-300 dark:border-slate-700 focus-visible:border-primary focus-visible:ring-1 focus-visible:ring-primary rounded-lg p-3 min-h-[110px] shadow-2xs resize-y"
+                />
+                {comment.trim() && (
+                  <span className="absolute bottom-2 right-2.5 text-[10px] text-muted-foreground/60 pointer-events-none">
+                    {comment.length} ký tự
+                  </span>
+                )}
+              </div>
               {aiError && <p className="text-sm text-destructive">{aiError}</p>}
 
               {/* Banner & Popup Modal Bảng Đánh Giá Năng Lực & Tổng Điểm */}
               {hasFinalEvaluation && (
-                <div className="rounded-lg border border-border/80 bg-card p-3 shadow-2xs space-y-2">
+                <div className="rounded-xl border border-slate-300 dark:border-slate-700 bg-card p-3.5 shadow-2xs space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-start gap-2.5">
                       <span className="text-xl leading-none pt-0.5">📊</span>
@@ -1000,7 +1343,9 @@ export function ReviewEditor({
                         <p className="text-[11px] text-muted-foreground">
                           {finalEvaluation
                             ? hideDemoScore
-                              ? "Đã đánh giá 9 tiêu chí ĐNL chuẩn Denise LMS. Bấm để xem hoặc chỉnh sửa chi tiết."
+                              ? isPeriodicExam
+                                ? "Đã đánh giá 9 tiêu chí ĐNL bài kiểm tra định kỳ. Bấm để xem hoặc chỉnh sửa chi tiết."
+                                : "Đã đánh giá 9 tiêu chí ĐNL chuẩn Denise LMS. Bấm để xem hoặc chỉnh sửa chi tiết."
                               : `Tổng điểm: ${finalEvaluation.demo_score.total.toFixed(1)}/10 (Demo: ${finalEvaluation.demo_score.demo_total.toFixed(1)}, Kiến thức: ${finalEvaluation.demo_score.knowledge_score.toFixed(1)}). Bấm để xem hoặc chỉnh sửa.`
                             : "Khung điểm và 9 tiêu chí ĐNL sẽ được AI tự động tạo khi sinh nhận xét, hoặc bạn có thể mở popup để chấm thủ công."}
                         </p>
@@ -1038,7 +1383,9 @@ export function ReviewEditor({
                           </DialogTitle>
                           <DialogDescription className="text-xs">
                             {hideDemoScore
-                              ? "Khung 9 tiêu chí Đánh Giá Năng Lực (chuẩn Denise LMS) áp dụng cho bài kiểm tra cuối khóa."
+                              ? isPeriodicExam
+                                ? "Khung 9 tiêu chí Đánh Giá Năng Lực (chuẩn Denise LMS) áp dụng cho bài kiểm tra định kỳ."
+                                : "Khung 9 tiêu chí Đánh Giá Năng Lực (chuẩn Denise LMS) áp dụng cho bài kiểm tra cuối khóa."
                               : "Khung 9 tiêu chí Đánh Giá Năng Lực và Điểm Demo Thuyết Trình chuẩn Denise LMS."}
                           </DialogDescription>
                         </DialogHeader>
@@ -1049,6 +1396,7 @@ export function ReviewEditor({
                               studentName={studentName}
                               data={finalEvaluation}
                               hideDemoScore={hideDemoScore}
+                              isPeriodicExam={isPeriodicExam}
                               onChange={(updated) => {
                                 setFinalEvaluation(updated);
                                 try {
@@ -1087,10 +1435,23 @@ export function ReviewEditor({
 
         {/* Đánh vắng đã tự lưu lúc tick nên không còn gì để bấm — giấu nút đi
             thay vì để một nút không có việc gì làm. */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pt-1">
           {!isAbsent && (
-            <Button type="submit" size="sm" disabled={pending}>
-              {pending ? "Đang lưu..." : "Lưu nhận xét"}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={pending}
+              className="h-9 px-4 text-xs font-semibold cursor-pointer bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs flex items-center gap-1.5"
+            >
+              {pending ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="animate-spin">⏳</span> Đang lưu...
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <span>💾</span> Lưu nhận xét
+                </span>
+              )}
             </Button>
           )}
           <FormMessage result={state} />

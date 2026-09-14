@@ -116,3 +116,29 @@ def test_session_review_item_is_absent_field() -> None:
     item_absent = SessionReviewItem(session_number=2, session_title="Buổi 2", is_absent=True)
     assert item_absent.is_absent is True
 
+
+def test_periodic_exam_review_prompt_for_session_5() -> None:
+    prompt = build_final_presentation_review_prompt(
+        student_name="Nguyễn Văn C",
+        class_code="CSI01",
+        course_name="Computer Science Intro",
+        academic_level="Khá",
+        project_name=None,
+        project_description=None,
+        project_features=[],
+        presentation_notes="Tập trung làm bài, hoàn thành tốt các câu hỏi cơ bản.",
+        prior_reviews_text="THỐNG KÊ CHUYÊN CẦN: Đi học đầy đủ 4/4 buổi (100%)\n- Buổi 1: mạnh [Hiểu bài]",
+        current_strengths=[],
+        current_improvements=[],
+        is_exam=True,
+        is_periodic_exam=True,
+        session_number=5,
+    )
+
+    assert "Nguyễn Văn C" in prompt
+    assert "BÀI KIỂM TRA ĐỊNH KỲ (Buổi 5)" in prompt
+    assert "CHƯA PHẢI kết thúc khóa học" in prompt
+    assert "nhận xét bài kiểm tra định kỳ gửi phụ huynh" in prompt
+    assert "dnl_evaluations" in prompt
+
+

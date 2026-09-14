@@ -164,7 +164,10 @@ def generate_final_presentation_review(
         current_strengths=body.current_strengths,
         current_improvements=body.current_improvements,
         is_exam=body.is_exam,
+        is_periodic_exam=body.is_periodic_exam,
+        session_number=body.session_number,
     )
+
 
     criterion_schema = {
         "type": "object",

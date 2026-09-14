@@ -144,6 +144,8 @@ class FinalPresentationReviewRequest(AiRequest):
     current_strengths: list[str] = []
     current_improvements: list[str] = []
     is_exam: bool = False
+    is_periodic_exam: bool = False
+    session_number: int | None = None
 
 
 class FinalPresentationReviewResponse(BaseModel):
