@@ -68,8 +68,8 @@
    - `web/`: `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm test` (270/270 tests PASSED - 23 test files).
    - Nhánh Git: Đã commit và merge sạch từ `feature/final-presentation-review` vào `develop` và `main`, push lên `origin` thành công.
 
-**`main` = `origin/main` = `f35fc30`**
-`ai-service/` CÓ đổi ở đợt này (thêm endpoint `/generate-final-presentation-review` và schema rubric ĐNL/Demo Score) — Render tự động build/deploy theo webhook push `main`.
+**`main` = `origin/main` = `270f5b9`**
+`ai-service/` CÓ đổi ở đợt này (hỗ trợ prompt bài thi cuối khóa & đồng bộ thứ tự tiêu chí ĐNL) — Render tự động build/deploy theo webhook push `main`.
 Kiểm tra `/health` khớp commit mới trên Render dashboard nếu cần.
 
 
