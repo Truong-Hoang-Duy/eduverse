@@ -859,15 +859,16 @@ export function ReviewEditor({
                           )}
                         </div>
 
-                        <DialogFooter className="p-3 border-t bg-muted/20 sm:justify-between flex items-center">
-                          <span className="text-xs text-muted-foreground">
-                            Dữ liệu được tự động lưu tạm trên trình duyệt của bạn.
+                        <DialogFooter className="m-0 mx-0 mb-0 px-4 py-3 border-t bg-muted/30 flex flex-row items-center justify-between sm:justify-between gap-3 shrink-0 rounded-b-xl">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                            <span>💾</span>
+                            <span>Dữ liệu được tự động lưu tạm trên trình duyệt của bạn.</span>
                           </span>
                           <Button
                             type="button"
                             size="sm"
                             onClick={() => setRubricModalOpen(false)}
-                            className="text-xs"
+                            className="text-xs cursor-pointer shrink-0"
                           >
                             Đóng
                           </Button>
