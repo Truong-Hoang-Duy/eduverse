@@ -83,3 +83,27 @@ def test_final_presentation_review_response_schema_validation() -> None:
     assert len(resp.dnl_evaluations) == 9
     assert resp.dnl_evaluations["kien_thuc_tu_hoc"].score == 5
 
+
+def test_final_exam_review_prompt_for_session_14() -> None:
+    prompt = build_final_presentation_review_prompt(
+        student_name="Trần Thị B",
+        class_code="JSB01",
+        course_name="Javascript Basic",
+        academic_level="Khá",
+        project_name=None,
+        project_description=None,
+        project_features=[],
+        presentation_notes="Làm bài kiểm tra nghiêm túc, hoàn thành nhanh, tự kiểm tra lại bài trước khi nộp.",
+        prior_reviews_text="- Buổi 1: mạnh [Tư duy tốt]; cần cải thiện [Hay quên cú pháp]",
+        current_strengths=["Hoàn thành bài sớm", "Tư duy logic tốt"],
+        current_improvements=["Cần chú ý lỗi chính tả"],
+        is_exam=True,
+    )
+
+    assert "Trần Thị B" in prompt
+    assert "BÀI KIỂM TRA CUỐI KHÓA" in prompt
+    assert "buổi kiểm tra" in prompt
+    assert "dnl_evaluations" in prompt
+    assert "kien_thuc_tu_hoc" in prompt
+    assert "demo_score" in prompt
+

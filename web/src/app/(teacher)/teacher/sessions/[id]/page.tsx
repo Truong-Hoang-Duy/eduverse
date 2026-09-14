@@ -174,6 +174,11 @@ export default async function SessionDetailPage({
       !session.is_project_period &&
       session.session_number === 14;
 
+  const isFinalSession =
+    session.session_number === 14 ||
+    (Boolean(session.classes?.total_sessions) &&
+      session.session_number === session.classes?.total_sessions);
+
   const projects = (projectsData ?? []) as {
     id: string;
     student_id: string;
@@ -288,11 +293,13 @@ export default async function SessionDetailPage({
           <CardDescription>
             {isFinalPresentation
               ? "Buổi thuyết trình sản phẩm cuối khóa: Bấm 'AI tổng kết Buổi 14' để tổng hợp toàn khóa và chấm ĐNL / Demo Score."
-              : session.is_periodic_test
-                ? "Buổi kiểm tra: Điền quan sát làm bài rồi bấm 'AI tạo nhận xét' để tách 2 phần (học tập / kết quả kiểm tra)."
-                : session.is_project_period
-                  ? "Giai đoạn làm sản phẩm cuối khóa: Điền quan sát tiến độ SPCK rồi bấm 'AI tạo nhận xét'."
-                  : "Áp bộ combo điểm mạnh/cần cải thiện rồi bấm \"AI tạo nhận xét\"."}
+              : session.is_periodic_test && isFinalSession
+                ? "Buổi kiểm tra cuối khóa: Bấm 'AI tổng kết bài thi' để tổng hợp toàn khóa và chấm 9 tiêu chí Đánh Giá Năng Lực."
+                : session.is_periodic_test
+                  ? "Buổi kiểm tra: Điền quan sát làm bài rồi bấm 'AI tạo nhận xét' để tách 2 phần (học tập / kết quả kiểm tra)."
+                  : session.is_project_period
+                    ? "Giai đoạn làm sản phẩm cuối khóa: Điền quan sát tiến độ SPCK rồi bấm 'AI tạo nhận xét'."
+                    : "Áp bộ combo điểm mạnh/cần cải thiện rồi bấm \"AI tạo nhận xét\"."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -319,6 +326,7 @@ export default async function SessionDetailPage({
               isPeriodicTest={session.is_periodic_test}
               isProjectPeriod={session.is_project_period}
               isFinalPresentation={isFinalPresentation}
+              isFinalSession={isFinalSession}
               classCode={session.classes?.class_code ?? ""}
               courseName={session.classes?.courses?.name ?? ""}
               students={students}

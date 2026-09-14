@@ -35,7 +35,10 @@ import {
 } from "@/lib/actions/reviews";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
 import { addReviewOption, deleteReviewOption } from "@/lib/actions/settings";
-import type { FinalPresentationEvaluation } from "@/lib/presentation-evaluation";
+import {
+  createDefaultFinalEvaluation,
+  type FinalPresentationEvaluation,
+} from "@/lib/presentation-evaluation";
 import type { ActionResult } from "@/lib/types";
 
 import { ComboBar } from "./combo-bar";
@@ -67,6 +70,7 @@ export function ReviewEditor({
   isPeriodicTest,
   isProjectPeriod,
   isFinalPresentation,
+  isFinalSession,
   classCode,
   courseName,
   project,
@@ -94,6 +98,8 @@ export function ReviewEditor({
   isProjectPeriod: boolean;
   /** Buổi thuyết trình sản phẩm cuối khóa & Tổng kết (Demo Day / Buổi 14). */
   isFinalPresentation?: boolean;
+  /** Buổi 14 hoặc buổi cuối khóa học (dù là bài kiểm tra hay thuyết trình). */
+  isFinalSession?: boolean;
   classCode?: string;
   courseName?: string;
   project?: {
@@ -136,8 +142,12 @@ export function ReviewEditor({
   const [finalEvaluation, setFinalEvaluation] =
     useState<FinalPresentationEvaluation | null>(null);
 
+  const hasFinalEvaluation =
+    Boolean(isFinalPresentation) || Boolean(isPeriodicTest && isFinalSession);
+  const hideDemoScore = Boolean(isPeriodicTest && !isFinalPresentation);
+
   useEffect(() => {
-    if (isFinalPresentation) {
+    if (hasFinalEvaluation) {
       try {
         const cached = localStorage.getItem(
           `eduverse_rubric_${sessionId}_${studentId}`
@@ -147,7 +157,7 @@ export function ReviewEditor({
         }
       } catch {}
     }
-  }, [isFinalPresentation, sessionId, studentId]);
+  }, [hasFinalEvaluation, sessionId, studentId]);
 
   const formRef = useRef<HTMLFormElement>(null);
   const [aiError, setAiError] = useState("");
@@ -241,19 +251,33 @@ export function ReviewEditor({
     setAiError("");
     setCopied(false);
     startAi(async () => {
-      if (isFinalPresentation) {
+      if (hasFinalEvaluation) {
+        const examOrPresNotes = isPeriodicTest
+          ? [
+              ...(testProcessNotes.length > 0
+                ? [`Quá trình làm bài: ${testProcessNotes.join(", ")}`]
+                : []),
+              ...(presentationNotes.trim() ? [presentationNotes.trim()] : []),
+            ].join(". ")
+          : presentationNotes.trim();
+
         const res = await generateFinalPresentationReview({
           studentName,
           classCode: classCode ?? "",
           courseName: courseName ?? "",
           academicLevel: academicLevelLabel(academicLevel) ?? undefined,
-          projectName: project?.name,
-          projectDescription: project?.description ?? undefined,
-          projectFeatures: project?.features ?? undefined,
-          presentationNotes: presentationNotes.trim() || undefined,
+          projectName: isFinalPresentation ? project?.name : undefined,
+          projectDescription: isFinalPresentation
+            ? (project?.description ?? undefined)
+            : undefined,
+          projectFeatures: isFinalPresentation
+            ? (project?.features ?? undefined)
+            : undefined,
+          presentationNotes: examOrPresNotes || undefined,
           priorReviews: allPriorReviews ?? [],
           currentStrengths: strengths,
           currentImprovements: improvements,
+          isExam: !isFinalPresentation && Boolean(isPeriodicTest),
         });
         if (res.error) {
           setAiError(res.error);
@@ -397,6 +421,22 @@ export function ReviewEditor({
         {improvements.map((s) => (
           <input key={s} type="hidden" name="improvements" value={s} />
         ))}
+
+        {isPeriodicTest && isFinalSession && (
+          <div className="rounded-lg border border-primary/25 bg-primary/5 p-3.5 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-bold text-primary flex items-center gap-1.5">
+                📝 {sessionTitle}: Bài kiểm tra cuối khóa &amp; Đánh giá năng lực
+              </span>
+              <Badge variant="outline" className="text-xs bg-background text-primary border-primary/30">
+                Buổi 14 / Tổng kết
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Khóa học làm bài kiểm tra cuối khóa: Hệ thống áp dụng khung 9 tiêu chí Đánh Giá Năng Lực (chuẩn Denise LMS) để tổng kết quá trình học và bài thi, không bao gồm Demo Score.
+            </p>
+          </div>
+        )}
 
         {isFinalPresentation && (
           <div className="rounded-lg border border-primary/25 bg-primary/5 p-3.5 space-y-2.5">
@@ -562,7 +602,9 @@ export function ReviewEditor({
                   ? "AI đang viết..."
                   : isFinalPresentation
                     ? "✨ AI tổng kết Buổi 14 & Đánh giá năng lực"
-                    : "✨ AI tạo nhận xét"}
+                    : isPeriodicTest && isFinalSession
+                      ? "✨ AI tổng kết bài thi & Đánh giá năng lực"
+                      : "✨ AI tạo nhận xét"}
               </Button>
             </div>
           </div>
@@ -576,18 +618,44 @@ export function ReviewEditor({
               setCopied(false);
             }}
             placeholder={
-              isFinalPresentation
-                ? "Bấm 'AI tổng kết Buổi 14' để sinh nhận xét toàn khóa và bảng ĐNL / Demo Score..."
+              hasFinalEvaluation
+                ? hideDemoScore
+                  ? "Bấm 'AI tổng kết bài thi' để sinh nhận xét toàn khóa và bảng Đánh Giá Năng Lực..."
+                  : "Bấm 'AI tổng kết Buổi 14' để sinh nhận xét toàn khóa và bảng ĐNL / Demo Score..."
                 : "Bấm 'AI tạo nhận xét' rồi chỉnh sửa lại theo ý bạn..."
             }
           />
           {aiError && <p className="text-sm text-destructive">{aiError}</p>}
 
-          {isFinalPresentation && finalEvaluation && (
+          {hasFinalEvaluation && !finalEvaluation && (
+            <div className="pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const initial = createDefaultFinalEvaluation(comment);
+                  setFinalEvaluation(initial);
+                  try {
+                    localStorage.setItem(
+                      `eduverse_rubric_${sessionId}_${studentId}`,
+                      JSON.stringify(initial)
+                    );
+                  } catch {}
+                }}
+                className="text-xs cursor-pointer border-dashed border-primary/40 text-primary hover:bg-primary/5"
+              >
+                📊 {hideDemoScore ? "Mở Bảng Đánh Giá Năng Lực (9 tiêu chí)" : "Mở Bảng Đánh Giá Năng Lực & Demo Score"}
+              </Button>
+            </div>
+          )}
+
+          {hasFinalEvaluation && finalEvaluation && (
             <div className="pt-2">
               <PresentationEvaluationCard
                 studentName={studentName}
                 data={finalEvaluation}
+                hideDemoScore={hideDemoScore}
                 onChange={(updated) => {
                   setFinalEvaluation(updated);
                   try {

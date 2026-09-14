@@ -138,6 +138,7 @@ def generate_final_presentation_review(
         prior_reviews_text=prior_reviews_text,
         current_strengths=body.current_strengths,
         current_improvements=body.current_improvements,
+        is_exam=body.is_exam,
     )
 
     criterion_schema = {

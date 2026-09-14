@@ -537,9 +537,10 @@ export interface GenerateFinalPresentationReviewInput {
   priorReviews?: PriorReviewHistoryItem[];
   currentStrengths?: string[];
   currentImprovements?: string[];
+  isExam?: boolean;
 }
 
-/** Gọi AI tổng kết toàn khóa học và đánh giá buổi thuyết trình (Buổi 14 / Demo Day). */
+/** Gọi AI tổng kết toàn khóa học và đánh giá buổi thuyết trình hoặc bài kiểm tra (Buổi 14 / Demo Day). */
 export async function generateFinalPresentationReview(
   input: GenerateFinalPresentationReviewInput
 ): Promise<{ evaluation?: FinalPresentationEvaluation; error?: string }> {
@@ -573,6 +574,7 @@ export async function generateFinalPresentationReview(
         prior_reviews: input.priorReviews ?? [],
         current_strengths: input.currentStrengths ?? [],
         current_improvements: input.currentImprovements ?? [],
+        is_exam: Boolean(input.isExam),
       }
     );
     return { evaluation: data };

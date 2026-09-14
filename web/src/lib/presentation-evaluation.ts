@@ -191,7 +191,8 @@ export function distributeScores(targetTotal = 7.0): DemoScoreBreakdown {
 /** Định dạng toàn bộ bảng đánh giá thành văn bản hoàn chỉnh để copy 1 lần. */
 export function formatFullEvaluationText(
   studentName: string,
-  data: FinalPresentationEvaluation
+  data: FinalPresentationEvaluation,
+  options?: { hideDemoScore?: boolean }
 ): string {
   const lines: string[] = [
     `=== BẢNG TỔNG KẾT & ĐÁNH GIÁ NĂNG LỰC: ${studentName.toUpperCase()} ===\n`,
@@ -220,18 +221,39 @@ export function formatFullEvaluationText(
     }
   }
 
-  lines.push(
-    "",
-    `[ĐIỂM TỔNG KẾT: ${data.demo_score.total}/10.0 (TỰ ĐỘNG CHIA ĐỀU KHÔNG DƯỚI 6.0)]`,
-    `- Điểm kiến thức (Demo2024 | CSI): ${data.demo_score.knowledge_score}/5.0 điểm`,
-    `- Điểm demo sản phẩm: ${data.demo_score.demo_total}/5.0 điểm`,
-    `  + Tư duy máy tính, thuật toán: ${data.demo_score.computational_thinking}/2.0 điểm`,
-    `  + Tư duy sáng tạo: ${data.demo_score.creative_thinking}/0.5 điểm`,
-    `  + Kỹ năng giao tiếp, hợp tác: ${data.demo_score.communication}/1.0 điểm`,
-    `  + Giải quyết vấn đề: ${data.demo_score.problem_solving}/1.0 điểm`,
-    `  + Kỹ năng sử dụng máy tính: ${data.demo_score.computer_skills}/0.5 điểm`
-  );
+  if (!options?.hideDemoScore && data.demo_score) {
+    lines.push(
+      "",
+      `[ĐIỂM TỔNG KẾT: ${data.demo_score.total}/10.0 (TỰ ĐỘNG CHIA ĐỀU KHÔNG DƯỚI 6.0)]`,
+      `- Điểm kiến thức (Demo2024 | CSI): ${data.demo_score.knowledge_score}/5.0 điểm`,
+      `- Điểm demo sản phẩm: ${data.demo_score.demo_total}/5.0 điểm`,
+      `  + Tư duy máy tính, thuật toán: ${data.demo_score.computational_thinking}/2.0 điểm`,
+      `  + Tư duy sáng tạo: ${data.demo_score.creative_thinking}/0.5 điểm`,
+      `  + Kỹ năng giao tiếp, hợp tác: ${data.demo_score.communication}/1.0 điểm`,
+      `  + Giải quyết vấn đề: ${data.demo_score.problem_solving}/1.0 điểm`,
+      `  + Kỹ năng sử dụng máy tính: ${data.demo_score.computer_skills}/0.5 điểm`
+    );
+  }
 
   return lines.join("\n");
+}
+
+/** Tạo bảng đánh giá mặc định (khi giáo viên muốn tự điền mà không cần gọi AI). */
+export function createDefaultFinalEvaluation(
+  comment = ""
+): FinalPresentationEvaluation {
+  const dnl: Record<string, DnlCriterionEvaluation> = {};
+  for (const c of DNL_CRITERIA) {
+    dnl[c.key] = {
+      score: 4,
+      level: "Khá",
+      comment: "",
+    };
+  }
+  return {
+    comment,
+    demo_score: distributeScores(7.0),
+    dnl_evaluations: dnl,
+  };
 }
 

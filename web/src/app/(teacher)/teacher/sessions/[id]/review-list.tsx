@@ -50,6 +50,7 @@ export function ReviewList({
   isPeriodicTest,
   isProjectPeriod,
   isFinalPresentation,
+  isFinalSession,
   classCode,
   courseName,
   students,
@@ -75,6 +76,8 @@ export function ReviewList({
   isProjectPeriod: boolean;
   /** Buổi thuyết trình sản phẩm cuối khóa & Tổng kết (Demo Day / Buổi 14). */
   isFinalPresentation?: boolean;
+  /** Buổi 14 hoặc buổi cuối khóa học (dù là bài kiểm tra hay thuyết trình). */
+  isFinalSession?: boolean;
   classCode?: string;
   courseName?: string;
   students: StudentForReview[];
@@ -178,6 +181,7 @@ export function ReviewList({
             isPeriodicTest={isPeriodicTest}
             isProjectPeriod={isProjectPeriod}
             isFinalPresentation={isFinalPresentation}
+            isFinalSession={isFinalSession}
             classCode={classCode}
             courseName={courseName}
             project={projectsByStudentId?.get(student.id) ?? null}

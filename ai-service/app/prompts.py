@@ -301,17 +301,24 @@ def build_final_presentation_review_prompt(
     prior_reviews_text: str,
     current_strengths: list[str],
     current_improvements: list[str],
+    is_exam: bool = False,
 ) -> str:
-    """Xây dựng prompt tổng kết toàn khóa học và buổi thuyết trình sản phẩm cuối khóa (Buổi 14 / Demo Day).
+    """Xây dựng prompt tổng kết toàn khóa học (Buổi 14 / Demo Day hoặc Bài kiểm tra cuối khóa).
     Đánh giá theo đúng cấu trúc rubric của hệ thống LMS:
     - Điểm Demo Score (thang 5.0 gồm 5 tiêu chí)
     - 9 tiêu chí ĐNL (Đo lường Năng Lực: Kiến thức, Kỹ năng, Thái độ)
     - Nhận xét tổng kết toàn diện gửi phụ huynh.
     """
+    mission_text = (
+        "Nhiệm vụ: Bạn đang hỗ trợ giáo viên tổng kết toàn khóa học và đánh giá BÀI KIỂM TRA CUỐI KHÓA (Buổi 14) cho một học viên."
+        if is_exam
+        else "Nhiệm vụ: Bạn đang hỗ trợ giáo viên tổng kết toàn khóa học và đánh giá buổi THUYẾT TRÌNH SẢN PHẨM CUỐI KHÓA (Buổi 14 / Demo Day) cho một học viên."
+    )
+
     parts = [
         SYSTEM_ROLE,
         TONE_RULE,
-        "Nhiệm vụ: Bạn đang hỗ trợ giáo viên tổng kết toàn khóa học và đánh giá buổi THUYẾT TRÌNH SẢN PHẨM CUỐI KHÓA (Buổi 14 / Demo Day) cho một học viên.",
+        mission_text,
         f"Học viên: {student_name}",
         f"Lớp: {class_code} — Khóa học: {course_name}",
     ]
@@ -322,33 +329,47 @@ def build_final_presentation_review_prompt(
             "Dùng thông tin này để cân đối thang điểm và giọng điệu nhận xét sao cho vừa tầm trình độ của em."
         )
 
-    if project_name:
-        parts.append(f"Tên sản phẩm cuối khóa (SPCK): {project_name}")
-    if project_description:
-        parts.append(f"Mô tả sản phẩm: {project_description}")
-    if project_features:
-        parts.append(f"Các tính năng chính của sản phẩm: {', '.join(project_features)}")
+    if not is_exam:
+        if project_name:
+            parts.append(f"Tên sản phẩm cuối khóa (SPCK): {project_name}")
+        if project_description:
+            parts.append(f"Mô tả sản phẩm: {project_description}")
+        if project_features:
+            parts.append(f"Các tính năng chính của sản phẩm: {', '.join(project_features)}")
 
     if presentation_notes:
-        parts.append(
-            f"Quan sát của giáo viên về phần thuyết trình của em hôm nay: {presentation_notes}"
+        note_intro = (
+            "Quan sát của giáo viên về quá trình làm bài kiểm tra cuối khóa hôm nay:"
+            if is_exam
+            else "Quan sát của giáo viên về phần thuyết trình của em hôm nay:"
         )
+        parts.append(f"{note_intro} {presentation_notes}")
+
+    occasion = "buổi kiểm tra" if is_exam else "buổi thuyết trình"
     if current_strengths:
-        parts.append(f"Điểm mạnh giáo viên ghi nhận trong buổi thuyết trình: {', '.join(current_strengths)}")
+        parts.append(f"Điểm mạnh giáo viên ghi nhận trong {occasion}: {', '.join(current_strengths)}")
     if current_improvements:
-        parts.append(f"Điểm cần cải thiện trong buổi thuyết trình: {', '.join(current_improvements)}")
+        parts.append(f"Điểm cần cải thiện trong {occasion}: {', '.join(current_improvements)}")
 
     parts.append(
         "LỊCH SỬ HỌC TẬP QUA CÁC BUỔI TRƯỚC ĐÓ CỦA EM (TỪ BUỔI 1 ĐẾN BUỔI 13):\n"
         f"{prior_reviews_text or '(Chưa có dữ liệu nhận xét chi tiết các buổi trước — dựa vào thông tin hiện có)'}"
     )
 
+    comment_bullets = (
+        "   - Quá trình học tập và sự tiến bộ, nỗ lực của em suốt khóa học.\n"
+        "   - Đánh giá quá trình làm bài kiểm tra cuối khóa hôm nay (sự tập trung, cẩn thận, nắm vững kiến thức).\n"
+        "   - Lời khen ngợi thế mạnh nổi bật, điểm cần lưu ý tiếp tục phát huy, lời động viên và định hướng học tập tiếp theo.\n"
+        if is_exam
+        else "   - Quá trình học tập và sự tiến bộ, nỗ lực của em suốt khóa học.\n"
+        "   - Đánh giá sản phẩm cuối khóa và phần thuyết trình, tự tin trong buổi hôm nay.\n"
+        "   - Lời khen ngợi thế mạnh nổi bật, điểm cần lưu ý tiếp tục phát huy, lời động viên và định hướng học tập tiếp theo.\n"
+    )
+
     parts.append(
         "YÊU CẦU ĐÁNH GIÁ (TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON YÊU CẦU):\n"
         "1. 'comment': Đoạn văn nhận xét tổng kết toàn khóa gửi phụ huynh (120-180 từ, liền mạch, trang trọng, chân thành, giàu tính khích lệ, chuẩn mực học đường). Cần nêu được:\n"
-        "   - Quá trình học tập và sự tiến bộ, nỗ lực của em suốt khóa học.\n"
-        "   - Đánh giá sản phẩm cuối khóa và phần thuyết trình, tự tin trong buổi hôm nay.\n"
-        "   - Lời khen ngợi thế mạnh nổi bật, điểm cần lưu ý tiếp tục phát huy, lời động viên và định hướng học tập tiếp theo.\n"
+        f"{comment_bullets}"
         "2. 'demo_score': Đánh giá điểm tổng kết gồm Điểm kiến thức (thang 5.0) và Điểm demo sản phẩm (thang 5.0):\n"
         "   - QUY TẮC BẮT BUỘC: Tổng cả điểm kiến thức + demo sản phẩm ('total') TUYỆT ĐỐI KHÔNG ĐƯỢC DƯỚI 6.0 ĐIỂM (thang điểm 10). "
         "     Tự động chia đều điểm giữa kiến thức và demo sản phẩm sao cho cân đối, phù hợp với năng lực của học viên (ví dụ: tổng 7.0 thì Kiến thức 3.5, Demo 3.5).\n"
