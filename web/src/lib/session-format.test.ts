@@ -58,6 +58,32 @@ describe("session-format", () => {
         })
       ).toBe("final_presentation");
     });
+
+    it("graceful fallback cho buổi 14 khi cột is_final_presentation chưa có trong DB (undefined)", () => {
+      // Khi DB chưa dán migration, is_final_presentation là undefined
+      // Nếu là buổi 14 và không có cờ khác:
+      expect(
+        resolveSessionFormat({
+          session_number: 14,
+        })
+      ).toBe("final_presentation");
+
+      // Nhưng nếu đã chọn kiểm tra (is_periodic_test = true), phải trả về periodic_test:
+      expect(
+        resolveSessionFormat({
+          session_number: 14,
+          is_periodic_test: true,
+        })
+      ).toBe("periodic_test");
+
+      // Hoặc nếu đã chọn SPCK (is_project_period = true), phải trả về project_period:
+      expect(
+        resolveSessionFormat({
+          session_number: 14,
+          is_project_period: true,
+        })
+      ).toBe("project_period");
+    });
   });
 
   describe("formatToFlags", () => {

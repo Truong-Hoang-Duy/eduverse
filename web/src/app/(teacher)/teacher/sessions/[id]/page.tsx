@@ -81,13 +81,25 @@ export default async function SessionDetailPage({
   const supabase = await createClient();
   const { id } = await params;
 
-  const { data: sessionData } = await supabase
+  let { data: sessionData } = await supabase
     .from("sessions")
     .select(
       "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, is_final_presentation, session_date, classes(class_code, total_sessions, courses(name, code))"
     )
     .eq("id", id)
     .single();
+
+  if (!sessionData) {
+    // Graceful fallback nếu DB chưa dán migration 20260911000000 (cột is_final_presentation)
+    const fallback = await supabase
+      .from("sessions")
+      .select(
+        "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, session_date, classes(class_code, total_sessions, courses(name, code))"
+      )
+      .eq("id", id)
+      .single();
+    sessionData = fallback.data as unknown as typeof sessionData;
+  }
 
   if (!sessionData) {
     notFound();
@@ -153,7 +165,14 @@ export default async function SessionDetailPage({
     isHandled(reviewByStudentId.get(s.id) ?? null)
   ).length;
 
-  const isFinalPresentation = Boolean(session.is_final_presentation);
+  const hasFinalColumn =
+    (sessionData as unknown as { is_final_presentation?: boolean })
+      ?.is_final_presentation !== undefined;
+  const isFinalPresentation = hasFinalColumn
+    ? Boolean(session.is_final_presentation)
+    : !session.is_periodic_test &&
+      !session.is_project_period &&
+      session.session_number === 14;
 
   const projects = (projectsData ?? []) as {
     id: string;

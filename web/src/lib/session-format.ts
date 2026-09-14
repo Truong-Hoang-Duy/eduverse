@@ -74,6 +74,7 @@ export const SESSION_FORMATS: Record<SessionFormat, SessionFormatConfig> = {
  * Ưu tiên: final_presentation > periodic_test > project_period > standard.
  */
 export function resolveSessionFormat(session: {
+  session_number?: number;
   is_periodic_test?: boolean | null;
   is_project_period?: boolean | null;
   is_final_presentation?: boolean | null;
@@ -81,6 +82,15 @@ export function resolveSessionFormat(session: {
   if (session.is_final_presentation) return "final_presentation";
   if (session.is_periodic_test) return "periodic_test";
   if (session.is_project_period) return "project_period";
+  // Nếu cột is_final_presentation chưa tồn tại trong DB (undefined) và là buổi 14:
+  if (
+    session.is_final_presentation === undefined &&
+    session.session_number === 14 &&
+    !session.is_periodic_test &&
+    !session.is_project_period
+  ) {
+    return "final_presentation";
+  }
   return "standard";
 }
 

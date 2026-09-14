@@ -120,7 +120,20 @@ export default async function ClassDetailPage({
       totalSessions: c.total_sessions,
     }));
 
-  const sessions = sessionsData ?? [];
+  let sessions = sessionsData ?? [];
+  if (!sessionsData) {
+    // Graceful fallback nếu DB chưa dán migration 20260911000000 (cột is_final_presentation)
+    const { data: fallback } = await supabase
+      .from("sessions")
+      .select(
+        "id, session_number, title, content, session_date, is_periodic_test, is_project_period"
+      )
+      .eq("class_id", id)
+      .order("session_number");
+    if (fallback) {
+      sessions = fallback as typeof sessions;
+    }
+  }
   const filledSessions = sessions.filter((s) => Boolean(s.content)).length;
   // Tiến độ lớp = tỉ lệ buổi đã soạn nội dung.
   const progressPercent =
