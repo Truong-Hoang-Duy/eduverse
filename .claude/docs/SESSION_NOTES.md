@@ -6,29 +6,30 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-14, bởi: Gemini)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-21, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Chuyển 2 Nhóm Quan Sát Bài Kiểm Tra Thành Dropdown Độc Lập & Bổ Sung Nhận Xét Cải Thiện 4 Cấp Bậc (Đợt 72)**:
-1. **Dropdown nổi lên bề mặt (Floating Overlay Popover) cho 2 nhóm quan sát (`review-editor.tsx`):**
-   - Loại bỏ hoàn toàn nút gập/mở chung (`▲ Thu gọn danh sách` / `▼ Mở rộng danh sách`).
-   - Chuyển `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy` thành 2 khối Dropdown nổi độc lập:
-     + **Không chiếm vị trí - Không giật mở rộng trang:** Khi bấm "Xổ xuống", menu quan sát hiển thị dưới dạng **Floating Popover** (`absolute top-full mt-1.5 z-50`), nổi lơ lửng trên bề mặt với bóng đổ `shadow-2xl` và viền sắc nét, đè lên các phần tử bên dưới mà **hoàn toàn không chiếm diện tích document flow, không làm giãn card và không giật nhảy giao diện**.
-     + **Đóng/mở linh hoạt:** Tự động bắt click bên ngoài (`backdrop fixed inset-0 z-40`) hoặc bấm nút `[ ✓ Xong ]` trên header menu để đóng êm ái.
-     + **Cố định chiều cao 100% (h-11) & Giao diện tối giản:** Không hiển thị danh sách chip ra ngoài làm nhảy chiều cao thẻ; thanh trigger cố định chính xác 44px (`h-11`) với huy hiệu `✓ Đã chọn {count}`. Bên trong dropdown hiển thị trực tiếp danh sách tiêu chí (các mục đã chọn được highlight checkmark `✓` rõ nét ngay trên danh sách), lược bỏ khối tóm tắt chip thừa.
-     + **Cuộn mượt mà:** Danh sách bên trong floating menu có thanh cuộn riêng `max-h-[250px] overflow-y-auto`.
-2. **Bổ sung nhận xét cải thiện 4 cấp bậc & Phân tách trực quan (`presentation-evaluation.ts`):**
-   - Mở rộng ngân hàng nhận xét bài kiểm tra lên 12 items/cấp bậc (tổng 96 items cho cả 2 nhóm), bảo đảm mọi cấp bậc (Giỏi, Khá, Trung bình, Cần cố gắng) đều có đầy đủ cả điểm làm tốt và điểm cần lưu ý/cải thiện.
-   - Thêm hàm `isImprovementObservation(text: string): boolean` nhận diện các từ khóa sư phạm (`cần`, `nên`, `đôi lúc`, `còn`, `chưa`, `dễ`, `lưu ý`...).
-   - Trong dropdown, tự động phân nhóm thành 2 tiểu mục trực quan:
-     * `✨ Điểm làm tốt` (chip màu xanh primary / emerald nhẹ).
-     * `💡 Cần lưu ý & cải thiện` (chip màu hổ phách amber nhẹ `border-amber-500/30 bg-amber-500/5`).
-   - Tuân thủ quy tắc không dùng từ "xuất sắc", "hiểu hết" trong toàn bộ ngân hàng quan sát.
-3. **Siết Prompt AI Service (`ai-service/app/prompts.py`):**
-   - Cập nhật `TONE_RULE`: Cấm tuyệt đối việc khen một chiều 100%, bắt buộc chỉ ra ít nhất 1-2 điểm cần lưu ý cải thiện (về kỹ năng tự kiểm thử, đọc kỹ đề bài, tính cẩn thận, tối ưu mã nguồn...).
-   - Cập nhật `build_review_prompt` và `build_final_presentation_review_prompt` để mọi nhận xét gửi phụ huynh đều có tính xây dựng, chân thực và cân bằng.
-4. **Kiểm thử chất lượng:**
-   - `web/`: `pnpm test` (296/296 tests PASSED - 25 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
-   - `ai-service/`: `python -m pytest` (89/89 tests PASSED).
+**Đang làm:** Đã hoàn thành tính năng **Ngân Hàng Nhận Xét SPCK Theo Kỹ Năng & Tinh Chỉnh Giao Diện Buổi Làm Đồ Án (Đợt 73)**:
+1. **Ngân hàng 44 nhận xét SPCK chia theo 3 cấp độ học lực & 6 nhóm kỹ năng (`spck-evaluation.ts`):**
+   - 3 Cấp độ: Học yếu (17 mục), Trung bình (14 mục), Khá / Giỏi (13 mục).
+   - 6 Nhóm kỹ năng: Thái độ (`attitude`), Kỹ năng (`coding`), Tự học (`self_study`), Tiến độ & sản phẩm (`project_progress`), Kỹ năng mềm (`soft_skills`), Kiến thức nền tảng (`knowledge`).
+   - Phân biệt trực quan điểm làm tốt (`+`) và điểm cần lưu ý/cải thiện (`💡`).
+   - Bao hàm và đồng bộ 100% các câu nhận xét SPCK cũ của hệ thống.
+2. **Quản lý danh mục SPCK tại Cài đặt (`project-progress-manager.tsx`, `settings.ts`):**
+   - Accordion quản lý nhóm theo 6 kỹ năng với badge cấp độ học lực từng câu.
+   - Thêm nhanh / đồng bộ toàn bộ 44 nhận xét chuẩn vào `review_options` qua `seedDefaultProjectProgressOptions`.
+   - Cho phép thêm/xóa nhận xét trong từng nhóm kỹ năng; mở rộng `resolveSkillGroup` hỗ trợ các nhóm kỹ năng SPCK.
+3. **Cải tiến giao diện buổi làm đồ án (`review-editor.tsx`):**
+   - Khi buổi học là buổi làm đồ án (`isProjectPeriod = true`):
+     + **Ẩn bộ combo (`ComboBar`)** và **ẩn 2 ô `Điểm mạnh` / `Cần cải thiện`**.
+     + **Đổi dropdown copy thành `📋 Nhận xét buổi trước`**: Hiển thị danh sách nhận xét các buổi trước của học viên; khi chọn sẽ điền ngay vào ô nhận xét gửi phụ huynh.
+     + **Khung `🎓 Quan sát SPCK`**: Phân chia theo 6 kỹ năng, có thanh lọc cấp độ (`Tất cả`, `🌟 Khá / Giỏi`, `⚖️ Trung bình`, `⚠️ Học yếu`) tự động kích hoạt theo học lực của học viên; tích chọn nhanh dạng chip checkmark `✓`; hỗ trợ gõ thêm quan sát tự do.
+4. **Thu nhỏ phần hiển thị Mẫu tin Zalo (`template-manager.tsx`):**
+   - Thu nhỏ danh sách mẫu tin Zalo trong Cài đặt: mặc định ở dạng gập gọn chỉ còn 1 dòng tiêu đề, badge `📝 {lineCount} dòng`, mũi tên `▼` và đoạn trích dẫn 2 dòng (`line-clamp-2`).
+   - Khi bấm mở rộng: hiển thị toàn bộ nội dung trong khung cuộn giới hạn độ cao (`max-h-56 overflow-y-auto`) kèm nút `▲ Thu gọn`, chống tràn màn hình khi mẫu tin dài nhiều đoạn.
+   - Thu gọn form tạo mẫu mới thành nút bấm `➕ Thêm mẫu tin mới` mở ra khi cần.
+5. **Kiểm thử chất lượng:**
+   - `web/`: `pnpm test` (303/303 tests PASSED - 26 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm build` (PASSED).
+   - `ai-service/`: `pytest` (89/89 tests PASSED).
 
 
 2. **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts`):**
