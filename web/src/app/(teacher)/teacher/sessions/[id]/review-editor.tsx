@@ -4,6 +4,7 @@ import {
   startTransition,
   useActionState,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useTransition,
@@ -53,6 +54,17 @@ import {
   type ObservationLevel,
   PRESENTATION_OBSERVATION_GROUPS,
 } from "@/lib/presentation-evaluation";
+import {
+  getSpckLevel,
+  getSpckSkillGroup,
+  isSpckImprovement,
+  resolveDefaultSpckLevel,
+  SPCK_LEVEL_CONFIGS,
+  SPCK_OBSERVATION_BANK,
+  SPCK_SKILL_GROUPS,
+  type SpckLevel,
+  type SpckObservationItem,
+} from "@/lib/spck-evaluation";
 import type { ActionResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -323,7 +335,100 @@ export function ReviewEditor({
     (o) => o.category === "project_progress"
   );
 
-  function persistFreeOption(category: "test_process" | "project_progress", label: string) {
+  const [selectedSpckLevel, setSelectedSpckLevel] = useState<SpckLevel | "all">(
+    () => resolveDefaultSpckLevel(academicLevel)
+  );
+  const [customSpckInput, setCustomSpckInput] = useState("");
+
+  // Tổng hợp danh sách quan sát SPCK (từ DB kết hợp ngân hàng chuẩn 44 mục)
+  const spckBankItems: SpckObservationItem[] = useMemo(() => {
+    const seen = new Set<string>();
+    const items: SpckObservationItem[] = [];
+
+    // Ưu tiên items trong DB (đã được giáo viên tùy biến hoặc seed)
+    for (const opt of projectProgressOptions) {
+      const label = opt.label.trim();
+      const lower = label.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        items.push({
+          label,
+          level: getSpckLevel(label) ?? "trung_binh",
+          skillGroup: getSpckSkillGroup(label, opt.skill_group),
+        });
+      }
+    }
+
+    // Bổ sung các items từ ngân hàng chuẩn nếu DB chưa có
+    for (const item of SPCK_OBSERVATION_BANK) {
+      const lower = item.label.trim().toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        items.push(item);
+      }
+    }
+
+    return items;
+  }, [projectProgressOptions]);
+
+  function toggleProjectProgressNote(note: string) {
+    setProjectProgressNotes((prev) =>
+      prev.includes(note) ? prev.filter((i) => i !== note) : [...prev, note]
+    );
+  }
+
+  function handleAddCustomSpckNote() {
+    const val = customSpckInput.trim();
+    if (!val) return;
+    if (!projectProgressNotes.includes(val)) {
+      setProjectProgressNotes((prev) => [...prev, val]);
+    }
+    persistFreeOption("project_progress", val);
+    setCustomSpckInput("");
+  }
+
+  // Danh sách nhận xét các buổi trước của học viên này
+  const priorSessionsWithComment = useMemo(() => {
+    return (allPriorReviews ?? [])
+      .filter((r) => Boolean(r.comment?.trim()))
+      .sort((a, b) => b.session_number - a.session_number);
+  }, [allPriorReviews]);
+
+  const priorCommentsList = useMemo(() => {
+    if (priorSessionsWithComment.length > 0) {
+      return priorSessionsWithComment.map((r) => ({
+        key: `prior_session_${r.session_number}`,
+        label: `Buổi ${r.session_number}`,
+        preview: r.comment?.slice(0, 50) ?? "",
+        fullComment: r.comment ?? "",
+      }));
+    }
+    return (priorComments ?? []).map((c, idx) => {
+      const parts = c.split(":");
+      const sessionLabel = parts[0]?.trim() || `Buổi trước`;
+      const commentText = (parts.length > 1 ? parts.slice(1).join(":") : c).trim();
+      return {
+        key: `prior_cmt_${idx}`,
+        label: sessionLabel,
+        preview: commentText.slice(0, 50),
+        fullComment: commentText,
+      };
+    });
+  }, [priorSessionsWithComment, priorComments]);
+
+  function applyPriorComment(key: string) {
+    if (!key) return;
+    const item = priorCommentsList.find((p) => p.key === key);
+    if (item?.fullComment) {
+      setComment(item.fullComment);
+      setCopied(false);
+    }
+  }
+
+  function persistFreeOption(
+    category: "test_process" | "project_progress",
+    label: string
+  ) {
     const alreadyInCatalog = options.some(
       (o) => o.category === category && o.label.toLowerCase() === label.toLowerCase()
     );
@@ -331,7 +436,10 @@ export function ReviewEditor({
     const fd = new FormData();
     fd.set("category", category);
     fd.set("label", label);
-    fd.set("skill_group", "other");
+    fd.set(
+      "skill_group",
+      category === "project_progress" ? getSpckSkillGroup(label) : "other"
+    );
     addReviewOption({}, fd).catch(() => {});
   }
 
@@ -344,14 +452,6 @@ export function ReviewEditor({
     persistFreeOption("test_process", value);
   }
 
-  function addCustomProjectProgressNote(raw: string) {
-    const value = raw.trim();
-    if (!value) return;
-    setProjectProgressNotes((prev) =>
-      prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
-    );
-    persistFreeOption("project_progress", value);
-  }
 
   function handleGenerate() {
     setAiError("");
@@ -403,8 +503,8 @@ export function ReviewEditor({
         studentName,
         sessionTitle,
         sessionContent,
-        strengths,
-        improvements,
+        strengths: isProjectPeriod ? [] : strengths,
+        improvements: isProjectPeriod ? [] : improvements,
         sessionContext: sessionContext || undefined,
         isPeriodicTest,
         testProcessNotes: isPeriodicTest ? testProcessNotes : undefined,
@@ -628,7 +728,7 @@ export function ReviewEditor({
 
         {!isAbsent && (
           <>
-            {!hasFinalEvaluation && (
+            {!hasFinalEvaluation && !isProjectPeriod && (
               <>
                 {strengths.map((s) => (
                   <input key={s} type="hidden" name="strengths" value={s} />
@@ -1167,77 +1267,281 @@ export function ReviewEditor({
               )}
 
             {/* --- CÁC BUỔI THƯỜNG (BUỔI 1 - 13): COMBO, ĐIỂM MẠNH, CẦN CẢI THIỆN --- */}
+            {/* --- CÁC BUỔI THƯỜNG (BUỔI 1 - 13): COMBO, ĐIỂM MẠNH, CẦN CẢI THIỆN HOẶC SPCK --- */}
             {!hasFinalEvaluation && (
               <>
-                <div className="flex flex-wrap items-center gap-2">
-                  <ComboBar combos={combos ?? []} onApply={applyCombo} />
-                  {(copySources?.length ?? 0) > 0 && (
-                    <Select value="" onValueChange={copyFromSource}>
-                      <SelectTrigger
-                        size="sm"
-                        className="h-7 w-[190px] text-xs"
-                        aria-label="Copy lựa chọn từ bạn khác hoặc buổi trước"
-                      >
-                        <SelectValue placeholder="📋 Copy điểm mạnh/cải thiện từ..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {copyGroups.map(({ group, items }) => (
-                          <SelectGroup key={group}>
-                            <SelectLabel>{group}</SelectLabel>
-                            {items.map((s) => (
-                              <SelectItem key={s.key} value={s.key}>
-                                {s.label}
+                {/* Thanh công cụ: Nếu là buổi làm đồ án (SPCK), ẩn combo và đổi copy điểm mạnh thành copy nhận xét buổi trước */}
+                {isProjectPeriod ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {priorCommentsList.length > 0 && (
+                      <Select value="" onValueChange={applyPriorComment}>
+                        <SelectTrigger
+                          size="sm"
+                          className="h-7 w-[230px] text-xs"
+                          aria-label="Xem và copy nhận xét buổi trước"
+                        >
+                          <SelectValue placeholder="📋 Nhận xét buổi trước..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>📅 Nhận xét các buổi trước của em</SelectLabel>
+                            {priorCommentsList.map((item) => (
+                              <SelectItem key={item.key} value={item.key}>
+                                <span className="font-semibold text-foreground">{item.label}:</span>{" "}
+                                <span className="text-muted-foreground truncate max-w-[280px]">
+                                  {item.preview}...
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectGroup>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ComboBar combos={combos ?? []} onApply={applyCombo} />
+                    {(copySources?.length ?? 0) > 0 && (
+                      <Select value="" onValueChange={copyFromSource}>
+                        <SelectTrigger
+                          size="sm"
+                          className="h-7 w-[190px] text-xs"
+                          aria-label="Copy lựa chọn từ bạn khác hoặc buổi trước"
+                        >
+                          <SelectValue placeholder="📋 Copy điểm mạnh/cải thiện từ..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {copyGroups.map(({ group, items }) => (
+                            <SelectGroup key={group}>
+                              <SelectLabel>{group}</SelectLabel>
+                              {items.map((s) => (
+                                <SelectItem key={s.key} value={s.key}>
+                                  {s.label}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                )}
 
-                <div className={gridColsClass}>
-                  <div className="space-y-1.5">
-                    <p className="flex h-7 items-center text-sm font-medium">💪 Điểm mạnh</p>
-                    <SelectedBadges selected={strengths} onChange={setStrengths} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="flex h-7 items-center text-sm font-medium">🎯 Cần cải thiện</p>
-                    <SelectedBadges selected={improvements} onChange={setImprovements} />
-                  </div>
-                  {isPeriodicTest && (
-                    <div className="space-y-1.5">
-                      <div className="flex h-7 items-center">
-                        <Label>📝 Quá trình làm bài kiểm tra</Label>
+                {/* Khung quan sát: Buổi SPCK thì ẩn Điểm mạnh / Cần cải thiện, hiển thị Quan sát SPCK chia theo kỹ năng & cấp độ */}
+                {isProjectPeriod ? (
+                  <div className="rounded-xl border border-slate-300 dark:border-slate-700 bg-card p-4 space-y-3.5 shadow-2xs">
+                    {/* Header & Bộ lọc cấp độ học lực */}
+                    <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border/50 pb-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                          <span>🎓</span> Quan sát quá trình làm đồ án (SPCK)
+                        </span>
+                        {projectProgressNotes.length > 0 && (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-primary/15 text-primary border border-primary/25 font-semibold"
+                          >
+                            ✓ Đã chọn {projectProgressNotes.length}
+                          </Badge>
+                        )}
                       </div>
-                      <MultiSelect
-                        options={testProcessOptions}
-                        selected={testProcessNotes}
-                        onChange={setTestProcessNotes}
-                        onCreate={addCustomTestProcessNote}
-                        onDelete={deleteCustomOption}
-                        placeholder="Chọn hoặc gõ quan sát về bài kiểm tra..."
-                        emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
-                      />
-                    </div>
-                  )}
-                  {isProjectPeriod && (
-                    <div className="space-y-1.5">
-                      <div className="flex h-7 items-center">
-                        <Label>🎓 Quan sát SPCK</Label>
+
+                      {/* Filter cấp độ */}
+                      <div className="flex flex-wrap items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSpckLevel("all")}
+                          className={cn(
+                            "text-xs px-2.5 py-1 rounded-md border font-medium transition-all cursor-pointer",
+                            selectedSpckLevel === "all"
+                              ? "bg-primary text-primary-foreground border-primary shadow-2xs"
+                              : "bg-background text-muted-foreground hover:text-foreground border-border/70"
+                          )}
+                        >
+                          Tất cả
+                        </button>
+                        {SPCK_LEVEL_CONFIGS.map((cfg) => {
+                          const isMatch = cfg.academicLevelMatch.includes(
+                            academicLevel ?? ""
+                          );
+                          const isSelected = selectedSpckLevel === cfg.level;
+                          return (
+                            <button
+                              key={cfg.level}
+                              type="button"
+                              onClick={() => setSelectedSpckLevel(cfg.level)}
+                              className={cn(
+                                "text-xs px-2.5 py-1 rounded-md border transition-all cursor-pointer flex items-center gap-1",
+                                isSelected
+                                  ? `${cfg.badgeClass} font-semibold shadow-2xs ring-1 ring-primary/25`
+                                  : "bg-background text-muted-foreground hover:text-foreground border-border/70"
+                              )}
+                            >
+                              <span>{cfg.icon}</span>
+                              <span>{cfg.label}</span>
+                              {isMatch && (
+                                <span className="text-[10px] ml-0.5 opacity-85 font-normal">
+                                  (khớp học lực)
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
-                      <MultiSelect
-                        options={projectProgressOptions}
-                        selected={projectProgressNotes}
-                        onChange={setProjectProgressNotes}
-                        onCreate={addCustomProjectProgressNote}
-                        onDelete={deleteCustomOption}
-                        placeholder="Chọn hoặc gõ quan sát về SPCK..."
-                        emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
-                      />
                     </div>
-                  )}
-                </div>
+
+                    {/* Danh sách các nhóm kỹ năng */}
+                    <div className="space-y-3">
+                      {SPCK_SKILL_GROUPS.map((skill) => {
+                        const items = spckBankItems.filter(
+                          (item) =>
+                            item.skillGroup === skill.value &&
+                            (selectedSpckLevel === "all" ||
+                              item.level === selectedSpckLevel)
+                        );
+                        if (items.length === 0) return null;
+
+                        return (
+                          <div key={skill.value} className="space-y-1.5">
+                            <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                              <span>{skill.icon}</span>
+                              <span>{skill.label}</span>
+                              <span className="text-[10px] text-muted-foreground font-normal">
+                                ({items.length})
+                              </span>
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {items.map((item) => {
+                                const isSelected = projectProgressNotes.includes(
+                                  item.label
+                                );
+                                const isImprovement = isSpckImprovement(
+                                  item.label
+                                );
+                                return (
+                                  <button
+                                    key={item.label}
+                                    type="button"
+                                    onClick={() =>
+                                      toggleProjectProgressNote(item.label)
+                                    }
+                                    className={cn(
+                                      "text-xs px-2.5 py-1 rounded-full border transition-all text-left flex items-center gap-1.5 cursor-pointer select-none leading-tight",
+                                      isSelected
+                                        ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
+                                        : isImprovement
+                                        ? "border-amber-500/30 bg-amber-500/5 text-muted-foreground hover:border-amber-500/50 hover:text-foreground hover:bg-amber-500/10"
+                                        : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
+                                    )}
+                                  >
+                                    <span className="text-[10px] font-bold">
+                                      {isSelected
+                                        ? "✓"
+                                        : isImprovement
+                                        ? "💡"
+                                        : "+"}
+                                    </span>
+                                    <span>{item.label}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Danh sách đã chọn tóm tắt (nếu có) */}
+                    {projectProgressNotes.length > 0 && (
+                      <div className="rounded-lg border border-primary/20 bg-primary/5 p-2.5 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-semibold text-primary flex items-center gap-1">
+                            <span>✓</span> Đã chọn {projectProgressNotes.length} quan sát SPCK:
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setProjectProgressNotes([])}
+                            className="text-[11px] text-muted-foreground hover:text-destructive underline cursor-pointer"
+                          >
+                            Xóa tất cả
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {projectProgressNotes.map((note) => (
+                            <span
+                              key={note}
+                              className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                            >
+                              <span>{note}</span>
+                              <button
+                                type="button"
+                                onClick={() => toggleProjectProgressNote(note)}
+                                className="hover:text-destructive cursor-pointer ml-0.5 font-bold"
+                                aria-label={`Bỏ chọn ${note}`}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Gõ thêm quan sát tự do */}
+                    <div className="pt-1 flex gap-2">
+                      <Input
+                        value={customSpckInput}
+                        onChange={(e) => setCustomSpckInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddCustomSpckNote();
+                          }
+                        }}
+                        placeholder="Gõ thêm quan sát khác về đồ án của em rồi nhấn Thêm hoặc Enter..."
+                        className="h-8 text-xs bg-background flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleAddCustomSpckNote}
+                        disabled={!customSpckInput.trim()}
+                        className="h-8 text-xs cursor-pointer"
+                      >
+                        Thêm
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Giao diện chuẩn cho các buổi khác: Điểm mạnh & Cần cải thiện */
+                  <div className={gridColsClass}>
+                    <div className="space-y-1.5">
+                      <p className="flex h-7 items-center text-sm font-medium">💪 Điểm mạnh</p>
+                      <SelectedBadges selected={strengths} onChange={setStrengths} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="flex h-7 items-center text-sm font-medium">🎯 Cần cải thiện</p>
+                      <SelectedBadges selected={improvements} onChange={setImprovements} />
+                    </div>
+                    {isPeriodicTest && (
+                      <div className="space-y-1.5">
+                        <div className="flex h-7 items-center">
+                          <Label>📝 Quá trình làm bài kiểm tra</Label>
+                        </div>
+                        <MultiSelect
+                          options={testProcessOptions}
+                          selected={testProcessNotes}
+                          onChange={setTestProcessNotes}
+                          onCreate={addCustomTestProcessNote}
+                          onDelete={deleteCustomOption}
+                          placeholder="Chọn hoặc gõ quan sát về bài kiểm tra..."
+                          emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </>
             )}
 

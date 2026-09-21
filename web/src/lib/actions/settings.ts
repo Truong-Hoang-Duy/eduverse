@@ -6,6 +6,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/database.types";
 import { SKILL_GROUPS, type SkillGroup } from "@/lib/skill-groups";
+import {
+  SPCK_OBSERVATION_BANK,
+  SPCK_SKILL_GROUPS,
+} from "@/lib/spck-evaluation";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
@@ -16,15 +20,16 @@ const VALID_CATEGORIES = [
   "project_progress",
 ] as const;
 
-/** `skill_group` chấp nhận 1 trong 12 giá trị cố định, HOẶC id của một nhóm
- *  giáo viên tự thêm (`review_skill_groups`, phải THUỘC chính giáo viên này)
- *  — giá trị lạ/không thuộc về mình rơi về "other". */
+/** `skill_group` chấp nhận 1 trong các giá trị cố định chuẩn hoặc SPCK, HOẶC id
+ *  của một nhóm giáo viên tự thêm (`review_skill_groups`, phải THUỘC chính giáo
+ *  viên này) — giá trị lạ/không thuộc về mình rơi về "other". */
 async function resolveSkillGroup(
   supabase: SupabaseClient<Database>,
   teacherId: string,
   value: string
 ): Promise<string> {
   if (SKILL_GROUPS.some((g) => g.value === value)) return value;
+  if (SPCK_SKILL_GROUPS.some((g) => g.value === value)) return value;
   const { data } = await supabase
     .from("review_skill_groups")
     .select("id")
@@ -383,23 +388,10 @@ export async function seedDefaultTestProcessOptions(): Promise<void> {
   revalidatePath("/teacher/settings");
 }
 
-// Danh mục "quan sát SPCK" (sản phẩm cuối khóa, buổi 9-13) — thêm 2026-08-28,
-// cùng cơ chế phẳng với DEFAULT_TEST_PROCESS (không theo skill_group). 2 câu
-// đầu lấy nguyên văn ví dụ user đưa, còn lại thêm cho đủ tông quan sát tiến độ
-// làm đồ án (không phải một kỹ năng cụ thể).
-const DEFAULT_PROJECT_PROGRESS: string[] = [
-  "Tập trung làm bài, tìm hiểu thêm nhiều kiến thức lập trình",
-  "Chưa có ý tưởng, còn gặp khó khăn trong việc xác định hướng làm",
-  "Chủ động hỏi khi bí ý tưởng",
-  "Biết chia nhỏ việc để làm dần từng phần",
-  "Hoàn thành đúng tiến độ đề ra",
-  "Cần hỗ trợ thêm để hoàn thiện sản phẩm",
-  "Có ý tưởng nhưng triển khai còn chậm",
-  "Chủ động tìm hiểu thêm kiến thức ngoài buổi học để làm sản phẩm",
-];
+// Danh mục "quan sát SPCK" (sản phẩm cuối khóa, buổi 9-13) —
+// Ngân hàng 44 nhận xét chia theo 3 cấp độ học lực và 6 nhóm kỹ năng (spck-evaluation.ts).
 
-/** Thêm nhanh bộ lựa chọn "quan sát SPCK" mặc định — cùng cơ chế gate như
- *  `seedDefaultTestProcessOptions` (nút riêng, theo chính category rỗng). */
+/** Thêm nhanh hoặc đồng bộ bộ lựa chọn "quan sát SPCK" mặc định (44 nhận xét chia 6 nhóm kỹ năng). */
 export async function seedDefaultProjectProgressOptions(): Promise<void> {
   const supabase = await createClient();
   const {
@@ -407,14 +399,45 @@ export async function seedDefaultProjectProgressOptions(): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  const rows = DEFAULT_PROJECT_PROGRESS.map((label) => ({
-    teacher_id: user.id,
-    category: "project_progress",
-    label,
-    skill_group: "other",
-  }));
-  await supabase.from("review_options").insert(rows);
+  // Lấy các options project_progress đã có của teacher này
+  const { data: existing } = await supabase
+    .from("review_options")
+    .select("id, label, skill_group")
+    .eq("teacher_id", user.id)
+    .eq("category", "project_progress");
+
+  const existingMap = new Map<string, { id: string; skill_group: string }>();
+  for (const row of existing ?? []) {
+    existingMap.set(row.label.trim().toLowerCase(), row);
+  }
+
+  // 1. Cập nhật lại skill_group cho các item cũ nếu đang là 'other'
+  for (const item of SPCK_OBSERVATION_BANK) {
+    const found = existingMap.get(item.label.trim().toLowerCase());
+    if (found && found.skill_group === "other") {
+      await supabase
+        .from("review_options")
+        .update({ skill_group: item.skillGroup })
+        .eq("id", found.id);
+    }
+  }
+
+  // 2. Thêm mới các item còn thiếu
+  const rowsToInsert = SPCK_OBSERVATION_BANK
+    .filter((item) => !existingMap.has(item.label.trim().toLowerCase()))
+    .map((item) => ({
+      teacher_id: user.id,
+      category: "project_progress",
+      label: item.label,
+      skill_group: item.skillGroup,
+    }));
+
+  if (rowsToInsert.length > 0) {
+    await supabase.from("review_options").insert(rowsToInsert);
+  }
+
   revalidatePath("/teacher/settings");
+  revalidatePath("/teacher/sessions/[id]", "page");
 }
 
 /** Thêm nhanh bộ lựa chọn mặc định cho giáo viên mới. */

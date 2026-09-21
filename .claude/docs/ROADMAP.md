@@ -1080,6 +1080,27 @@
   - Bổ sung quy tắc vào `TONE_RULE`: Cấm khen một chiều 100%, bắt buộc chỉ ra ít nhất 1-2 điểm cần lưu ý cải thiện (tự kiểm thử, đọc đề, tính cẩn thận, tối ưu mã nguồn...).
 - [x] **Kiểm thử chất lượng:** 296/296 vitest PASS, 89/89 pytest PASS, typecheck & eslint 0 lỗi.
 
+### Đợt 73 (`feature/spck-observations-by-skills`) — Ngân Hàng Nhận Xét SPCK Theo Kỹ Năng & Tinh Chỉnh Giao Diện Buổi Làm Đồ Án
+- [x] **Ngân hàng 44 nhận xét SPCK chia theo 3 cấp độ học lực & 6 nhóm kỹ năng (`spck-evaluation.ts`):**
+  - 3 Cấp độ: Học yếu (17 mục), Trung bình (14 mục), Khá / Giỏi (13 mục).
+  - 6 Nhóm kỹ năng: Thái độ (`attitude`), Kỹ năng (`coding`), Tự học (`self_study`), Tiến độ & sản phẩm (`project_progress`), Kỹ năng mềm (`soft_skills`), Kiến thức nền tảng (`knowledge`).
+  - Phân biệt trực quan điểm làm tốt (`+`) và điểm cần lưu ý/cải thiện (`💡`).
+  - Bao hàm và đồng bộ 100% các câu nhận xét SPCK cũ của hệ thống.
+- [x] **Quản lý danh mục SPCK tại Cài đặt (`project-progress-manager.tsx`, `settings.ts`):**
+  - Accordion quản lý nhóm theo 6 kỹ năng với badge cấp độ học lực từng câu.
+  - Thêm nhanh / đồng bộ toàn bộ 44 nhận xét chuẩn vào `review_options` qua `seedDefaultProjectProgressOptions`.
+  - Cho phép thêm/xóa nhận xét trong từng nhóm kỹ năng; mở rộng `resolveSkillGroup` hỗ trợ các nhóm kỹ năng SPCK.
+- [x] **Cải tiến giao diện buổi làm đồ án (`review-editor.tsx`):**
+  - Khi buổi học là buổi làm đồ án (`isProjectPeriod = true`):
+    + **Ẩn bộ combo (`ComboBar`)** và **ẩn 2 ô `Điểm mạnh` / `Cần cải thiện`**.
+    + **Đổi dropdown copy thành `📋 Nhận xét buổi trước`**: Hiển thị danh sách nhận xét các buổi trước của học viên; khi chọn sẽ điền ngay vào ô nhận xét gửi phụ huynh.
+    + **Khung `🎓 Quan sát SPCK`**: Phân chia theo 6 kỹ năng, có thanh lọc cấp độ (`Tất cả`, `🌟 Khá / Giỏi`, `⚖️ Trung bình`, `⚠️ Học yếu`) tự động kích hoạt theo học lực của học viên; tích chọn nhanh dạng chip checkmark `✓`; hỗ trợ gõ thêm quan sát tự do.
+- [x] **Thu nhỏ phần hiển thị Mẫu tin Zalo (`template-manager.tsx`):**
+  - Thu nhỏ các mục mẫu tin Zalo mặc định: 1 dòng tiêu đề + badge `📝 {lineCount} dòng` + chevron xoay + trích đoạn 2 dòng (`line-clamp-2`).
+  - Khi mở rộng: hiển thị toàn bộ trong khung cuộn giới hạn độ cao (`max-h-56 overflow-y-auto`) kèm nút `▲ Thu gọn`.
+  - Form tạo mới gập gọn sau nút `➕ Thêm mẫu tin mới`.
+- [x] **Kiểm thử chất lượng:** 303/303 vitest PASS, 89/89 pytest PASS, typecheck & eslint 0 lỗi, build Next.js thành công.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

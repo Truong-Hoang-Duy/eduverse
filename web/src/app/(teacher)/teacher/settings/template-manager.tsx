@@ -4,10 +4,12 @@ import { useActionState, useEffect, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   addZaloTemplate,
   deleteZaloTemplate,
@@ -186,6 +188,7 @@ function TemplateItem({ template }: { template: TemplateRow }) {
     {}
   );
   const [editing, setEditing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState(template.name);
   const [text, setText] = useState(template.template_text);
 
@@ -229,10 +232,33 @@ function TemplateItem({ template }: { template: TemplateRow }) {
     );
   }
 
+  const lineCount = template.template_text.trim().split("\n").length;
+
   return (
-    <li className="rounded-lg border p-3">
+    <li className="rounded-lg border p-3 transition-colors hover:border-border">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-medium">{template.name}</p>
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+          aria-expanded={expanded}
+        >
+          <span className="truncate text-sm font-medium">{template.name}</span>
+          <Badge
+            variant="outline"
+            className="shrink-0 rounded-md text-[11px] font-normal text-muted-foreground"
+          >
+            📝 {lineCount} dòng
+          </Badge>
+          <span
+            className={cn(
+              "ml-auto shrink-0 text-xs text-muted-foreground transition-transform duration-200",
+              expanded && "rotate-180"
+            )}
+          >
+            ▼
+          </span>
+        </button>
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
@@ -260,9 +286,41 @@ function TemplateItem({ template }: { template: TemplateRow }) {
           />
         </div>
       </div>
-      <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-2 text-xs whitespace-pre-wrap text-muted-foreground">
-        {template.template_text}
-      </pre>
+
+      {expanded ? (
+        <div className="mt-2 space-y-1.5">
+          <pre className="max-h-56 overflow-y-auto rounded-md border bg-muted/50 p-2.5 text-xs whitespace-pre-wrap text-muted-foreground font-mono leading-relaxed">
+            {template.template_text}
+          </pre>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setExpanded(false)}
+              className="text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ▲ Thu gọn
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setExpanded(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setExpanded(true);
+            }
+          }}
+          className="mt-2 cursor-pointer rounded-md bg-muted/30 hover:bg-muted/60 p-2 transition-colors"
+          title="Bấm để xem đầy đủ nội dung"
+        >
+          <p className="line-clamp-2 text-xs font-mono text-muted-foreground/90 whitespace-pre-line leading-relaxed">
+            {template.template_text}
+          </p>
+        </div>
+      )}
     </li>
   );
 }
@@ -272,6 +330,7 @@ function CreateTemplateForm() {
     addZaloTemplate,
     {}
   );
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [text, setText] = useState("");
 
@@ -279,12 +338,38 @@ function CreateTemplateForm() {
     if (state.success) {
       setName("");
       setText("");
+      setOpen(false);
     }
   }, [state]);
 
+  if (!open) {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+        className="w-full sm:w-auto"
+      >
+        ➕ Thêm mẫu tin mới
+      </Button>
+    );
+  }
+
   return (
     <form action={formAction} className="space-y-3 rounded-lg border border-dashed p-3">
-      <p className="text-sm font-medium">Tạo mẫu mới</p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium">Tạo mẫu mới</p>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs text-muted-foreground"
+          onClick={() => setOpen(false)}
+        >
+          ✕ Đóng
+        </Button>
+      </div>
       <TemplateFields
         idPrefix="new-tpl"
         name={name}
@@ -293,9 +378,19 @@ function CreateTemplateForm() {
         onTextChange={setText}
       />
       <FormMessage result={state} />
-      <Button type="submit" size="sm" disabled={pending || !name.trim() || !text.trim()}>
-        {pending ? "Đang lưu..." : "Lưu mẫu"}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button type="submit" size="sm" disabled={pending || !name.trim() || !text.trim()}>
+          {pending ? "Đang lưu..." : "Lưu mẫu"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setOpen(false)}
+        >
+          Hủy
+        </Button>
+      </div>
     </form>
   );
 }
