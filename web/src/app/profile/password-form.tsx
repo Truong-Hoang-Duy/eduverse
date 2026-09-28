@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useRef } from "react";
+import { Lock } from "lucide-react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -24,23 +26,26 @@ export function PasswordForm() {
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
-    <Card className="shadow-sm">
+    <Card className="flex h-full flex-col shadow-sm">
       <CardHeader>
-        <CardTitle className="text-base">🔒 Đổi mật khẩu</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Lock className="h-4 w-4 text-primary" />
+          <span>Đổi mật khẩu</span>
+        </CardTitle>
         <CardDescription>
           Chỉ cần nhập mật khẩu mới — không cần mật khẩu cũ.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form
-          ref={formRef}
-          action={async (fd) => {
-            await formAction(fd);
-            formRef.current?.reset();
-          }}
-          className="space-y-4"
-        >
-          <div className="space-y-1.5">
+      <form
+        ref={formRef}
+        action={async (fd) => {
+          await formAction(fd);
+          formRef.current?.reset();
+        }}
+        className="flex flex-1 flex-col justify-between"
+      >
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
             <Label htmlFor="new-password">Mật khẩu mới</Label>
             <Input
               id="new-password"
@@ -51,8 +56,11 @@ export function PasswordForm() {
               required
               placeholder="Ít nhất 6 ký tự"
             />
+            <p className="text-xs text-muted-foreground">
+              Mật khẩu cần tối thiểu 6 ký tự để bảo mật tài khoản.
+            </p>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="confirm-password">Nhập lại mật khẩu mới</Label>
             <Input
               id="confirm-password"
@@ -61,16 +69,17 @@ export function PasswordForm() {
               autoComplete="new-password"
               minLength={6}
               required
+              placeholder="Nhập lại mật khẩu mới"
             />
           </div>
-          <div className="flex items-center gap-3">
-            <Button type="submit" disabled={pending}>
-              {pending ? "Đang đổi..." : "Đổi mật khẩu"}
-            </Button>
-            <FormMessage result={state} />
-          </div>
-        </form>
-      </CardContent>
+        </CardContent>
+        <CardFooter className="mt-auto flex items-center gap-3">
+          <Button type="submit" disabled={pending}>
+            {pending ? "Đang đổi..." : "Đổi mật khẩu"}
+          </Button>
+          <FormMessage result={state} />
+        </CardFooter>
+      </form>
     </Card>
   );
 }

@@ -37,10 +37,10 @@ export function AppNav({ profile }: { profile: Profile }) {
   const stackOnMobile = links.length > 2;
 
   return (
-    <header className="sticky top-4 z-40 mx-4 sm:mx-auto max-w-5xl rounded-2xl border border-border/50 bg-background/60 backdrop-blur-xl shadow-sm transition-all">
+    <header className="sticky top-4 z-40 mx-auto w-[calc(100%-2rem)] max-w-5xl rounded-2xl border border-border/50 bg-background/80 backdrop-blur-xl shadow-xs transition-all">
       {/* Dùng `order` thay vì render NavLinks hai lần: giữ đúng MỘT client
           component, và thứ tự đọc bằng bàn phím vẫn là logo → nav → tài khoản. */}
-      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-2 gap-y-2 px-4 py-3 sm:flex-nowrap sm:gap-4">
+      <div className="flex w-full flex-wrap items-center gap-x-2 gap-y-2 px-4 py-2.5 sm:flex-nowrap sm:gap-4 sm:px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <BrandMark />
           {/* Ẩn chữ trên điện thoại để nav không tràn — logo là đủ nhận diện. */}

@@ -167,12 +167,12 @@
 @layer utilities {
   .scrollbar-slim {
     scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 40%, transparent) transparent;
   }
 
   .scrollbar-slim::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   .scrollbar-slim::-webkit-scrollbar-track {
@@ -180,8 +180,8 @@
   }
 
   .scrollbar-slim::-webkit-scrollbar-thumb {
-    background-color: var(--border);
-    border: 2px solid transparent;
+    background-color: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+    border: 1px solid transparent;
     background-clip: content-box;
     border-radius: 9999px;
   }

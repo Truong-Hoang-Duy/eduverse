@@ -39,7 +39,7 @@ export interface ClassItem {
 type StatusFilter = "active" | "completed" | "all";
 
 const STATUS_LABELS: Record<StatusFilter, string> = {
-  active: "Đang học",
+  active: "Chưa hoàn thành",
   completed: "Đã hoàn thành",
   all: "Tất cả",
 };
@@ -125,7 +125,7 @@ export function ClassList({ classes }: { classes: ClassItem[] }) {
           {query
             ? `Không có lớp nào khớp "${query}".`
             : status === "active"
-              ? "Không còn lớp nào đang học — chọn “Đã hoàn thành” hoặc “Tất cả” để xem lớp cũ."
+              ? "Không có lớp nào chưa hoàn thành — chọn “Đã hoàn thành” hoặc “Tất cả” để xem lớp cũ."
               : status === "completed"
                 ? "Chưa có lớp nào hoàn thành (lớp xong khi buổi cuối đã nhận xét đủ học viên)."
                 : "Chưa có lớp nào — mở lớp bằng form bên dưới."}

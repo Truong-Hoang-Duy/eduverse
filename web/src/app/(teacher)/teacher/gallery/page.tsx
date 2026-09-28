@@ -3,8 +3,10 @@ import type { GalleryProject, RosterMember } from "@/components/gallery/project-
 import { PageHeader } from "@/components/page-header";
 import { requireRole } from "@/lib/get-profile";
 import { driveLinksOfStudents } from "@/lib/actions/drive-link";
+import { isClassCompleted } from "@/lib/class-completion";
 import { createClient } from "@/lib/supabase/server";
 
+import { type ExistingReview, isHandled } from "../sessions/[id]/review-status";
 import { GalleryView } from "./gallery-view";
 
 export const metadata = { title: "Sản phẩm học viên — Eduverse" };
@@ -39,6 +41,12 @@ interface EnrollmentRow {
   profiles: { full_name: string } | null;
 }
 
+interface SessionRow {
+  id: string;
+  class_id: string;
+  session_number: number;
+}
+
 export default async function TeacherGalleryPage() {
   const profile = await requireRole("teacher");
   const supabase = await createClient();
@@ -48,38 +56,49 @@ export default async function TeacherGalleryPage() {
   // enrollments/projects lấy về đúng phạm vi lớp GV dạy.
   const { data: classesData } = await supabase
     .from("classes")
-    .select("id, class_code, courses(code)")
+    .select("id, class_code, total_sessions, courses(code)")
     .eq("teacher_id", profile.id)
     .order("class_code");
 
   const classes = (classesData ?? []) as unknown as {
     id: string;
     class_code: string;
+    total_sessions: number;
     courses: { code: string } | null;
   }[];
   const classIds = classes.map((c) => c.id);
 
-  const [{ data: projectsData }, { data: commentsData }, { data: enrollmentsData }] =
-    await Promise.all([
-      supabase
-        .from("projects")
-        .select(
-          "id, class_id, student_id, name, description, features, image_urls, repo_url, demo_url, extra_notes, updated_at, profiles!projects_student_id_fkey(full_name)"
-        )
-        .order("updated_at", { ascending: false }),
-      supabase
-        .from("project_comments")
-        .select(
-          "id, project_id, content, author_id, created_at, profiles!project_comments_author_id_fkey(full_name)"
-        )
-        .order("created_at"),
-      classIds.length > 0
-        ? supabase
-            .from("enrollments")
-            .select("class_id, student_id, profiles(full_name)")
-            .in("class_id", classIds)
-        : Promise.resolve({ data: [] as EnrollmentRow[] }),
-    ]);
+  const [
+    { data: projectsData },
+    { data: commentsData },
+    { data: enrollmentsData },
+    { data: sessionsData },
+  ] = await Promise.all([
+    supabase
+      .from("projects")
+      .select(
+        "id, class_id, student_id, name, description, features, image_urls, repo_url, demo_url, extra_notes, updated_at, profiles!projects_student_id_fkey(full_name)"
+      )
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("project_comments")
+      .select(
+        "id, project_id, content, author_id, created_at, profiles!project_comments_author_id_fkey(full_name)"
+      )
+      .order("created_at"),
+    classIds.length > 0
+      ? supabase
+          .from("enrollments")
+          .select("class_id, student_id, profiles(full_name)")
+          .in("class_id", classIds)
+      : Promise.resolve({ data: [] as EnrollmentRow[] }),
+    classIds.length > 0
+      ? supabase
+          .from("sessions")
+          .select("id, class_id, session_number")
+          .in("class_id", classIds)
+      : Promise.resolve({ data: [] as SessionRow[] }),
+  ]);
 
   const comments = (commentsData ?? []) as unknown as CommentRow[];
   const enrollments = (enrollmentsData ?? []) as unknown as EnrollmentRow[];
@@ -126,6 +145,42 @@ export default async function TeacherGalleryPage() {
 
   const totalComments = projects.reduce((n, p) => n + p.comments.length, 0);
 
+  // Xác định buổi cuối cùng của từng lớp để kiểm tra hoàn thành
+  const lastSessionIdByClass = new Map<string, string>();
+  for (const cls of classes) {
+    const last = (sessionsData ?? []).find(
+      (s) => s.class_id === cls.id && s.session_number === cls.total_sessions
+    );
+    if (last) lastSessionIdByClass.set(cls.id, last.id);
+  }
+
+  const lastSessionIds = [...lastSessionIdByClass.values()];
+  const { data: lastReviewsData } = lastSessionIds.length
+    ? await supabase
+        .from("student_reviews")
+        .select("session_id, strengths, improvements, ai_generated_comment, is_absent")
+        .in("session_id", lastSessionIds)
+    : { data: [] };
+
+  const handledCountBySession = new Map<string, number>();
+  for (const row of (lastReviewsData ?? []) as (ExistingReview & {
+    session_id: string;
+  })[]) {
+    if (!isHandled(row)) continue;
+    handledCountBySession.set(
+      row.session_id,
+      (handledCountBySession.get(row.session_id) ?? 0) + 1
+    );
+  }
+
+  const studentCountByClass = new Map<string, number>();
+  for (const e of enrollments) {
+    studentCountByClass.set(
+      e.class_id,
+      (studentCountByClass.get(e.class_id) ?? 0) + 1
+    );
+  }
+
   // Enrollment chưa có sản phẩm tương ứng → thẻ mờ "Chưa có sản phẩm" cuối
   // mỗi lớp, giúp GV biết ngay ai còn thiếu mà không phải tự đếm.
   const hasProject = new Set(
@@ -163,11 +218,19 @@ export default async function TeacherGalleryPage() {
         </div>
       ) : (
         <GalleryView
-          classes={classes.map((c) => ({
-            id: c.id,
-            class_code: c.class_code,
-            courseCode: c.courses?.code ?? "",
-          }))}
+          classes={classes.map((c) => {
+            const studentCount = studentCountByClass.get(c.id) ?? 0;
+            const lastSessionId = lastSessionIdByClass.get(c.id);
+            const handledCount = lastSessionId
+              ? (handledCountBySession.get(lastSessionId) ?? 0)
+              : 0;
+            return {
+              id: c.id,
+              class_code: c.class_code,
+              courseCode: c.courses?.code ?? "",
+              completed: isClassCompleted({ studentCount, handledCount }),
+            };
+          })}
           projects={projects}
           membersWithoutProject={membersWithoutProject}
           currentUserId={profile.id}

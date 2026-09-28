@@ -16,7 +16,6 @@ const VIDEOS = {
   github: "https://www.youtube.com/watch?v=jVAeaIb-Kyg",
   drive: "https://www.youtube.com/watch?v=NWEu-bCUuLM",
   deploy: "https://www.youtube.com/watch?v=X6boIuWzBhg",
-  apikey: "https://www.youtube.com/watch?v=JZCjL3hrvcY",
   images: "https://www.youtube.com/watch?v=LVoXkDeoso8",
 };
 
@@ -75,19 +74,6 @@ const SECTIONS = [
       'Copy dòng "Direct link" (link kết thúc bằng .jpg hoặc .png).',
       'Vào tab Sản phẩm → ô "Ảnh sản phẩm" → dán link → Enter. Ảnh phải hiện ra ở khung xem trước thì mới đúng.',
       'Không thấy ảnh? Bấm chuột phải vào ảnh trên trang host → "Sao chép địa chỉ hình ảnh" rồi dán lại.',
-    ],
-  },
-  {
-    key: "apikey" as const,
-    title: "5. Lấy API key Gemini miễn phí (để dùng AI riêng)",
-    description:
-      "Cả lớp đang dùng chung một key nên rất dễ hết lượt. Có key riêng thì em có hạn mức riêng, miễn phí, không cần thẻ.",
-    steps: [
-      "Mở aistudio.google.com/apikey, đăng nhập bằng tài khoản Google.",
-      'Bấm "Create API key" → chọn project bất kỳ (hoặc tạo mới).',
-      "Copy TOÀN BỘ key vừa hiện ra.",
-      "Vào Hồ sơ (menu góc phải) → dán vào ô API key → Lưu.",
-      "Không chia sẻ key cho ai — người có key sẽ dùng hết lượt của bạn.",
     ],
   },
 ];

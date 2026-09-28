@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CornerDownRight, MessageSquareText, Send, Sparkles, X } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
@@ -12,32 +13,40 @@ import { PROJECT_COMMENT_MAX } from "@/lib/project-limits";
 import { createClient } from "@/lib/supabase/client";
 import type { ActionResult } from "@/lib/types";
 
-export interface CommentItem {
-  id: string;
-  content: string;
-  authorName: string;
-  authorId: string;
-  createdAt: string;
-}
+export type { CommentItem, CommentThread } from "@/lib/project-comments";
+import {
+  type CommentItem,
+  formatCommentTime,
+  getAvatarGradient,
+  groupCommentsIntoThreads,
+  parseCommentContent,
+  QUICK_PRAISES,
+} from "@/lib/project-comments";
 
 export function CommentSection({
   projectId,
   classId,
   comments: initialComments,
   currentUserId,
-  placeholder = "Viết nhận xét cho bạn...",
+  placeholder = "Viết lời khen ngợi, góp ý cho bạn...",
+  headerAction,
 }: {
   projectId: string;
   classId?: string;
   comments: CommentItem[];
   currentUserId: string;
   placeholder?: string;
+  headerAction?: React.ReactNode;
 }) {
   const router = useRouter();
   const [comments, setComments] = useState<CommentItem[]>(initialComments);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [state, setState] = useState<ActionResult>({});
+  const [replyTo, setReplyTo] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const threads = useMemo(() => groupCommentsIntoThreads(comments), [comments]);
 
   // Đồng bộ khi props từ Server Component thay đổi
   useEffect(() => {
@@ -112,15 +121,41 @@ export function CommentSection({
     };
   }, [projectId, fetchLatestComments]);
 
+  // Chọn nhanh mẫu khen ngợi
+  const handleSelectQuickPraise = (text: string) => {
+    if (inputRef.current) {
+      inputRef.current.value = text;
+      inputRef.current.focus();
+    }
+  };
+
+  // Kích hoạt trả lời một bạn học
+  const handleStartReply = (authorName: string) => {
+    setReplyTo(authorName);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   // Gửi nhận xét với Optimistic UI (hiện ngay trong 0ms)
   const handleSubmit = async (fd: FormData) => {
-    const content = String(fd.get("content") ?? "").trim();
-    if (!content) return;
+    const rawContent = String(fd.get("content") ?? "").trim();
+    if (!rawContent) return;
+
+    // Tự động gắn tiền tố reply nếu đang trả lời bình luận
+    const content =
+      replyTo && !rawContent.startsWith(`@[${replyTo}]:`)
+        ? `@[${replyTo}]: ${rawContent}`
+        : rawContent;
 
     if (content.length > PROJECT_COMMENT_MAX) {
       setState({ error: `Nhận xét tối đa ${PROJECT_COMMENT_MAX} ký tự.` });
       return;
     }
+
+    fd.set("content", content);
+    const activeReply = replyTo;
+    setReplyTo(null);
 
     const tempId = `temp-${Date.now()}`;
     const optimisticComment: CommentItem = {
@@ -142,6 +177,7 @@ export function CommentSection({
       if (res.error) {
         // Rollback nếu server báo lỗi
         setComments((prev) => prev.filter((c) => c.id !== tempId));
+        setReplyTo(activeReply);
         setState(res);
       } else {
         setState(res);
@@ -150,6 +186,7 @@ export function CommentSection({
       }
     } catch {
       setComments((prev) => prev.filter((c) => c.id !== tempId));
+      setReplyTo(activeReply);
       setState({ error: "Không gửi được nhận xét. Vui lòng thử lại." });
     } finally {
       setIsSubmitting(false);
@@ -175,73 +212,286 @@ export function CommentSection({
   };
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm font-medium">
-        💬 Nhận xét ({comments.length})
-      </p>
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-background">
+      {/* 1. HEADER NHẬN XÉT CỐ ĐỊNH SANG TRỌNG - THOÁNG ĐÃNG, KHÔNG SÁT MÉP */}
+      <div className="shrink-0 px-6 py-4 flex items-center justify-between border-b border-border/60 bg-muted/20 backdrop-blur-xs gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex size-9.5 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-2xs">
+            <Sparkles className="size-5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">
+                Nhận xét & Góp ý
+              </h3>
+              <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground shadow-2xs">
+                {comments.length}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground truncate hidden sm:block pt-0.5">
+              Cùng trao đổi và động viên nhau học tập
+            </p>
+          </div>
+        </div>
 
-      {comments.length > 0 && (
-        <ul className="space-y-2">
-          {comments.map((c) => {
-            const mine = c.authorId === currentUserId;
-            return (
-              <li
-                key={c.id}
-                className="flex items-start justify-between gap-3 rounded-md bg-muted/50 px-3 py-2 text-sm"
-              >
-                <div className="min-w-0">
-                  <span className="font-medium">{c.authorName}</span>
-                  {mine && (
-                    <span className="ml-1 text-xs text-muted-foreground">(bạn)</span>
-                  )}{" "}
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(c.createdAt).toLocaleDateString("vi-VN")}
-                  </span>
-                  <p className="break-words text-muted-foreground">{c.content}</p>
+        <div className="shrink-0">
+          {headerAction}
+        </div>
+      </div>
+
+      {/* 2. VÙNG CUỘN: CHỈ CHỨA DANH SÁCH NHẬN XÉT */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 scrollbar-slim">
+        {comments.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mb-3 shadow-xs">
+              <MessageSquareText className="size-7" />
+            </div>
+            <h4 className="text-sm font-bold text-foreground">Chưa có nhận xét nào</h4>
+            <p className="mt-1 text-xs text-muted-foreground max-w-xs leading-relaxed">
+              Hãy là người đầu tiên gửi lời khen ngợi, động viên hoặc góp ý tích cực cho dự án của bạn nhé! ✨
+            </p>
+
+            {/* Quick Suggestion Chips */}
+            <div className="mt-5 w-full max-w-sm space-y-2">
+              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Gợi ý nhận xét nhanh:
+              </p>
+              <div className="flex flex-wrap gap-1.5 justify-center">
+                {QUICK_PRAISES.map((praise) => (
+                  <button
+                    key={praise}
+                    type="button"
+                    onClick={() => handleSelectQuickPraise(praise)}
+                    className="rounded-full border border-border/80 bg-card px-3 py-1.5 text-xs text-foreground/90 shadow-2xs transition-all hover:border-primary/50 hover:bg-primary/5 hover:text-primary active:scale-95 cursor-pointer text-left"
+                  >
+                    {praise}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4 pb-2">
+            {threads.map((thread) => {
+              const root = thread.root;
+              const isRootMine = root.authorId === currentUserId;
+              const { replyToName: rootReplyToName, text: rootText } = parseCommentContent(root.content);
+
+              return (
+                <div key={root.id} className="space-y-2">
+                  {/* Bình luận gốc (Root Comment) dạng bubble giống Facebook */}
+                  <div className="flex items-start gap-2.5 group">
+                    {/* Avatar cá nhân hóa theo tên */}
+                    <div
+                      className={`size-8.5 shrink-0 rounded-full flex items-center justify-center font-bold text-xs shadow-2xs bg-gradient-to-br ${getAvatarGradient(
+                        root.authorName
+                      )}`}
+                    >
+                      {root.authorName.trim().charAt(0).toUpperCase() || "?"}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      {/* Bong bóng bình luận Facebook */}
+                      <div className="inline-block max-w-[95%] sm:max-w-[90%] rounded-2xl rounded-tl-xs bg-muted/60 dark:bg-muted/40 hover:bg-muted/80 dark:hover:bg-muted/50 px-3.5 py-2 transition-colors border border-border/40 shadow-2xs">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-xs sm:text-sm text-foreground hover:underline cursor-pointer">
+                            {root.authorName}
+                          </span>
+                          {isRootMine && (
+                            <span className="rounded-full bg-primary/10 border border-primary/20 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                              bạn
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-xs sm:text-sm text-foreground/95 whitespace-pre-wrap break-words leading-relaxed">
+                          {rootReplyToName && (
+                            <button
+                              type="button"
+                              onClick={() => handleStartReply(rootReplyToName)}
+                              className="font-semibold text-primary hover:underline cursor-pointer mr-1 inline"
+                            >
+                              @{rootReplyToName}
+                            </button>
+                          )}
+                          {rootText}
+                        </p>
+                      </div>
+
+                      {/* Hàng nút hành động dưới bong bóng: Thời gian · Trả lời · Xóa */}
+                      <div className="flex items-center gap-3 pl-3 pt-1 text-[11px] text-muted-foreground select-none">
+                        <span className="text-muted-foreground/80">
+                          {formatCommentTime(root.createdAt)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleStartReply(root.authorName)}
+                          className="font-semibold text-muted-foreground hover:text-foreground hover:underline cursor-pointer transition-colors"
+                        >
+                          Trả lời
+                        </button>
+                        {isRootMine && (
+                          <ConfirmDialog
+                            trigger={
+                              <button
+                                type="button"
+                                className="font-semibold text-muted-foreground/70 hover:text-destructive hover:underline cursor-pointer transition-colors"
+                              >
+                                Xóa
+                              </button>
+                            }
+                            title="Xóa nhận xét của bạn?"
+                            description="Nhận xét này sẽ bị xóa vĩnh viễn khỏi sản phẩm."
+                            action={handleDeleteComment}
+                            fields={{ id: root.id, class_id: classId ?? "" }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Danh sách các câu trả lời trực thuộc (Threaded replies giống Facebook) */}
+                  {thread.replies.length > 0 && (
+                    <div className="relative ml-4 sm:ml-4.5 pl-6 sm:pl-7 space-y-2.5 pt-1 before:absolute before:left-0 before:top-0 before:bottom-3.5 before:w-0.5 before:bg-border/60">
+                      {thread.replies.map((reply) => {
+                        const isReplyMine = reply.authorId === currentUserId;
+                        const { replyToName: targetName, text: replyText } = parseCommentContent(reply.content);
+
+                        return (
+                          <div key={reply.id} className="relative flex items-start gap-2 group">
+                            {/* Đường cong nối nhánh (L-branch connector) */}
+                            <div className="absolute -left-6 sm:-left-7 top-3 w-4 sm:w-5 h-3.5 border-b-2 border-l-2 border-border/70 rounded-bl-xl pointer-events-none" />
+
+                            {/* Avatar nhỏ hơn cho câu trả lời */}
+                            <div
+                              className={`size-6.5 shrink-0 rounded-full flex items-center justify-center font-bold text-[10px] shadow-2xs bg-gradient-to-br ${getAvatarGradient(
+                                reply.authorName
+                              )}`}
+                            >
+                              {reply.authorName.trim().charAt(0).toUpperCase() || "?"}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              {/* Bong bóng reply */}
+                              <div className="inline-block max-w-[95%] sm:max-w-[90%] rounded-2xl rounded-tl-xs bg-muted/60 dark:bg-muted/40 hover:bg-muted/80 dark:hover:bg-muted/50 px-3 py-1.5 transition-colors border border-border/40 shadow-2xs">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-semibold text-xs text-foreground hover:underline cursor-pointer">
+                                    {reply.authorName}
+                                  </span>
+                                  {isReplyMine && (
+                                    <span className="rounded-full bg-primary/10 border border-primary/20 px-1.5 py-0.2 text-[9px] font-bold text-primary">
+                                      bạn
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="mt-0.5 text-xs sm:text-[13px] text-foreground/95 whitespace-pre-wrap break-words leading-relaxed">
+                                  {targetName && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartReply(targetName)}
+                                      className="font-semibold text-primary hover:underline cursor-pointer mr-1 inline"
+                                    >
+                                      @{targetName}
+                                    </button>
+                                  )}
+                                  {replyText}
+                                </p>
+                              </div>
+
+                              {/* Hàng nút hành động dưới bong bóng reply */}
+                              <div className="flex items-center gap-3 pl-2.5 pt-0.5 text-[10.5px] text-muted-foreground select-none">
+                                <span className="text-muted-foreground/80">
+                                  {formatCommentTime(reply.createdAt)}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartReply(reply.authorName)}
+                                  className="font-semibold text-muted-foreground hover:text-foreground hover:underline cursor-pointer transition-colors"
+                                >
+                                  Trả lời
+                                </button>
+                                {isReplyMine && (
+                                  <ConfirmDialog
+                                    trigger={
+                                      <button
+                                        type="button"
+                                        className="font-semibold text-muted-foreground/70 hover:text-destructive hover:underline cursor-pointer transition-colors"
+                                      >
+                                        Xóa
+                                      </button>
+                                    }
+                                    title="Xóa câu trả lời của bạn?"
+                                    description="Câu trả lời này sẽ bị xóa vĩnh viễn khỏi sản phẩm."
+                                    action={handleDeleteComment}
+                                    fields={{ id: reply.id, class_id: classId ?? "" }}
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                {/* Chỉ chủ nhận xét xóa được (RLS project_comments_delete_own). */}
-                {mine && (
-                  <ConfirmDialog
-                    trigger={
-                      <button
-                        type="button"
-                        aria-label="Xóa nhận xét"
-                        className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
-                      >
-                        ✕
-                      </button>
-                    }
-                    title="Xóa nhận xét của bạn?"
-                    description="Nhận xét này sẽ bị xóa vĩnh viễn khỏi sản phẩm."
-                    action={handleDeleteComment}
-                    fields={{ id: c.id, class_id: classId ?? "" }}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-      <form
-        ref={formRef}
-        action={handleSubmit}
-        className="flex gap-2"
-      >
-        <input type="hidden" name="project_id" value={projectId} />
-        {classId && <input type="hidden" name="class_id" value={classId} />}
-        <Input
-          name="content"
-          placeholder={placeholder}
-          maxLength={PROJECT_COMMENT_MAX}
-          disabled={isSubmitting}
-          className="h-9 text-base sm:text-sm"
-        />
-        <Button type="submit" disabled={isSubmitting} className="h-9 shrink-0">
-          {isSubmitting ? "Đang gửi..." : "Gửi"}
-        </Button>
-      </form>
-      <FormMessage result={state} />
+      {/* 3. KHỐI ĐÁY: CỐ ĐỊNH Ô NHẬP NHẬN XÉT DẠNG CHAT HIỆN ĐẠI CÓ HỖ TRỢ REPLY */}
+      <div className="shrink-0 border-t border-border/60 bg-card/95 p-3 sm:px-5 sm:py-3.5 backdrop-blur-md space-y-2">
+        {/* Thanh thông báo đang trả lời ai */}
+        {replyTo && (
+          <div className="flex items-center justify-between rounded-xl bg-primary/10 border border-primary/20 px-3 py-1.5 text-xs text-primary animate-in fade-in">
+            <div className="flex items-center gap-1.5 truncate">
+              <CornerDownRight className="size-3.5 shrink-0" />
+              <span>
+                Đang trả lời <strong className="font-semibold">@{replyTo}</strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="shrink-0 p-0.5 hover:bg-primary/20 rounded-md transition-colors cursor-pointer"
+              title="Hủy trả lời"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
+
+        <form
+          ref={formRef}
+          action={handleSubmit}
+          className="flex items-center gap-2 rounded-2xl border border-border/80 bg-background/90 p-1.5 shadow-2xs focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all"
+        >
+          <input type="hidden" name="project_id" value={projectId} />
+          {classId && <input type="hidden" name="class_id" value={classId} />}
+          <Input
+            ref={inputRef}
+            name="content"
+            placeholder={
+              replyTo ? `Viết câu trả lời cho @${replyTo}...` : placeholder
+            }
+            maxLength={PROJECT_COMMENT_MAX}
+            disabled={isSubmitting}
+            className="h-9.5 flex-1 border-0 bg-transparent px-3 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/70"
+          />
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            size="sm"
+            className="h-9.5 shrink-0 px-4 rounded-xl font-semibold gap-1.5 shadow-xs cursor-pointer"
+          >
+            <Send className="size-3.5" />
+            <span>{isSubmitting ? "Đang gửi..." : "Gửi"}</span>
+          </Button>
+        </form>
+        <FormMessage result={state} />
+      </div>
     </div>
   );
 }
+
+

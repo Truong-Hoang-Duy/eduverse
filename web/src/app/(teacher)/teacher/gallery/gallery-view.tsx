@@ -24,12 +24,20 @@ export interface GalleryClass {
   id: string;
   class_code: string;
   courseCode: string;
+  completed: boolean;
 }
 
 const ALL = "all";
 
-/** Danh sách sản phẩm theo từng lớp + bộ lọc theo lớp và tìm kiếm theo tên — tách khỏi Server
- *  Component vì cần state client để lọc. */
+type StatusFilter = "active" | "completed" | "all";
+
+const STATUS_LABELS: Record<StatusFilter, string> = {
+  active: "Chưa hoàn thành",
+  completed: "Đã hoàn thành",
+  all: "Tất cả trạng thái",
+};
+
+/** Danh sách sản phẩm theo từng lớp + bộ lọc theo trạng thái hoàn thành và lớp học + tìm kiếm theo tên. */
 export function GalleryView({
   classes,
   projects,
@@ -41,6 +49,8 @@ export function GalleryView({
   membersWithoutProject: RosterMember[];
   currentUserId: string;
 }) {
+  // Mặc định lọc theo lớp chưa hoàn thành theo yêu cầu
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
   const [classFilter, setClassFilter] = useState(ALL);
   const [query, setQuery] = useState("");
 
@@ -62,8 +72,19 @@ export function GalleryView({
     );
   }, [membersWithoutProject, needle]);
 
-  const filteredClasses =
-    classFilter === ALL ? classes : classes.filter((c) => c.id === classFilter);
+  // Lọc danh sách lớp khả dụng theo trạng thái Chưa hoàn thành / Đã hoàn thành / Tất cả
+  const availableClasses = useMemo(() => {
+    return classes.filter((c) => {
+      if (statusFilter === "active") return !c.completed;
+      if (statusFilter === "completed") return c.completed;
+      return true;
+    });
+  }, [classes, statusFilter]);
+
+  const filteredClasses = useMemo(() => {
+    if (classFilter === ALL) return availableClasses;
+    return availableClasses.filter((c) => c.id === classFilter);
+  }, [availableClasses, classFilter]);
 
   const currentClassStudents = useMemo(() => {
     if (classFilter === ALL) return [];
@@ -111,14 +132,37 @@ export function GalleryView({
           )}
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          <Select value={classFilter} onValueChange={setClassFilter}>
-            <SelectTrigger size="sm" className="w-[180px]" aria-label="Lọc theo lớp">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {/* Bộ lọc theo trạng thái: Chưa hoàn thành (mặc định) / Đã hoàn thành / Tất cả */}
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => {
+              setStatusFilter(v as StatusFilter);
+              setClassFilter(ALL);
+            }}
+          >
+            <SelectTrigger size="sm" className="w-[165px]" aria-label="Lọc theo trạng thái lớp">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL}>Tất cả lớp</SelectItem>
-              {classes.map((c) => (
+              {(Object.keys(STATUS_LABELS) as StatusFilter[]).map((key) => (
+                <SelectItem key={key} value={key}>
+                  {STATUS_LABELS[key]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Bộ lọc theo lớp cụ thể */}
+          <Select value={classFilter} onValueChange={setClassFilter}>
+            <SelectTrigger size="sm" className="w-[165px]" aria-label="Lọc theo lớp">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>
+                Tất cả lớp ({availableClasses.length})
+              </SelectItem>
+              {availableClasses.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.class_code}
                 </SelectItem>
@@ -191,7 +235,15 @@ export function GalleryView({
         </div>
       )}
 
-      {query && totalMatches === 0 ? (
+      {filteredClasses.length === 0 ? (
+        <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+          {statusFilter === "active"
+            ? "Không có lớp nào chưa hoàn thành — chọn “Đã hoàn thành” hoặc “Tất cả trạng thái” để xem lớp cũ."
+            : statusFilter === "completed"
+              ? "Chưa có lớp nào hoàn thành (lớp hoàn thành khi buổi cuối đã nhận xét đủ học viên)."
+              : "Không có lớp nào phù hợp với bộ lọc."}
+        </div>
+      ) : query && totalMatches === 0 ? (
         <div className="rounded-xl border border-dashed p-8 text-center">
           <p className="text-sm font-medium">Không tìm thấy kết quả nào</p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -225,6 +277,14 @@ export function GalleryView({
                 <Badge className="rounded-md px-2.5 py-1 font-mono text-xs">
                   {c.class_code}
                 </Badge>
+                {c.completed && (
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 rounded-md border-green-600/40 text-xs font-normal text-green-700 dark:border-green-400/40 dark:text-green-400"
+                  >
+                    ✓ Đã hoàn thành
+                  </Badge>
+                )}
                 <span className="text-sm text-muted-foreground">
                   {c.courseCode} · {classProjects.length} sản phẩm
                   {classMembersWithoutProject.length > 0 &&

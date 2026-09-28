@@ -1117,6 +1117,28 @@
   - Hoạt động 100% offline, zero network latency khi tải font, compile cực nhanh.
 - [x] **Kiểm thử chất lượng:** 306/306 vitest PASS (27 test files), typecheck & eslint 0 lỗi.
 
+### Đợt 75 (`feat/gallery-modal-ux-image-preview`) — Lightbox Phóng To Ảnh & Tinh Chỉnh UX Toàn Diện Modal Gallery
+- [x] **Bố cục 2 Cột Split-View: Trải Dài Xuống, Fix 1 Ảnh To Đẹp Nhất, Ẩn Bớt Chức Năng & Tính Năng Reply (`project-grid.tsx`, `project-card.tsx`, `comment-section.tsx`):**
+  - Mở rộng DialogContent lên kích thước chuẩn màn hình lớn (`w-[96vw] sm:max-w-5xl lg:max-w-6xl xl:max-w-7xl h-[92vh] max-h-[850px]`).
+  - **Cột Trái (~60%):** Bố cục trải dài xuống 1 cột tuần tự tự nhiên (Mô tả dự án → Fix 1 ảnh ngang to đẹp nhất `h-36 sm:h-44` kèm dải thumbnail phụ `+N ảnh khác` mở popup Lightbox → Các chức năng mặc định hiện 3 cái có nút toggle "Xem thêm / Thu gọn" → Các link nộp bài dàn ngang 1 hàng). Tổng chiều cao ~410px vừa vặn hoàn hảo trong khung 850px, khóa `lg:overflow-hidden` **100% TRIỆT TIÊU THANH CUỘN (ZERO SCROLL)**.
+  - **Cột Phải (~40%):** Header nhận xét mở rộng padding `px-6 py-4` và khoảng cách `gap-4` với nút X, không còn bị sát mép. Bổ sung **Tính năng Reply (Trả lời bình luận)**: nút "Trả lời" trên từng bình luận, banner "Đang trả lời @[Tên]", tự động parse và hiển thị badge `↳ Trả lời @Tên` màu sắc nổi bật, thẻ reply có viền sáng nhẹ phân biệt rõ ràng; avatar đa sắc gradient cá nhân hóa; empty state kèm 4 nút gợi ý nhận xét nhanh 1 chạm.
+  - **Tối ưu Mobile (< lg):** Tự động chuyển về dạng 1 cột xếp dọc; khối bài làm ở trên có nút đóng `X` ở góc trên bên phải; khối nhận xét ở dưới có thanh cuộn và ô nhập ở đáy.
+- [x] **Xem ảnh phóng to & Không tắt modal cha khi click ngoài (Image Lightbox - `image-lightbox.tsx`, `project-card.tsx`):**
+  - Component Lightbox qua React Portal (`createPortal(..., document.body)`), nền tối mờ `bg-black/90 backdrop-blur-md`, z-index `z-[100]`.
+  - Phím tắt `Escape` đóng popup, phím mũi tên `←` / `→` duyệt ảnh, nút "Mở ảnh gốc ↗", hiển thị số thứ tự `1 / N`.
+  - Bấm vào thumbnail ảnh bài làm sẽ mở ngay lightbox với hiệu ứng hover mượt mà và huy hiệu "🔍 Xem ảnh".
+  - **Sửa lỗi click ngoài ảnh đóng cả modal:** Chặn lan truyền pointerdown/mousedown ở Lightbox, bắt phím Escape ở Capture Phase với `stopImmediatePropagation()`, thêm guard `onPointerDownOutside` và `onEscapeKeyDown` tại `DialogContent`. Bấm ra ngoài chỉ đóng ảnh và trở về nội dung hiện tại, không tắt popup lớn.
+- [x] **Bộ lọc trạng thái hoàn thành lớp trong Triển Lãm & Danh Sách Lớp (`gallery-view.tsx`, `gallery/page.tsx`, `class-list.tsx`):**
+  - Tự động tính toán trạng thái lớp đã hoàn thành (`isClassCompleted`) ở trang Triển Lãm `/teacher/gallery`.
+  - Bổ sung bộ lọc trạng thái: "Chưa hoàn thành" (Mặc định), "Đã hoàn thành", "Tất cả trạng thái". Mặc định chỉ hiển thị lớp chưa hoàn thành để không bị dồn ứ lớp cũ.
+  - Dropdown chọn lớp tự động lọc đồng bộ theo trạng thái đã chọn; gắn badge `✓ Đã hoàn thành` cạnh mã lớp.
+  - Cập nhật nhãn trong `class-list.tsx` sang "Chưa hoàn thành" đồng bộ.
+- [x] **Loại bỏ hoàn toàn tính năng AI ở phía học viên theo yêu cầu:**
+  - **Form nhập sản phẩm & Thư mục nộp bài (`project-editor.tsx`, `projects/page.tsx`, `image-url-chips.tsx`, `sample-project-dialog.tsx`, `drive-link-form.tsx`):** Xóa bỏ gợi ý AI; bổ sung ô nhập "Link Canvas" trên lưới 3 cột cân xứng; bấm vào ảnh thu nhỏ để xem phóng to bằng ImageLightbox; nâng cỡ chữ các tiêu đề trường lên `text-base font-semibold text-foreground` nổi bật; thêm nút "Bài mẫu" ở góc phải cùng dòng với tiêu đề Sản phẩm cuối khóa (kèm dialog chuẩn `w-[95vw] sm:max-w-5xl lg:max-w-6xl` 2 cột đẹp mắt, 100% không có thanh cuộn, nút Đóng to bản lùi xa mép đáy với padding lớn, bỏ nút áp dụng mẫu); xóa chữ "Chỉnh sửa sản phẩm của bạn"; đổi tiêu đề "📁 Thư mục nộp bài", mô tả "Em sẽ tải tất cả bài tập (CP1, CP2, SPCK) vào đây. Giáo viên và các bạn sẽ theo dõi tại đường dẫn này.", xóa dòng text phụ dưới chip link Drive.
+  - **Trang hướng dẫn nộp bài (`guide/page.tsx`):** Xóa bỏ mục 5 ("Lấy API key Gemini miễn phí") và video hướng dẫn API key.
+  - **Trang Hồ sơ cá nhân (`profile/page.tsx`, `profile-form.tsx`, `password-form.tsx`):** Ẩn card `🔑 Provider AI của bạn` đối với học viên; cân bằng layout 2 Card (Thông tin cá nhân & Đổi mật khẩu) bằng `items-stretch`, đồng bộ icon Lucide, đồng bộ dải `CardFooter` nền mờ, nút bấm và thông báo thẳng hàng ngang tuyệt đối.
+- [x] **Kiểm thử chất lượng:** 306/306 vitest PASS, typecheck & eslint 0 lỗi.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

@@ -119,8 +119,9 @@ export async function saveProject(
   for (const [label, url] of [
     ["GitHub", repoUrl],
     ["demo", demoUrl],
+    ["Canvas", extraNotes],
   ] as const) {
-    if (!isValidUrl(url)) {
+    if (url && !isValidUrl(url)) {
       return { error: `Link ${label} không hợp lệ — phải bắt đầu bằng http:// hoặc https://` };
     }
   }
