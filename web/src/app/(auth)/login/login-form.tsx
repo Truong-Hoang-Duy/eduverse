@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ export function LoginForm() {
     login,
     {}
   );
+  const [username, setUsername] = useState("demo");
+  const [password, setPassword] = useState("demo123");
 
   return (
     <Card className="border-border/60 shadow-xl shadow-black/5">
@@ -32,11 +34,37 @@ export function LoginForm() {
       </CardHeader>
       <form action={formAction}>
         <CardContent className="space-y-4">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs flex items-center justify-between gap-2">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 font-medium text-foreground">
+                <span className="flex size-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Tài khoản Demo học viên (Lớp DEMO)</span>
+              </div>
+              <div className="text-muted-foreground">
+                Tài khoản: <strong className="text-primary font-mono">demo</strong> &bull; Mật khẩu: <strong className="text-primary font-mono">demo123</strong>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs border-primary/30 text-primary hover:bg-primary/10 shrink-0 cursor-pointer"
+              onClick={() => {
+                setUsername("demo");
+                setPassword("demo123");
+              }}
+            >
+              Điền nhanh
+            </Button>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="username">Tên tài khoản</Label>
             <Input
               id="username"
               name="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               required
               autoFocus
@@ -48,6 +76,8 @@ export function LoginForm() {
               id="password"
               name="password"
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               required
             />
