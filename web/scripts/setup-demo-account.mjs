@@ -121,7 +121,7 @@ async function main() {
   console.log(`✓ Đã tạo tài khoản demo thành công:`);
   console.log(`  - ID: ${demoUserId}`);
   console.log(`  - Username: demo`);
-  console.log(`  - Mật khẩu: demo123`);
+  console.log(`  - Mật khẩu: demo`);
   console.log(`  - Họ và tên: Học viên Demo`);
   console.log(`  - Lớp: DEMO`);
 
@@ -290,7 +290,7 @@ async function main() {
   console.log("\n=== HOÀN TẤT THIẾT LẬP! ===");
   console.log("Thông tin đăng nhập DEMO:");
   console.log("- Tên tài khoản: demo");
-  console.log("- Mật khẩu: demo123");
+  console.log("- Mật khẩu: demo");
   console.log("- Mã lớp: DEMO");
 }
 
