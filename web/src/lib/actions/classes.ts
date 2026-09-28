@@ -7,7 +7,7 @@ import { isAcademicLevel } from "@/lib/academic-levels";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
-const CLASS_CODE_PATTERN = /^[A-Z]{2,6}\d{1,3}$/;
+const CLASS_CODE_PATTERN = /^([A-Z]{2,6}\d{1,3}|DEMO)$/;
 
 export async function createClass(
   _prev: ActionResult,
