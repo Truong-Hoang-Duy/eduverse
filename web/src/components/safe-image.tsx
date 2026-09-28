@@ -18,10 +18,12 @@ export function SafeImage({
   src,
   alt,
   className,
+  onClick,
 }: {
   src: string;
   alt: string;
   className?: string;
+  onClick?: () => void;
 }) {
   const [broken, setBroken] = useState(false);
 
@@ -36,6 +38,7 @@ export function SafeImage({
       alt={alt}
       loading="lazy"
       onError={() => setBroken(true)}
+      onClick={onClick}
       className={className}
     />
   );

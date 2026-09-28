@@ -40,22 +40,16 @@ export function DriveLinkForm({ initialUrl }: { initialUrl: string | null }) {
 
   if (!editing && saved) {
     return (
-      <div className="space-y-1.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <DriveLinkChip url={saved} label="Mở thư mục Drive của tôi" />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setEditing(true)}
-          >
-            Sửa
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Giáo viên và các bạn cùng lớp xem được đường dẫn này. Dùng chung cho
-          tất cả lớp của bạn.
-        </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <DriveLinkChip url={saved} label="Mở thư mục Drive của tôi" />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setEditing(true)}
+        >
+          Sửa
+        </Button>
       </div>
     );
   }

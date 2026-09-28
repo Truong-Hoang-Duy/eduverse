@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { User } from "lucide-react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
@@ -24,14 +25,17 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   );
 
   return (
-    <Card>
+    <Card className="flex h-full flex-col shadow-sm">
       <CardHeader>
-        <CardTitle>Thông tin cá nhân</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <User className="h-4 w-4 text-primary" />
+          <span>Thông tin cá nhân</span>
+        </CardTitle>
         <CardDescription>
           Vai trò: {profile.role === "teacher" ? "Giáo viên" : "Học viên"}
         </CardDescription>
       </CardHeader>
-      <form action={formAction}>
+      <form action={formAction} className="flex flex-1 flex-col justify-between">
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Tên tài khoản</Label>
@@ -49,12 +53,12 @@ export function ProfileForm({ profile }: { profile: Profile }) {
               required
             />
           </div>
-          <FormMessage result={state} />
         </CardContent>
-        <CardFooter className="mt-4">
+        <CardFooter className="mt-auto flex items-center gap-3">
           <Button type="submit" disabled={pending}>
             {pending ? "Đang lưu..." : "Lưu thay đổi"}
           </Button>
+          <FormMessage result={state} />
         </CardFooter>
       </form>
     </Card>

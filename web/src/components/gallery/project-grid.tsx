@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, Search, X } from "lucide-react";
+import { Calendar, ChevronDown, Laptop, Search, User, X } from "lucide-react";
 
 import { ProjectCard, type ProjectView } from "@/components/project-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -380,29 +381,109 @@ export function ProjectGrid({
 
       <Dialog open={openId !== null} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent
+          showCloseButton={false}
           style={{ touchAction: "pan-y" }}
-          className="scrollbar-slim max-h-[85vh] overflow-x-hidden overflow-y-auto sm:max-w-2xl"
+          className="flex flex-col lg:flex-row h-[92vh] max-h-[850px] w-[96vw] sm:max-w-5xl lg:max-w-6xl xl:max-w-7xl p-0 gap-0 overflow-hidden border-border shadow-2xl"
+          onPointerDownOutside={(e) => {
+            // Khi có lightbox xem ảnh đang mở hoặc click bắt nguồn từ portal xem ảnh, không đóng popup chi tiết
+            const target = e.target as HTMLElement | null;
+            if (
+              document.querySelector('[data-lightbox-overlay="true"]') ||
+              target?.closest?.('[data-lightbox-overlay="true"]')
+            ) {
+              e.preventDefault();
+            }
+          }}
+          onEscapeKeyDown={(e) => {
+            // Khi có lightbox xem ảnh đang mở, phím ESC chỉ đóng lightbox chứ không đóng popup chi tiết
+            if (document.querySelector('[data-lightbox-overlay="true"]')) {
+              e.preventDefault();
+            }
+          }}
         >
           {selected && (
             <>
-              <DialogHeader>
-                <DialogTitle>{selected.name}</DialogTitle>
-                <DialogDescription>
-                  {selected.authorName} · Lớp {selected.classCode}
-                  {selected.updatedAt &&
-                    ` · Cập nhật ${new Date(selected.updatedAt).toLocaleDateString("vi-VN")}`}
-                </DialogDescription>
-              </DialogHeader>
+              {/* CỘT TRÁI (DESKTOP) / KHỐI TRÊN (MOBILE): NỘI DUNG BÀI LÀM ĐẦY ĐỦ, THOÁNG ĐÃNG */}
+              <div className="w-full lg:w-[60%] xl:w-[62%] shrink-0 flex flex-col border-b lg:border-b-0 lg:border-r border-border/60 bg-muted/15 p-5 sm:p-6 lg:p-6 max-h-[48vh] lg:max-h-none overflow-y-auto scrollbar-slim">
+                <div className="flex items-start justify-between gap-3.5 pb-3 border-b border-border/60">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs">
+                      <Laptop className="size-5.5 text-primary" />
+                    </div>
+                    <DialogHeader className="space-y-0.5 text-left min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground leading-snug">
+                          {selected.name}
+                        </DialogTitle>
+                        <Badge
+                          variant="outline"
+                          className="bg-primary/10 text-primary border-primary/30 text-xs px-2 py-0.5 font-semibold shrink-0"
+                        >
+                          Lớp {selected.classCode}
+                        </Badge>
+                      </div>
+                      <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap pt-0.5">
+                        <span className="font-medium text-foreground/85 flex items-center gap-1">
+                          <User className="size-3 text-muted-foreground" />
+                          {selected.authorName}
+                        </span>
+                        {selected.updatedAt && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <span>•</span>
+                            <Calendar className="size-3 text-muted-foreground" />
+                            Cập nhật {new Date(selected.updatedAt).toLocaleDateString("vi-VN")}
+                          </span>
+                        )}
+                      </DialogDescription>
+                    </DialogHeader>
+                  </div>
 
-              <ProjectCard project={selected} hideHeading />
+                  {/* Nút đóng trên mobile (ẩn trên desktop vì đã có nút ở đỉnh cột nhận xét) */}
+                  <div className="lg:hidden shrink-0">
+                    <DialogClose asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Đóng chi tiết bài làm"
+                        title="Đóng (ESC)"
+                        className="size-8.5 shrink-0 rounded-full border border-border/60 bg-background/80 text-muted-foreground hover:bg-accent hover:text-foreground hover:border-border transition-all duration-150 cursor-pointer shadow-xs"
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </DialogClose>
+                  </div>
+                </div>
 
-              <div className="border-t pt-4">
+                <div className="pt-3 flex-1">
+                  <ProjectCard project={selected} hideHeading twoColumn />
+                </div>
+              </div>
+
+              {/* CỘT PHẢI (DESKTOP) / KHỐI DƯỚI (MOBILE): NHẬN XÉT (CUỘN ĐỘC LẬP & FORM GHIM Ở ĐÁY) */}
+              <div className="w-full lg:w-[40%] xl:w-[38%] flex-1 min-h-0 flex flex-col overflow-hidden bg-card">
                 <CommentSection
                   projectId={selected.id}
                   classId={selected.classId}
                   comments={selected.comments}
                   currentUserId={currentUserId}
                   placeholder={commentPlaceholder}
+                  headerAction={
+                    <div className="hidden lg:flex shrink-0">
+                      <DialogClose asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Đóng chi tiết bài làm"
+                          title="Đóng (ESC)"
+                          className="size-8.5 shrink-0 rounded-full border border-border/60 bg-background/80 text-muted-foreground hover:bg-accent hover:text-foreground hover:border-border transition-all duration-150 cursor-pointer shadow-xs"
+                        >
+                          <X className="size-4.5" />
+                        </Button>
+                      </DialogClose>
+                    </div>
+                  }
                 />
               </div>
             </>

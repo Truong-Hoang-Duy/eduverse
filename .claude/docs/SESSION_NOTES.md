@@ -1,40 +1,63 @@
 # SESSION_NOTES.md — Sổ tay bàn giao giữa các phiên làm việc
-
 > File này là "bộ nhớ chung". Claude đọc file này ĐẦU MỖI PHIÊN và cập nhật CUỐI
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
-
 ---
-
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-28, bởi: Gemini)
-
-**Đang làm:** Đã hoàn thành xử lý **Tối Ưu Hiệu Năng Khởi Động Giao Diện & Nhận Xét Realtime/Optimistic Trong Gallery (Đợt 74)**:
-1. **Tối ưu tốc độ tải và khởi động giao diện (Startup Render Performance):**
-   - **Pre-warm background request trong dev mode (`web/scripts/dev.mjs`):** Khi Turbopack in `Ready in ...ms`, kích hoạt fetch ngầm để biên dịch trước root layout, CSS, và font giúp người dùng khi mở trình duyệt lên là giao diện đã sẵn sàng, loại bỏ hiện tượng treo trắng trang lần đầu.
-   - **Thêm khung xương tải trang gốc (`web/src/app/loading.tsx`):** Hiển thị `PageSkeleton` tức thì trong 0.1s khi truy cập trang gốc, giải quyết tình trạng đơ màn hình khi middleware/Server Components kiểm tra auth.
-   - **Song song hóa truy vấn Supabase:**
-     + `web/src/app/(teacher)/teacher/page.tsx`: Gom cả 3 query ban đầu (`courses`, `classes`, `sessions`) vào 1 `Promise.all` song song, tiết kiệm 1 roundtrip mạng tuần tự (100–200ms).
-     + `web/src/app/(student)/student/classes/[classId]/gallery/page.tsx`: Gom cả 4 query (`classes`, `enrollments`, `projects`, `project_comments`) vào 1 `Promise.all` duy nhất, cắt giảm một nửa độ trễ server.
-2. **Chuyển đổi toàn bộ Font sang Self-hosted Local Fonts (`next/font/local`):**
-   - **Xóa bỏ vĩnh viễn lỗi Turbopack `Can't resolve '@vercel/turbopack-next/internal/font/google/font'`:** Tải toàn bộ font files về trực tiếp trong repository (`web/src/app/fonts/`), loại bỏ hoàn toàn `next/font/google` khỏi toàn bộ dự án.
-   - **Tập tin font đã lưu trong source:**
-     + `Be Vietnam Pro` (4 tệp: Regular 400, Medium 500, SemiBold 600, Bold 700) cho toàn bộ giao diện app ([layout.tsx](file:///D:/Project/Eduverse/web/src/app/layout.tsx)).
-     + `GeistMono-Variable.ttf` cho mã lớp/mã khóa.
-     + `PlayfairDisplay-Variable.ttf` và `DancingScript-Variable.ttf` cho trang Showcase / Bằng khen ([fonts.ts](file:///D:/Project/Eduverse/web/src/components/showcase/fonts.ts)).
-   - **Lợi ích:** 100% offline, zero network roundtrip tới Google Fonts CDN, không bao giờ bị lỗi kết nối hoặc chặn DNS/firewall, dev server và Turbopack khởi động ngay lập tức.
-3. **Nhận xét sản phẩm học viên cập nhật tức thì không cần reload trang (`comment-section.tsx`, `projects.ts`):**
-   - **Optimistic UI (0ms):** Khi học viên bấm gửi nhận xét, nhận xét mới lập tức hiển thị trên màn hình với ID tạm và badge "(bạn)"; input tự động reset; nếu server lỗi sẽ tự động rollback và báo lỗi rõ ràng. Khi bấm xóa nhận xét cũng biến mất ngay lập tức trên UI.
-   - **Kích hoạt `router.refresh()` & đồng bộ `revalidatePath`:** Truyền `classId` cụ thể vào `revalidateGallery(classId)` và gọi `router.refresh()` sau khi action hoàn tất để Next.js làm mới router cache.
-   - **Đồng bộ Realtime + Fallback Polling (4s):**
-     + Đăng ký kênh Supabase Realtime `postgres_changes` trên bảng `project_comments` theo `project_id`.
-     + Tạo migration `20260928010000_realtime_project_comments.sql` bật `supabase_realtime` cho bảng `project_comments`.
-     + Bổ sung polling chu kỳ ngắn (mỗi 4s) để đảm bảo ngay cả khi mạng hoặc firewall chặn WebSocket, học viên trong lớp vẫn tự động thấy nhận xét của nhau mà không cần bấm F5.
-   - **Bộ đếm nhận xét động:** Chuyển `💬 Nhận xét ({count})` vào trong `CommentSection` để nhảy số tức thì theo realtime.
-4. **Kiểm thử chất lượng:**
-   - `web/`: `pnpm test` (306/306 tests PASSED - 27 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
-   - Nhánh Git: Đã commit, merge `fix/perf-and-gallery-comments` vào `develop` và `main`, push lên `origin` thành công.
-
-
+**Đang làm:** Đã hoàn thành xử lý **Loại Bỏ Tính Năng AI Phía Học Viên, Cải Tiến Modal Gallery 2 Cột Split-View & Bổ Sung Filter Lớp (Đợt 75)**:
+1. **Loại bỏ hoàn toàn tính năng AI ở phía học viên:**
+   - **Form nhập sản phẩm (`project-editor.tsx`, `projects/page.tsx`, `sample-project-dialog.tsx`):**
+     - Loại bỏ cụm nút `Độ khó: Tùy AI ▾` và `✨ AI gợi ý`, bỏ danh sách gợi ý tính năng và các logic/state liên quan.
+     - **Bổ sung ô nhập Link Canvas (`project-editor.tsx`, `projects.ts`, `project-card.tsx`):** Thay thế trường ghi chú cũ bằng ô nhập `Link Canvas` (Canva/Canvas thuyết trình), dàn đều trên lưới 3 cột cân xứng (`Link GitHub`, `Link demo`, `Link Canvas`), validate URL an toàn và render `LinkChip` Canvas đồng bộ.
+     - **Xem ảnh phóng to khi bấm ảnh thu nhỏ (`image-url-chips.tsx`):** Tích hợp `ImageLightbox` khi học viên bấm vào bất kỳ ảnh thumbnail nào trong phần nhập ảnh sản phẩm; có hiệu ứng hover zoom nhẹ và huy hiệu "🔍 Xem ảnh", nút xóa ảnh có `stopPropagation` riêng biệt.
+     - **Nâng cấp độ nổi bật tiêu đề trường:** Font chữ các nhãn (`Tên dự án *`, `Mô tả dự án`, `Các chức năng`, `Ảnh sản phẩm`, `Link GitHub`, `Link demo`, `Link Canvas`) được nâng lên `text-base font-semibold text-foreground`, khoảng cách `space-y-2` thoáng đãng, dễ đọc và nổi bật rõ rệt.
+      - **Nút "Bài mẫu" & Tối ưu chiều cao popup (`sample-project-dialog.tsx`):** Đặt ở góc trên bên phải cùng dòng với tiêu đề `Sản phẩm cuối khóa`. Thiết kế dialog kích thước cân đối chuẩn mực (`w-[94vw] sm:max-w-4xl lg:max-w-5xl`), chiều cao tinh chỉnh gọn gàng (~420px), khắc phục triệt để lỗi bị "kín trên dưới" (chạm sát 2 mép màn hình). Giảm padding dọc thừa của Header (`py-3`), Body (`py-3.5`) và Footer (`py-3`); nút Đóng vừa vặn chuẩn mực (`size="sm" h-9 px-6 text-sm font-semibold`); để lại khoảng thở trên/dưới thoáng đãng (~150px - 250px) trên mọi loại màn hình laptop/desktop và **100% không phát sinh thanh cuộn (Zero Scroll)**.
+     - **Xóa dòng mô tả phụ:** Xóa bỏ chữ "Chỉnh sửa sản phẩm của bạn" bên dưới tiêu đề `Sản phẩm cuối khóa`. Bỏ query thừa `courses(code)`.
+   - **Khối Thư mục nộp bài (`projects/page.tsx`, `drive-link-form.tsx`):**
+     - Đổi tiêu đề: `📁 Thư mục nộp bài`.
+     - Đổi mô tả: `Em sẽ tải tất cả bài tập (CP1, CP2, SPCK) vào đây. Giáo viên và các bạn sẽ theo dõi tại đường dẫn này.`
+     - Xóa bỏ dòng chú thích phụ bên dưới chip link Drive (`Giáo viên và các bạn cùng lớp xem được đường dẫn này...`) để giao diện gọn gàng, thanh lịch.
+   - **Trang hướng dẫn nộp bài (`guide/page.tsx`):** Xóa bỏ mục 5 ("5. Lấy API key Gemini miễn phí để dùng AI riêng") và link video hướng dẫn lấy API key.
+   - **Trang Hồ sơ cá nhân (`profile/page.tsx`, `profile-form.tsx`, `password-form.tsx`):**
+     - Ẩn hoàn toàn card `🔑 Provider AI của bạn` đối với tài khoản học viên (`profile.role !== "teacher"`).
+     - **Cân bằng giao diện 2 Card (Thông tin cá nhân & Đổi mật khẩu):** Sử dụng `grid items-stretch md:grid-cols-2`, cả 2 card co giãn chiều cao bằng nhau 100% (`h-full flex flex-col justify-between`), đồng bộ icon Lucide (`User` và `Lock`), đồng bộ `CardFooter` có nền xám `border-t bg-muted/50 rounded-b-xl`, nút "Lưu thay đổi" và "Đổi mật khẩu" neo cố định ở đáy và nằm thẳng hàng ngang tuyệt đối từng pixel.
+     - Đối với giáo viên: layout 2 cột cân xứng (cột trái gồm Thông tin cá nhân + Đổi mật khẩu, cột phải là Provider AI).
+2. **Bố cục 2 Cột Split-View: Trải Dài Xuống, Fix 1 Ảnh To Đẹp Nhất, Ẩn Bớt Chức Năng & Tính Năng Reply (`project-grid.tsx`, `project-card.tsx`, `comment-section.tsx`):**
+   - **Cột Trái (~60%) — Trải dài xuống 1 cột tự nhiên, 100% Zero Scroll:**
+     - **Header bài làm:** Hộp icon Laptop bo góc (`size-10 rounded-xl bg-primary/10 text-primary`), tiêu đề sản phẩm font to ấn tượng (`text-xl sm:text-2xl font-bold tracking-tight text-foreground`), kèm huy hiệu `Lớp {code}`, tên tác giả với icon `User` và ngày cập nhật với icon `Calendar`.
+     - **Mô tả dự án:** Bọc trong card cao cấp (`p-3 sm:p-3.5 text-xs sm:text-sm leading-relaxed text-foreground/95`), chữ to rõ ràng, trải rộng toàn bề ngang.
+     - **Ảnh sản phẩm (Hero Banner):** Fix **1 ảnh ngang to đẹp nhất** (`h-36 sm:h-44 w-full object-cover rounded-xl border border-border/80 shadow-xs`), góc có huy hiệu `🔍 Phóng to` và badge `📷 +N ảnh khác`. Nếu có nhiều ảnh, các ảnh phụ được thu nhỏ thành dải thumbnail bên dưới (`size-12 rounded-lg`), bấm vào bất kỳ ảnh nào sẽ mở popup `ImageLightbox` xem toàn màn hình. Dù có 1 hay 6 ảnh vẫn chỉ chiếm đúng một chiều cao cố định!
+      - **Các chức năng & Liên kết dự án (Chia 2 bên cân xứng, 100% không bị tràn):** Đặt song song "Các chức năng" (bên trái, khung cuộn mỏng nội bộ `max-h-32 sm:max-h-36 scrollbar-slim`) và "Liên kết dự án & Nộp bài" (bên phải, lưới 2 cột cho Drive, GitHub, Demo, Canvas, kèm ghi chú nếu có). Giúp tiết kiệm hơn 100px chiều cao theo trục dọc, giải quyết dứt điểm tình trạng liên kết bị tràn xuống đáy khuất tầm nhìn, đồng thời đảm bảo không phát sinh thanh cuộn ngoài cho modal.
+      - **Độ cao hoàn hảo, không bị tràn (Zero Overflow):** Hero banner ảnh tối ưu `h-32 sm:h-38`, tổng chiều cao toàn bộ các khối chỉ ~420px, để lại khoảng trống thoải mái trên khung modal 850px và có scrollbar dự phòng an toàn.
+   - **Cột Phải (~40%) — Giao diện nhận xét & câu trả lời dạng Thread bong bóng chuẩn Facebook:**
+     - **Header nhận xét:** Tăng padding `px-6 py-4` và khoảng cách `gap-4` với nút đóng `X`, chữ và icon rộng rãi, sang trọng, không bị sát mép.
+     - **Giao diện nhận xét & câu trả lời chuẩn Facebook (`comment-section.tsx`, `lib/project-comments.ts`):**
+       - **Bong bóng chat Facebook:** Thiết kế bubble bo góc mềm mại (`rounded-2xl rounded-tl-xs px-3.5 py-2 bg-muted/60 dark:bg-muted/40`), tên tác giả in đậm kèm badge `[bạn]`, loại bỏ hoàn toàn viền card cứng nhắc cũ.
+       - **Hàng hành động Facebook dưới bong bóng:** Dòng chữ nhỏ thanh lịch `Thời gian · Trả lời · Xóa`, bấm "Trả lời" kích hoạt banner reply và focus input ngay lập tức.
+       - **Cấu trúc cây Thread thụt lề cha - con:** Các câu trả lời được thụt lề (`ml-4 sm:ml-4.5 pl-6 sm:pl-7`), có đường cong nối nhánh hình chữ L (`L-branch connector curve`) nối từ bình luận gốc xuống avatar nhỏ của câu trả lời.
+       - **Mention tag inline:** Tên người được trả lời hiển thị dạng link `@Tên` màu xanh primary nổi bật ngay đầu nội dung giống hệt tag Facebook, bấm vào tag có thể trả lời tiếp người đó.
+       - **Tách module logic thuần:** Hàm parse và gom nhóm thread chuyển sang `lib/project-comments.ts` kèm bộ unit test Vitest toàn diện.
+     - **Avatar sinh động đa sắc:** Tự động tạo màu gradient ngẫu nhiên cố định theo tên học viên.
+     - **Empty state truyền cảm hứng & Quick Suggestion Chips:** 4 nút gợi ý nhận xét nhanh 1 chạm tự điền vào input.
+   - **Tối ưu Mobile (< lg):** Tự động chuyển về dạng 1 cột xếp dọc; khối bài làm ở trên có nút đóng `X` ở góc trên bên phải; khối nhận xét ở dưới có thanh cuộn và ô nhập ở đáy.
+3. **Bộ lọc trạng thái hoàn thành lớp trong Triển Lãm & Danh Sách Lớp (`gallery-view.tsx`, `gallery/page.tsx`, `class-list.tsx`):**
+   - **Tính toán trạng thái lớp hoàn thành:** Trong `teacher/gallery/page.tsx`, tự động phân tích buổi học cuối cùng (`total_sessions`) và số lượng nhận xét đã xử lý (`isHandled`) qua hàm chuẩn `isClassCompleted`.
+   - **Thêm Filter Trạng thái hoàn thành:** Tích hợp bộ chọn `Select` gồm 3 mức: "Chưa hoàn thành" (Mặc định), "Đã hoàn thành", "Tất cả trạng thái".
+   - **Mặc định là "Chưa hoàn thành":** Khi giáo viên vào xem Gallery, trang mặc định chỉ hiển thị các lớp chưa hoàn thành (đang học), giúp không bị ngập bởi các lớp cũ đã kết thúc.
+   - **Đồng bộ Dropdown chọn lớp:** Dropdown lớp tự động lọc theo danh sách lớp khả dụng của trạng thái đang chọn.
+   - **Badge nhận diện lớp:** Gắn nhãn `✓ Đã hoàn thành` màu xanh lá tinh tế bên cạnh mã lớp.
+   - **Đồng bộ nhãn trong `class-list.tsx`:** Đổi nhãn `active: "Đang học"` thành `active: "Chưa hoàn thành"` để đồng bộ 100% ngữ nghĩa trên toàn bộ ứng dụng.
+4. **Xem ảnh phóng to (Image Lightbox - `image-lightbox.tsx`, `project-card.tsx`, `safe-image.tsx`):**
+   - Tạo mới component `ImageLightbox` qua React Portal (`createPortal(..., document.body)`), nền tối mờ `bg-black/90 backdrop-blur-md` với z-index cao nhất (`z-[100]`).
+   - Bấm vào bất kỳ ảnh bài làm nào trong `ProjectCard` sẽ phóng to tức thì, có huy hiệu "🔍 Xem ảnh" khi hover và con trỏ `cursor-zoom-in`.
+   - **Bấm ra ngoài ảnh CHỈ trở về nội dung hiện tại (không tắt popup lớn):** Bắt và chặn lan truyền `onPointerDown`, `onMouseDown`, `onClick` từ Lightbox lên document; bắt phím `Escape` ở Capture Phase với `e.stopImmediatePropagation()`; bổ sung guard `onPointerDownOutside` và `onEscapeKeyDown` tại `DialogContent` của modal cha. Đảm bảo khi bấm ra ngoài hoặc ấn ESC trong Lightbox, người dùng quay về đúng màn hình bài làm hiện tại mà không bị văng ra khỏi popup!
+5. **Căn chỉnh độ rộng Header Navigation bằng với nội dung bên dưới (`app-nav.tsx`):**
+   - Khắc phục lỗi co cụm kích thước do thiếu `w-full` trong container flexbox khiến header bị thu hẹp thành một viên pill ~380px lọt thỏm ở giữa màn hình lớn.
+   - Thiết lập `w-[calc(100%-2rem)] sm:w-full max-w-5xl mx-auto` và khối con `flex w-full items-center justify-between px-4 sm:px-4`: thanh navigation kéo dài cân xứng 100% bằng phẳng với toàn bộ khối nội dung trang `main` (max-w-5xl) bên dưới.
+   - Logo Eduverse bên trái và cụm tài khoản cá nhân bên phải dóng thẳng hàng dọc chuẩn xác từng pixel với lề của tiêu đề trang và lưới thẻ học viên.
+6. **Kiểm thử chất lượng:**
+   - `web/`: `pnpm test` (306/306 tests PASSED), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
+---
 2. **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts`):**
    - Mở rộng ngân hàng nhận xét của 2 nhóm: `Quá trình & Tác phong làm bài` và `Nắm vững kiến thức & Tư duy` (lên 40 mục nhận xét thực tế).
    - Chia thành 4 cấp bậc rõ rệt: 🌟 **Giỏi / Xuất sắc** (xanh lá), 👍 **Khá** (xanh dương), ⚖️ **Trung bình** (vàng hổ phách), ⚠️ **Cần cố gắng** (đỏ hồng).
@@ -78,11 +101,8 @@
    - `ai-service`: `.venv/Scripts/python -m pytest` → 86/86 tests PASSED (100%).
    - `web/`: `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm test` (270/270 tests PASSED - 23 test files).
    - Nhánh Git: Đã commit và merge sạch từ `feature/final-presentation-review` vào `develop` và `main`, push lên `origin` thành công.
-
 **`main` = `origin/main` = `79e4606`**
 Migration mới: `supabase/migrations/20260928010000_realtime_project_comments.sql` (bật Supabase Realtime cho bảng `project_comments`).
-
-
 🔴 **Phát hiện đầu phiên: `develop` bị BỎ SÓT một commit chỉ-sửa-docs trên
 `main`** (`b8e8a1a`, không phải merge commit — có vẻ soạn trực tiếp trên
 `main` ở phiên trước rồi quên đồng bộ ngược). Do nhánh `feature/parent-showcase-link`
@@ -94,7 +114,6 @@ code lệch nhau đúng 1 commit. Xử lý: dựng lại toàn bộ docs Đợt 
 `main` (giữ nguyên nội dung Đợt 57), không phải merge conflict thô. **Bài học
 lặp lại của Đợt 55**: đầu phiên thấy trạng thái nhánh lạ (ở đây là "hai nhánh
 chuẩn lệch nhau") thì phải đối chiếu TRƯỚC khi viết đè, đọc DECISIONS.md.
-
 **8 migration user đã xác nhận DÁN + CHẠY XONG** (Claude không tự verify
 được — không query DB trực tiếp, trừ lúc probe bằng script tay). 6 migration
 Đợt 57 (`20260805000000` → `20260828010000`, xem chi tiết lịch sử phiên
@@ -117,7 +136,6 @@ chưa tồn tại, panel "🔗 Link cho phụ huynh" hiện "chưa bật" dù d�
 hệt nhau trên UI. Toàn bộ bài học ở DECISIONS.md — **luật cũ nhắc lại nghiêm:
 file trong `supabase/migrations/` mà user đã dán là BẤT BIẾN, kể cả vừa tạo
 vài phút trước; đổi thiết kế = migration MỚI, không sửa file cũ.**
-
 ✅ **Đợt 58 là NGOẠI LỆ hiếm hoi trong dự án: ĐÃ nghiệm thu bằng mắt + ĐÃ chạy
 E2E trên DB thật, cả hai đều xanh.** User tự bấm thử trên `pnpm dev` (sáng +
 tối, điện thoại) và xác nhận "ổn định, đẹp mắt". Sau khi dán migration,
@@ -126,7 +144,6 @@ xanh** ở cả 2 lần chạy trong phiên. (`grading.e2e.ts` có 1-3 ca đỏ 
 "đang quá tải" — flake đã biết, không liên quan nhánh này.) Vẫn CHƯA nghiệm
 thu: toàn bộ Đợt 48→57 cũ (xem cảnh báo trong lịch sử phiên bên dưới, chưa
 đổi từ trước tới giờ).
-
 🔴 **`.claude/docs/GIT-WORKFLOW-RULES.md` SIẾT hơn `.claude/rules/git-workflow.md`
 cũ** — đọc file này ĐẦU MỖI PHIÊN:
 - KHÔNG tự ý commit/push/merge `develop`→`main` — phải đợi user xác nhận rõ
@@ -134,21 +151,17 @@ cũ** — đọc file này ĐẦU MỖI PHIÊN:
 - Commit message tiếng Anh, `feat:`/`fix:`, **KHÔNG** `Co-Authored-By` hay bất
   kỳ attribution nào của Claude.
 - Luôn `git branch --show-current` TRƯỚC KHI SỬA CODE.
-
 **Bắt đầu phiên sau:** `git checkout develop && git pull --ff-only && git checkout -b feature/<slug>`
 — và **kiểm tra lại branch trước MỖI lần sửa file**, không chỉ lần đầu. Cũng
 nên `git log --oneline -3 main ^develop` một lần đầu phiên để bắt sớm kiểu
 lệch nhánh vừa dính ở trên.
-
 ⚠️ **`pnpm build` xung đột với `pnpm dev` đang chạy** (lỗi lạ "Cannot find
 module for page") — port 3000 dùng chung `.next` cache. Luôn `netstat -ano |
 grep ":3000 " | grep LISTENING` trước khi build; nếu có, nhờ user dừng dev
 server (đừng tự kill tiến trình của user).
-
 **Deploy:** sửa `web/` → chỉ Vercel; sửa `ai-service/` → **cả Render**
 (`/health`, so `commit` với `git log --oneline -1 main`). Máy dev KHÔNG vào
 được `onrender.com` — phải nhờ user tự mở.
-
 **Sản phẩm hiện có** (nghiệp vụ ở FEATURES.md, lịch sử ở ROADMAP.md): auth
 USERNAME; khóa→lớp→buổi + sao chép lớp + chuyển học viên qua dialog riêng +
 xếp loại học lực tích 1 lần/lớp + xem nội dung buổi khác để tham khảo + áp
@@ -161,23 +174,17 @@ riêng; trang vận hành `/teacher/admin`; 3 màn chiếu TV; **link triển l�
 phẩm cuối khóa cho PHỤ HUYNH** (mới — `/showcase/<token>`, không cần đăng
 nhập, bản sắc thị giác riêng "Bảng vàng", QR chiếu TV, phụ huynh chấm điểm +
 nhận xét ẩn danh từng em); `pnpm dev` tự mở trình duyệt.
-
 ## ✅ Cổng kiểm tra & E2E
-
 `web/`: **lint + typecheck + `pnpm test` (229 unit test) + build**.
 `ai-service/`: **`.venv/Scripts/python -m pytest`** (68 test — Đợt 58 KHÔNG đụng ai-service).
-
 E2E chạy trong `web/` trên DB THẬT (tự tạo, tự dọn), chia **HAI LOẠI** (Đợt 41):
-
 **A. `pnpm test:e2e`** — gọi THẲNG thân Server Action (`web/e2e/*.e2e.ts`).
 Đổi chữ ký hàm là `pnpm typecheck` đỏ, đổi hành vi là bộ này đỏ. **138 ca** —
 `showcase.e2e.ts` (Đợt 58) đã chạy thật, 40/40 xanh. Các bộ action Đợt 48→57
 (combo, SPCK, xếp loại theo lớp...) **vẫn CHƯA có ca nào** (xem cảnh báo trên).
-
 🔴 **Bộ này KHÔNG phủ lớp React bọc quanh action** — gọi thẳng thân hàm.
 **E2E xanh ≠ UI chạy được**, vẫn phải bấm thử — đã dính lỗi này 1 lần (Đợt 47,
 thiếu `startTransition`). Đợt 58 là ngoại lệ: ĐÃ bấm thử thật, không chỉ dựa E2E.
-
 | Bộ | Test | Ghi chú |
 |---|---|---|
 | `admin-ops.e2e.ts` | 21 | trang vận hành: guard, 3 action service-role, dọn file |
@@ -186,20 +193,15 @@ thiếu `startTransition`). Đợt 58 là ngoại lệ: ĐÃ bấm thử thật,
 | `grading.e2e.ts` | 26 | **cần ai-service**; chấm bài + hỏi bài + trắc nghiệm. Tiêu 6 lượt Gemini |
 | `reviews.e2e.ts` | 10 | nhận xét theo buổi + đánh vắng + gợi ý nội dung; 1 ca cần ai-service. Schema Đợt 57; **CHƯA có ca cho `applyReviewsFromSession`/combo mới** |
 | `showcase.e2e.ts` | 40 | **MỚI Đợt 58**; link phụ huynh: token, ẩn HV, chấm điểm/sửa lượt/ẩn danh thật, công tắc hiện điểm TB, thả tim, lượt xem, thu hồi link (tắt/bật/đổi token/hết hạn), ranh giới RLS 3 bảng mới. Không cần ai-service |
-
 **B. `node --env-file=.env.local scripts/<script>`** — probe RLS gọi REST trần,
 CỐ Ý bỏ qua code app. **ĐỪNG chuyển sang gọi action.** 7 script, ~101 ca —
 xem chi tiết ở git log nếu cần (không đổi gì phiên này).
-
 ⚠️ Hạn mức Gemini free = **20 lượt/NGÀY theo Google Cloud PROJECT** (không theo
 key). E2E gọi AI đỏ thì nghi hạn mức trước, đọc log ai-service (`Gemini quota
 exhausted` vs `unavailable (high demand)`).
-
 Công cụ chẩn đoán: `/health` ai-service, `scripts/check-integrity.mjs`,
 `scripts/check-user.mjs`, `scripts/purge-test-users.mjs [--yes]`.
-
 ## 📌 Quyết định đã chốt → `.claude/docs/DECISIONS.md`
-
 Đọc DECISIONS.md trước khi định làm ngược một quyết định cũ; thêm quyết định
 mới cũng ghi vào đó. Phiên Đợt 58 thêm ~12 mục — trọng tâm: ảnh sản phẩm là
 LINK NGOÀI (không Storage), trang công khai đi qua RPC SECURITY DEFINER
@@ -208,9 +210,7 @@ LINK NGOÀI (không Storage), trang công khai đi qua RPC SECURITY DEFINER
 mặc định KHÔNG hiện cho phụ huynh (tránh xếp hạng trẻ con), bản sắc thị giác
 riêng "Bảng vàng" phải qua test tương phản WCAG AA, không dùng emoji làm phần
 tử giao diện.
-
 ## ⚠️ Vấn đề đang mở / cần chú ý
-
 ### Nợ kỹ thuật đã biết, CHƯA làm
 - 🟡 **E2E chưa phủ hầu hết action Đợt 48→57** (xem bảng trên) — `showcase.e2e.ts`
   của Đợt 58 là bộ MỚI DUY NHẤT đã đủ ca. Ưu tiên nếu làm tiếp:
@@ -222,7 +222,6 @@ tử giao diện.
   DECISIONS.md).
 - 🟡 E2E action còn thiếu: tin Zalo, API key, mật khẩu — mới chỉ có probe RLS.
   Mẫu ở `web/e2e/_harness.ts`, nhớ khai tiền tố vào `test-user-prefixes.json`.
-
 ### Ràng buộc môi trường (không sửa được, phải sống chung)
 - Migration dán tay vào Supabase SQL Editor — mạng chặn cổng 5432/6543. SQL
   KHÔNG xóa được Storage (lỗi 42501) — phải qua Storage API.
@@ -240,16 +239,13 @@ tử giao diện.
   tiến trình mồ côi trên port 3000 nếu dừng không sạch; kill port + xóa
   `web/.next` nếu gặp lỗi lạ. Script dùng service key phải đặt TRONG
   `web/scripts/`.
-
 ## 🗂 Lịch sử phiên gần đây (nén — chi tiết đầy đủ nằm trong git log từng commit)
-
 ### 2026-08-29 — Đợt 58 (`feature/parent-showcase-link`) — link triển lãm sản phẩm cho PHỤ HUYNH
 User muốn một link công khai gửi phụ huynh xem sản phẩm cuối khóa của cả lớp
 trong buổi lễ tốt nghiệp. Khảo sát trước khi code (không có sẵn khái niệm
 "khách vãng lai" trong app — mọi route đều sau `requireRole`), hỏi rõ 4 điểm
 mơ hồ bằng `AskUserQuestion` (phạm vi, nội dung hiện, hiện tên đầy đủ hay
 viết tắt, hạn dùng mặc định) trước khi viết migration đầu tiên.
-
 **Thiết kế đổi 2 lần theo phản hồi trực tiếp** (giống nếp cũ của Đợt 48→54):
 (1) bản đầu có "lời chúc" công khai + thanh tên các em dính đầu trang để
 chuyển bạn; (2) user xem xong yêu cầu đổi hẳn sang "chấm điểm + nhận xét ẨN
@@ -257,20 +253,17 @@ DANH" (3 tiêu chí sao Sản phẩm/Thuyết trình/Sáng tạo, đều đượ
 bỏ thanh tên → chuyển sang POPUP khi bấm vào từng em, vì thanh tên 12-20 nút
 cuộn ngang không hợp điện thoại. Bảng `showcase_ratings` thay hẳn
 `showcase_messages` — không có cột tên vì ẩn danh là RÀNG BUỘC THIẾT KẾ.
-
 **Sự cố migration** (xem chi tiết ở "Trạng thái hiện tại" phía trên): sửa
 thẳng file migration đã dán thay vì tạo file mới, khiến panel "chưa bật link"
 sai sự thật ngay sau lần đổi thiết kế. Vá bằng migration nối tiếp
 (`information_schema`, dán lại vô hại) + bịt chỗ nuốt `error` khiến triệu
 chứng khó chẩn đoán.
-
 ## Cập nhật phiên làm việc (Cập nhật bởi: Gemini)
 - Hoàn thành tính năng sinh lời chào Buổi 1 bằng AI (Gemini/OpenAI) thay vì hardcode. Tính năng lấy API Key/Provider từ cài đặt cá nhân của người dùng.
 - Tinh chỉnh Prompt cho lời chào Buổi 1: không dùng emoji, format chuẩn Zalo, văn phong trang trọng, ngôn ngữ chuẩn học đường.
 - Setup cron job để tự động dọn dẹp các bản ghi Showcase hết hạn (dùng `pg_cron`).
 - Đã merge và deploy code (feature/ai-session-1-greeting -> develop -> main).
 - Bổ sung tính năng lọc theo tên học viên & tên sản phẩm trên trang Showcase phụ huynh (`/showcase/[token]`), Thư viện học viên (`/student/classes/[classId]/gallery`), và Thư viện giáo viên (`/teacher/gallery`). Loại bỏ điều kiện `projects.length > 6` để các lớp nhỏ vẫn luôn có ô tìm kiếm. Đã bổ sung unit tests và pass toàn bộ 264 tests. (Nhánh `feature/showcase-name-filter`).
-
 **Bản sắc thị giác riêng "Bảng vàng"** (user yêu cầu RÕ RÀNG "không phải
 giao diện tối mặc định", duyệt bản kế hoạch trước khi code): palette ngà/than
 ấm + đồng thau + đất nung khoanh trong `.showcase-theme`, Playfair Display +
@@ -282,18 +275,14 @@ qua test là biết ngay, không phải duyệt bằng mắt. Bug kỹ thuật �
 popup Radix portal ra ngoài cây DOM của layout nên không thừa kế được biến
 font/màu — phải tách `.showcase-theme` (khai biến) khỏi `.showcase-surface`
 (sơn nền) và truyền tay class font xuống popup.
-
 **Phát hiện cuối phiên (trước khi merge)**: `develop` thiếu 1 commit
 docs-only đã có trên `main` (xem "Trạng thái hiện tại") — dựng lại docs Đợt
 58 trên nền `main` thay vì để git tự 3-way-merge các file prose dài.
-
 Dependency MỚI (user duyệt): `qrcode-generator`. Ảnh sản phẩm đổi hẳn sang
 link ngoài học viên tự dán (không Storage, user chốt vì chi phí — lợi phụ:
 hết nạn file mồ côi).
-
 `lint + typecheck + 229 unit test + build` sạch; `pnpm test:e2e` 138 ca,
 `showcase.e2e.ts` (40 ca) 40/40 xanh trên DB thật sau khi user dán migration.
 User tự nghiệm thu bằng mắt (sáng + tối, điện thoại): "ổn định, đẹp mắt".
-
 > Phiên cũ hơn (Đợt 1→57): xem ROADMAP.md — đã có tóm tắt + bài học nén sẵn ở
 > đó, không lặp lại ở đây nữa.
