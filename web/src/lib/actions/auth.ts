@@ -38,7 +38,14 @@ export async function login(
     return { error: "Tên tài khoản không tồn tại." };
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  // Hỗ trợ mật khẩu 'demo' cho tài khoản demo
+  const effectivePassword =
+    username === "demo" && password === "demo" ? "demo123" : password;
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password: effectivePassword,
+  });
   if (error) {
     return { error: "Mật khẩu không đúng." };
   }

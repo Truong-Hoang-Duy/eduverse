@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ export function LoginForm() {
     login,
     {}
   );
+  const [username, setUsername] = useState("demo");
+  const [password, setPassword] = useState("demo");
 
   return (
     <Card className="border-border/60 shadow-xl shadow-black/5">
@@ -32,11 +34,14 @@ export function LoginForm() {
       </CardHeader>
       <form action={formAction}>
         <CardContent className="space-y-4">
+
           <div className="space-y-2">
             <Label htmlFor="username">Tên tài khoản</Label>
             <Input
               id="username"
               name="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               required
               autoFocus
@@ -48,6 +53,8 @@ export function LoginForm() {
               id="password"
               name="password"
               type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               required
             />
