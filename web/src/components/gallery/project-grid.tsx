@@ -404,11 +404,11 @@ export function ProjectGrid({
           {selected && (
             <>
               {/* CỘT TRÁI (DESKTOP) / KHỐI TRÊN (MOBILE): NỘI DUNG BÀI LÀM ĐẦY ĐỦ, THOÁNG ĐÃNG */}
-              <div className="w-full lg:w-[60%] xl:w-[62%] shrink-0 flex flex-col border-b lg:border-b-0 lg:border-r border-border/60 bg-muted/15 p-5 sm:p-6 lg:p-6 max-h-[48vh] lg:max-h-none overflow-y-auto scrollbar-slim">
-                <div className="flex items-start justify-between gap-3.5 pb-3 border-b border-border/60">
+              <div className="w-full lg:w-[60%] xl:w-[62%] shrink-0 flex flex-col border-b lg:border-b-0 lg:border-r border-border/60 bg-muted/15 p-4 sm:p-5 lg:p-5 max-h-[48vh] lg:max-h-none overflow-y-auto lg:overflow-hidden lg:h-full">
+                <div className="flex items-start justify-between gap-3.5 pb-2.5 border-b border-border/60 shrink-0">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs">
-                      <Laptop className="size-5.5 text-primary" />
+                    <div className="flex size-9.5 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs">
+                      <Laptop className="size-5 text-primary" />
                     </div>
                     <DialogHeader className="space-y-0.5 text-left min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -455,7 +455,7 @@ export function ProjectGrid({
                   </div>
                 </div>
 
-                <div className="pt-3 flex-1">
+                <div className="pt-2.5 flex-1 min-h-0 flex flex-col overflow-hidden">
                   <ProjectCard project={selected} hideHeading twoColumn />
                 </div>
               </div>
