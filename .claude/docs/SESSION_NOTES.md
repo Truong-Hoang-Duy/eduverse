@@ -4,8 +4,21 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-28, bởi: Gemini)
-**Đang làm:** Đã hoàn thành xử lý **Loại Bỏ Tính Năng AI Phía Học Viên, Cải Tiến Modal Gallery 2 Cột Split-View & Bổ Sung Filter Lớp (Đợt 75)**:
-1. **Loại bỏ hoàn toàn tính năng AI ở phía học viên:**
+**Đang làm:** Đã hoàn thành xử lý **Triệt Tiêu Hoàn Toàn Scroll Bên Trái, Fix Chiều Cao Vừa Vặn Màn Hình & Chỉ Cho Phép Scroll Ở Các Chức Năng**:
+1. **Triệt tiêu hoàn toàn thanh cuộn cột trái trên Desktop (Zero Scroll Left Column):**
+   - **Nguyên nhân gốc rễ:** Container cột trái (`project-grid.tsx`) trước đó dùng `overflow-y-auto scrollbar-slim` và `ProjectCard` dùng layout khối thông thường không co giãn theo flexbox (`space-y-3.5`). Khi tổng chiều cao các phần tử (Header + Mô tả + Banner ảnh + Chức năng + Links) vượt quá chiều cao cột dù chỉ 1px, trình duyệt lập tức sinh ra thanh cuộn dọc ở mép phải cột trái (đường ngăn cách giữa 2 cột).
+   - **Giải pháp xử lý:**
+     - Thiết lập cột trái trên desktop là `lg:overflow-hidden lg:h-full flex flex-col`.
+     - Header bài làm được ghim cố định `shrink-0 pb-2.5 border-b`.
+     - Container `ProjectCard` chuyển sang flexbox toàn chiều cao `twoColumn ? "h-full flex flex-col justify-between gap-2.5 sm:gap-3 overflow-hidden" : "space-y-3.5"`.
+     - Mô tả dự án và Banner ảnh sản phẩm được tối ưu chiều cao gọn gàng, tinh tế (`shrink-0`), tuyệt đối không bị mất nội dung hay tràn khung.
+2. **Chỉ cho phép thanh cuộn duy nhất ở "Các chức năng" (Strict Single-Element Scroll):**
+   - Khối dưới cùng ("Các chức năng & Liên kết") tận dụng toàn bộ chiều cao còn lại của modal qua `flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch`.
+   - Vùng danh sách chức năng nhận `flex-1 min-h-[90px] overflow-y-auto space-y-1.5 pr-1.5 scrollbar-slim`, tự động mở rộng theo màn hình và chỉ cuộn nội bộ bên trong khi có nhiều chức năng (ví dụ 7 tính năng như trong hình).
+   - Cột trái hoàn toàn không còn bất kỳ thanh cuộn nào, chiều cao modal cố định chuẩn mực trên màn hình (`h-[92vh] max-h-[850px]`), 100% các thành phần cần hiển thị đều nguyên vẹn.
+3. **Sửa lỗi nhảy 2 ảnh & điều hướng Lightbox phóng to:**
+   - Đã loại bỏ hoàn toàn việc gọi action trong `onPointerDown`, chỉ dùng `onClick` kèm debounce 200ms để đảm bảo 1 cú click chỉ chuyển đúng 1 ảnh. Bấm ra ngoài khung ảnh đóng Lightbox và giữ nguyên modal dự án.
+3. **Loại bỏ hoàn toàn tính năng AI ở phía học viên:**
    - **Form nhập sản phẩm (`project-editor.tsx`, `projects/page.tsx`, `sample-project-dialog.tsx`):**
      - Loại bỏ cụm nút `Độ khó: Tùy AI ▾` và `✨ AI gợi ý`, bỏ danh sách gợi ý tính năng và các logic/state liên quan.
      - **Bổ sung ô nhập Link Canvas (`project-editor.tsx`, `projects.ts`, `project-card.tsx`):** Thay thế trường ghi chú cũ bằng ô nhập `Link Canvas` (Canva/Canvas thuyết trình), dàn đều trên lưới 3 cột cân xứng (`Link GitHub`, `Link demo`, `Link Canvas`), validate URL an toàn và render `LinkChip` Canvas đồng bộ.
@@ -26,7 +39,11 @@
    - **Cột Trái (~60%) — Trải dài xuống 1 cột tự nhiên, 100% Zero Scroll:**
      - **Header bài làm:** Hộp icon Laptop bo góc (`size-10 rounded-xl bg-primary/10 text-primary`), tiêu đề sản phẩm font to ấn tượng (`text-xl sm:text-2xl font-bold tracking-tight text-foreground`), kèm huy hiệu `Lớp {code}`, tên tác giả với icon `User` và ngày cập nhật với icon `Calendar`.
      - **Mô tả dự án:** Bọc trong card cao cấp (`p-3 sm:p-3.5 text-xs sm:text-sm leading-relaxed text-foreground/95`), chữ to rõ ràng, trải rộng toàn bề ngang.
-     - **Ảnh sản phẩm (Hero Banner):** Fix **1 ảnh ngang to đẹp nhất** (`h-36 sm:h-44 w-full object-cover rounded-xl border border-border/80 shadow-xs`), góc có huy hiệu `🔍 Phóng to` và badge `📷 +N ảnh khác`. Nếu có nhiều ảnh, các ảnh phụ được thu nhỏ thành dải thumbnail bên dưới (`size-12 rounded-lg`), bấm vào bất kỳ ảnh nào sẽ mở popup `ImageLightbox` xem toàn màn hình. Dù có 1 hay 6 ảnh vẫn chỉ chiếm đúng một chiều cao cố định!
+     - **Ảnh sản phẩm (Hero Banner Carousel & Chuyển ảnh qua lại):**
+      - **Nút chuyển ảnh ◀ ▶ (Prev / Next):** Tích hợp nút ◀ và ▶ nổi bật ở 2 bên ảnh chính, bo tròn glassmorphism (`size-8 sm:size-9 rounded-full bg-black/60 text-white border border-white/20`), chuyển ảnh tuần hoàn mượt mà kèm badge chỉ số `{safeIndex + 1} / {totalImages}`.
+      - **Dải Thumbnail tương tác:** Hiển thị toàn bộ các ảnh dưới dạng dải thumbnail nằm ngang. Bấm vào bất kỳ thumbnail nào sẽ đổi ngay ảnh chính sang ảnh đó, thumbnail đang chọn có viền `ring-2 ring-primary ring-offset-2 border-2 border-primary scale-105 opacity-100`.
+      - **Điều hướng cảm ứng & Bàn phím:** Hỗ trợ vuốt chạm trái/phải (touch swipe) trên điện thoại/máy tính bảng và phím mũi tên.
+      - **Nâng cấp ImageLightbox phóng to:** Nút ◀ ▶ z-index cao an toàn (`z-30`), chặn pointerdown lan truyền, dải thumbnail nhỏ ở đáy popup cho phép chuyển nhanh tới ảnh bất kỳ trong chế độ toàn màn hình, đồng bộ 2 chiều với thẻ bài làm.
       - **Các chức năng & Liên kết dự án (Chia 2 bên cân xứng, 100% không bị tràn):** Đặt song song "Các chức năng" (bên trái, khung cuộn mỏng nội bộ `max-h-32 sm:max-h-36 scrollbar-slim`) và "Liên kết dự án & Nộp bài" (bên phải, lưới 2 cột cho Drive, GitHub, Demo, Canvas, kèm ghi chú nếu có). Giúp tiết kiệm hơn 100px chiều cao theo trục dọc, giải quyết dứt điểm tình trạng liên kết bị tràn xuống đáy khuất tầm nhìn, đồng thời đảm bảo không phát sinh thanh cuộn ngoài cho modal.
       - **Độ cao hoàn hảo, không bị tràn (Zero Overflow):** Hero banner ảnh tối ưu `h-32 sm:h-38`, tổng chiều cao toàn bộ các khối chỉ ~420px, để lại khoảng trống thoải mái trên khung modal 850px và có scrollbar dự phòng an toàn.
    - **Cột Phải (~40%) — Giao diện nhận xét & câu trả lời dạng Thread bong bóng chuẩn Facebook:**
