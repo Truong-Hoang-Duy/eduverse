@@ -27,25 +27,20 @@ function nextClassCode(courseCode: string, classes: ClassRow[]): string {
 export default async function TeacherDashboard() {
   const supabase = await createClient();
 
-  const [{ data: coursesData }, { data: classesData }] = await Promise.all([
-    supabase.from("courses").select("*").order("code"),
-    supabase
-      .from("classes")
-      .select("*, enrollments(count)")
-      .order("class_code"),
-  ]);
+  // Gom cả 3 query ban đầu (courses, classes, sessions) vào một Promise.all song song
+  // để loại bỏ 1 roundtrip mạng tuần tự (tiết kiệm 100-200ms khi tải trang).
+  const [{ data: coursesData }, { data: classesData }, { data: sessionsData }] =
+    await Promise.all([
+      supabase.from("courses").select("*").order("code"),
+      supabase
+        .from("classes")
+        .select("*, enrollments(count)")
+        .order("class_code"),
+      supabase.from("sessions").select("id, class_id, session_number"),
+    ]);
 
   const courses = (coursesData ?? []) as Course[];
   const classes = (classesData ?? []) as ClassRow[];
-
-  // Lớp "đã hoàn thành" = buổi CUỐI đã xử lý xong mọi học viên. Phải hỏi DB 2
-  // nhịp vì Supabase không lọc được "session_number = classes.total_sessions"
-  // ngay trong một query: lấy danh sách buổi trước, tính ra id buổi cuối của
-  // từng lớp, rồi mới đọc nhận xét của ĐÚNG những buổi đó (đọc nhận xét mọi
-  // buổi thì gấp `total_sessions` lần số dòng mà không dùng tới).
-  const { data: sessionsData } = await supabase
-    .from("sessions")
-    .select("id, class_id, session_number");
 
   const lastSessionIdByClass = new Map<string, string>();
   for (const cls of classes) {

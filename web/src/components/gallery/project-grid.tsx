@@ -397,11 +397,9 @@ export function ProjectGrid({
               <ProjectCard project={selected} hideHeading />
 
               <div className="border-t pt-4">
-                <p className="mb-2 text-sm font-medium">
-                  💬 Nhận xét ({selected.comments.length})
-                </p>
                 <CommentSection
                   projectId={selected.id}
+                  classId={selected.classId}
                   comments={selected.comments}
                   currentUserId={currentUserId}
                   placeholder={commentPlaceholder}
