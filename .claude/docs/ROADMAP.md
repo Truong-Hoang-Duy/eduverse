@@ -1111,6 +1111,10 @@
   - **Kích hoạt `router.refresh()` & `revalidatePath` chuẩn:** Truyền `classId` cụ thể để làm mới router cache chính xác.
   - **Đồng bộ Realtime + Fallback Polling (4s):** Tích hợp kênh Supabase Realtime `postgres_changes` trên bảng `project_comments` kết hợp chu kỳ kiểm tra tự động 4s dự phòng, giúp cả lớp nhìn thấy nhận xét chéo của nhau mà không cần bấm F5.
   - Tạo migration `20260928010000_realtime_project_comments.sql` bật `supabase_realtime` cho bảng `project_comments`.
+- [x] **Chuyển đổi toàn bộ Font sang Self-hosted Local Fonts (`next/font/local`):**
+  - Tải toàn bộ font files vào `web/src/app/fonts/`: Be Vietnam Pro (4 weights), GeistMono, PlayfairDisplay, DancingScript.
+  - Loại bỏ hoàn toàn `next/font/google`, triệt tiêu dứt điểm lỗi Turbopack `Can't resolve '@vercel/turbopack-next/internal/font/google/font'`.
+  - Hoạt động 100% offline, zero network latency khi tải font, compile cực nhanh.
 - [x] **Kiểm thử chất lượng:** 306/306 vitest PASS (27 test files), typecheck & eslint 0 lỗi.
 
 ## Ý tưởng còn để ngỏ (chưa làm)

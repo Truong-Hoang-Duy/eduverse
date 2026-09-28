@@ -15,7 +15,14 @@
    - **Song song hóa truy vấn Supabase:**
      + `web/src/app/(teacher)/teacher/page.tsx`: Gom cả 3 query ban đầu (`courses`, `classes`, `sessions`) vào 1 `Promise.all` song song, tiết kiệm 1 roundtrip mạng tuần tự (100–200ms).
      + `web/src/app/(student)/student/classes/[classId]/gallery/page.tsx`: Gom cả 4 query (`classes`, `enrollments`, `projects`, `project_comments`) vào 1 `Promise.all` duy nhất, cắt giảm một nửa độ trễ server.
-2. **Nhận xét sản phẩm học viên cập nhật tức thì không cần reload trang (`comment-section.tsx`, `projects.ts`):**
+2. **Chuyển đổi toàn bộ Font sang Self-hosted Local Fonts (`next/font/local`):**
+   - **Xóa bỏ vĩnh viễn lỗi Turbopack `Can't resolve '@vercel/turbopack-next/internal/font/google/font'`:** Tải toàn bộ font files về trực tiếp trong repository (`web/src/app/fonts/`), loại bỏ hoàn toàn `next/font/google` khỏi toàn bộ dự án.
+   - **Tập tin font đã lưu trong source:**
+     + `Be Vietnam Pro` (4 tệp: Regular 400, Medium 500, SemiBold 600, Bold 700) cho toàn bộ giao diện app ([layout.tsx](file:///D:/Project/Eduverse/web/src/app/layout.tsx)).
+     + `GeistMono-Variable.ttf` cho mã lớp/mã khóa.
+     + `PlayfairDisplay-Variable.ttf` và `DancingScript-Variable.ttf` cho trang Showcase / Bằng khen ([fonts.ts](file:///D:/Project/Eduverse/web/src/components/showcase/fonts.ts)).
+   - **Lợi ích:** 100% offline, zero network roundtrip tới Google Fonts CDN, không bao giờ bị lỗi kết nối hoặc chặn DNS/firewall, dev server và Turbopack khởi động ngay lập tức.
+3. **Nhận xét sản phẩm học viên cập nhật tức thì không cần reload trang (`comment-section.tsx`, `projects.ts`):**
    - **Optimistic UI (0ms):** Khi học viên bấm gửi nhận xét, nhận xét mới lập tức hiển thị trên màn hình với ID tạm và badge "(bạn)"; input tự động reset; nếu server lỗi sẽ tự động rollback và báo lỗi rõ ràng. Khi bấm xóa nhận xét cũng biến mất ngay lập tức trên UI.
    - **Kích hoạt `router.refresh()` & đồng bộ `revalidatePath`:** Truyền `classId` cụ thể vào `revalidateGallery(classId)` và gọi `router.refresh()` sau khi action hoàn tất để Next.js làm mới router cache.
    - **Đồng bộ Realtime + Fallback Polling (4s):**
@@ -23,7 +30,7 @@
      + Tạo migration `20260928010000_realtime_project_comments.sql` bật `supabase_realtime` cho bảng `project_comments`.
      + Bổ sung polling chu kỳ ngắn (mỗi 4s) để đảm bảo ngay cả khi mạng hoặc firewall chặn WebSocket, học viên trong lớp vẫn tự động thấy nhận xét của nhau mà không cần bấm F5.
    - **Bộ đếm nhận xét động:** Chuyển `💬 Nhận xét ({count})` vào trong `CommentSection` để nhảy số tức thì theo realtime.
-3. **Kiểm thử chất lượng:**
+4. **Kiểm thử chất lượng:**
    - `web/`: `pnpm test` (306/306 tests PASSED - 27 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
    - Nhánh Git: `fix/perf-and-gallery-comments`.
 
