@@ -32,7 +32,7 @@
    - **Bộ đếm nhận xét động:** Chuyển `💬 Nhận xét ({count})` vào trong `CommentSection` để nhảy số tức thì theo realtime.
 4. **Kiểm thử chất lượng:**
    - `web/`: `pnpm test` (306/306 tests PASSED - 27 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
-   - Nhánh Git: `fix/perf-and-gallery-comments`.
+   - Nhánh Git: Đã commit, merge `fix/perf-and-gallery-comments` vào `develop` và `main`, push lên `origin` thành công.
 
 
 2. **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts`):**
@@ -79,10 +79,8 @@
    - `web/`: `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm test` (270/270 tests PASSED - 23 test files).
    - Nhánh Git: Đã commit và merge sạch từ `feature/final-presentation-review` vào `develop` và `main`, push lên `origin` thành công.
 
-**`main` = `origin/main` = `e177f37`**
-`ai-service/` CÓ đổi ở đợt này (hỗ trợ prompt bài kiểm tra định kỳ, xét chuyên cần ở tiêu chí thái độ, siết AI chống khen một chiều) — Render tự động build/deploy theo webhook push `main`.
-Kiểm tra `/health` khớp commit mới trên Render dashboard nếu cần.
-Migration mới: `supabase/migrations/20260914020000_enrollment_sort_order.sql` (thêm cột `sort_order` vào bảng `enrollments`).
+**`main` = `origin/main` = `79e4606`**
+Migration mới: `supabase/migrations/20260928010000_realtime_project_comments.sql` (bật Supabase Realtime cho bảng `project_comments`).
 
 
 🔴 **Phát hiện đầu phiên: `develop` bị BỎ SÓT một commit chỉ-sửa-docs trên
