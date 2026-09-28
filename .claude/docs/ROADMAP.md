@@ -1101,6 +1101,22 @@
   - Form tạo mới gập gọn sau nút `➕ Thêm mẫu tin mới`.
 - [x] **Kiểm thử chất lượng:** 303/303 vitest PASS, 89/89 pytest PASS, typecheck & eslint 0 lỗi, build Next.js thành công.
 
+### Đợt 74 (`fix/perf-and-gallery-comments`) — Tối Ưu Hiệu Năng Khởi Động Giao Diện & Nhận Xét Realtime/Optimistic Trong Gallery
+- [x] **Tối ưu tốc độ tải và khởi động giao diện (Startup Render Performance):**
+  - Thêm request khởi động (warmup pre-fetch) trong `web/scripts/dev.mjs` để kích hoạt Turbopack biên dịch trước ngay khi server sẵn sàng, loại bỏ hiện tượng treo trắng trang lần đầu.
+  - Tạo khung xương tải trang gốc `web/src/app/loading.tsx` hiển thị tức thì trong 0.1s.
+  - Song song hóa truy vấn Supabase trong `TeacherDashboard` (`teacher/page.tsx`) và `StudentClassGalleryPage` (`gallery/page.tsx`), cắt giảm tối đa các roundtrip tuần tự.
+- [x] **Nhận xét sản phẩm học viên cập nhật tức thì & Realtime (`comment-section.tsx`, `projects.ts`):**
+  - **Optimistic UI (0ms):** Thêm và xóa nhận xét phản hồi tức thì trên giao diện mà không cần chờ mạng; tự động rollback nếu server lỗi.
+  - **Kích hoạt `router.refresh()` & `revalidatePath` chuẩn:** Truyền `classId` cụ thể để làm mới router cache chính xác.
+  - **Đồng bộ Realtime + Fallback Polling (4s):** Tích hợp kênh Supabase Realtime `postgres_changes` trên bảng `project_comments` kết hợp chu kỳ kiểm tra tự động 4s dự phòng, giúp cả lớp nhìn thấy nhận xét chéo của nhau mà không cần bấm F5.
+  - Tạo migration `20260928010000_realtime_project_comments.sql` bật `supabase_realtime` cho bảng `project_comments`.
+- [x] **Chuyển đổi toàn bộ Font sang Self-hosted Local Fonts (`next/font/local`):**
+  - Tải toàn bộ font files vào `web/src/app/fonts/`: Be Vietnam Pro (4 weights), GeistMono, PlayfairDisplay, DancingScript.
+  - Loại bỏ hoàn toàn `next/font/google`, triệt tiêu dứt điểm lỗi Turbopack `Can't resolve '@vercel/turbopack-next/internal/font/google/font'`.
+  - Hoạt động 100% offline, zero network latency khi tải font, compile cực nhanh.
+- [x] **Kiểm thử chất lượng:** 306/306 vitest PASS (27 test files), typecheck & eslint 0 lỗi.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

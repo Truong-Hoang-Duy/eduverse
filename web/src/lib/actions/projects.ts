@@ -20,9 +20,12 @@ import type { ActionResult } from "@/lib/types";
  * Sản phẩm + nhận xét hiện ở 3 trang: khu HV (sản phẩm của mình, gallery lớp) và
  * gallery của GV. Đổi ở đâu cũng phải làm mới cả ba, nếu không trang kia còn cache cũ.
  */
-function revalidateGallery(): void {
-  // Khu HV giờ theo từng lớp → phải làm mới theo MẪU route động, truyền đường dẫn
-  // tĩnh cũ sẽ không khớp page nào và cache lớp vẫn cũ.
+function revalidateGallery(classId?: string): void {
+  // Khu HV giờ theo từng lớp → làm mới cả URL cụ thể (nếu có) và mẫu route động.
+  if (classId) {
+    revalidatePath(`/student/classes/${classId}/projects`);
+    revalidatePath(`/student/classes/${classId}/gallery`);
+  }
   revalidatePath("/student/classes/[classId]/projects", "page");
   revalidatePath("/student/classes/[classId]/gallery", "page");
   revalidatePath("/teacher/gallery");
@@ -154,7 +157,7 @@ export async function saveProject(
     return { error: `Không lưu được: ${error.message}` };
   }
 
-  revalidateGallery();
+  revalidateGallery(classId);
   return {
     success: "Đã lưu sản phẩm.",
     project: {
@@ -172,11 +175,12 @@ export async function saveProject(
 
 export async function deleteProject(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
+  const classId = String(formData.get("class_id") ?? "");
   if (!id) return;
 
   const supabase = await createClient();
   await supabase.from("projects").delete().eq("id", id);
-  revalidateGallery();
+  revalidateGallery(classId);
 }
 
 export async function addComment(
@@ -184,6 +188,7 @@ export async function addComment(
   formData: FormData
 ): Promise<ActionResult> {
   const projectId = String(formData.get("project_id") ?? "");
+  const classId = String(formData.get("class_id") ?? "");
   const content = String(formData.get("content") ?? "").trim();
 
   if (!projectId || !content) {
@@ -208,17 +213,18 @@ export async function addComment(
     return { error: `Không gửi được nhận xét: ${error.message}` };
   }
 
-  revalidateGallery();
+  revalidateGallery(classId);
   return { success: "Đã gửi nhận xét." };
 }
 
 export async function deleteComment(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
+  const classId = String(formData.get("class_id") ?? "");
   if (!id) return;
 
   const supabase = await createClient();
   await supabase.from("project_comments").delete().eq("id", id);
-  revalidateGallery();
+  revalidateGallery(classId);
 }
 
 export interface FeatureSuggestion {

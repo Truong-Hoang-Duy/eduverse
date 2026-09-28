@@ -43,23 +43,19 @@ export default async function StudentClassGalleryPage({
   const profile = await requireRole("student");
   const supabase = await createClient();
 
-  // Lớp đã được layout xác thực. Roster lấy theo ĐÚNG lớp này để hiện cả bạn
-  // chưa có sản phẩm (policy `enrollments_classmates_select` cho đọc bạn cùng lớp).
-  const [{ data: clsData }, { data: enrollmentsData }] = await Promise.all([
+  // Lớp đã được layout xác thực. Chạy song song cả 4 truy vấn (thông tin lớp, danh sách học viên,
+  // sản phẩm và nhận xét) trong một Promise.all duy nhất để giảm triệt để độ trễ mạng.
+  const [
+    { data: clsData },
+    { data: enrollmentsData },
+    { data: projectsData },
+    { data: commentsData },
+  ] = await Promise.all([
     supabase.from("classes").select("class_code").eq("id", classId).maybeSingle(),
     supabase
       .from("enrollments")
       .select("student_id, profiles(full_name)")
       .eq("class_id", classId),
-  ]);
-
-  const classCode = clsData?.class_code ?? "";
-  const enrollments = (enrollmentsData ?? []) as unknown as {
-    student_id: string;
-    profiles: { full_name: string } | null;
-  }[];
-
-  const [{ data: projectsData }, { data: commentsData }] = await Promise.all([
     supabase
       .from("projects")
       .select(
@@ -74,6 +70,12 @@ export default async function StudentClassGalleryPage({
       )
       .order("created_at"),
   ]);
+
+  const classCode = clsData?.class_code ?? "";
+  const enrollments = (enrollmentsData ?? []) as unknown as {
+    student_id: string;
+    profiles: { full_name: string } | null;
+  }[];
 
   const rows = (projectsData ?? []) as unknown as ProjectRow[];
   const comments = (commentsData ?? []) as unknown as CommentRow[];

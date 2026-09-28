@@ -35,6 +35,9 @@ child.stdout.on("data", (chunk) => {
 
   if (!opened && /Ready in/.test(text)) {
     opened = true;
+    // Gửi request khởi động (warmup) để Next.js bắt đầu biên dịch trang và layout
+    // ngay lập tức, giảm tối đa độ trễ trắng trang khi trình duyệt mở lên.
+    fetch(lastUrl).catch(() => {});
     openBrowser(lastUrl);
   }
 });
@@ -44,6 +47,7 @@ child.stdout.on("data", (chunk) => {
 const fallback = setTimeout(() => {
   if (!opened) {
     opened = true;
+    fetch(lastUrl).catch(() => {});
     openBrowser(lastUrl);
   }
 }, 20000);

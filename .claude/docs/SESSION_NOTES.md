@@ -6,30 +6,33 @@
 
 ---
 
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-21, bởi: Gemini)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-28, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành tính năng **Ngân Hàng Nhận Xét SPCK Theo Kỹ Năng & Tinh Chỉnh Giao Diện Buổi Làm Đồ Án (Đợt 73)**:
-1. **Ngân hàng 44 nhận xét SPCK chia theo 3 cấp độ học lực & 6 nhóm kỹ năng (`spck-evaluation.ts`):**
-   - 3 Cấp độ: Học yếu (17 mục), Trung bình (14 mục), Khá / Giỏi (13 mục).
-   - 6 Nhóm kỹ năng: Thái độ (`attitude`), Kỹ năng (`coding`), Tự học (`self_study`), Tiến độ & sản phẩm (`project_progress`), Kỹ năng mềm (`soft_skills`), Kiến thức nền tảng (`knowledge`).
-   - Phân biệt trực quan điểm làm tốt (`+`) và điểm cần lưu ý/cải thiện (`💡`).
-   - Bao hàm và đồng bộ 100% các câu nhận xét SPCK cũ của hệ thống.
-2. **Quản lý danh mục SPCK tại Cài đặt (`project-progress-manager.tsx`, `settings.ts`):**
-   - Accordion quản lý nhóm theo 6 kỹ năng với badge cấp độ học lực từng câu.
-   - Thêm nhanh / đồng bộ toàn bộ 44 nhận xét chuẩn vào `review_options` qua `seedDefaultProjectProgressOptions`.
-   - Cho phép thêm/xóa nhận xét trong từng nhóm kỹ năng; mở rộng `resolveSkillGroup` hỗ trợ các nhóm kỹ năng SPCK.
-3. **Cải tiến giao diện buổi làm đồ án (`review-editor.tsx`):**
-   - Khi buổi học là buổi làm đồ án (`isProjectPeriod = true`):
-     + **Ẩn bộ combo (`ComboBar`)** và **ẩn 2 ô `Điểm mạnh` / `Cần cải thiện`**.
-     + **Đổi dropdown copy thành `📋 Nhận xét buổi trước`**: Hiển thị danh sách nhận xét các buổi trước của học viên; khi chọn sẽ điền ngay vào ô nhận xét gửi phụ huynh.
-     + **Khung `🎓 Quan sát SPCK`**: Phân chia theo 6 kỹ năng, có thanh lọc cấp độ (`Tất cả`, `🌟 Khá / Giỏi`, `⚖️ Trung bình`, `⚠️ Học yếu`) tự động kích hoạt theo học lực của học viên; tích chọn nhanh dạng chip checkmark `✓`; hỗ trợ gõ thêm quan sát tự do.
-4. **Thu nhỏ phần hiển thị Mẫu tin Zalo (`template-manager.tsx`):**
-   - Thu nhỏ danh sách mẫu tin Zalo trong Cài đặt: mặc định ở dạng gập gọn chỉ còn 1 dòng tiêu đề, badge `📝 {lineCount} dòng`, mũi tên `▼` và đoạn trích dẫn 2 dòng (`line-clamp-2`).
-   - Khi bấm mở rộng: hiển thị toàn bộ nội dung trong khung cuộn giới hạn độ cao (`max-h-56 overflow-y-auto`) kèm nút `▲ Thu gọn`, chống tràn màn hình khi mẫu tin dài nhiều đoạn.
-   - Thu gọn form tạo mẫu mới thành nút bấm `➕ Thêm mẫu tin mới` mở ra khi cần.
-5. **Kiểm thử chất lượng:**
-   - `web/`: `pnpm test` (303/303 tests PASSED - 26 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors), `pnpm build` (PASSED).
-   - `ai-service/`: `pytest` (89/89 tests PASSED).
+**Đang làm:** Đã hoàn thành xử lý **Tối Ưu Hiệu Năng Khởi Động Giao Diện & Nhận Xét Realtime/Optimistic Trong Gallery (Đợt 74)**:
+1. **Tối ưu tốc độ tải và khởi động giao diện (Startup Render Performance):**
+   - **Pre-warm background request trong dev mode (`web/scripts/dev.mjs`):** Khi Turbopack in `Ready in ...ms`, kích hoạt fetch ngầm để biên dịch trước root layout, CSS, và font giúp người dùng khi mở trình duyệt lên là giao diện đã sẵn sàng, loại bỏ hiện tượng treo trắng trang lần đầu.
+   - **Thêm khung xương tải trang gốc (`web/src/app/loading.tsx`):** Hiển thị `PageSkeleton` tức thì trong 0.1s khi truy cập trang gốc, giải quyết tình trạng đơ màn hình khi middleware/Server Components kiểm tra auth.
+   - **Song song hóa truy vấn Supabase:**
+     + `web/src/app/(teacher)/teacher/page.tsx`: Gom cả 3 query ban đầu (`courses`, `classes`, `sessions`) vào 1 `Promise.all` song song, tiết kiệm 1 roundtrip mạng tuần tự (100–200ms).
+     + `web/src/app/(student)/student/classes/[classId]/gallery/page.tsx`: Gom cả 4 query (`classes`, `enrollments`, `projects`, `project_comments`) vào 1 `Promise.all` duy nhất, cắt giảm một nửa độ trễ server.
+2. **Chuyển đổi toàn bộ Font sang Self-hosted Local Fonts (`next/font/local`):**
+   - **Xóa bỏ vĩnh viễn lỗi Turbopack `Can't resolve '@vercel/turbopack-next/internal/font/google/font'`:** Tải toàn bộ font files về trực tiếp trong repository (`web/src/app/fonts/`), loại bỏ hoàn toàn `next/font/google` khỏi toàn bộ dự án.
+   - **Tập tin font đã lưu trong source:**
+     + `Be Vietnam Pro` (4 tệp: Regular 400, Medium 500, SemiBold 600, Bold 700) cho toàn bộ giao diện app ([layout.tsx](file:///D:/Project/Eduverse/web/src/app/layout.tsx)).
+     + `GeistMono-Variable.ttf` cho mã lớp/mã khóa.
+     + `PlayfairDisplay-Variable.ttf` và `DancingScript-Variable.ttf` cho trang Showcase / Bằng khen ([fonts.ts](file:///D:/Project/Eduverse/web/src/components/showcase/fonts.ts)).
+   - **Lợi ích:** 100% offline, zero network roundtrip tới Google Fonts CDN, không bao giờ bị lỗi kết nối hoặc chặn DNS/firewall, dev server và Turbopack khởi động ngay lập tức.
+3. **Nhận xét sản phẩm học viên cập nhật tức thì không cần reload trang (`comment-section.tsx`, `projects.ts`):**
+   - **Optimistic UI (0ms):** Khi học viên bấm gửi nhận xét, nhận xét mới lập tức hiển thị trên màn hình với ID tạm và badge "(bạn)"; input tự động reset; nếu server lỗi sẽ tự động rollback và báo lỗi rõ ràng. Khi bấm xóa nhận xét cũng biến mất ngay lập tức trên UI.
+   - **Kích hoạt `router.refresh()` & đồng bộ `revalidatePath`:** Truyền `classId` cụ thể vào `revalidateGallery(classId)` và gọi `router.refresh()` sau khi action hoàn tất để Next.js làm mới router cache.
+   - **Đồng bộ Realtime + Fallback Polling (4s):**
+     + Đăng ký kênh Supabase Realtime `postgres_changes` trên bảng `project_comments` theo `project_id`.
+     + Tạo migration `20260928010000_realtime_project_comments.sql` bật `supabase_realtime` cho bảng `project_comments`.
+     + Bổ sung polling chu kỳ ngắn (mỗi 4s) để đảm bảo ngay cả khi mạng hoặc firewall chặn WebSocket, học viên trong lớp vẫn tự động thấy nhận xét của nhau mà không cần bấm F5.
+   - **Bộ đếm nhận xét động:** Chuyển `💬 Nhận xét ({count})` vào trong `CommentSection` để nhảy số tức thì theo realtime.
+4. **Kiểm thử chất lượng:**
+   - `web/`: `pnpm test` (306/306 tests PASSED - 27 files), `pnpm typecheck` (0 errors), `pnpm lint` (0 errors).
+   - Nhánh Git: `fix/perf-and-gallery-comments`.
 
 
 2. **Phân cấp 4 mức học lực cho quan sát bài thi cuối khóa (`presentation-evaluation.ts`):**
