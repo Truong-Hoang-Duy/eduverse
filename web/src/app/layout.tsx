@@ -1,21 +1,42 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 // Be Vietnam Pro: sans-serif hiện đại, thiết kế riêng cho dấu tiếng Việt nên
 // các dấu (ắ, ệ, ỡ...) cân đối, không bị chồng lên chữ như font Latin thường.
-// Tên biến PHẢI là --font-sans để khớp @theme trong globals.css.
-const beVietnamPro = Be_Vietnam_Pro({
+// Tải trực tiếp từ source local để 100% offline, loại bỏ triệt để lỗi mạng/Turbopack.
+const beVietnamPro = localFont({
+  src: [
+    {
+      path: "./fonts/BeVietnamPro-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./fonts/BeVietnamPro-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "./fonts/BeVietnamPro-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "./fonts/BeVietnamPro-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-sans",
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-// Mono chỉ dùng cho mã lớp/mã khóa (ASCII) nên không cần subset vietnamese.
-const geistMono = Geist_Mono({
+// Mono dùng cho mã lớp/mã khóa
+const geistMono = localFont({
+  src: "./fonts/GeistMono-Variable.ttf",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {

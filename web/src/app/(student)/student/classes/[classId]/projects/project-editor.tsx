@@ -340,7 +340,7 @@ export function ProjectEditor({
             description="Toàn bộ thông tin sản phẩm và các nhận xét của bạn bè sẽ bị xóa vĩnh viễn khỏi hệ thống, không lấy lại được. Bạn có thể khai báo lại từ đầu sau đó."
             confirmLabel="Xóa vĩnh viễn"
             action={deleteProject}
-            fields={{ id: projectId }}
+            fields={{ id: projectId, class_id: classId }}
           />
         )}
         <FormMessage result={state} />
