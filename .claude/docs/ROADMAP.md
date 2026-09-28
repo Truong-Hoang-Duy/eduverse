@@ -1142,15 +1142,15 @@
 ### Đợt 76 (`feature/demo-student-account`) — Thiết Lập Tài Khoản Học Viên Demo & Lớp DEMO Hướng Dẫn Học Viên
 - [x] **Xóa sạch tài khoản `test123`:** Xóa tài khoản `test123` khỏi Supabase Auth và toàn bộ dữ liệu cascade (profile, projects, enrollments, comments, drive links).
 - [x] **Khởi tạo lớp `DEMO`:** Tạo lớp có mã `DEMO` thuộc khóa CSB (14 buổi học); mở rộng `CLASS_CODE_PATTERN` trong `classes.ts` để cho phép mã lớp `DEMO`.
-- [x] **Tạo tài khoản Demo học viên:** Username: `demo`, Password: `demo123`, Họ tên: `Học viên Demo`, ghi danh vào lớp `DEMO`.
+- [x] **Tạo tài khoản Demo học viên:** Username: `demo`, Password: `demo`, Họ tên: `Học viên Demo`, ghi danh vào lớp `DEMO`.
 - [x] **Chèn sẵn nội dung mẫu phong phú:**
   - Thư mục nộp bài Google Drive (`student_drive_links`).
   - Sản phẩm cuối khóa hoàn chỉnh ("Website quản lý thư viện thông minh") với mô tả, 7 tính năng, link GitHub, link Demo, link Canvas, 2 hình ảnh.
   - Bình luận & câu trả lời mẫu: nhận xét của giáo viên Trương Hoàng Duy, phản hồi của học viên demo (`@[Trương Hoàng Duy]...`), bình luận của bạn học cùng lớp (`@[Nguyễn Phú Xuân Nghi]...`).
   - Sản phẩm thứ hai của bạn học trong lớp ("Game giải đố mê cung 2D") để triển lãm thêm chân thực.
-- [x] **Điền sẵn thông tin đăng nhập trên màn hình Login:**
-  - Prefill sẵn `demo` và `demo123` trên form đăng nhập `/login`.
-  - Hiển thị badge chỉ dẫn tài khoản Demo học viên kèm nút "Điền nhanh" 1 chạm.
+- [x] **Điền sẵn thông tin đăng nhập trên màn hình Login (ẩn bảng điền nhanh):**
+  - Prefill sẵn `demo` và `demo` trực tiếp vào 2 ô nhập của form đăng nhập `/login`.
+  - Gỡ bỏ hoàn toàn hộp "Điền nhanh" ở ngoài theo yêu cầu, giao diện đăng nhập tự nhiên và sẵn sàng đăng nhập ngay lập tức.
 - [x] **Kiểm thử chất lượng:** 310/310 vitest PASS, typecheck & eslint 0 lỗi.
 
 ## Ý tưởng còn để ngỏ (chưa làm)

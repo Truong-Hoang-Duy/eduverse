@@ -9,15 +9,17 @@
 2. **Khởi tạo lớp `DEMO`:** Tạo lớp có mã `DEMO` (14 buổi học), cho phép mã lớp `DEMO` trong `CLASS_CODE_PATTERN` của `classes.ts`.
 3. **Tạo tài khoản Demo học viên:** 
    - Tên tài khoản: `demo`
-   - Mật khẩu: `demo123`
+   - Mật khẩu: `demo`
    - Họ tên: `Học viên Demo` (Lớp DEMO)
 4. **Điền sẵn nội dung mẫu hoàn chỉnh phục vụ giảng dạy/demo:**
    - Link thư mục Drive nộp bài mẫu (`student_drive_links`).
    - Sản phẩm cuối khóa mẫu ("Website quản lý thư viện thông minh") với đầy đủ mô tả, 7 tính năng, link GitHub, link Demo, link Canvas và ảnh chụp dự án.
    - Thảo luận & phản hồi mẫu trên dự án: Nhận xét của giáo viên Trương Hoàng Duy, câu trả lời của học viên demo (`@[Trương Hoàng Duy]...`), bình luận của bạn cùng lớp và phản hồi tương tác.
    - Sản phẩm mẫu của bạn cùng lớp ("Game giải đố mê cung 2D") để triển lãm thêm sinh động.
-5. **Điền sẵn thông tin đăng nhập trên màn hình Login:**
-   - Màn hình `/login` tự động điền sẵn `demo` và `demo123`, hiển thị badge chỉ dẫn tài khoản Demo học viên và nút "Điền nhanh" 1 chạm. Giáo viên chỉ cần mở trang đăng nhập là có thể bấm "Đăng nhập" ngay lập tức để hướng dẫn học viên.
+5. **Điền sẵn thông tin đăng nhập trên màn hình Login (ẩn bảng điền nhanh):**
+   - Màn hình `/login` tự động điền sẵn tên tài khoản `demo` và mật khẩu `demo` vào 2 ô nhập.
+   - Gỡ bỏ hoàn toàn khung banner "Điền nhanh" ở bên ngoài form theo yêu cầu của user để giao diện đăng nhập tự nhiên, gọn gàng và không để lộ thông tin tài khoản demo ra ngoài.
+   - Action đăng nhập hỗ trợ mật khẩu `demo` thông qua mapping an toàn. Giáo viên chỉ cần mở trang đăng nhập lên là bấm "Đăng nhập" được ngay.
 
 1. **Triệt tiêu hoàn toàn thanh cuộn cột trái trên Desktop (Zero Scroll Left Column):**
    - **Nguyên nhân gốc rễ:** Container cột trái (`project-grid.tsx`) trước đó dùng `overflow-y-auto scrollbar-slim` và `ProjectCard` dùng layout khối thông thường không co giãn theo flexbox (`space-y-3.5`). Khi tổng chiều cao các phần tử (Header + Mô tả + Banner ảnh + Chức năng + Links) vượt quá chiều cao cột dù chỉ 1px, trình duyệt lập tức sinh ra thanh cuộn dọc ở mép phải cột trái (đường ngăn cách giữa 2 cột).
