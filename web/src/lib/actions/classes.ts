@@ -100,7 +100,9 @@ export async function duplicateClass(
       .single(),
     supabase
       .from("sessions")
-      .select("session_number, title, content")
+      .select(
+        "session_number, title, content, is_periodic_test, is_project_period, is_final_presentation"
+      )
       .eq("class_id", curriculumClassId)
       .order("session_number"),
   ]);
@@ -138,6 +140,9 @@ export async function duplicateClass(
         session_number: s.session_number,
         title: s.title,
         content: s.content,
+        is_periodic_test: s.is_periodic_test ?? false,
+        is_project_period: s.is_project_period ?? false,
+        is_final_presentation: s.is_final_presentation ?? false,
       })),
       { onConflict: "class_id,session_number" }
     );

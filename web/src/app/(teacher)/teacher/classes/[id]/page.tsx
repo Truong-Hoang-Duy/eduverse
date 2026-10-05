@@ -13,7 +13,13 @@ import {
 } from "@/lib/session-format";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
+import {
+  type ExistingReview,
+  isHandled,
+  resolveSessionReviewState,
+} from "../../sessions/[id]/review-status";
 import { AddStudentDialog } from "./add-student-dialog";
 import { BreakScreen } from "./break-screen";
 import { DeleteClassButton } from "./delete-class-button";
@@ -48,6 +54,7 @@ export default async function ClassDetailPage({
     { data: sessionsData },
     { data: projectsData },
     { data: coursesData },
+    { data: reviewsData },
   ] = await Promise.all([
     supabase
       .from("classes")
@@ -79,6 +86,12 @@ export default async function ClassDetailPage({
       .eq("class_id", id)
       .order("updated_at", { ascending: false }),
     supabase.from("courses").select("id, code, name").order("code"),
+    supabase
+      .from("student_reviews")
+      .select(
+        "session_id, student_id, strengths, improvements, ai_generated_comment, is_absent, sessions!inner(class_id)"
+      )
+      .eq("sessions.class_id", id),
   ]);
 
   if (!classData) {
@@ -148,10 +161,36 @@ export default async function ClassDetailPage({
     }
   }
   const filledSessions = sessions.filter((s) => Boolean(s.content)).length;
-  // Tiến độ lớp = tỉ lệ buổi đã soạn nội dung.
+
+  const currentStudentIds = new Set(students.map((s) => s.studentId));
+  const handledCountBySession = new Map<string, number>();
+  for (const row of (reviewsData ?? []) as (ExistingReview & {
+    session_id: string;
+    student_id: string;
+  })[]) {
+    if (currentStudentIds.size > 0 && !currentStudentIds.has(row.student_id)) {
+      continue;
+    }
+    if (!isHandled(row)) continue;
+    handledCountBySession.set(
+      row.session_id,
+      (handledCountBySession.get(row.session_id) ?? 0) + 1
+    );
+  }
+
+  const studentCount = students.length;
+  const completedSessions = sessions.filter((s) => {
+    const handled = handledCountBySession.get(s.id) ?? 0;
+    return (
+      resolveSessionReviewState({ studentCount, handledCount: handled }) ===
+      "completed"
+    );
+  }).length;
+
+  // Tiến độ lớp = tỉ lệ buổi đã hoàn thành nhận xét cho cả lớp.
   const progressPercent =
     cls.total_sessions > 0
-      ? Math.round((filledSessions / cls.total_sessions) * 100)
+      ? Math.round((completedSessions / cls.total_sessions) * 100)
       : 0;
 
   const projects = (
@@ -283,6 +322,7 @@ export default async function ClassDetailPage({
         <StatCard
           label="Tiến độ lớp"
           value={`${progressPercent}%`}
+          hint={`${completedSessions}/${cls.total_sessions} buổi đã nhận xét`}
           progress={progressPercent}
         />
       </div>
@@ -291,6 +331,13 @@ export default async function ClassDetailPage({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {sessions.map((session) => {
             const filled = Boolean(session.content);
+            const handledCount = handledCountBySession.get(session.id) ?? 0;
+            const reviewState = resolveSessionReviewState({
+              studentCount,
+              handledCount,
+            });
+            const isReviewed = reviewState === "completed";
+            const isPartiallyReviewed = reviewState === "partial";
             const badge = getSessionFormatBadge(
               resolveSessionFormat(session),
               session.session_number,
@@ -300,10 +347,14 @@ export default async function ClassDetailPage({
               <Link key={session.id} href={`/teacher/sessions/${session.id}`}>
                 <div className="group flex h-full items-start gap-3 rounded-lg border p-3 transition-all hover:border-primary/40 hover:shadow-sm">
                   <span
-                    className={`flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${filled
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                      }`}
+                    className={cn(
+                      "flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold transition-colors",
+                      isReviewed
+                        ? "bg-emerald-600 text-white font-bold shadow-xs dark:bg-emerald-500"
+                        : isPartiallyReviewed
+                          ? "bg-amber-500 text-white font-bold shadow-xs dark:bg-amber-500"
+                          : "bg-muted text-muted-foreground"
+                    )}
                   >
                     {session.session_number}
                   </span>
@@ -320,13 +371,24 @@ export default async function ClassDetailPage({
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {session.session_date
-                        ? new Date(session.session_date).toLocaleDateString("vi-VN")
-                        : filled
-                          ? "Đã có nội dung"
-                          : "Chưa có nội dung"}
-                    </p>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                      {isReviewed ? (
+                        <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                          <span>✓</span> Đã nhận xét
+                        </span>
+                      ) : isPartiallyReviewed ? (
+                        <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                          <span>⏳</span> Đang nhận xét ({handledCount}/{studentCount})
+                        </span>
+                      ) : (
+                        <span>Chưa nhận xét</span>
+                      )}
+                      {session.session_date ? (
+                        <span>· {new Date(session.session_date).toLocaleDateString("vi-VN")}</span>
+                      ) : (
+                        <span>· {filled ? "Đã có nội dung" : "Chưa có nội dung"}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Link>
