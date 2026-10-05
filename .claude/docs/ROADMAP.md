@@ -1153,6 +1153,18 @@
   - Gỡ bỏ hoàn toàn hộp "Điền nhanh" ở ngoài theo yêu cầu, giao diện đăng nhập tự nhiên và sẵn sàng đăng nhập ngay lập tức.
 - [x] **Kiểm thử chất lượng:** 310/310 vitest PASS, typecheck & eslint 0 lỗi.
 
+### Đợt 77 (`fix/duplicate-class-review-status`) — Giữ Trạng Thái Chưa Nhận Xét Cho Lớp Sao Chép Mới
+- [x] **Tách biệt trạng thái nhận xét với việc có giáo án:**
+  - Trang chi tiết lớp (`/teacher/classes/[id]/page.tsx`): Trước đây các ô số buổi tô màu `bg-primary` theo `Boolean(session.content)` (đã có nội dung). Khi sao chép lớp kèm giáo án, tất cả buổi học lập tức bị tô màu và "Tiến độ lớp" nhảy lên 100%, gây hiểu nhầm lớp mới đã hoàn thành nhận xét.
+  - Chuyển việc tô màu ô số buổi và tính "Tiến độ lớp" dựa trên trạng thái nhận xét thực tế (`student_reviews`):
+    - Đã nhận xét đủ học viên: Ô số buổi màu xanh lá (`bg-emerald-600 text-white font-bold`), nhãn `✓ Đã nhận xét`.
+    - Đang nhận xét dở: Ô số buổi màu vàng cam (`bg-amber-500 text-white font-bold`), nhãn `⏳ Đang nhận xét (X/Y)`.
+    - Chưa nhận xét: Ô số buổi màu xám (`bg-muted text-muted-foreground`), nhãn `Chưa nhận xét`.
+  - "Tiến độ lớp" phản ánh chính xác tỉ lệ số buổi đã hoàn thành nhận xét (0% cho lớp mới sao chép).
+  - Giữ nguyên việc sao chép nội dung giáo án, số buổi, học sinh và định dạng buổi học (`is_periodic_test`, `is_project_period`, `is_final_presentation`).
+- [x] **Bổ sung unit test:** Thêm test suite cho `resolveSessionReviewState` trong `review-status.test.ts`.
+- [x] **Kiểm thử chất lượng:** 315/315 vitest PASS, typecheck & eslint 0 lỗi.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

@@ -3,11 +3,16 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-09-28, bởi: Gemini)
-**Đang làm:** Đã hoàn thành thiết lập **Tài Khoản Học Viên Demo & Lớp DEMO (kèm nội dung bài làm & bình luận mẫu)**:
-1. **Xóa tài khoản `test123`:** Đã dọn dẹp sạch sẽ tài khoản cũ `test123` khỏi Auth và các bảng liên quan (profiles, projects, enrollments, comments, drive links).
-2. **Khởi tạo lớp `DEMO`:** Tạo lớp có mã `DEMO` (14 buổi học), cho phép mã lớp `DEMO` trong `CLASS_CODE_PATTERN` của `classes.ts`.
-3. **Tạo tài khoản Demo học viên:** 
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-05, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 77 (**Giữ trạng thái chưa nhận xét cho lớp sao chép mới**):
+1. **Khắc phục lỗi ô số buổi bị đánh dấu màu xanh & tiến độ 100% khi sao chép lớp:**
+   - Trước đây `classes/[id]/page.tsx` tính màu ô số buổi và "Tiến độ lớp" dựa trên `filled = Boolean(session.content)` (đã có nội dung). Khi sao chép lớp, toàn bộ giáo án các buổi được sao chép nên các ô số buổi lập tức bị tô màu và tiến độ lớp bị đánh dấu 100%.
+   - Chuyển logic tô màu ô số buổi và "Tiến độ lớp" sang đọc dữ liệu nhận xét thực tế (`student_reviews`):
+     - `resolveSessionReviewState` xác định 3 mức: `completed` (ô số buổi xanh lá `bg-emerald-600`, nhãn `✓ Đã nhận xét`), `partial` (ô số buổi vàng cam `bg-amber-500`, nhãn `⏳ Đang nhận xét (X/Y)`), `unreviewed` (ô số buổi xám `bg-muted`, nhãn `Chưa nhận xét`).
+     - "Tiến độ lớp" hiển thị đúng tỉ lệ số buổi đã hoàn thành nhận xét (lớp mới sao chép là 0%).
+   - Sao chép lớp giữ nguyên giáo án, số buổi, danh sách học sinh và format buổi học (`is_periodic_test`, `is_project_period`, `is_final_presentation`).
+2. **Kiểm thử chất lượng:** 315/315 tests PASS, typecheck và eslint 0 lỗi.
+
    - Tên tài khoản: `demo`
    - Mật khẩu: `demo`
    - Họ tên: `Học viên Demo` (Lớp DEMO)
@@ -292,6 +297,7 @@ sai sự thật ngay sau lần đổi thiết kế. Vá bằng migration nối t
 (`information_schema`, dán lại vô hại) + bịt chỗ nuốt `error` khiến triệu
 chứng khó chẩn đoán.
 ## Cập nhật phiên làm việc (Cập nhật bởi: Gemini)
+- Đợt 77: Sửa lỗi hiển thị trạng thái nhận xét khi sao chép lớp (`fix/duplicate-class-review-status`). Chuyển logic tô màu ô số buổi từ `Boolean(session.content)` sang đọc bảng `student_reviews` qua `resolveSessionReviewState`. Lớp mới sao chép giữ nguyên nội dung giáo án, số buổi, học sinh nhưng các ô số buổi ở trạng thái xám "Chưa nhận xét", tiến độ lớp 0%. Bổ sung unit test, 315/315 tests pass.
 - Hoàn thành tính năng sinh lời chào Buổi 1 bằng AI (Gemini/OpenAI) thay vì hardcode. Tính năng lấy API Key/Provider từ cài đặt cá nhân của người dùng.
 - Tinh chỉnh Prompt cho lời chào Buổi 1: không dùng emoji, format chuẩn Zalo, văn phong trang trọng, ngôn ngữ chuẩn học đường.
 - Setup cron job để tự động dọn dẹp các bản ghi Showcase hết hạn (dùng `pg_cron`).

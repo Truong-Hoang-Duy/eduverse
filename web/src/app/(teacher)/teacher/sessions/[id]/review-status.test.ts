@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   isHandled,
   isReviewed,
+  resolveSessionReviewState,
   reviewSignature,
   type ExistingReview,
 } from "./review-status";
@@ -94,5 +95,44 @@ describe("reviewSignature", () => {
     ).not.toBe(
       reviewSignature({ ...base, strengths: ["a"], improvements: ["b"] })
     );
+  });
+});
+
+describe("resolveSessionReviewState", () => {
+  it("should be unreviewed when class has no students", () => {
+    expect(
+      resolveSessionReviewState({ studentCount: 0, handledCount: 0 })
+    ).toBe("unreviewed");
+    expect(
+      resolveSessionReviewState({ studentCount: 0, handledCount: 5 })
+    ).toBe("unreviewed");
+  });
+
+  it("should be unreviewed when no student has been reviewed or marked absent", () => {
+    expect(
+      resolveSessionReviewState({ studentCount: 10, handledCount: 0 })
+    ).toBe("unreviewed");
+  });
+
+  it("should be partial when some students are handled but not all", () => {
+    expect(
+      resolveSessionReviewState({ studentCount: 10, handledCount: 1 })
+    ).toBe("partial");
+    expect(
+      resolveSessionReviewState({ studentCount: 10, handledCount: 9 })
+    ).toBe("partial");
+  });
+
+  it("should be completed when all students in the class are handled", () => {
+    expect(
+      resolveSessionReviewState({ studentCount: 10, handledCount: 10 })
+    ).toBe("completed");
+  });
+
+  it("should be completed when handled count exceeds student count", () => {
+    // Trường hợp học viên bị xóa/chuyển sau khi đã nhận xét
+    expect(
+      resolveSessionReviewState({ studentCount: 8, handledCount: 10 })
+    ).toBe("completed");
   });
 });
