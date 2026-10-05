@@ -58,3 +58,25 @@ export function reviewSignature(existing: ExistingReview | null): string {
     existing.ai_generated_comment ?? "",
   ].join("~");
 }
+
+export type SessionReviewState = "completed" | "partial" | "unreviewed";
+
+export interface SessionReviewStatusInput {
+  studentCount: number;
+  handledCount: number;
+}
+
+/**
+ * Xác định trạng thái nhận xét của 1 buổi học trong trang chi tiết lớp:
+ * - "completed": Tất cả học viên đã được nhận xét hoặc đánh vắng (handled >= studentCount > 0).
+ * - "partial": Đang nhận xét dở (0 < handled < studentCount).
+ * - "unreviewed": Chưa nhận xét em nào (handled === 0 hoặc lớp chưa có học viên).
+ */
+export function resolveSessionReviewState({
+  studentCount,
+  handledCount,
+}: SessionReviewStatusInput): SessionReviewState {
+  if (studentCount <= 0 || handledCount <= 0) return "unreviewed";
+  if (handledCount >= studentCount) return "completed";
+  return "partial";
+}
