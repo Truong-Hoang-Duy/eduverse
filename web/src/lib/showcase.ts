@@ -35,11 +35,12 @@ export const RATING_CRITERIA = [
 
 export type RatingCriterion = (typeof RATING_CRITERIA)[number]["key"];
 
-export type ExpiryPreset = "1" | "7" | "30" | "none";
+export type ExpiryPreset = "1" | "7" | "14" | "30" | "none";
 
 export const EXPIRY_PRESETS: { value: ExpiryPreset; label: string }[] = [
   { value: "1", label: "1 ngày" },
   { value: "7", label: "7 ngày (mặc định)" },
+  { value: "14", label: "14 ngày" },
   { value: "30", label: "30 ngày" },
   { value: "none", label: "Không hết hạn" },
 ];

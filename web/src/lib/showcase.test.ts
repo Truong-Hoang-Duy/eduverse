@@ -54,6 +54,7 @@ describe("expiryFromPreset", () => {
   it("should add the right number of days", () => {
     expect(expiryFromPreset("7", NOW)).toBe("2026-09-05T10:00:00.000Z");
     expect(expiryFromPreset("1", NOW)).toBe("2026-08-30T10:00:00.000Z");
+    expect(expiryFromPreset("14", NOW)).toBe("2026-09-12T10:00:00.000Z");
     expect(expiryFromPreset("30", NOW)).toBe("2026-09-28T10:00:00.000Z");
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { SafeImage } from "@/components/safe-image";
 import { CheckMark, GraduationSeal } from "@/components/showcase/emblem";
@@ -14,46 +14,9 @@ import {
 } from "@/components/tv-overlay";
 import { Button } from "@/components/ui/button";
 import type { ProjectView } from "@/components/project-card";
-import { isSafeHttpUrl } from "@/lib/drive-url";
-import { buildIdleReel } from "@/lib/idle-reel";
 
-/** Ảnh hiển thị tối đa trên lưới của slide từng em — ảnh dư gộp vào ô "+N ảnh"
- *  mở lightbox xem hết, để lưới luôn đều và không tràn khung. */
-const MAX_GRID_IMAGES = 4;
-
-/** Mỗi cảnh màn hình chờ đứng bao lâu. 7 giây: đủ để phụ huynh vừa vào phòng
- *  kịp đọc tên em và tên sản phẩm, chưa đủ lâu để thành màn hình đứng hình. */
-const IDLE_SCENE_MS = 7000;
-
-function BigLink({ href, label }: { href: string | null; label: string }) {
-  if (!href) return null;
-  // Cùng lý do như LinkChip: URL do học viên dán, chặn ở chỗ render.
-  if (!isSafeHttpUrl(href)) return null;
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="rounded-full border border-sc-brass/45 px-4 py-2 text-base font-medium text-sc-brass transition-colors hover:bg-sc-brass-soft"
-    >
-      {label} ↗
-    </a>
-  );
-}
-
-/** Lớp lưới ảnh theo số lượng — luôn lấp đầy chiều cao còn lại, không phụ
- *  thuộc tỉ lệ ảnh gốc (khác object-contain cũ vốn gây cao thấp lệch → tràn). */
-function imageGridClass(count: number): string {
-  if (count <= 1) return "grid-cols-1 grid-rows-1";
-  if (count === 2) return "grid-cols-2 grid-rows-1";
-  return "grid-cols-2 grid-rows-2";
-}
-
-function imageCellClass(count: number, i: number): string {
-  // 3 ảnh: ảnh đầu chiếm trọn cột trái (2 hàng), hai ảnh sau xếp cột phải.
-  if (count === 3 && i === 0) return "row-span-2";
-  return "";
-}
+/** Thời gian mỗi cảnh màn hình chờ hiển thị trước khi chuyển em tiếp theo (8 giây) */
+const IDLE_SCENE_MS = 8000;
 
 function TvChrome({
   title,
@@ -65,157 +28,134 @@ function TvChrome({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-3 border-b border-sc-line px-6 py-4 sm:px-8">
-      <GraduationSeal size={30} className="shrink-0 text-sc-brass" />
-      <h2 className="font-display text-xl font-semibold text-sc-ink sm:text-2xl">
+    <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-3 border-b border-sc-line px-6 py-4.5 sm:px-10">
+      <GraduationSeal size={36} className="shrink-0 text-sc-brass" />
+      <h2 className="font-display text-2xl font-bold text-sc-ink sm:text-3xl">
         {title}
       </h2>
       {progress && (
-        <span className="font-display text-base text-sc-ink-soft sm:text-lg">
+        <span className="font-display text-lg font-semibold text-sc-ink-soft sm:text-xl">
           {progress}
         </span>
       )}
-      <div className="ml-auto flex flex-wrap items-center gap-2">{children}</div>
+      <div className="ml-auto flex flex-wrap items-center gap-2.5">{children}</div>
     </div>
   );
 }
 
-function StudentSlide({
-  project,
-  onOpenLightbox,
-}: {
-  project: ProjectView;
-  onOpenLightbox: (index: number) => void;
-}) {
-  const images = project.image_urls;
-  const shown = images.slice(0, MAX_GRID_IMAGES);
-  const extra = images.length - shown.length;
+/** Cảnh Màn hình chờ hiển thị từng học sinh:
+ *  - Cột trái: Tên học viên, Tên dự án, Mô tả chi tiết, Danh sách chức năng bo tròn (không link).
+ *  - Cột phải: 1 hình ảnh tiêu biểu đẹp nhất hiển thị rõ đầy đủ (Cinema Showcase Frame). */
+function IdleSlide({ project }: { project: ProjectView }) {
+  const featuredImage = project.image_urls[0] ?? null;
+
+  const sortedFeatures = useMemo(() => {
+    return [...project.features].sort(
+      (a, b) => a.trim().length - b.trim().length
+    );
+  }, [project.features]);
 
   return (
     <div
       key={project.id}
-      className="grid h-full min-h-0 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] gap-5 overflow-y-auto p-6 sm:gap-6 sm:p-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-rows-1 lg:overflow-hidden lg:p-10 animate-in fade-in slide-in-from-right-4"
+      className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-12 gap-8 p-6 sm:p-10 lg:p-12 animate-in fade-in duration-500 overflow-hidden"
     >
-      {/* Trái: danh tính + mô tả — CỐ ĐỊNH, luôn thấy khi đổi slide. */}
-      <div className="flex min-h-0 flex-col justify-center gap-4 overflow-hidden">
-        <div className="flex items-center gap-4">
-          <SealAvatar name={project.authorName} size={72} />
+      {/* CỘT TRÁI (THÔNG TIN TÁC GIẢ, MÔ TẢ & CHỨC NĂNG - 5/12 CỘT) */}
+      <div className="lg:col-span-5 flex min-h-0 flex-col justify-center gap-5 sm:gap-6 overflow-hidden">
+        {/* Tác giả & Tên dự án */}
+        <div className="flex items-center gap-5 shrink-0">
+          <SealAvatar name={project.authorName} size={84} />
           <div className="min-w-0">
-            <p className="truncate font-display text-2xl font-semibold text-sc-ink sm:text-3xl">
+            <p className="truncate font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold text-sc-ink tracking-tight">
               {project.authorName}
             </p>
-            <p className="truncate text-lg text-sc-brass sm:text-xl">{project.name}</p>
-          </div>
-        </div>
-
-        {project.description && (
-          <p className="line-clamp-5 text-base leading-relaxed text-sc-ink-soft sm:text-lg">
-            {project.description}
-          </p>
-        )}
-
-        {project.features.length > 0 && (
-          <div>
-            <p className="text-[11px] font-semibold tracking-[0.18em] text-sc-brass uppercase">
-              Em đã làm được
+            <p className="truncate text-xl sm:text-2xl lg:text-3xl font-bold text-sc-brass mt-1 sm:mt-1.5">
+              {project.name}
             </p>
-            <ul className="mt-1.5 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
-              {project.features.slice(0, 8).map((f) => (
-                <li key={f} className="flex items-start gap-2 py-0.5 text-sm sm:text-base">
-                  <CheckMark className="mt-1 size-4 shrink-0 text-sc-brass" />
-                  <span className="truncate">{f}</span>
-                </li>
-              ))}
-            </ul>
-            {project.features.length > 8 && (
-              <p className="mt-1 text-xs text-sc-ink-soft">
-                +{project.features.length - 8} chức năng nữa
-              </p>
-            )}
+          </div>
+        </div>
+
+        {/* Mô tả dự án */}
+        {project.description ? (
+          <div className="shrink-0 space-y-2">
+            <span className="text-xs sm:text-sm lg:text-base font-bold uppercase tracking-wider text-sc-brass">
+              Mô tả dự án
+            </span>
+            <div className="rounded-2xl border border-sc-line bg-sc-raised/80 p-4 sm:p-5 text-base sm:text-lg lg:text-xl leading-relaxed text-sc-ink font-normal max-h-44 sm:max-h-56 overflow-y-auto scrollbar-slim shadow-2xs">
+              <p className="whitespace-pre-wrap">{project.description}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="shrink-0 rounded-2xl border border-sc-line/70 bg-sc-raised/50 p-4 text-sm sm:text-base lg:text-lg text-sc-ink-soft italic">
+            Sản phẩm cuối khóa do học viên {project.authorName} tự tay thiết kế và phát triển.
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
-          <BigLink href={project.repo_url} label="GitHub" />
-          <BigLink href={project.drive_url} label="Google Drive" />
-          <BigLink href={project.demo_url} label="Demo" />
-        </div>
+        {/* Các chức năng sản phẩm (Sắp xếp từ ngắn đến dài, bo tròn trên cùng hàng, không link) */}
+        {sortedFeatures.length > 0 && (
+          <div className="min-h-0 flex-1 flex flex-col gap-2 overflow-hidden">
+            <div className="flex items-center justify-between shrink-0">
+              <span className="text-xs sm:text-sm lg:text-base font-bold uppercase tracking-wider text-sc-brass">
+                Các chức năng nổi bật ({sortedFeatures.length})
+              </span>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto scrollbar-slim pr-1">
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                {sortedFeatures.map((f) => (
+                  <div
+                    key={f}
+                    className="inline-flex items-center gap-2 rounded-full border border-sc-brass/45 bg-sc-raised px-4 py-2 sm:px-4.5 sm:py-2.5 text-sm sm:text-base lg:text-lg font-medium text-sc-ink shadow-2xs transition-colors"
+                  >
+                    <CheckMark className="size-4 sm:size-5 shrink-0 text-sc-brass" />
+                    <span className="leading-snug">{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Phải: lưới ảnh — cắt object-cover đều tỉ lệ, ảnh dư gộp "+N ảnh". */}
-      {shown.length > 0 ? (
-        <div className={`grid min-h-[32vh] gap-3 sm:gap-4 lg:min-h-0 ${imageGridClass(shown.length)}`}>
-          {shown.map((url, i) => (
-            <button
-              key={url}
-              type="button"
-              onClick={() => onOpenLightbox(i)}
-              className={`group relative min-h-0 overflow-hidden rounded-2xl border border-sc-line bg-sc-raised ${imageCellClass(shown.length, i)}`}
-            >
+      {/* CỘT PHẢI (ẢNH TIÊU BIỂU HIỂN THỊ RÕ ĐẦY ĐỦ - 7/12 CỘT) */}
+      <div className="lg:col-span-7 flex min-h-0 items-center justify-center overflow-hidden">
+        {featuredImage ? (
+          <div className="group relative size-full overflow-hidden rounded-2xl border border-sc-line bg-zinc-950 flex items-center justify-center p-2 sm:p-3 shadow-xl">
+            {/* Lớp nền mờ Ambient Backdrop tạo chiều sâu và vầng hào quang theo màu ảnh */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
               <SafeImage
-                src={url}
-                alt={`Ảnh ${i + 1} sản phẩm của ${project.authorName}`}
-                className="size-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                src={featuredImage}
+                alt=""
+                className="size-full scale-125 object-cover blur-2xl opacity-35 saturate-150"
               />
-              <span className="sc-tape absolute -top-1 left-4 h-3.5 w-12 rounded-[2px]" />
-              {i === shown.length - 1 && extra > 0 && (
-                <span className="absolute inset-0 flex items-center justify-center bg-sc-ink/60 font-display text-2xl font-semibold text-sc-paper">
-                  +{extra} ảnh
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="flex min-h-[20vh] items-center justify-center rounded-2xl border border-dashed border-sc-brass/30 text-sc-ink-soft lg:min-h-0">
-          Chưa có ảnh sản phẩm
-        </div>
-      )}
-    </div>
-  );
-}
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-2xs" />
+            </div>
 
-/** Một cảnh của màn hình chờ: ảnh to hết cỡ, tên em + tên sản phẩm ở dưới.
- *  Chiếu lúc phụ huynh đang lục tục vào phòng, chưa ai thuyết trình. */
-function IdleSlide({
-  project,
-  imageUrl,
-}: {
-  project: ProjectView;
-  imageUrl: string | null;
-}) {
-  return (
-    <div
-      // `key` ở chỗ gọi ép React dựng lại → animation chạy lại mỗi cảnh.
-      className="flex h-full min-h-0 flex-col items-center justify-center gap-6 p-8 sm:p-10 animate-in fade-in duration-700"
-    >
-      {imageUrl ? (
-        <div className="relative flex min-h-0 flex-1 items-center justify-center">
-          <SafeImage
-            src={imageUrl}
-            alt={`Ảnh sản phẩm của ${project.authorName}`}
-            className="max-h-full max-w-full rounded-xl object-contain shadow-lg"
-          />
-        </div>
-      ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center">
-          <GraduationSeal size={160} withRibbon className="text-sc-brass/70" />
-        </div>
-      )}
-
-      <div className="flex shrink-0 items-center gap-5">
-        <SealAvatar name={project.authorName} size={72} />
-        <div className="min-w-0 text-left">
-          <p className="truncate font-display text-3xl font-semibold text-sc-ink sm:text-4xl">
-            {project.authorName}
-          </p>
-          <p className="truncate text-xl text-sc-brass sm:text-2xl">{project.name}</p>
-        </div>
+            {/* Ảnh chính hiển thị 100% trọn vẹn, không crop, sắc nét tối đa */}
+            <div className="relative z-1 flex size-full items-center justify-center p-1 sm:p-2">
+              <SafeImage
+                src={featuredImage}
+                alt={`Ảnh tiêu biểu sản phẩm của ${project.authorName}`}
+                className="max-h-full max-w-full object-contain drop-shadow-2xl rounded-xl transition-transform duration-300 group-hover:scale-[1.01]"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex size-full flex-col items-center justify-center gap-5 rounded-2xl border border-dashed border-sc-brass/35 bg-sc-raised/30 p-8 text-center text-sc-ink-soft">
+            <GraduationSeal size={130} withRibbon className="text-sc-brass/60" />
+            <p className="text-xl sm:text-2xl font-bold text-sc-ink">
+              Sản phẩm của {project.authorName}
+            </p>
+            <p className="text-sm sm:text-base text-sc-ink-soft max-w-sm">
+              Chưa có ảnh tải lên — hãy chúc mừng bài làm của em!
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+/** Màn hình tổng kết cả lớp (Overview) — có thể mở từ màn hình chờ để ngắm toàn bộ sản phẩm */
 function OverviewSlide({
   slides,
   onJump,
@@ -224,49 +164,49 @@ function OverviewSlide({
   onJump: (index: number) => void;
 }) {
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 overflow-hidden p-6 sm:gap-5 sm:p-8">
-      <p className="shrink-0 text-center text-base text-sc-ink-soft sm:text-lg">
+    <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden p-6 sm:gap-6 sm:p-10">
+      <p className="shrink-0 text-center text-lg text-sc-ink-soft sm:text-xl lg:text-2xl font-medium">
         Cả lớp đã hoàn thành{" "}
-        <span className="font-display text-lg font-semibold text-sc-brass sm:text-xl">
+        <span className="font-display text-xl font-bold text-sc-brass sm:text-2xl lg:text-3xl">
           {slides.length} sản phẩm
         </span>{" "}
-        — cảm ơn quý phụ huynh đã đồng hành cùng các em! 💐
+        — chúc mừng tất cả các em! 💐
       </p>
 
       <div className="scrollbar-slim min-h-0 flex-1 overflow-y-auto">
         <div
-          className="grid gap-4 sm:gap-5"
-          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
+          className="grid gap-5 sm:gap-6"
+          style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}
         >
           {slides.map((p, i) => (
             <button
               key={p.id}
               type="button"
               onClick={() => onJump(i)}
-              className="sc-rule group rounded-2xl bg-sc-raised p-4 text-left transition-transform hover:-translate-y-1 animate-in fade-in slide-in-from-bottom-2"
+              className="sc-rule group rounded-2xl bg-sc-raised p-5 text-left transition-transform hover:-translate-y-1 animate-in fade-in slide-in-from-bottom-2 cursor-pointer shadow-xs"
               style={{ animationDelay: `${Math.min(i, 14) * 40}ms` }}
             >
               {p.image_urls.length > 0 && (
-                <div className="relative mb-3">
+                <div className="relative mb-3.5">
                   <SafeImage
                     src={p.image_urls[0]}
                     alt={`Ảnh sản phẩm của ${p.authorName}`}
-                    className="h-28 w-full rounded-lg bg-sc-paper object-cover sm:h-32"
+                    className="h-32 w-full rounded-xl bg-sc-paper object-cover sm:h-36"
                   />
                   <span className="sc-tape absolute -top-1.5 left-4 h-3.5 w-12 rounded-[2px]" />
                 </div>
               )}
-              <div className="flex items-center gap-3">
-                <SealAvatar name={p.authorName} size={42} />
+              <div className="flex items-center gap-3.5">
+                <SealAvatar name={p.authorName} size={48} />
                 <div className="min-w-0">
-                  <p className="truncate font-display text-base font-semibold text-sc-ink">
+                  <p className="truncate font-display text-lg font-bold text-sc-ink sm:text-xl">
                     {p.authorName}
                   </p>
-                  <p className="truncate text-sm text-sc-ink-soft">{p.name}</p>
+                  <p className="truncate text-base font-semibold text-sc-brass mt-0.5">{p.name}</p>
                 </div>
               </div>
               {p.features.length > 0 && (
-                <p className="mt-2 truncate text-xs text-sc-ink-soft">
+                <p className="mt-2.5 truncate text-xs sm:text-sm text-sc-ink-soft">
                   {p.features.slice(0, 3).join(" · ")}
                   {p.features.length > 3 && ` +${p.features.length - 3}`}
                 </p>
@@ -276,93 +216,15 @@ function OverviewSlide({
         </div>
       </div>
 
-      <p className="shrink-0 text-center text-sm text-sc-ink-soft">
-        Bấm vào từng em để xem lại chi tiết sản phẩm
+      <p className="shrink-0 text-center text-sm sm:text-base font-medium text-sc-ink-soft">
+        Bấm vào từng em để chuyển tới màn hình của em đó
       </p>
     </div>
   );
 }
 
-function Lightbox({
-  images,
-  index,
-  authorName,
-  onClose,
-  onIndex,
-}: {
-  images: string[];
-  index: number;
-  authorName: string;
-  onClose: () => void;
-  onIndex: (i: number) => void;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowRight") onIndex(Math.min(index + 1, images.length - 1));
-      if (e.key === "ArrowLeft") onIndex(Math.max(index - 1, 0));
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, onIndex, index, images.length]);
-
-  return (
-    <div
-      className="fixed inset-0 z-10 flex flex-col items-center justify-center gap-5 bg-sc-ink/90 p-6"
-      onClick={onClose}
-    >
-      <div className="absolute top-6 right-6">
-        <TvNavButton onClick={onClose} variant="ghost" ariaLabel="Đóng xem ảnh lớn">
-          <span className="text-sc-paper">✕ Đóng</span>
-        </TvNavButton>
-      </div>
-
-      <div className="max-h-[75vh] max-w-[85vw]" onClick={(e) => e.stopPropagation()}>
-        <SafeImage
-          src={images[index]}
-          alt={`Ảnh ${index + 1} sản phẩm của ${authorName}`}
-          className="max-h-[75vh] max-w-[85vw] rounded-2xl object-contain"
-        />
-      </div>
-
-      <div
-        className="flex items-center gap-4 text-sc-paper"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          disabled={index === 0}
-          onClick={() => onIndex(index - 1)}
-          className="rounded-full border border-sc-paper/30 px-4 py-2 text-sm transition-colors hover:bg-sc-paper/10 disabled:opacity-30"
-        >
-          ← Trước
-        </button>
-        <span className="font-display text-sm">
-          {index + 1}/{images.length}
-        </span>
-        <button
-          type="button"
-          disabled={index === images.length - 1}
-          onClick={() => onIndex(index + 1)}
-          className="rounded-full border border-sc-paper/30 px-4 py-2 text-sm transition-colors hover:bg-sc-paper/10 disabled:opacity-30"
-        >
-          Tiếp →
-        </button>
-      </div>
-    </div>
-  );
-}
-
-type TvView = "slides" | "overview" | "idle";
-
-/** Màn hình chiếu thuyết trình sản phẩm cuối khóa, thiết kế theo tư duy SLIDE
- *  (concept "Bảng vàng" đồng bộ với trang phụ huynh `/showcase`) — mỗi cảnh
- *  khít khung `100dvh`, hạn chế cuộn tối đa:
- *  - "slides": mỗi em một slide, chuyển bằng nút hoặc phím ← →, thứ tự theo tên.
- *  - "overview": tổng kết CẢ LỚP một màn — chiếu khi nói chuyện với phụ huynh
- *    sau khi các em thuyết trình xong; bấm thẻ để nhảy về slide của em đó.
- *  - "idle": màn hình chờ TỰ CHẠY vòng ảnh sản phẩm — chiếu lúc phụ huynh đang
- *    vào phòng, trước khi buổi lễ bắt đầu (thêm 2026-09-04). */
+/** Chức năng Màn hình chờ (TV Slideshow) cho sản phẩm cuối khóa của lớp:
+ *  Tự động chạy tuần tự từng học sinh sau mỗi 8s, hiển thị mô tả, chức năng bo tròn và 1 ảnh tiêu biểu. */
 export function ProjectShowcase({
   classCode,
   projects,
@@ -371,52 +233,50 @@ export function ProjectShowcase({
   projects: ProjectView[];
 }) {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<TvView>("slides");
   const [index, setIndex] = useState(0);
-  const [idleIndex, setIdleIndex] = useState(0);
-  const [lightbox, setLightbox] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [view, setView] = useState<"idle" | "overview">("idle");
 
-  const slides = [...projects].sort((a, b) =>
-    a.authorName.localeCompare(b.authorName, "vi")
-  );
-  const current = slides[Math.min(index, slides.length - 1)];
-  const isLast = index === slides.length - 1;
-
-  const reel = buildIdleReel(slides);
-  const idleScene = reel[idleIndex % Math.max(reel.length, 1)];
-
-  // Màn hình chờ tự chạy vòng, KHÔNG dừng ở cảnh cuối: giáo viên bật rồi bỏ đó
-  // đi đón phụ huynh, quay lại vẫn thấy nó đang chạy.
-  useEffect(() => {
-    if (!open || view !== "idle" || reel.length === 0) return;
-    const timer = setInterval(
-      () => setIdleIndex((i) => (i + 1) % reel.length),
-      IDLE_SCENE_MS
+  const slides = useMemo(() => {
+    return [...projects].sort((a, b) =>
+      a.authorName.localeCompare(b.authorName, "vi")
     );
-    return () => clearInterval(timer);
-  }, [open, view, reel.length]);
+  }, [projects]);
 
+  const current = slides[Math.min(index, slides.length - 1)];
+
+  // Màn hình chờ tự động chuyển sang em tiếp theo theo chu kỳ lặp vô tận
   useEffect(() => {
-    if (!open || view !== "slides" || lightbox !== null) return;
+    if (!open || !isPlaying || view !== "idle" || slides.length <= 1) return;
+    const timer = setInterval(() => {
+      setIndex((i) => (i + 1) % slides.length);
+    }, IDLE_SCENE_MS);
+    return () => clearInterval(timer);
+  }, [open, isPlaying, view, slides.length]);
+
+  // Phím tắt bàn phím tiện lợi
+  useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") setIndex((i) => Math.min(i + 1, slides.length - 1));
-      if (e.key === "ArrowLeft") setIndex((i) => Math.max(i - 1, 0));
+      if (e.key === "ArrowRight") {
+        setIndex((i) => (i + 1) % slides.length);
+      } else if (e.key === "ArrowLeft") {
+        setIndex((i) => (i - 1 + slides.length) % slides.length);
+      } else if (e.key === " " && view === "idle") {
+        e.preventDefault();
+        setIsPlaying((p) => !p);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, view, slides.length, lightbox]);
-
-  // Đổi slide/đổi màn thì đóng lightbox đang mở của slide trước, tránh lệch ảnh.
-  useEffect(() => {
-    setLightbox(null);
-  }, [index, view]);
+  }, [open, view, slides.length]);
 
   if (projects.length === 0) return null;
 
-  function enter(mode: TvView = "slides") {
+  function enter() {
     setIndex(0);
-    setIdleIndex(0);
-    setView(mode);
+    setIsPlaying(true);
+    setView("idle");
     setOpen(true);
     enterBrowserFullscreen();
   }
@@ -428,21 +288,13 @@ export function ProjectShowcase({
 
   function jumpToSlide(i: number) {
     setIndex(i);
-    setView("slides");
+    setView("idle");
   }
 
   return (
     <>
-      {/* Đặt song song với nút "📺 Chiếu QR lên TV" ở khối bên cạnh: cùng động
-          từ "chiếu ... lên TV" để giáo viên đọc lướt là biết cả hai đều mở màn
-          trình chiếu, không phải một trang quản lý nào khác. */}
-      <Button variant="outline" onClick={() => enter("slides")}>
-        🎬 Chiếu sản phẩm
-      </Button>
-      {/* Đường vào THẲNG màn hình chờ: lúc cần nó (phụ huynh đang vào phòng)
-          giáo viên còn đang đón khách, không muốn phải vào slide rồi lần mò
-          đổi chế độ. */}
-      <Button variant="outline" onClick={() => enter("idle")}>
+      {/* Chỉ giữ lại 1 nút chức năng: Màn hình chờ */}
+      <Button variant="outline" onClick={enter} className="cursor-pointer">
         🖼️ Màn hình chờ
       </Button>
 
@@ -452,77 +304,59 @@ export function ProjectShowcase({
             <div className="showcase-surface flex h-full w-full flex-col overflow-hidden">
               <TvChrome
                 title={
-                  view === "slides"
-                    ? `🎤 Sản phẩm cuối khóa · Lớp ${classCode}`
-                    : view === "idle"
-                      ? `🖼️ Chào mừng quý phụ huynh · Lớp ${classCode}`
-                      : `🎉 Sản phẩm cuối khóa · Lớp ${classCode}`
+                  view === "idle"
+                    ? `🖼️ Màn hình chờ sản phẩm cuối khóa · Lớp ${classCode}`
+                    : `🎉 Tổng kết sản phẩm cuối khóa · Lớp ${classCode}`
                 }
-                progress={view === "slides" ? `${index + 1}/${slides.length}` : undefined}
+                progress={view === "idle" ? `${index + 1}/${slides.length}` : undefined}
               >
                 {view === "idle" ? (
-                  <TvNavButton onClick={() => setView("slides")}>
-                    ▶️ Bắt đầu thuyết trình
-                  </TvNavButton>
-                ) : view === "slides" ? (
                   <>
                     <TvNavButton
-                      onClick={() => setIndex((i) => Math.max(i - 1, 0))}
-                      disabled={index === 0}
+                      onClick={() => setIndex((i) => (i - 1 + slides.length) % slides.length)}
+                      ariaLabel="Xem học viên trước (Phím ←)"
                     >
                       ← Trước
                     </TvNavButton>
                     <TvNavButton
-                      variant={isLast ? "outline" : "solid"}
-                      onClick={() => setIndex((i) => Math.min(i + 1, slides.length - 1))}
-                      disabled={isLast}
+                      onClick={() => setIndex((i) => (i + 1) % slides.length)}
+                      ariaLabel="Xem học viên tiếp theo (Phím →)"
                     >
                       Tiếp →
                     </TvNavButton>
-                    {/* MỘT đường sang màn tổng kết duy nhất. Đến em cuối thì nó
-                        thành nút chính — vừa là "xem cả lớp", vừa là bước tiếp
-                        theo tự nhiên của buổi lễ, không cần nút thứ hai. */}
                     <TvNavButton
-                      variant={isLast ? "solid" : "outline"}
+                      variant={isPlaying ? "solid" : "outline"}
+                      onClick={() => setIsPlaying((p) => !p)}
+                      ariaLabel={isPlaying ? "Tạm dừng tự chạy (Phím Space)" : "Tiếp tục tự chạy (Phím Space)"}
+                    >
+                      {isPlaying ? "⏸️ Tạm dừng" : "▶️ Tự chạy"}
+                    </TvNavButton>
+                    <TvNavButton
+                      variant="outline"
                       onClick={() => setView("overview")}
                     >
-                      🎉 Tất cả
+                      🎉 Xem tất cả
                     </TvNavButton>
                   </>
                 ) : (
-                  <TvNavButton onClick={() => setView("slides")}>
-                    ▶️ Xem lần lượt
+                  <TvNavButton onClick={() => setView("idle")}>
+                    🖼️ Quay lại màn hình chờ
                   </TvNavButton>
                 )}
+
                 <TvNavButton variant="ghost" onClick={exit} ariaLabel="Thoát chế độ chiếu">
                   ✕ Thoát
                 </TvNavButton>
               </TvChrome>
 
-              <div className="min-h-0 flex-1">
-                {view === "idle" && idleScene ? (
-                  <IdleSlide
-                    key={idleScene.key}
-                    project={idleScene.project}
-                    imageUrl={idleScene.imageUrl}
-                  />
-                ) : view === "slides" ? (
-                  <StudentSlide project={current} onOpenLightbox={setLightbox} />
+              <div className="min-h-0 flex-1 overflow-hidden">
+                {view === "idle" ? (
+                  <IdleSlide project={current} />
                 ) : (
                   <OverviewSlide slides={slides} onJump={jumpToSlide} />
                 )}
               </div>
             </div>
-
-            {lightbox !== null && current.image_urls.length > 0 && (
-              <Lightbox
-                images={current.image_urls}
-                index={lightbox}
-                authorName={current.authorName}
-                onClose={() => setLightbox(null)}
-                onIndex={setLightbox}
-              />
-            )}
           </div>
         </TvOverlay>
       )}

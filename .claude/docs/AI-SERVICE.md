@@ -68,10 +68,13 @@ Output: `{bullets: [string]}` — GẠCH ĐẦU DÒNG (3-6 ý), web tự thêm `
 model KHÔNG được tự thêm ký tự đầu dòng (chốt 2026-08-03).
 `prior_sessions` = tối đa 5 buổi TRƯỚC gần nhất cùng lớp đã có nội dung, để AI
 nối đúng tiến trình (không lặp kiến thức trừ khi ghi chú nói rõ là ôn tập).
-`draft_text` có thể RỖNG (chốt 2026-08-28) — hai nhánh luật NGƯỢC NHAU, đừng gộp:
-- **Có draft**: CHỈ viết lại đúng ý GV đã ghi. TUYỆT ĐỐI KHÔNG tự thêm kiến
-  thức/chủ đề mới — nội dung này chảy vào nhận xét gửi PHỤ HUYNH, thêm thứ
-  chưa dạy vào đây là báo sai cho phụ huynh (quyết định gốc 2026-08-03).
+`draft_text` có thể RỖNG (chốt 2026-08-28) hoặc mô tả dài/ngắn tùy ý (chốt 2026-10-13):
+- **Có draft**: GV có thể gõ ngắn hoặc dán mô tả chi tiết, bài tập, dự án. AI chắt
+  lọc và viết thành các gạch đầu dòng 1-2 câu giàu tính sư phạm theo tiến trình
+  (Khởi động/Ôn tập -> Kiến thức trọng tâm -> Thực hành/Mini-project -> Mở rộng)
+  theo dạng `[Hoạt động / Chủ đề / Dự án]: [Mô tả chi tiết việc học hoặc sản phẩm]`,
+  tránh cộc lốc. Tuy nhiên PHẢI BẢO TOÀN KIẾN THỨC: TUYỆT ĐỐI KHÔNG tự thêm kiến
+  thức/chủ đề mới ngoài ghi chú GV (vì nội dung này chảy vào nhận xét gửi PHỤ HUYNH).
 - **Draft rỗng**: đây là ca DUY NHẤT được phép tự đề xuất chủ đề — dựa HOÀN
   TOÀN vào `prior_sessions` để đề xuất bài tiếp theo hợp lý. Web tự chặn gọi
   endpoint này khi draft rỗng LẪN không có `prior_sessions` nào (`suggestSessionContent`
