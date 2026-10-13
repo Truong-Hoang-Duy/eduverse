@@ -4,20 +4,39 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-13, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 91 (**Tinh gọn giao diện Tổng kết khóa học & Tối giản Màn chiếu TV/QR**):
-1. **Giao diện Tổng kết khóa học ở ngoài (`showcase-panel.tsx`):**
-   - Đổi tên nhãn khối "Link gửi phụ huynh" thành "Đường dẫn sản phẩm cuối khóa".
-   - Sắp xếp nút "Gia hạn link / Bật link" và ô chọn hạn dùng (Select 7 ngày, 14 ngày,...) cùng nằm trên một hàng ngang liền kề.
-   - Đổi tên nút "📺 Chiếu TV / QR" thành "📱 QR sản phẩm" ngắn gọn, trực quan, ăn nhập với thao tác quét mã.
-2. **Màn chiếu TV & QR (`showcase-tv-screen.tsx`):**
-   - Bỏ dòng nhãn "Học viên lập trình", chỉ hiển thị tên tác giả và thu nhỏ cỡ chữ vừa vặn thanh lịch (`text-lg sm:text-xl font-bold`, avatar size 40).
-   - Ở phần đầu nội dung (Giai đoạn 1): Xóa thumbnail ảnh bài làm, dành trọn 100% diện tích thẻ hiển thị thông tin dự án (Tên dự án to rõ, khung mô tả rộng rãi, các thẻ điểm nổi bật).
-   - Tối giản thanh công cụ phía dưới (footer): Xóa các nút thừa/trùng lặp ("✕ Đóng màn chiếu" vì đã có "✕ Thoát" ở header, "⛶ Toàn màn hình", "🔄 Đặt lại 0"), chỉ giữ lại điều khiển Nhạc nền Lofi và Hẹn giờ khai mạc.
-3. **Kiểm thử chất lượng:**
+**Đang làm:** Đã hoàn thành Đợt 92 (**Tối ưu giao diện Quét mã QR Sản phẩm cuối khóa: Danh sách ngang tinh giản, Xem ảnh full trên máy tính kèm Lightbox, Tách biệt và tự động dọn sạch Nhận xét góp ý theo link**):
+1. **Tinh gọn giao diện trang quét mã QR (`showcase-view.tsx`):**
+   - Loại bỏ hoàn toàn bộ lọc rườm rà (các nút chuyển chế độ xem `Lưới | Danh sách | Trình chiếu`, dropdown sắp xếp, nút lọc chưa góp ý, danh sách nút chọn nhanh học viên).
+   - Chỉ giữ lại ô tìm kiếm đơn giản, thanh lịch, tinh tế.
+   - Cố định hiển thị dưới dạng danh sách hàng ngang: Tên học sinh và tên sản phẩm nằm ngang trên cùng một hàng (`[Avatar] [Tên học viên] — [Tên sản phẩm] [Badge trạng thái] [Xem →]`), bấm vào hàng mới mở popup chi tiết.
+2. **Hiển thị ảnh full một hình ảnh trên máy tính & Điều hướng trái/phải (`showcase-view.tsx`):**
+   - Popup chi tiết sản phẩm (`ProjectDetail`) trên máy tính và điện thoại hiển thị trọn vẹn 1 hình ảnh to đẹp mắt với ambient backdrop làm mờ lung linh, không chia 2 cột nhỏ nát ảnh nữa.
+   - Bổ sung nút bấm sang trái/phải (`◀` `▶`), indicator `X / Y`, và dãy thumbnail ảnh bên dưới để chuyển qua lại mượt mà.
+   - Tích hợp `ImageLightbox`: bấm vào ảnh mở xem toàn màn hình (Full Screen) với điều hướng mũi tên bàn phím và nút bấm trái/phải.
+3. **Phần nhận xét góp ý độc lập & Vòng đời theo link (`showcase-view.tsx`, `showcase.ts`, `page.tsx`):**
+   - Loại bỏ hoàn toàn khối `project.comments` ("Góp ý bài làm ban đầu" từ `project_comments` của học sinh) khỏi trang showcase để đảm bảo phần nhận xét góp ý của phụ huynh/khách hoàn toàn độc lập.
+   - Khi tạo link mới hoặc đổi token (`enableShowcase`, `rotateShowcaseToken`), toàn bộ nhận xét góp ý cũ được xóa sạch để bắt đầu phiên nhận xét mới toanh.
+   - Khi link hết hạn (`isShowcaseExpired`), tự động dọn sạch toàn bộ `showcase_ratings` của showcase đó.
+4. **Tái cấu trúc thứ tự & Kích thước chi tiết sản phẩm (`showcase-view.tsx`):**
+   - Đưa phần **Mô tả dự án** lên đầu tiên ngay sau tiêu đề/thông tin tác giả.
+   - Đổi tiêu đề "Em đã làm được" thành **Tính năng**.
+   - Đổi tiêu đề "Em tìm hiểu thêm" thành **Đường dẫn dự án** (chứa nút bấm mở Mã nguồn GitHub, Dùng thử sản phẩm, Slide thuyết trình Canvas/liên kết ngoài).
+   - Đặt khung **Hình ảnh sản phẩm** nằm bên dưới 2 phần trên (Mô tả và Tính năng/Đường dẫn), kèm cơ chế xem ảnh Ambient Blur, nút chuyển ảnh ◀ ▶, thumbnail và Lightbox phóng to.
+5. **Tối ưu toàn diện Responsive điện thoại & Ghim mép Header/Footer trọn vẹn khung ảnh (`showcase-view.tsx`):**
+   - Đổi modal sang cấu trúc `flex-col h-[94dvh] sm:h-[90dvh] max-h-[96dvh] w-[calc(100%-1rem)] sm:w-full max-w-[calc(100%-1rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl`.
+   - **Ghim cố định 2 đầu mép:** Header (`shrink-0 border-b`) luôn ghim mép trên, Footer phân trang (`shrink-0 border-t`) luôn ghim mép dưới với nền `backdrop-blur-md` chống trôi mất khi cuộn.
+   - **Khớp trọn khung ảnh:** Khi cuộn đến ảnh sản phẩm, chiều cao khung ảnh tự động mở rộng bao quát toàn bộ khoảng cách từ mép dưới Header đến mép trên Footer (`h-[calc(94dvh-230px)] min-h-[340px] max-h-[580px]` trên mobile, lên đến `620px-660px` trên desktop) kết hợp `object-contain max-h-full max-w-full`, đảm bảo nhìn trọn vẹn 100% tấm ảnh (ảnh ngang 16:9 hay ảnh dọc 9:16/slide đều không bị che khuất/cắt nát).
+   - **Thao tác cảm ứng điện thoại:** Tích hợp thao tác vuốt tay trái/phải (Touch Swipe) trực tiếp trên điện thoại + phím mũi tên trái/phải trên bàn phím máy tính để xem các ảnh tiếp theo.
+   - Đổi tiêu đề đầu trang showcase từ "Lễ tổng kết khóa học" thành **Tổng kết khóa học** (`showcase-view.tsx`).
+6. **Kiểm thử chất lượng:**
    - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
-   - `ai-service`: 91/91 tests PASS.
 
-**Trước đó:** Đã hoàn thành Đợt 90 (**Tối ưu Màn chiếu TV & QR: Cố định khung bên phải, chống rớt dòng cột trái, chuẩn hóa Header và chiếu ảnh bài làm vừa vặn toàn màn hình**):
+Cập nhật bởi: Gemini
+
+
+
+
+**Trước đó:** Đã hoàn thành Đợt 91 (**Tinh gọn giao diện Tổng kết khóa học & Tối giản Màn chiếu TV/QR**):
 1. **Cố định khung trình chiếu bên phải (`showcase-tv-screen.tsx`):**
    - Ghim chiều cao cố định `h-[560px] sm:h-[580px] lg:h-[600px]`, chia rõ các khu vực: Header thẻ cố định `h-20`, Footer phân trang `h-16`, Thân thẻ `flex-1 min-h-0`.
    - Các vùng nội dung (mô tả dự án, danh sách tính năng) dùng `overflow-y-auto scrollbar-slim` đảm bảo khi đổi học sinh có độ dài nội dung khác nhau, giao diện tuyệt đối không bị giật, co giãn hay nhảy khung (layout shift).
