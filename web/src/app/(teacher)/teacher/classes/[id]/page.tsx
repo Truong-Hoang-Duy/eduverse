@@ -11,6 +11,7 @@ import {
   getSessionFormatBadge,
   resolveSessionFormat,
 } from "@/lib/session-format";
+import { isShowcaseExpired } from "@/lib/showcase";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -241,24 +242,33 @@ export default async function ClassDetailPage({
 
   let showcaseRatings: ShowcaseRatingRow[] = [];
   if (showcase) {
-    const { data: ratingRows } = await supabase
-      .from("showcase_ratings")
-      .select(
-        "id, project_id, score_product, score_presentation, score_creativity, comment, created_at"
-      )
-      .eq("showcase_id", showcase.id)
-      .order("created_at", { ascending: false });
-    // Bài chấm ẩn danh: dòng KHÔNG có tên người gửi. `studentName` là tên em
-    // ĐƯỢC CHẤM, lấy từ chính danh sách sản phẩm phía trên.
-    showcaseRatings = (ratingRows ?? []).map((r) => ({
-      id: r.id,
-      studentName: authorByProject.get(r.project_id) ?? "Học viên",
-      score_product: r.score_product,
-      score_presentation: r.score_presentation,
-      score_creativity: r.score_creativity,
-      comment: r.comment,
-      created_at: r.created_at,
-    }));
+    const isExpired = isShowcaseExpired(showcase.expires_at);
+    if (isExpired) {
+      // Link đã hết hạn -> xóa sạch nhận xét góp ý theo yêu cầu
+      await supabase
+        .from("showcase_ratings")
+        .delete()
+        .eq("showcase_id", showcase.id);
+    } else {
+      const { data: ratingRows } = await supabase
+        .from("showcase_ratings")
+        .select(
+          "id, project_id, score_product, score_presentation, score_creativity, comment, created_at"
+        )
+        .eq("showcase_id", showcase.id)
+        .order("created_at", { ascending: false });
+      // Bài chấm ẩn danh: dòng KHÔNG có tên người gửi. `studentName` là tên em
+      // ĐƯỢC CHẤM, lấy từ chính danh sách sản phẩm phía trên.
+      showcaseRatings = (ratingRows ?? []).map((r) => ({
+        id: r.id,
+        studentName: authorByProject.get(r.project_id) ?? "Học viên",
+        score_product: r.score_product,
+        score_presentation: r.score_presentation,
+        score_creativity: r.score_creativity,
+        comment: r.comment,
+        created_at: r.created_at,
+      }));
+    }
   }
 
   return (
