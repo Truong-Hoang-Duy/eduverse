@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Search, X } from "lucide-react";
 
+import { ZoomableImage } from "@/components/gallery/zoomable-image";
 import { SafeImage } from "@/components/safe-image";
 import { CheckMark, GraduationSeal } from "@/components/showcase/emblem";
 import { SealAvatar } from "@/components/showcase/seal-avatar";
@@ -21,17 +23,11 @@ import {
 import { usePreventZoom } from "@/lib/use-prevent-zoom";
 import {
   RATING_CRITERIA,
-  SHOWCASE_LAYOUTS,
-  SHOWCASE_SORTS,
   arrangeShowcaseProjects,
   hasRated,
-  normalizeVi,
-  overallScore,
   type MyRating,
-  type ShowcaseLayout,
   type ShowcasePayload,
   type ShowcaseProject,
-  type ShowcaseSort,
 } from "@/lib/showcase";
 
 import { RatingForm } from "./rating-form";
@@ -43,14 +39,8 @@ import { ThemeSwitch } from "./theme-switch";
  * bảng tin lớp học. Motif xuyên suốt là TRIỆN TỐT NGHIỆP (xem `emblem.tsx`),
  * dùng ở ba cỡ: crest đầu trang, vòng quanh avatar, con dấu "đã nhận xét".
  *
- * Thiết kế cho ĐIỆN THOẠI trước: phụ huynh quét QR trên TV rồi xem trên máy
- * mình, giữa buổi lễ, một tay cầm điện thoại. Vì vậy chỉ có MỘT lưới thẻ, bấm
- * vào một bạn là mở popup toàn bộ thông tin của bạn đó — không thanh tab, không
- * menu nhiều tầng (user chốt 2026-08-29).
- *
- * Mọi thứ nhận diện người xem (id ngẫu nhiên cho tim và cho bài chấm, cờ "đã
- * đếm lượt xem") nằm trong localStorage của chính máy đó — KHÔNG có tài khoản,
- * không tên, không theo dõi ai.
+ * Thiết kế tinh gọn: Hiển thị dưới dạng danh sách tên học viên & sản phẩm nằm ngang.
+ * Bấm vào một bạn sẽ mở popup toàn bộ thông tin chi tiết của bạn đó.
  */
 
 /** Id ngẫu nhiên cho mỗi trình duyệt — khớp CHECK `showcase_*_visitor_shape`. */
@@ -63,12 +53,9 @@ function readVisitorId(): string {
     localStorage.setItem(KEY, fresh);
     return fresh;
   } catch {
-    // Trình duyệt chặn localStorage (chế độ ẩn danh chẳng hạn): vẫn chấm được,
-    // chỉ là mở lại trang thì không nhớ mình đã chấm những em nào.
     return crypto.randomUUID().replace(/-/g, "");
   }
 }
-
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("vi-VN", {
@@ -94,38 +81,36 @@ function Divider({ className }: { className?: string }) {
 }
 
 /** Nhãn nhỏ chữ hoa giãn cách — nhịp chữ của một tấm bằng. */
-function Eyebrow({ children }: { children: React.ReactNode }) {
+function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <p className="text-[11px] font-semibold tracking-[0.18em] text-sc-brass uppercase">
+    <p className={`text-xs sm:text-[13px] font-bold tracking-[0.16em] text-sc-brass uppercase ${className ?? ""}`}>
       {children}
     </p>
   );
 }
 
 function BigLink({ href, label }: { href: string | null; label: string }) {
-  // Link do học viên dán → luôn kiểm ở chỗ render, không tin dữ liệu trong DB.
   if (!href || !isSafeHttpUrl(href)) return null;
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="rounded-full border border-sc-brass/50 px-4 py-2 text-sm font-medium text-sc-brass transition-colors hover:bg-sc-brass-soft"
+      className="inline-flex items-center gap-1.5 rounded-full border border-sc-brass/50 bg-sc-brass-soft/40 px-4 py-2 text-sm sm:text-base font-medium text-sc-brass transition-all hover:bg-sc-brass hover:text-sc-paper hover:shadow-xs"
     >
-      {label} ↗
+      <span>{label}</span>
+      <span aria-hidden="true">↗</span>
     </a>
   );
 }
 
-
-/** Danh sách chức năng dạng THÀNH TÍCH có dấu tick, không phải hàng tag rời rạc. */
+/** Danh sách chức năng dạng THÀNH TÍCH có dấu tick. */
 function FeatureList({
   features,
   limit,
   columns = 1,
 }: {
   features: string[];
-  /** Cắt bớt trên thẻ nhỏ; bỏ trống = hiện hết (trong popup). */
   limit?: number;
   columns?: 1 | 2;
 }) {
@@ -134,20 +119,20 @@ function FeatureList({
   const rest = features.length - shown.length;
 
   return (
-    <div>
-      <Eyebrow>Em đã làm được</Eyebrow>
+    <div className="space-y-1.5">
+      <Eyebrow>Tính năng</Eyebrow>
       <ul
-        className={`mt-1.5 gap-x-4 gap-y-1 ${columns === 2 ? "sm:columns-2" : ""}`}
+        className={`mt-1.5 gap-x-6 gap-y-1.5 ${columns === 2 ? "sm:columns-2" : ""}`}
       >
         {shown.map((f) => (
-          <li key={f} className="flex items-start gap-2 py-0.5 text-sm break-inside-avoid">
-            <CheckMark className="mt-1 size-3.5 shrink-0 text-sc-brass" />
-            <span>{f}</span>
+          <li key={f} className="flex items-start gap-2.5 py-1 text-sm sm:text-base lg:text-lg break-inside-avoid">
+            <CheckMark className="mt-1 size-4 shrink-0 text-sc-brass" />
+            <span className="leading-snug">{f}</span>
           </li>
         ))}
       </ul>
       {rest > 0 && (
-        <p className="mt-1 text-xs text-sc-ink-soft">+{rest} chức năng nữa</p>
+        <p className="mt-1 text-xs sm:text-sm text-sc-ink-soft">+{rest} chức năng nữa</p>
       )}
     </div>
   );
@@ -160,23 +145,12 @@ export function ShowcaseView({
 }: {
   token: string;
   showcase: ShowcasePayload;
-  /**
-   * Class biến font của khu triển lãm. Phải truyền tay xuống popup: Radix
-   * portal nó ra thẳng `<body>`, nằm ngoài cây DOM của layout nên không thừa kế
-   * được `--font-playfair`.
-   */
   fontClass: string;
 }) {
   const projects = showcase.projects;
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const searchContainerRef = useRef<HTMLDivElement>(null);
-  const [layout, setLayout] = useState<ShowcaseLayout>("grid");
-  const [sort, setSort] = useState<ShowcaseSort>("name");
-  const [onlyUnrated, setOnlyUnrated] = useState(false);
-  const [slide, setSlide] = useState(0);
   const [myRatings, setMyRatings] = useState<Record<string, MyRating>>({});
   const [guestNotes, setGuestNotes] = useState(() =>
     Object.fromEntries(projects.map((p) => [p.id, p.guest_notes]))
@@ -206,51 +180,15 @@ export function ShowcaseView({
 
   usePreventZoom(true);
 
-  const students = useMemo(() => {
-    return [...projects]
-      .map((p) => ({
-        id: p.id,
-        name: p.author_name,
-        projectName: p.name,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name, "vi"));
-  }, [projects]);
-
-  const dropdownStudents = useMemo(() => {
-    const needle = normalizeVi(query);
-    if (!needle) return students;
-    return students.filter(
-      (s) =>
-        normalizeVi(s.name).includes(needle) ||
-        normalizeVi(s.projectName).includes(needle)
-    );
-  }, [students, query]);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        searchContainerRef.current &&
-        !searchContainerRef.current.contains(e.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   useEffect(() => {
     const id = readVisitorId();
     setVisitorId(id);
 
-    // Bài chấm cũ của chính máy này — mở lại trang vẫn thấy mình đã chấm những
-    // em nào và sửa được. Đọc theo `visitorId` nên không ai thấy của người khác.
+    // Bài chấm cũ của chính máy này
     void loadMyShowcaseRatings(token, id).then((rows) => {
       setMyRatings(Object.fromEntries(rows.map((r) => [r.project_id, r])));
     });
 
-    // Đếm MỘT lần cho mỗi phiên mở trang của khán giả: vào tới website là tính một
-    // lượt kết nối, F5 trong cùng phiên không bị cộng trùng.
     const key = `eduverse.showcase.viewed.${token}`;
     try {
       if (!sessionStorage.getItem(key)) {
@@ -267,59 +205,35 @@ export function ShowcaseView({
     [projects, myRatings]
   );
 
-  // Thứ tự phụ huynh đang NHÌN THẤY — mọi thao tác chuyển bạn (popup, trình
-  // chiếu) đều bám theo danh sách này, không bám danh sách gốc; nếu không thì
-  // vừa sắp xếp xong bấm "Bạn tiếp" lại nhảy sang một bạn ở tận đâu.
   const visible = useMemo(
     () =>
       arrangeShowcaseProjects(projects, {
         query,
-        sort,
-        onlyUnrated,
+        sort: "name",
+        onlyUnrated: false,
         ratedIds,
       }),
-    [projects, query, sort, onlyUnrated, ratedIds]
+    [projects, query, ratedIds]
   );
 
   const openIndex = visible.findIndex((p) => p.id === openId);
   const current = openIndex >= 0 ? visible[openIndex] : null;
 
-  useEffect(() => {
-    if (!current) return;
-    const onKey = (e: KeyboardEvent) => {
-      // Máy tính (giáo viên chiếu, hoặc phụ huynh xem lại ở nhà) dùng được phím
-      // mũi tên; điện thoại đã có hai nút to ở cuối popup.
-      if (e.key === "ArrowRight" && openIndex < visible.length - 1) {
-        setOpenId(visible[openIndex + 1].id);
-      }
-      if (e.key === "ArrowLeft" && openIndex > 0) {
-        setOpenId(visible[openIndex - 1].id);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [current, openIndex, visible]);
-
   const saveRating = useCallback((rating: MyRating) => {
     setMyRatings((prev) => ({ ...prev, [rating.project_id]: rating }));
-    // Nhận xét ẩn danh hiện ngay cho chính người vừa gửi thấy, khỏi phải F5.
     setGuestNotes((prev) => {
       const others = (prev[rating.project_id] ?? []).filter(
         (n) => n.id !== rating.id
       );
       const next = rating.comment
         ? [
-          { id: rating.id, comment: rating.comment, created_at: rating.created_at },
-          ...others,
-        ]
+            { id: rating.id, comment: rating.comment, created_at: rating.created_at },
+            ...others,
+          ]
         : others;
       return { ...prev, [rating.project_id]: next };
     });
   }, []);
-
-  // Lọc/sắp xếp làm danh sách ngắn lại — kẹp lại để không trỏ ra ngoài mảng.
-  const slideIndex = Math.min(slide, Math.max(visible.length - 1, 0));
-  const slideProject = visible[slideIndex];
 
   return (
     <main className="pb-16" style={{ touchAction: "manipulation" }}>
@@ -334,7 +248,7 @@ export function ShowcaseView({
             withRibbon
             className="mx-auto text-sc-brass"
           />
-          <Eyebrow>Lễ tổng kết khóa học</Eyebrow>
+          <Eyebrow>Tổng kết khóa học</Eyebrow>
           <h1 className="font-display text-3xl leading-tight font-semibold sm:text-4xl">
             Sản phẩm cuối khóa
           </h1>
@@ -347,237 +261,44 @@ export function ShowcaseView({
             {projects.length > 0 && ` · ${projects.length} sản phẩm`}
           </p>
           {showcase.intro && (
-            <p className="mx-auto max-w-2xl rounded-2xl border border-sc-brass/25 bg-sc-raised p-4 text-left text-sm leading-relaxed whitespace-pre-wrap">
+            <p className="mx-auto max-w-2xl rounded-2xl border border-sc-brass/25 bg-sc-raised p-4 text-left text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
               {showcase.intro}
             </p>
           )}
         </header>
 
-        {/* Tìm kiếm hoặc chọn học viên */}
+        {/* Ô tìm kiếm nhanh học sinh hoặc sản phẩm (giao diện tối giản, không bộ lọc rườm rà) */}
         {projects.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <div ref={searchContainerRef} className="relative">
+          <div className="mt-5 max-w-md mx-auto">
+            <div className="relative">
               <span
                 className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sc-ink-soft"
                 aria-hidden="true"
               >
-                <svg
-                  className="size-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                  />
-                </svg>
+                <Search className="size-4" />
               </span>
               <input
                 value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                placeholder="Nhập hoặc chọn học sinh / sản phẩm..."
-                aria-label="Tìm hoặc chọn học sinh"
-                className="w-full rounded-full border border-sc-line bg-sc-raised py-2.5 pr-16 pl-10 text-base sm:text-sm text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Tìm học sinh hoặc sản phẩm..."
+                aria-label="Tìm học sinh hoặc sản phẩm"
+                className="w-full rounded-full border border-sc-line bg-sc-raised py-2 pr-10 pl-10 text-sm sm:text-base text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none shadow-2xs transition-colors"
               />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-2 gap-1">
-                {query && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQuery("");
-                      setIsDropdownOpen(false);
-                    }}
-                    aria-label="Xóa tìm kiếm"
-                    className="p-1 text-sc-ink-soft hover:text-sc-ink transition-colors"
-                  >
-                    <svg
-                      className="size-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2}
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                )}
+              {query && (
                 <button
                   type="button"
-                  onClick={() => setIsDropdownOpen((v) => !v)}
-                  aria-label="Danh sách học viên"
-                  aria-expanded={isDropdownOpen}
-                  className="p-1 text-sc-ink-soft hover:text-sc-ink transition-colors"
+                  onClick={() => setQuery("")}
+                  aria-label="Xóa tìm kiếm"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-sc-ink-soft hover:text-sc-ink transition-colors cursor-pointer"
                 >
-                  <svg
-                    className={`size-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2}
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
+                  <X className="size-4" />
                 </button>
-              </div>
-
-              {/* Menu dropdown chọn học viên */}
-              {isDropdownOpen && (
-                <div className="absolute z-20 mt-1.5 w-full rounded-2xl border border-sc-line bg-sc-raised p-1.5 shadow-lg max-h-60 overflow-y-auto">
-                  <div
-                    onClick={() => {
-                      setQuery("");
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors ${!query
-                        ? "bg-sc-brass-soft font-semibold text-sc-brass"
-                        : "text-sc-ink hover:bg-sc-brass-soft/50"
-                      }`}
-                  >
-                    <span>Tất cả học viên ({students.length})</span>
-                    {!query && <span className="text-xs text-sc-brass">✓</span>}
-                  </div>
-                  <div className="my-1 border-t border-sc-line" />
-                  {dropdownStudents.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-sc-ink-soft text-center">
-                      Không có học sinh nào khớp
-                    </p>
-                  ) : (
-                    dropdownStudents.map((s) => {
-                      const isSelected = normalizeVi(query) === normalizeVi(s.name);
-                      return (
-                        <div
-                          key={s.id}
-                          onClick={() => {
-                            setQuery(s.name);
-                            setIsDropdownOpen(false);
-                          }}
-                          className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors ${isSelected
-                              ? "bg-sc-brass-soft font-semibold text-sc-brass"
-                              : "text-sc-ink hover:bg-sc-brass-soft/50"
-                            }`}
-                        >
-                          <div className="min-w-0 flex-1 pr-2">
-                            <p className="font-medium truncate">{s.name}</p>
-                            <p className="text-xs text-sc-ink-soft truncate">{s.projectName}</p>
-                          </div>
-                          {isSelected && <span className="text-xs text-sc-brass shrink-0">✓</span>}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
               )}
             </div>
-
-            {/* Hàng nút bấm chọn nhanh học sinh trong lớp */}
-            <div
-              className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none"
-              role="tablist"
-              aria-label="Chọn nhanh học viên"
-            >
-              <span className="shrink-0 text-xs font-medium text-sc-ink-soft">
-                Chọn em:
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery("");
-                  setIsDropdownOpen(false);
-                }}
-                className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${!query
-                    ? "bg-sc-brass font-semibold text-sc-paper shadow-xs"
-                    : "border border-sc-line bg-sc-raised text-sc-ink hover:border-sc-brass/50 hover:bg-sc-brass-soft"
-                  }`}
-              >
-                Tất cả ({students.length})
-              </button>
-              {students.map((s) => {
-                const isSelected = normalizeVi(query) === normalizeVi(s.name);
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => {
-                      if (isSelected) {
-                        setQuery("");
-                      } else {
-                        setQuery(s.name);
-                      }
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs transition-colors ${isSelected
-                        ? "bg-sc-brass font-semibold text-sc-paper shadow-xs"
-                        : "border border-sc-line bg-sc-raised text-sc-ink hover:border-sc-brass/50 hover:bg-sc-brass-soft"
-                      }`}
-                  >
-                    {s.name}
-                  </button>
-                );
-              })}
-            </div>
           </div>
         )}
 
-        {/* Chế độ xem + sắp xếp. Lớp 1-2 bạn thì mấy thứ này chỉ tổ rối. */}
-        {projects.length > 2 && (
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <div
-              role="group"
-              aria-label="Chế độ xem"
-              className="flex rounded-full border border-sc-line bg-sc-raised p-0.5"
-            >
-              {SHOWCASE_LAYOUTS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setLayout(opt.value)}
-                  aria-pressed={layout === opt.value}
-                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${layout === opt.value
-                      ? "bg-sc-brass-soft font-medium text-sc-brass"
-                      : "text-sc-ink-soft hover:text-sc-ink"
-                    }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as ShowcaseSort)}
-              aria-label="Sắp xếp"
-              className="rounded-full border border-sc-line bg-sc-raised px-3 py-1.5 text-base sm:text-sm text-sc-ink focus:border-sc-brass focus:outline-none"
-            >
-              {SHOWCASE_SORTS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-
-            {showcase.allow_ratings && (
-              <button
-                type="button"
-                onClick={() => setOnlyUnrated((v) => !v)}
-                aria-pressed={onlyUnrated}
-                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${onlyUnrated
-                    ? "border-sc-brass bg-sc-brass-soft font-medium text-sc-brass"
-                    : "border-sc-line bg-sc-raised text-sc-ink-soft hover:text-sc-ink"
-                  }`}
-              >
-                Chưa có Cảm nghĩ & Góp ý
-              </button>
-            )}
-          </div>
-        )}
-
+        {/* Danh sách học sinh theo hàng ngang: Tên và sản phẩm nằm ngang */}
         {projects.length === 0 ? (
           <div className="mt-6 rounded-2xl border border-dashed border-sc-brass/40 p-10 text-center">
             <p className="font-display text-lg">Lớp chưa có sản phẩm nào được đăng</p>
@@ -587,23 +308,17 @@ export function ShowcaseView({
           </div>
         ) : visible.length === 0 ? (
           <div className="mt-6 rounded-2xl border border-dashed border-sc-brass/40 p-8 text-center text-sm text-sc-ink-soft">
-            <p>
-              {query
-                ? `Không tìm thấy bạn nào khớp “${query}”.`
-                : "Bạn đã gửi cảm nghĩ & góp ý cho cả lớp rồi — bỏ lọc để xem lại."}
-            </p>
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-sc-brass/50 bg-sc-brass-soft px-4 py-1.5 text-xs font-medium text-sc-brass hover:bg-sc-brass/20 transition-colors"
-              >
-                ✕ Xóa tìm kiếm
-              </button>
-            )}
+            <p>Không tìm thấy học sinh hay sản phẩm nào khớp “{query}”.</p>
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-sc-brass/50 bg-sc-brass-soft px-4 py-1.5 text-xs font-medium text-sc-brass hover:bg-sc-brass/20 transition-colors cursor-pointer"
+            >
+              ✕ Xóa tìm kiếm
+            </button>
           </div>
-        ) : layout === "list" ? (
-          <ul className="mt-6 space-y-2">
+        ) : (
+          <ul className="mt-6 space-y-2.5">
             {visible.map((p) => (
               <ProjectListRow
                 key={p.id}
@@ -614,50 +329,6 @@ export function ShowcaseView({
               />
             ))}
           </ul>
-        ) : layout === "slideshow" && slideProject ? (
-          <div className="mt-6 space-y-4">
-            <div className="mx-auto max-w-md">
-              <ProjectCardTile
-                project={slideProject}
-                rated={hasRated(myRatings[slideProject.id])}
-                isSpotlight={slideProject.id === spotlightId}
-                showResults={showcase.show_rating_results}
-                onOpen={() => setOpenId(slideProject.id)}
-              />
-            </div>
-            <div className="flex items-center justify-center gap-3">
-              <SlideNavButton
-                onClick={() => setSlide(Math.max(slideIndex - 1, 0))}
-                disabled={slideIndex === 0}
-              >
-                ← Bạn trước
-              </SlideNavButton>
-              <span className="font-display text-lg text-sc-brass">
-                {slideIndex + 1}/{visible.length}
-              </span>
-              <SlideNavButton
-                onClick={() =>
-                  setSlide(Math.min(slideIndex + 1, visible.length - 1))
-                }
-                disabled={slideIndex >= visible.length - 1}
-              >
-                Bạn tiếp →
-              </SlideNavButton>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map((p) => (
-              <ProjectCardTile
-                key={p.id}
-                project={p}
-                rated={hasRated(myRatings[p.id])}
-                isSpotlight={p.id === spotlightId}
-                showResults={showcase.show_rating_results}
-                onOpen={() => setOpenId(p.id)}
-              />
-            ))}
-          </div>
         )}
 
         <footer className="mt-12 space-y-2 text-center">
@@ -670,13 +341,9 @@ export function ShowcaseView({
       </div>
 
       <Dialog open={current !== null} onOpenChange={(o) => !o && setOpenId(null)}>
-        {/* `showcase-theme` + font phải gắn lại ở đây: popup được portal ra ngoài
-            cây DOM của layout nên không thừa kế biến nào.
-            Trên điện thoại: gần như toàn màn hình. Chỉ THÂN popup cuộn — tên em
-            luôn thấy ở đầu, hai nút chuyển bạn luôn thấy ở chân. */}
         <DialogContent
           style={{ touchAction: "pan-y" }}
-          className={`${fontClass} showcase-theme grid max-h-[92dvh] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden border border-sc-line bg-sc-raised p-0 text-sc-ink ring-0 sm:max-w-2xl`}
+          className={`${fontClass} showcase-theme flex flex-col h-[94dvh] sm:h-[90dvh] max-h-[96dvh] w-[calc(100%-1rem)] sm:w-full max-w-[calc(100%-1rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl gap-0 overflow-hidden border border-sc-line bg-sc-raised p-0 text-sc-ink ring-0`}
         >
           {current && (
             <ProjectDetail
@@ -709,7 +376,7 @@ export function ShowcaseView({
           <button
             type="button"
             onClick={() => setOpenId(spotlightProject.id)}
-            className="pointer-events-auto w-full flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 bg-[length:200%_auto] text-white p-3.5 shadow-2xl hover:brightness-110 transition-all border border-white/25 active:scale-[0.98] text-left"
+            className="pointer-events-auto w-full flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-red-600 bg-[length:200%_auto] text-white p-3.5 shadow-2xl hover:brightness-110 transition-all border border-white/25 active:scale-[0.98] text-left cursor-pointer"
           >
             <div className="flex items-center gap-3 min-w-0">
               <span className="relative flex size-3.5 shrink-0">
@@ -738,34 +405,9 @@ export function ShowcaseView({
   );
 }
 
-function SlideNavButton({
-  onClick,
-  disabled,
-  children,
-}: {
-  onClick: () => void;
-  disabled: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="rounded-full border border-sc-brass/45 px-4 py-2 text-sm font-medium text-sc-brass transition-colors hover:bg-sc-brass-soft disabled:opacity-30"
-    >
-      {children}
-    </button>
-  );
-}
-
 /**
- * Một dòng trong chế độ "Danh sách" — cùng dữ liệu nhận diện với thẻ lưới
- * (avatar triện + tên + tên dự án + dấu đã nhận xét) nhưng bỏ ảnh và danh sách
- * chức năng, để lớp đông thì lướt hết cả lớp trong một màn điện thoại.
- *
- * Không có nút tim ở đây: dòng gọn thì mọi thứ sát nhau, bấm nhầm tim khi định
- * mở chi tiết là chuyện chắc chắn xảy ra — tim vẫn bấm được trong popup.
+ * Một dòng danh sách theo tên và sản phẩm nằm ngang:
+ * [Avatar] [Tên học viên] — [Tên sản phẩm] [Badge thuyết trình/đã góp ý] [Xem →]
  */
 function ProjectListRow({
   project,
@@ -783,110 +425,44 @@ function ProjectListRow({
       <button
         type="button"
         onClick={onOpen}
-        className={`flex w-full items-center gap-3 rounded-xl border bg-sc-raised p-2.5 text-left transition-all ${
+        className={`group flex w-full items-center justify-between gap-3.5 rounded-2xl border bg-sc-raised p-3.5 sm:p-4 text-left transition-all cursor-pointer ${
           isSpotlight
-            ? "border-red-500 ring-2 ring-red-500/30 bg-red-500/5 shadow-sm"
-            : "border-sc-line hover:border-sc-brass/50"
+            ? "border-red-500 ring-2 ring-red-500/30 bg-red-500/5 shadow-md"
+            : "border-sc-line hover:border-sc-brass/60 hover:bg-sc-brass-soft/25 hover:shadow-2xs"
         }`}
       >
-        <SealAvatar name={project.author_name} size={40} />
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2 truncate font-display text-base font-semibold">
-            <span>{project.author_name}</span>
+        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+          <SealAvatar name={project.author_name} size={44} />
+          <div className="flex flex-wrap sm:flex-nowrap items-baseline sm:items-center gap-x-2.5 gap-y-0.5 min-w-0 flex-1">
+            <span className="font-display font-semibold text-base sm:text-lg lg:text-xl text-sc-ink shrink-0">
+              {project.author_name}
+            </span>
+            <span className="text-sc-brass/50 font-normal hidden sm:inline" aria-hidden="true">
+              —
+            </span>
+            <span className="text-sm sm:text-base lg:text-lg text-sc-ink-soft truncate font-normal group-hover:text-sc-ink transition-colors">
+              {project.name}
+            </span>
             {isSpotlight && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider animate-pulse">
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] sm:text-xs font-bold text-white uppercase tracking-wider animate-pulse shrink-0 ml-1">
                 🔴 Đang thuyết trình
               </span>
             )}
-          </span>
-          <span className="block truncate text-sm text-sc-ink-soft">
-            {project.name}
-          </span>
-        </span>
-        {rated && <CheckMark className="size-5 shrink-0 text-sc-terracotta" />}
-        <span className="shrink-0 text-sm text-sc-brass">→</span>
-      </button>
-    </li>
-  );
-}
-
-function ProjectCardTile({
-  project,
-  rated,
-  isSpotlight,
-  showResults,
-  onOpen,
-}: {
-  project: ShowcaseProject;
-  rated: boolean;
-  isSpotlight?: boolean;
-  showResults: boolean;
-  onOpen: () => void;
-}) {
-  const average = showResults ? overallScore(project.rating_avg) : null;
-
-  return (
-    /* Viền kép `.sc-rule` vẽ bằng inset shadow nên nội dung phải chừa lề ≥ 5px —
-       `p-3` lo việc đó, và cũng tạo cảm giác ảnh được DÁN LÊN tấm thẻ. */
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onOpen();
-        }
-      }}
-      className={`sc-rule relative cursor-pointer rounded-2xl bg-sc-raised p-3 text-left transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_color-mix(in_oklab,var(--sc-brass)_30%,transparent)] ${
-        isSpotlight
-          ? "ring-2 ring-red-500 shadow-[0_0_25px_rgba(239,68,68,0.25)]"
-          : ""
-      }`}
-    >
-      {isSpotlight && (
-        <div className="absolute -top-2.5 right-4 z-10">
-          <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-md animate-pulse">
-            🔴 Đang thuyết trình
-          </span>
-        </div>
-      )}
-      {project.image_urls.length > 0 && (
-        <div className="relative mb-3">
-          <SafeImage
-            src={project.image_urls[0]}
-            alt={`Ảnh sản phẩm của ${project.author_name}`}
-            className="h-40 w-full rounded-lg bg-sc-paper object-cover"
-          />
-          {/* Băng dán góc — chi tiết "bảng tin lớp học". */}
-          <span className="sc-tape absolute -top-1.5 left-5 h-4 w-14 rounded-[2px]" />
-        </div>
-      )}
-
-      <div className="space-y-3 px-1 pb-1">
-        <div className="flex items-center gap-3">
-          <SealAvatar name={project.author_name} size={46} />
-          <div className="min-w-0">
-            <p className="truncate font-display text-base font-semibold">
-              {project.author_name}
-            </p>
-            <p className="truncate text-sm text-sc-ink-soft">{project.name}</p>
           </div>
         </div>
 
-        <FeatureList features={project.features} limit={3} />
-
-        <div className="flex flex-wrap items-center gap-2 border-t border-sc-line pt-3">
+        <div className="flex items-center gap-2.5 shrink-0">
           {rated && (
-            <span className="sc-stamp inline-flex rounded-md border-2 border-sc-terracotta/60 px-2 py-0.5 text-[10px] font-bold tracking-[0.14em] text-sc-terracotta uppercase">
-              Đã góp ý
+            <span className="sc-stamp inline-flex items-center rounded-md border border-sc-terracotta/50 bg-sc-terracotta/10 px-2.5 py-0.5 text-[10px] sm:text-xs font-bold tracking-wider text-sc-terracotta uppercase">
+              ✓ Đã góp ý
             </span>
           )}
-          {average !== null && <StarDisplay score={average} />}
-          <span className="ml-auto text-sm font-medium text-sc-brass">Xem →</span>
+          <span className="text-sm sm:text-base font-semibold text-sc-brass group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+            <span className="hidden sm:inline">Xem</span> →
+          </span>
         </div>
-      </div>
-    </div>
+      </button>
+    </li>
   );
 }
 
@@ -917,95 +493,251 @@ function ProjectDetail({
   onNext: () => void;
   onRated: (rating: MyRating) => void;
 }) {
+  const [activeImgIndex, setActiveImgIndex] = useState(0);
+  const [imageZoomed, setImageZoomed] = useState(false);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchEndX, setTouchEndX] = useState<number | null>(null);
+
+  useEffect(() => {
+    setActiveImgIndex(0);
+  }, [project.id]);
+
+  const totalImages = project.image_urls.length;
+  const currentImage = totalImages > 0 ? project.image_urls[activeImgIndex] : null;
+
+  // Hỗ trợ phím mũi tên bàn phím trên máy tính
+  useEffect(() => {
+    if (totalImages <= 1) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        setActiveImgIndex((prev) => (prev - 1 + totalImages) % totalImages);
+      } else if (e.key === "ArrowRight") {
+        setActiveImgIndex((prev) => (prev + 1) % totalImages);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [totalImages]);
+
+  // Hỗ trợ vuốt tay trái/phải trên màn hình điện thoại.
+  // Đang zoom thì vuốt là kéo ảnh, và chụm 2 ngón là zoom — đều không được đổi ảnh.
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (imageZoomed || e.targetTouches.length > 1) {
+      setTouchStartX(null);
+      return;
+    }
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchEndX(null);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (imageZoomed || e.targetTouches.length > 1) {
+      setTouchStartX(null);
+      return;
+    }
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (imageZoomed || touchStartX === null || touchEndX === null) return;
+    const distance = touchStartX - touchEndX;
+    if (distance > 45 && totalImages > 1) {
+      setActiveImgIndex((prev) => (prev + 1) % totalImages);
+    } else if (distance < -45 && totalImages > 1) {
+      setActiveImgIndex((prev) => (prev - 1 + totalImages) % totalImages);
+    }
+    setTouchStartX(null);
+    setTouchEndX(null);
+  };
+
   return (
     <>
-      <DialogHeader className="border-b border-sc-line p-4 pr-12 text-left">
+      <DialogHeader className="shrink-0 border-b border-sc-line p-3.5 sm:p-5 pr-12 text-left bg-sc-raised/95 backdrop-blur-md">
         <DialogTitle className="flex items-center gap-3">
           <SealAvatar name={project.author_name} size={44} />
-          <span className="min-w-0">
-            <span className="block truncate font-display text-lg font-semibold">
+          <div className="min-w-0">
+            <span className="block truncate font-display text-lg sm:text-2xl lg:text-3xl font-bold">
               {project.author_name}
             </span>
-            <span className="block truncate text-sm font-normal text-sc-ink-soft">
+            <span className="block truncate text-xs sm:text-base lg:text-lg font-normal text-sc-ink-soft">
               {project.name}
             </span>
-          </span>
+          </div>
         </DialogTitle>
         <DialogDescription className="sr-only">
           Chi tiết sản phẩm cuối khóa của em {project.author_name}
         </DialogDescription>
       </DialogHeader>
 
-      <div className="scrollbar-slim space-y-4 overflow-x-hidden overflow-y-auto p-4">
+      <div className="flex-1 min-h-0 scrollbar-slim space-y-4 sm:space-y-5 overflow-x-hidden overflow-y-auto p-3.5 sm:p-6 lg:p-7 text-sm sm:text-base scroll-smooth">
         {project.rating_count > 0 && (
           <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-sc-ink-soft">
+            <span className="text-sm sm:text-base text-sc-ink-soft">
               {project.rating_count} phụ huynh đã chấm điểm
             </span>
           </div>
         )}
 
-        {project.image_urls.length > 0 && (
-          /* Một ảnh thì trải hết bề ngang; nhiều ảnh mới chia 2 cột. Chặn chiều
-             cao để ảnh dọc không đẩy hết phần còn lại xuống dưới màn hình. */
-          <div
-            className={
-              project.image_urls.length > 1
-                ? "grid gap-3 sm:grid-cols-2"
-                : undefined
-            }
-          >
-            {project.image_urls.map((url, i) => (
-              <SafeImage
-                key={url}
-                src={url}
-                alt={`Ảnh ${i + 1} sản phẩm của ${project.author_name}`}
-                className="max-h-[45vh] w-full rounded-xl border border-sc-line bg-sc-paper object-contain"
-              />
-            ))}
+        {/* 1. Phần Mô tả dự án đưa lên trước */}
+        {project.description && (
+          <div className="space-y-1.5">
+            <Eyebrow>Mô tả dự án</Eyebrow>
+            <div className="rounded-2xl border border-sc-line bg-sc-paper/60 p-3.5 sm:p-4.5 text-sm sm:text-base lg:text-lg leading-relaxed text-sc-ink">
+              <p className="whitespace-pre-wrap">{project.description}</p>
+            </div>
           </div>
         )}
 
-        {project.description && (
-          <p className="leading-relaxed whitespace-pre-wrap">{project.description}</p>
-        )}
-
+        {/* 2. Tiêu đề Tính năng (đổi từ 'Em đã làm được') */}
         <FeatureList features={project.features} columns={2} />
 
-        {(project.repo_url || project.demo_url) && (
-          <div className="flex flex-wrap gap-2">
-            <BigLink href={project.repo_url} label="Mã nguồn GitHub" />
-            <BigLink href={project.demo_url} label="Dùng thử sản phẩm" />
+        {/* 3. Tiêu đề Đường dẫn dự án (đổi từ 'Em tìm hiểu thêm') */}
+        {(project.repo_url || project.demo_url || project.extra_notes) && (
+          <div className="space-y-2">
+            <Eyebrow>Đường dẫn dự án</Eyebrow>
+            <div className="flex flex-wrap gap-2.5">
+              <BigLink href={project.repo_url} label="Mã nguồn GitHub" />
+              <BigLink href={project.demo_url} label="Dùng thử sản phẩm" />
+              {project.extra_notes && isSafeHttpUrl(project.extra_notes) && (
+                <BigLink
+                  href={project.extra_notes}
+                  label={
+                    project.extra_notes.includes("canva")
+                      ? "Slide thuyết trình Canvas"
+                      : "Slide thuyết trình / Liên kết"
+                  }
+                />
+              )}
+            </div>
+            {project.extra_notes && !isSafeHttpUrl(project.extra_notes) && (
+              <div className="rounded-xl border border-sc-line bg-sc-paper p-3 text-sm sm:text-base text-sc-ink-soft">
+                <p className="whitespace-pre-wrap">{project.extra_notes}</p>
+              </div>
+            )}
           </div>
         )}
 
-        {project.extra_notes && (
-          <div className="rounded-xl border border-sc-line bg-sc-paper p-3">
-            <Eyebrow>Em tìm hiểu thêm</Eyebrow>
-            <p className="mt-1 text-sm whitespace-pre-wrap text-sc-ink-soft">
-              {project.extra_notes}
-            </p>
+        {/* 4. Khung ảnh sản phẩm đặt DƯỚI 2 phần trên (Mô tả & Tính năng/Đường dẫn) */}
+        {currentImage && (
+          <div id="project-image-showcase" className="space-y-2 pt-1 scroll-mt-2">
+            <div className="flex items-center justify-between">
+              <Eyebrow>Hình ảnh sản phẩm</Eyebrow>
+              {totalImages > 1 && (
+                <span className="text-[11px] sm:text-xs text-sc-ink-soft">
+                  Vuốt ◀ ▶ hoặc bấm nút để đổi ảnh
+                </span>
+              )}
+            </div>
+
+            <div
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              className={`group relative w-full ${
+                totalImages > 1
+                  ? "h-[calc(94dvh-230px)] min-h-[340px] max-h-[580px] sm:h-[460px] md:h-[520px] lg:h-[580px] xl:h-[620px]"
+                  : "h-[calc(94dvh-175px)] min-h-[360px] max-h-[630px] sm:h-[500px] md:h-[560px] lg:h-[620px] xl:h-[660px]"
+              } overflow-hidden rounded-2xl border border-sc-line bg-zinc-950 select-none shadow-md transition-all`}
+            >
+              {/* Nền Ambient Blur nghệ thuật */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <SafeImage
+                  src={currentImage}
+                  alt=""
+                  className="size-full scale-125 object-cover blur-2xl opacity-40 saturate-150"
+                />
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-2xs" />
+              </div>
+
+              {/* Ảnh zoom TẠI CHỖ (chạm đúp / chụm / nút +−) — không mở popup phụ */}
+              <div className="relative z-1 size-full">
+                <ZoomableImage
+                  src={currentImage}
+                  alt={`Ảnh ${activeImgIndex + 1} sản phẩm của ${project.author_name}`}
+                  onZoomChange={setImageZoomed}
+                />
+              </div>
+
+              {/* Badge số thứ tự ảnh */}
+              {totalImages > 1 && (
+                <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10">
+                  <span className="rounded-full bg-black/70 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-semibold text-white backdrop-blur-md border border-white/20 shadow-xs">
+                    {activeImgIndex + 1} / {totalImages}
+                  </span>
+                </div>
+              )}
+
+              {/* Nút lùi / tiến ảnh ◀ ▶ bấm sang trái/phải xem các ảnh tiếp */}
+              {totalImages > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImgIndex((prev) => (prev - 1 + totalImages) % totalImages);
+                    }}
+                    aria-label="Ảnh trước"
+                    title="Ảnh trước"
+                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-10 flex size-9 sm:size-11 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur-md border border-white/25 hover:bg-black/90 hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
+                  >
+                    <ChevronLeft className="size-5 sm:size-7" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImgIndex((prev) => (prev + 1) % totalImages);
+                    }}
+                    aria-label="Ảnh tiếp theo"
+                    title="Ảnh tiếp theo"
+                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-10 flex size-9 sm:size-11 items-center justify-center rounded-full bg-black/65 text-white backdrop-blur-md border border-white/25 hover:bg-black/90 hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer"
+                  >
+                    <ChevronRight className="size-5 sm:size-7" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Dãy thumbnail các ảnh bên dưới */}
+            {totalImages > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-slim">
+                {project.image_urls.map((url, idx) => (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => setActiveImgIndex(idx)}
+                    className={`relative size-14 sm:size-18 shrink-0 rounded-xl overflow-hidden border-2 transition-all cursor-pointer ${
+                      idx === activeImgIndex
+                        ? "border-sc-brass ring-2 ring-sc-brass/40 scale-105 shadow-sm"
+                        : "border-sc-line opacity-65 hover:opacity-100"
+                    }`}
+                  >
+                    <SafeImage src={url} alt="" className="size-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+
           </div>
         )}
 
-        {/* Điểm trung bình CHỈ hiện khi giáo viên bật — mặc định tắt để trang
-            không thành bảng xếp hạng trẻ con giữa buổi lễ. */}
+        {/* Điểm trung bình CHỈ hiện khi giáo viên bật */}
         {showResults && project.rating_avg && project.rating_count > 0 && (
-          <div className="rounded-xl border border-sc-brass/30 bg-sc-paper p-3">
+          <div className="rounded-xl border border-sc-brass/30 bg-sc-paper p-3.5">
             <Eyebrow>Điểm trung bình · {project.rating_count} lượt chấm</Eyebrow>
-            <div className="mt-2 space-y-1">
+            <div className="mt-2 space-y-1.5">
               {RATING_CRITERIA.map((c) => {
                 const score = project.rating_avg?.[c.key];
                 return (
                   <div
                     key={c.key}
-                    className="flex items-center justify-between text-sm"
+                    className="flex items-center justify-between text-sm sm:text-base"
                   >
                     <span className="text-sc-ink-soft">{c.label}</span>
                     {typeof score === "number" ? (
                       <StarDisplay score={score} />
                     ) : (
-                      <span className="text-xs text-sc-ink-soft">chưa có</span>
+                      <span className="text-xs sm:text-sm text-sc-ink-soft">chưa có</span>
                     )}
                   </div>
                 );
@@ -1014,6 +746,7 @@ function ProjectDetail({
           </div>
         )}
 
+        {/* Phần nhận xét góp ý của phụ huynh / khách gửi cho bài làm qua link này */}
         {allowRatings ? (
           visitorId ? (
             <RatingForm
@@ -1025,21 +758,21 @@ function ProjectDetail({
               onSaved={onRated}
             />
           ) : (
-            <p className="text-sm text-sc-ink-soft">Đang chuẩn bị ô chấm điểm...</p>
+            <p className="text-sm sm:text-base text-sc-ink-soft">Đang chuẩn bị ô chấm điểm...</p>
           )
         ) : (
-          <p className="rounded-xl border border-dashed border-sc-brass/40 p-3 text-sm text-sc-ink-soft">
+          <p className="rounded-xl border border-dashed border-sc-brass/40 p-3 text-sm sm:text-base text-sc-ink-soft">
             Giáo viên đang tạm tắt phần chấm điểm.
           </p>
         )}
 
         {guestNotes.length > 0 && (
-          <div className="space-y-2.5 rounded-xl border border-sc-line bg-sc-paper/40 p-3.5">
+          <div className="space-y-3 rounded-xl border border-sc-line bg-sc-paper/40 p-4">
             <Eyebrow>Cảm nghĩ & Góp ý · {guestNotes.length}</Eyebrow>
-            <div className="space-y-3 divide-y divide-sc-line/60">
+            <div className="space-y-3.5 divide-y divide-sc-line/60">
               {guestNotes.map((n) => (
-                <div key={n.id} className="pt-2.5 first:pt-0 text-sm">
-                  <div className="flex items-center gap-1.5 text-xs text-sc-ink-soft">
+                <div key={n.id} className="pt-3 first:pt-0 text-sm sm:text-base">
+                  <div className="flex items-center gap-1.5 text-xs sm:text-sm text-sc-ink-soft">
                     <span>{formatDateTime(n.created_at)}</span>
                   </div>
                   <p className="mt-1 whitespace-pre-wrap leading-relaxed text-sc-ink">
@@ -1050,48 +783,25 @@ function ProjectDetail({
             </div>
           </div>
         )}
-
-        {project.comments.length > 0 && (
-          <div className="space-y-2.5 rounded-xl border border-sc-line bg-sc-paper/40 p-3.5">
-            <Eyebrow>Góp ý bài làm ban đầu · {project.comments.length}</Eyebrow>
-            <div className="space-y-3 divide-y divide-sc-line/60">
-              {project.comments.map((c) => (
-                <div key={c.id} className="pt-2.5 first:pt-0 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <span className="inline-flex items-center rounded-md border border-sc-line bg-sc-raised px-2 py-0.5 text-[11px] font-medium text-sc-ink">
-                      Bạn cùng lớp · {c.author_name}
-                    </span>
-                    <span className="text-xs text-sc-ink-soft">
-                      · {formatDateTime(c.created_at)}
-                    </span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap leading-relaxed text-sc-ink-soft">
-                    {c.content}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-sc-line p-4">
+      <div className="shrink-0 flex items-center gap-2 border-t border-sc-line p-3 sm:p-5 bg-sc-raised/95 backdrop-blur-md">
         <button
           type="button"
           onClick={onPrev}
           disabled={position === 1}
-          className="rounded-full border border-sc-line px-4 py-2 text-sm font-medium transition-colors hover:bg-sc-brass-soft disabled:opacity-40 disabled:hover:bg-transparent"
+          className="rounded-full border border-sc-line px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-base font-medium transition-colors hover:bg-sc-brass-soft disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer"
         >
           ← Bạn trước
         </button>
-        <span className="font-display text-sm text-sc-ink-soft">
+        <span className="font-display text-xs sm:text-base text-sc-ink-soft">
           {position}/{total}
         </span>
         <button
           type="button"
           onClick={onNext}
           disabled={position === total}
-          className="ml-auto rounded-full bg-sc-brass px-4 py-2 text-sm font-semibold text-sc-paper transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="ml-auto rounded-full bg-sc-brass px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-base font-semibold text-sc-paper transition-opacity hover:opacity-90 disabled:opacity-40 cursor-pointer"
         >
           Bạn tiếp →
         </button>

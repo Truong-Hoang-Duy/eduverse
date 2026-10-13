@@ -1317,16 +1317,28 @@
   - Giai đoạn 1: Hiện nội dung dự án học viên (Tên dự án to bản, khung mô tả, điểm nổi bật đã làm được và preview ảnh).
   - Giai đoạn 2: Tự động chạy các ảnh bài làm của học viên phóng to vừa vặn toàn màn hình (`object-contain max-h-full max-w-full drop-shadow-2xl`) kèm dải dots chuyển ảnh mượt mà.
   - Hỗ trợ nút chuyển đổi thủ công `[📋 Nội dung]` / `[🖼️ Ảnh bài làm]` ngay trên header thẻ để giáo viên linh hoạt điều khiển.
-### Đợt 91 — Tinh Gọn Giao Diện Tổng Kết Khóa Học & Tối Giản Màn Chiếu TV/QR
-- [x] **Giao diện Tổng kết khóa học ở ngoài (`showcase-panel.tsx`):**
-  - Đổi tên nhãn khối "Link gửi phụ huynh" thành "Đường dẫn sản phẩm cuối khóa".
-  - Gom nút "Gia hạn link / Bật link" và ô chọn hạn dùng (Select 7 ngày, 14 ngày,...) cùng nằm trên một hàng ngang liền kề.
-  - Đổi nút `📺 Chiếu TV / QR` thành `📱 QR sản phẩm` ngắn gọn, trực quan.
-- [x] **Màn chiếu TV & QR (`showcase-tv-screen.tsx`):**
-  - Xóa bỏ nhãn "Học viên lập trình", chỉ hiển thị tên tác giả và thu nhỏ cỡ chữ vừa vặn thanh lịch (`text-lg sm:text-xl font-bold`).
-  - Giai đoạn 1 (Nội dung): Xóa bỏ ảnh thumbnail, dành trọn vẹn 100% diện tích thẻ hiển thị thông tin dự án (Tên dự án to rõ, mô tả đề tài, danh sách tính năng nổi bật).
-  - Tối giản thanh công cụ phía dưới (footer): Xóa các nút thừa/trùng lặp (`✕ Đóng màn chiếu` vì đã có `✕ Thoát` ở header, `⛶ Toàn màn hình`, `🔄 Đặt lại 0`), chỉ giữ lại các nút cốt lõi: Nhạc nền Lofi và Hẹn giờ khai mạc.
+### Đợt 92 — Tối Ưu Giao Diện Quét QR Sản Phẩm Cuối Khóa & Tách Biệt Nhận Xét Góp Ý Theo Link
+- [x] **Danh sách học sinh hàng ngang & Bỏ bộ lọc rườm rà (`showcase-view.tsx`):**
+  - Loại bỏ hoàn toàn các bộ lọc phức tạp: bộ chuyển chế độ xem (Lưới / Danh sách / Trình chiếu), dropdown sắp xếp, nút lọc chưa góp ý và danh sách nút chọn nhanh học sinh.
+  - Cố định hiển thị danh sách theo hàng ngang tinh tế: Tên học sinh và tên sản phẩm nằm ngang trên cùng một dòng (`[Avatar] [Tên học viên] — [Tên sản phẩm] [Badge trạng thái] [Xem →]`), bấm vào dòng mở popup xem chi tiết.
+  - Giữ lại ô tìm kiếm đơn giản, thanh lịch, có nút xóa nhanh.
+- [x] **Hiển thị full một hình ảnh trên máy tính & Điều hướng trái/phải (`showcase-view.tsx`):**
+  - Trong popup chi tiết, hiển thị trọn vẹn 1 hình ảnh to đẹp mắt với ambient backdrop làm mờ lung linh, không chia 2 cột nhỏ nát ảnh.
+  - Bổ sung nút bấm sang trái/phải (`◀` `▶`), số đếm ảnh `X / Y`, và hàng ảnh thumbnail bên dưới để chuyển ảnh linh hoạt.
+  - Tích hợp `ImageLightbox` khi bấm vào ảnh để xem full toàn màn hình máy tính với phím mũi tên và nút bấm điều hướng.
+- [x] **Tách biệt nhận xét góp ý & Vòng đời theo link (`showcase-view.tsx`, `showcase.ts`, `page.tsx`):**
+  - Gỡ bỏ hoàn toàn phần bình luận bài làm trong lớp của học sinh (`project_comments` / `Góp ý bài làm ban đầu`) khỏi trang showcase.
+  - Phần nhận xét góp ý mới hoàn toàn khi tạo link: khi bật link mới hoặc đổi token link (`enableShowcase`, `rotateShowcaseToken`), toàn bộ nhận xét góp ý cũ được xóa sạch.
+  - Khi link hết hạn (`isShowcaseExpired`), tự động dọn sạch toàn bộ `showcase_ratings` của showcase đó.
+- [x] **Tối ưu toàn diện Responsive điện thoại & Ghim mép Header/Footer trọn vẹn khung ảnh (`showcase-view.tsx`):**
+  - Chuyển modal sang flex column cố định `h-[94dvh] sm:h-[90dvh]` với mép viền tối ưu trên điện thoại `w-[calc(100%-1rem)] max-w-[calc(100%-1rem)]`.
+  - Ghim cố định 2 đầu mép: Header (`shrink-0`) ở mép trên, Footer phân trang (`shrink-0`) ở mép dưới, không bị xô lệch hay trôi mất khi cuộn.
+  - Khung ảnh co giãn vừa khít từ mép dưới Header đến mép trên Footer (`h-[calc(94dvh-230px)] min-h-[340px] max-h-[580px]` trên mobile, lên tới `620px-660px` trên desktop) kết hợp `object-contain` hiển thị trọn vẹn 100% không bị che khuất.
+  - Tích hợp thao tác vuốt tay trái/phải (Touch Swipe) trên điện thoại và phím mũi tên ◀ ▶ trên máy tính.
+  - Đổi tiêu đề đầu trang showcase từ "Lễ tổng kết khóa học" thành **Tổng kết khóa học**.
 - [x] **Kiểm thử chất lượng:** 320/320 vitest PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+
+
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

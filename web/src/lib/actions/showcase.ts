@@ -7,6 +7,7 @@ import {
   EXPIRY_PRESETS,
   expiryFromPreset,
   generateShowcaseToken,
+  isShowcaseExpired,
   SHOWCASE_INTRO_MAX,
   type ExpiryPreset,
 } from "@/lib/showcase";
@@ -34,8 +35,7 @@ function isExpiryPreset(value: string): value is ExpiryPreset {
 /**
  * Bật link (tạo dòng + token nếu lớp chưa có) hoặc gia hạn link đang có.
  *
- * Bật lại một link đã tắt GIỮ NGUYÊN token cũ: giáo viên có thể đã gửi link cho
- * phụ huynh từ trước. Muốn khai tử link cũ thì dùng `rotateShowcaseToken`.
+ * Phần nhận xét góp ý mới hoàn toàn khi tạo link, nếu hết hạn thì xóa hết đi.
  */
 export async function enableShowcase(
   _prev: ActionResult,
@@ -51,28 +51,56 @@ export async function enableShowcase(
 
   const { data: existing } = await supabase
     .from("class_showcases")
-    .select("id")
+    .select("id, expires_at")
     .eq("class_id", classId)
     .maybeSingle();
 
-  const { error } = existing
-    ? await supabase
-        .from("class_showcases")
-        .update({
-          is_enabled: true,
-          expires_at: expiresAt,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", existing.id)
-    : await supabase.from("class_showcases").insert({
-        class_id: classId,
-        token: generateShowcaseToken(),
-        is_enabled: true,
-        expires_at: expiresAt,
-      });
+  // Kiểm tra link đã hết hạn chưa: nếu hết hạn thì xóa hết nhận xét góp ý cũ
+  const isExpired = existing?.expires_at
+    ? isShowcaseExpired(existing.expires_at)
+    : false;
 
-  if (error) {
-    return { error: `Không bật được link: ${error.message}` };
+  if (existing) {
+    if (isExpired) {
+      // Khi link đã hết hạn và bật lại: xóa sạch nhận xét góp ý cũ
+      await supabase
+        .from("showcase_ratings")
+        .delete()
+        .eq("showcase_id", existing.id);
+    }
+
+    const { error } = await supabase
+      .from("class_showcases")
+      .update(
+        isExpired
+          ? {
+              is_enabled: true,
+              expires_at: expiresAt,
+              updated_at: new Date().toISOString(),
+              token: generateShowcaseToken(),
+            }
+          : {
+              is_enabled: true,
+              expires_at: expiresAt,
+              updated_at: new Date().toISOString(),
+            }
+      )
+      .eq("id", existing.id);
+
+    if (error) {
+      return { error: `Không bật được link: ${error.message}` };
+    }
+  } else {
+    const { error } = await supabase.from("class_showcases").insert({
+      class_id: classId,
+      token: generateShowcaseToken(),
+      is_enabled: true,
+      expires_at: expiresAt,
+    });
+
+    if (error) {
+      return { error: `Không bật được link: ${error.message}` };
+    }
   }
 
   revalidateClass(classId);
@@ -95,15 +123,28 @@ export async function disableShowcase(formData: FormData): Promise<void> {
 
 /**
  * Đổi token — link cũ chết ngay lập tức.
- *
- * Đây là đường THU HỒI duy nhất khi link đã bị chuyển tiếp ra ngoài phạm vi
- * mong muốn: xóa dòng rồi tạo lại thì mất luôn bài chấm, nên chỉ đổi token.
+ * Khi tạo link mới, phần nhận xét góp ý mới hoàn toàn, dọn sạch nhận xét cũ.
  */
 export async function rotateShowcaseToken(formData: FormData): Promise<void> {
   const classId = String(formData.get("class_id") ?? "");
   if (!classId) return;
 
   const supabase = await createClient();
+
+  const { data: showcase } = await supabase
+    .from("class_showcases")
+    .select("id")
+    .eq("class_id", classId)
+    .maybeSingle();
+
+  if (showcase) {
+    // Đổi link mới -> phần nhận xét góp ý mới hoàn toàn, dọn sạch nhận xét cũ
+    await supabase
+      .from("showcase_ratings")
+      .delete()
+      .eq("showcase_id", showcase.id);
+  }
+
   await supabase
     .from("class_showcases")
     .update({
