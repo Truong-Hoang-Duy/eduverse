@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CheckCircle2,
   ChevronLeft,
@@ -155,7 +155,7 @@ export function ProjectCard({
     <div
       className={
         twoColumn
-          ? "h-full flex flex-col justify-between gap-2.5 sm:gap-3 overflow-hidden"
+          ? "flex-1 min-h-0 flex flex-col gap-2.5 sm:gap-3"
           : "space-y-3.5"
       }
     >
@@ -199,8 +199,14 @@ export function ProjectCard({
 
       {/* 3. Ảnh sản phẩm - Có nút chuyển ảnh qua lại ◀ ▶, chọn thumbnail, và mở phóng to */}
       {currentImage && (
-        <div className="shrink-0 space-y-1.5">
-          <div className="flex items-center justify-between">
+        <div
+          className={
+            twoColumn
+              ? "flex-1 min-h-0 flex flex-col gap-1.5"
+              : "shrink-0 space-y-1.5"
+          }
+        >
+          <div className="shrink-0 flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
               <span>Ảnh sản phẩm</span>
               <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground border border-border/60">
@@ -214,11 +220,19 @@ export function ProjectCard({
             </span>
           </div>
 
-          <div className="space-y-1.5">
+          <div
+            className={
+              twoColumn
+                ? "flex-1 min-h-0 flex flex-col gap-1.5"
+                : "space-y-1.5"
+            }
+          >
             {/* Khung ảnh chính (Hero Banner) - Có nút chuyển ◀ ▶ và bấm để phóng to */}
             <div
-              className={`group relative w-full overflow-hidden rounded-xl border border-border/80 bg-muted select-none transition-all duration-200 hover:border-primary/50 hover:shadow-md ${
-                twoColumn ? "h-28 sm:h-32 lg:h-34" : "h-34 sm:h-42"
+              className={`group relative w-full overflow-hidden rounded-xl border border-border/80 bg-zinc-950 select-none transition-all duration-200 hover:border-primary/50 hover:shadow-md ${
+                twoColumn
+                  ? "flex-1 min-h-[220px] max-h-[340px]"
+                  : "h-52 sm:h-60"
               }`}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
@@ -227,15 +241,29 @@ export function ProjectCard({
               <button
                 type="button"
                 onClick={() => setPreviewIndex(safeIndex)}
-                className="size-full cursor-zoom-in text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer"
+                className="relative size-full cursor-zoom-in text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary cursor-pointer overflow-hidden"
                 aria-label={`Bấm để phóng to ảnh ${safeIndex + 1} của ${project.authorName}`}
               >
-                <SafeImage
-                  src={currentImage}
-                  alt={`Ảnh sản phẩm ${safeIndex + 1} của ${project.authorName}`}
-                  className="size-full object-cover transition-transform duration-300 group-hover:scale-102"
-                />
-                <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/20 pointer-events-none" />
+                {/* Lớp 1: Nền làm mờ nghệ thuật (Ambient Backdrop) tạo chiều sâu và khử khoảng trống */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  <SafeImage
+                    src={currentImage}
+                    alt=""
+                    className="size-full scale-125 object-cover blur-2xl opacity-40 saturate-150 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-2xs" />
+                </div>
+
+                {/* Lớp 2: Ảnh chính hiển thị 100% trọn vẹn, cân đối đều 4 phía */}
+                <div className="relative z-1 flex size-full items-center justify-center p-2 sm:p-2.5">
+                  <SafeImage
+                    src={currentImage}
+                    alt={`Ảnh sản phẩm ${safeIndex + 1} của ${project.authorName}`}
+                    className="max-h-full max-w-full object-contain drop-shadow-xl transition-transform duration-300 group-hover:scale-[1.01]"
+                  />
+                </div>
+
+                <div className="absolute inset-0 z-2 bg-black/0 transition-colors group-hover:bg-black/10 pointer-events-none" />
               </button>
 
               {/* Nút phóng to ở góc dưới bên trái */}
@@ -291,7 +319,7 @@ export function ProjectCard({
 
             {/* Dải thumbnail phụ bên dưới (hiển thị tất cả các ảnh, click để đổi ảnh chính) */}
             {totalImages > 1 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 scrollbar-thin">
+              <div className="shrink-0 flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 scrollbar-thin">
                 {project.image_urls.map((url, i) => {
                   const isSelected = i === safeIndex;
                   return (
@@ -339,24 +367,18 @@ export function ProjectCard({
         </div>
       )}
 
-      {/* 4. Các chức năng & Liên kết dự án - Chia 2 bên cân xứng, 100% hiển thị đầy đủ không bị tràn */}
-      {(project.features.length > 0 || hasLinks) && (
+      {/* 4. Các chức năng & Liên kết dự án - Chỉ hiển thị khi KHÔNG PHẢI twoColumn (chế độ twoColumn đã chuyển sang cột phải) */}
+      {!twoColumn && (project.features.length > 0 || hasLinks) && (
         <div
           className={
-            twoColumn
-              ? "flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch"
-              : project.features.length > 0 && hasLinks
+            project.features.length > 0 && hasLinks
               ? "grid grid-cols-1 md:grid-cols-2 gap-3.5 items-start"
               : "space-y-3"
           }
         >
-          {/* Cột 1: Các chức năng sản phẩm (Khung cuộn nội bộ DUY NHẤT: scrollbar-slim) */}
+          {/* Cột 1: Các chức năng sản phẩm */}
           {project.features.length > 0 && (
-            <div
-              className={`space-y-1.5 min-w-0 ${
-                twoColumn ? "flex-1 min-h-0 flex flex-col" : ""
-              }`}
-            >
+            <div className="space-y-1.5 min-w-0">
               <div className="flex items-center justify-between shrink-0">
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <span>Các chức năng</span>
@@ -366,40 +388,31 @@ export function ProjectCard({
                 </span>
               </div>
 
-              {/* DUY NHẤT vùng này được phép scroll */}
-              <div
-                className={`overflow-y-auto space-y-1.5 pr-1.5 scrollbar-slim ${
-                  twoColumn ? "flex-1 min-h-[90px]" : "max-h-32 sm:max-h-36"
-                }`}
-              >
-                {project.features.map((feature) => (
-                  <div
-                    key={feature}
-                    className="flex items-start gap-2 rounded-lg border border-border/80 bg-card px-2.5 py-1.5 text-xs font-medium text-foreground shadow-2xs hover:border-primary/40 transition-colors"
-                  >
-                    <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500 mt-0.5" />
-                    <span className="flex-1 leading-snug">{feature}</span>
-                  </div>
-                ))}
+              <div className="overflow-y-auto pr-1.5 scrollbar-slim max-h-32 sm:max-h-36">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {[...project.features]
+                    .sort((a, b) => a.trim().length - b.trim().length)
+                    .map((feature) => (
+                      <div
+                        key={feature}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-2xs hover:border-primary/40 transition-colors"
+                      >
+                        <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
+                        <span className="leading-normal">{feature}</span>
+                      </div>
+                    ))}
+                </div>
               </div>
             </div>
           )}
 
           {/* Cột 2: Liên kết dự án & Nộp bài */}
           {hasLinks && (
-            <div
-              className={`space-y-1.5 min-w-0 ${
-                twoColumn ? "flex-1 min-h-0 flex flex-col" : ""
-              }`}
-            >
+            <div className="space-y-1.5 min-w-0">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground shrink-0">
                 Liên kết dự án & Nộp bài
               </span>
-              <div
-                className={`grid grid-cols-1 sm:grid-cols-2 gap-2 content-start pr-0.5 ${
-                  twoColumn ? "flex-1 min-h-0 overflow-y-auto scrollbar-slim" : ""
-                }`}
-              >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 content-start pr-0.5">
                 {project.drive_url && (
                   <LinkCard
                     href={project.drive_url}
@@ -451,7 +464,7 @@ export function ProjectCard({
       )}
 
       {/* Ghi chú khác nếu không có liên kết nào nhưng có extra_notes không phải http */}
-      {!hasLinks && project.extra_notes && !project.extra_notes.startsWith("http") && (
+      {!twoColumn && !hasLinks && project.extra_notes && !project.extra_notes.startsWith("http") && (
         <div className="space-y-1">
           <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Ghi chú thêm
@@ -461,6 +474,182 @@ export function ProjectCard({
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Phần hiển thị Các chức năng & Liên kết dự án đặt ở đỉnh cột phải của Modal */
+export function ProjectFeaturesAndLinks({
+  project,
+  headerAction,
+}: {
+  project: ProjectView;
+  headerAction?: React.ReactNode;
+}) {
+  const hasLinks = Boolean(
+    project.repo_url ||
+      project.drive_url ||
+      project.demo_url ||
+      (project.extra_notes && project.extra_notes.startsWith("http"))
+  );
+  const linksCount =
+    (project.drive_url ? 1 : 0) +
+    (project.repo_url ? 1 : 0) +
+    (project.demo_url ? 1 : 0) +
+    (project.extra_notes && project.extra_notes.startsWith("http") ? 1 : 0);
+
+  const hasFeatures = project.features.length > 0;
+  const [activeTab, setActiveTab] = useState<"features" | "links">(() =>
+    hasFeatures ? "features" : "links"
+  );
+
+  useEffect(() => {
+    setActiveTab(hasFeatures ? "features" : "links");
+  }, [project.id, hasFeatures]);
+
+  const sortedFeatures = useMemo(() => {
+    return [...project.features].sort(
+      (a, b) => a.trim().length - b.trim().length
+    );
+  }, [project.features]);
+
+  if (!hasFeatures && !hasLinks) {
+    if (!headerAction) return null;
+    return (
+      <div className="shrink-0 px-4 py-2.5 flex items-center justify-end border-b border-border/60 bg-muted/20">
+        {headerAction}
+      </div>
+    );
+  }
+
+  const showTabs = hasFeatures && hasLinks;
+
+  return (
+    <div className="shrink-0 h-[190px] sm:h-[200px] border-b border-border/60 bg-muted/10 flex flex-col overflow-hidden">
+      {/* Header thanh điều hướng: Tabs hoặc Tiêu đề + Nút đóng X */}
+      <div className="px-4 sm:px-5 h-11 shrink-0 flex items-center justify-between border-b border-border/50 gap-2 bg-muted/20">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          {showTabs ? (
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-muted/70 border border-border/60">
+              <button
+                type="button"
+                onClick={() => setActiveTab("features")}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === "features"
+                    ? "bg-background text-foreground shadow-2xs border border-border/50"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span>✨ Chức năng</span>
+                <span className="rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                  {project.features.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("links")}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === "links"
+                    ? "bg-background text-foreground shadow-2xs border border-border/50"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span>🔗 Liên kết & Nộp bài</span>
+                <span className="rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                  {linksCount}
+                </span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              {hasFeatures ? (
+                <>
+                  <span>✨ Các chức năng</span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground border border-border/60">
+                    {project.features.length}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>🔗 Liên kết & Nộp bài</span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground border border-border/60">
+                    {linksCount}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {headerAction && <div className="shrink-0">{headerAction}</div>}
+      </div>
+
+      {/* Nội dung: Chức năng hoặc Liên kết */}
+      <div className="flex-1 min-h-0 p-3 sm:p-3.5 overflow-y-auto scrollbar-slim">
+        {(activeTab === "features" || !hasLinks) && hasFeatures && (
+          <div className="flex flex-wrap items-center gap-2">
+            {sortedFeatures.map((feature) => (
+              <div
+                key={feature}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-2xs hover:border-primary/50 hover:bg-accent/40 transition-colors"
+              >
+                <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
+                <span className="leading-normal">{feature}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(activeTab === "links" || !hasFeatures) && hasLinks && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 content-start">
+            {project.drive_url && (
+              <LinkCard
+                href={project.drive_url}
+                title="Thư mục nộp bài"
+                subtitle="Google Drive"
+                icon={<Folder className="size-4 text-amber-500" />}
+              />
+            )}
+            {project.repo_url && (
+              <LinkCard
+                href={project.repo_url}
+                title="GitHub"
+                subtitle={cleanDomain(project.repo_url)}
+                icon={<Code2 className="size-4 text-foreground" />}
+              />
+            )}
+            {project.demo_url && (
+              <LinkCard
+                href={project.demo_url}
+                title="Demo trực tiếp"
+                subtitle={cleanDomain(project.demo_url)}
+                icon={<Globe className="size-4 text-primary" />}
+              />
+            )}
+            {project.extra_notes && project.extra_notes.startsWith("http") && (
+              <LinkCard
+                href={project.extra_notes}
+                title="Canvas"
+                subtitle={cleanDomain(project.extra_notes)}
+                icon={<Layout className="size-4 text-indigo-500" />}
+              />
+            )}
+
+            {/* Ghi chú thêm nếu không phải link http */}
+            {project.extra_notes && !project.extra_notes.startsWith("http") && (
+              <div className="space-y-1 pt-1 shrink-0 col-span-full">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Ghi chú thêm
+                </span>
+                <p className="rounded-xl border border-border/80 bg-card p-2 text-xs text-muted-foreground leading-relaxed shadow-xs">
+                  📝 {project.extra_notes}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

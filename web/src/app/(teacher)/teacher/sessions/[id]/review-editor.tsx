@@ -12,7 +12,6 @@ import {
 
 import { FormMessage } from "@/components/forms/form-message";
 import { MultiSelect } from "@/components/multi-select";
-import { SelectedBadges } from "@/components/selected-badges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
@@ -330,6 +329,8 @@ export function ReviewEditor({
     deleteReviewOption(fd).catch(() => {});
   }
 
+  const strengthOptions = options.filter((o) => o.category === "strength");
+  const improvementOptions = options.filter((o) => o.category === "improvement");
   const testProcessOptions = options.filter((o) => o.category === "test_process");
   const projectProgressOptions = options.filter(
     (o) => o.category === "project_progress"
@@ -426,7 +427,7 @@ export function ReviewEditor({
   }
 
   function persistFreeOption(
-    category: "test_process" | "project_progress",
+    category: "test_process" | "project_progress" | "strength" | "improvement",
     label: string
   ) {
     const alreadyInCatalog = options.some(
@@ -441,6 +442,24 @@ export function ReviewEditor({
       category === "project_progress" ? getSpckSkillGroup(label) : "other"
     );
     addReviewOption({}, fd).catch(() => {});
+  }
+
+  function addCustomStrength(raw: string) {
+    const value = raw.trim();
+    if (!value) return;
+    setStrengths((prev) =>
+      prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
+    );
+    persistFreeOption("strength", value);
+  }
+
+  function addCustomImprovement(raw: string) {
+    const value = raw.trim();
+    if (!value) return;
+    setImprovements((prev) =>
+      prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
+    );
+    persistFreeOption("improvement", value);
   }
 
   function addCustomTestProcessNote(raw: string) {
@@ -1518,11 +1537,27 @@ export function ReviewEditor({
                   <div className={gridColsClass}>
                     <div className="space-y-1.5">
                       <p className="flex h-7 items-center text-sm font-medium">💪 Điểm mạnh</p>
-                      <SelectedBadges selected={strengths} onChange={setStrengths} />
+                      <MultiSelect
+                        options={strengthOptions}
+                        selected={strengths}
+                        onChange={setStrengths}
+                        onCreate={addCustomStrength}
+                        onDelete={deleteCustomOption}
+                        placeholder="Chọn hoặc gõ điểm mạnh..."
+                        emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+                      />
                     </div>
                     <div className="space-y-1.5">
                       <p className="flex h-7 items-center text-sm font-medium">🎯 Cần cải thiện</p>
-                      <SelectedBadges selected={improvements} onChange={setImprovements} />
+                      <MultiSelect
+                        options={improvementOptions}
+                        selected={improvements}
+                        onChange={setImprovements}
+                        onCreate={addCustomImprovement}
+                        onDelete={deleteCustomOption}
+                        placeholder="Chọn hoặc gõ điểm cần cải thiện..."
+                        emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
+                      />
                     </div>
                     {isPeriodicTest && (
                       <div className="space-y-1.5">

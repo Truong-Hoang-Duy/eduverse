@@ -3,8 +3,195 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-05, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 77 (**Giữ trạng thái chưa nhận xét cho lớp sao chép mới**):
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-13, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 91 (**Tinh gọn giao diện Tổng kết khóa học & Tối giản Màn chiếu TV/QR**):
+1. **Giao diện Tổng kết khóa học ở ngoài (`showcase-panel.tsx`):**
+   - Đổi tên nhãn khối "Link gửi phụ huynh" thành "Đường dẫn sản phẩm cuối khóa".
+   - Sắp xếp nút "Gia hạn link / Bật link" và ô chọn hạn dùng (Select 7 ngày, 14 ngày,...) cùng nằm trên một hàng ngang liền kề.
+   - Đổi tên nút "📺 Chiếu TV / QR" thành "📱 QR sản phẩm" ngắn gọn, trực quan, ăn nhập với thao tác quét mã.
+2. **Màn chiếu TV & QR (`showcase-tv-screen.tsx`):**
+   - Bỏ dòng nhãn "Học viên lập trình", chỉ hiển thị tên tác giả và thu nhỏ cỡ chữ vừa vặn thanh lịch (`text-lg sm:text-xl font-bold`, avatar size 40).
+   - Ở phần đầu nội dung (Giai đoạn 1): Xóa thumbnail ảnh bài làm, dành trọn 100% diện tích thẻ hiển thị thông tin dự án (Tên dự án to rõ, khung mô tả rộng rãi, các thẻ điểm nổi bật).
+   - Tối giản thanh công cụ phía dưới (footer): Xóa các nút thừa/trùng lặp ("✕ Đóng màn chiếu" vì đã có "✕ Thoát" ở header, "⛶ Toàn màn hình", "🔄 Đặt lại 0"), chỉ giữ lại điều khiển Nhạc nền Lofi và Hẹn giờ khai mạc.
+3. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 90 (**Tối ưu Màn chiếu TV & QR: Cố định khung bên phải, chống rớt dòng cột trái, chuẩn hóa Header và chiếu ảnh bài làm vừa vặn toàn màn hình**):
+1. **Cố định khung trình chiếu bên phải (`showcase-tv-screen.tsx`):**
+   - Ghim chiều cao cố định `h-[560px] sm:h-[580px] lg:h-[600px]`, chia rõ các khu vực: Header thẻ cố định `h-20`, Footer phân trang `h-16`, Thân thẻ `flex-1 min-h-0`.
+   - Các vùng nội dung (mô tả dự án, danh sách tính năng) dùng `overflow-y-auto scrollbar-slim` đảm bảo khi đổi học sinh có độ dài nội dung khác nhau, giao diện tuyệt đối không bị giật, co giãn hay nhảy khung (layout shift).
+2. **Chống rớt dòng ở ô bên trái (khu vực QR code):**
+   - Tinh gọn câu từ: Tiêu đề chuyển thành `Xem sản phẩm` (`whitespace-nowrap`), phụ đề `Gửi cảm nghĩ & góp ý cho các con` (`whitespace-nowrap`), dòng trạng thái kết nối `Đang chờ kết nối · {n} thiết bị` (`whitespace-nowrap`).
+   - Giữ trọn bố cục cân đối, thoáng đãng, các dòng chữ nằm ngay ngắn trên 1 hàng không bị ngắt rớt chữ ("viên", "nối").
+3. **Chuẩn hóa Header màn chiếu:**
+   - Đổi tiêu đề thành: `Báo cáo sản phẩm cuối khóa - Lớp <Mã lớp>` (ví dụ: `Báo cáo sản phẩm cuối khóa - Lớp CSA05`).
+   - Cả cụm từ và mã lớp được áp `whitespace-nowrap`, đảm bảo chữ và mã lớp luôn cùng nằm trên 1 hàng duy nhất.
+4. **Trình chiếu ảnh bài làm vừa vặn toàn màn hình (Chế độ Cinema 2 giai đoạn):**
+   - Hỗ trợ 2 phân cảnh:
+     - **Giai đoạn 1 (Nội dung):** Hiển thị tên học viên, tên dự án, ảnh thu nhỏ, mô tả chi tiết và các tính năng nổi bật.
+     - **Giai đoạn 2 (Ảnh bài làm Cinema):** Tự động chuyển sang chiếu ảnh bài làm phóng to vừa vặn hoàn hảo với màn hình (`object-contain max-h-full max-w-full drop-shadow-2xl`) kèm backdrop làm mờ lung linh.
+   - Cơ chế tự động xoay vòng thông minh: Chạy 6.5s nội dung -> Chạy 5.5s mỗi ảnh bài làm của học sinh đó -> Chuyển tiếp mượt mà sang học sinh kế tiếp.
+   - Bổ sung cụm nút bấm thủ công `[📋 Nội dung]` / `[🖼️ Ảnh bài làm]` trên header thẻ để giáo viên có thể chuyển đổi linh hoạt bất cứ lúc nào khi đang thuyết trình.
+5. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 89 (**Xóa khối Sản phẩm cuối khóa trong lớp & chuyển Màn hình chờ lên mục Tổng kết khóa học**):
+1. **Xóa bỏ khối Sản phẩm cuối khóa khỏi trang chi tiết lớp học (`page.tsx`):**
+   - Loại bỏ hoàn toàn thẻ `<CollapsibleCard title="🚀 Sản phẩm cuối khóa">` và component `ProjectAccordionList`.
+   - Trang chi tiết lớp của giáo viên trở nên tinh gọn, ngắn gàng, quy củ và không còn bị kéo dài dàn trải.
+2. **Chuyển nút chức năng Màn hình chờ lên mục Tổng kết khóa học (`showcase-panel.tsx`):**
+   - Nhúng `ProjectShowcase` vào bên trong `ShowcasePanel`.
+   - Đặt nút `🖼️ Màn hình chờ` ngay cạnh nút `📺 Chiếu TV / QR` trong khối Link gửi phụ huynh, tạo thành bộ đôi công cụ chiếu màn hình chuyên dụng cho buổi lễ tổng kết (cũng như hiển thị ở góc trên bên phải khi link chưa bật).
+3. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 88 (**Tối ưu cỡ chữ và khả năng nhận diện tầm xa cho các màn hình chiếu TV/máy chiếu**):
+1. **Nâng cấp cỡ chữ cho Màn hình chờ TV (`project-showcase.tsx`):**
+   - Tên học viên: Nâng từ `text-2xl` lên `text-3xl sm:text-4xl lg:text-5xl font-extrabold`, avatar tăng lên `size={84}`.
+   - Tên sản phẩm: Nâng lên `text-xl sm:text-2xl lg:text-3xl font-bold text-sc-brass`.
+   - Nhãn "Mô tả dự án" & "Các chức năng nổi bật": Nâng từ `text-[11px]` lên `text-xs sm:text-sm lg:text-base font-bold uppercase`.
+   - Khung mô tả dự án: Nâng từ `text-sm` lên `p-4 sm:p-5 text-base sm:text-lg lg:text-xl leading-relaxed text-sc-ink font-normal`.
+   - Thẻ chức năng bo tròn: Nâng từ `text-xs sm:text-sm` lên `px-4 py-2 sm:px-4.5 sm:py-2.5 text-sm sm:text-base lg:text-lg font-medium`, icon CheckMark to hơn (`size-4 sm:size-5`).
+   - Màn hình xem tất cả (`OverviewSlide`): Dòng chúc mừng và các thẻ bài làm tăng cỡ chữ tương xứng để nhìn rõ từ xa.
+2. **Nâng cấp cỡ chữ cho Màn chiếu TV / QR (`showcase-tv-screen.tsx`):**
+   - Header: Tiêu đề lớp học tăng lên `text-xl sm:text-2xl lg:text-3xl font-extrabold`, số đếm ngược `text-xl sm:text-2xl font-black`.
+   - Cột trái: Tiêu đề "Xem sản phẩm học viên" `text-3xl sm:text-4xl lg:text-5xl font-extrabold`, phụ đề `text-base sm:text-lg lg:text-xl font-medium`, dòng đếm khán giả kết nối `text-sm sm:text-base lg:text-lg font-semibold`.
+   - Cột phải: Tên học viên `text-2xl sm:text-3xl lg:text-4xl font-extrabold` (Avatar `size={68}`), tên dự án `text-2xl sm:text-3xl lg:text-4xl font-extrabold`, mô tả `text-sm sm:text-base lg:text-lg`, các điểm nổi bật `text-sm sm:text-base lg:text-lg font-medium` kèm icon CheckMark to bản.
+   - Footer toolbar: Nút nhạc nền, hẹn giờ, toàn màn hình và đóng màn chiếu đều to rõ, padding rộng rãi, dễ bấm chuột trình chiếu từ xa.
+3. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 87 (**Hỗ trợ chế độ Sáng / Tối cho Màn chiếu TV/QR theo Header của app & Nút chuyển đổi trực tiếp trên Header màn chiếu**):
+1. **Đồng bộ tự động theo Header của ứng dụng (`showcase-tv-screen.tsx`):**
+   - Loại bỏ việc đóng cứng giao diện tối (`dark` và `#070a12`).
+   - Khởi tạo state `isDark` trực tiếp từ `document.documentElement.classList.contains("dark")`.
+   - Lắng nghe thay đổi class của `<html>` thông qua `MutationObserver`, tự động chuyển đổi theme thời gian thực khi giáo viên đổi theme từ Header chính của hệ thống.
+2. **Nút chuyển đổi Sáng / Tối trực tiếp trên Header màn chiếu:**
+   - Bổ sung nút bấm Sáng / Tối với icon SVG `SunIcon` và `MoonIcon` từ `@/components/showcase/emblem` (tuân thủ nguyên tắc không dùng emoji thô).
+   - Bấm nút sẽ chuyển đổi qua lại, cập nhật class trên thẻ `<html>` và lưu lại vào `localStorage.getItem("theme")`.
+3. **Thiết kế giao diện song song tuyệt đẹp cho cả 2 chế độ:**
+   - **Chế độ Sáng (Light):** Phong cách Bảng vàng giấy ngà truyền thống (`#faf6ee`), thẻ trắng kem `#fffcf6`, viền đồng thau `#8a5e10`, hạt sao canvas vàng mật ong dịu mắt (`opacity-35`), chữ đen mun `#241c14` rõ nét chuẩn tương phản WCAG AA.
+   - **Chế độ Tối (Dark):** Phong cách dạ yến lấp lánh sang trọng (`#070a12`), thẻ `#0f1422`, viền vàng hổ phách `amber-400`, hạt sao canvas lấp lánh (`opacity-60`).
+4. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 86 (**Bổ sung tùy chọn hạn dùng 14 ngày cho link Tổng kết khóa học**):
+1. **Bổ sung tùy chọn 14 ngày cho link phụ huynh (`showcase.ts`):**
+   - Thêm `"14"` vào kiểu `ExpiryPreset` và danh mục `EXPIRY_PRESETS` (`{ value: "14", label: "14 ngày" }`).
+   - Tự động hiển thị trong dropdown chọn hạn dùng của link ở `ShowcasePanel` (`teacher/classes/[id]`).
+   - Cập nhật unit test `expiryFromPreset` trong `showcase.test.ts`.
+2. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 85 (**Danh sách sản phẩm dạng Accordion đóng/mở & Nâng cấp Màn hình chờ TV**):
+1. **Danh sách sản phẩm cuối khóa dạng Accordion đóng/mở (`project-accordion-list.tsx`):**
+   - Thay thế việc render `ProjectCard` dàn trải kéo dài lê thê bằng `ProjectAccordionList`. Mỗi sản phẩm là 1 thẻ accordion gọn gàng, hiển thị STT, tên sản phẩm, tên học viên, badge số chức năng và số ảnh.
+   - Bấm vào thẻ để đóng/mở chi tiết sản phẩm; mặc định mở sản phẩm đầu tiên, các sản phẩm sau thu gọn. Hỗ trợ nút "Mở tất cả" / "Thu gọn tất cả" giúp trang lớp của giáo viên luôn ngắn gọn, quy củ.
+2. **Nâng cấp Màn hình chờ TV & Bỏ nút Chiếu sản phẩm (`project-showcase.tsx`):**
+   - Loại bỏ nút "🎬 Chiếu sản phẩm" (gây trùng lặp với màn hình chờ), chỉ giữ lại duy nhất 1 nút "🖼️ Màn hình chờ".
+   - Màn hình chờ hiển thị theo vòng tuần tự từng học sinh (8s/em):
+     - **Cột trái:** Tên học viên, tên dự án, Mô tả chi tiết dự án, Các chức năng nổi bật (sắp xếp ngắn đến dài, thẻ bo tròn mềm mại, không hiển thị link nộp bài).
+     - **Cột phải:** Chọn 1 hình ảnh đẹp tiêu biểu nhất của sản phẩm (`image_urls[0]`) hiển thị rõ đầy đủ 100% trong khung Cinema Showcase Frame với nền mờ Ambient Blur, không bị crop méo.
+     - Hỗ trợ phím tắt điều khiển: `←`/`→` chuyển slide, `Space` tạm dừng/tiếp tục tự chạy, `Esc` thoát.
+3. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 84 (**Cố định khung trên/dưới cột phải, tag chức năng bo tròn nằm cùng hàng, sắp xếp ngắn đến dài**):
+1. **Cố định khung trên và dưới:**
+   - Cố định chiều cao vùng Chức năng & Liên kết (`ProjectFeaturesAndLinks`) thành `h-[190px] sm:h-[200px] shrink-0` (Header tab `h-11 shrink-0`, nội dung `flex-1 min-h-0 overflow-y-auto scrollbar-slim`), triệt tiêu hoàn toàn hiện tượng rung giật hay co giãn layout khi chuyển tab hoặc khi số lượng chức năng khác nhau.
+   - Vùng Nhận xét & Góp ý (`CommentSection`) chiếm trọn vẹn phần diện tích còn lại (`flex-1 min-h-0 flex flex-col`), ghim form gửi bình luận chắc chắn ở đáy.
+2. **Tag chức năng bo tròn trên một hàng & sắp xếp ngắn đến dài:**
+   - Thay thế các khối chữ nhật to đùng chiếm nguyên hàng bằng các tag bo tròn thanh lịch `rounded-full px-3 py-1.5` nằm trên cùng hàng linh hoạt (`flex flex-wrap items-center gap-2`).
+   - Sắp xếp tự động mảng chức năng theo độ dài chuỗi từ ngắn nhất đến dài nhất (`a.trim().length - b.trim().length`), tạo bố cục thác đổ bậc thang cân đối, gọn gàng và đẹp mắt.
+3. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 83 (**Khắc phục lỗi cắt đáy khung ảnh, cân bằng khoảng cách viền & nâng cấp Cinema Backdrop cho ảnh SPCK**):
+1. **Khắc phục triệt để hiện tượng cắt khung ảnh và lệch khoảng cách xám:**
+   - **Nguyên nhân gốc rễ:** Chiều cao cố định `lg:h-[420px]` trước đó khiến tổng chiều cao cột trái vượt quá chiều cao khả dụng của Modal trên màn hình laptop (~600px - 700px). Kết hợp với `lg:overflow-hidden` và `justify-between`, toàn bộ phần đáy của khung ảnh (viền dưới, nút phóng to, số thứ tự ảnh) và dải thumbnails (1, 2, 3) bị đẩy tuột ra ngoài và cắt cụt, tạo cảm giác "phần trên xám nhiều, phần dưới xám ít / cắt sát mép".
+   - **Giải pháp xử lý:**
+     - Tại `project-card.tsx`: Chuyển chiều cao khung sang cơ chế linh hoạt `flex-1 min-h-[220px] max-h-[340px]`, bỏ `justify-between` và `overflow-hidden` ở container gốc. Dải thumbnails được gắn `shrink-0` bảo toàn vị trí.
+     - Tại `project-grid.tsx`: Thay `lg:overflow-hidden` ở cột trái bằng `overflow-y-auto scrollbar-slim lg:h-full` đảm bảo trong mọi tình huống màn hình nhỏ, người dùng vẫn cuộn xem trọn vẹn 100% nội dung.
+     - **Nâng cấp nền Cinema Backdrop:** Đổi nền khung từ xám sáng `bg-muted/70` sang đen tuyền sang trọng `bg-zinc-950` kết hợp lớp mờ nghệ thuật `bg-black/40 backdrop-blur-2xs`. Căn giữa ảnh tuyệt đối với padding đồng đều 4 phía (`p-2 sm:p-2.5`), giúp cả ảnh Dark Mode (như Streamlit) lẫn Light Mode đều hòa quyện hài hòa, không còn các mảng xám chỏi màu thô kệch.
+2. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 82 (**Tách cột phải: Chức năng & Liên kết ở trên, Nhận xét ở dưới; Tối đa hóa cỡ ảnh SPCK**):
+1. **Tái cấu trúc 2 cột của Modal SPCK (`project-grid.tsx` & `project-card.tsx`):**
+   - **Cột phải:** Chia 2 tầng rõ ràng:
+     - Tầng trên (`ProjectFeaturesAndLinks`): Tiếp nhận "Các chức năng" và "Liên kết dự án & Nộp bài", hỗ trợ chuyển tab `[✨ Chức năng (X)]` và `[🔗 Liên kết (Y)]` mượt mà, cuộn nội bộ `scrollbar-slim`, nút đóng `✕` nằm ở góc trên bên phải.
+     - Tầng dưới (`CommentSection`): Dành trọn phần còn lại cho trao đổi nhận xét và form gửi bình luận.
+   - **Cột trái:** Loại bỏ khối Chức năng/Liên kết, tăng chiều cao khung ảnh chính lên `h-[340px] sm:h-[380px] lg:h-[420px]` (gấp 2.5 lần trước đây), hiển thị ảnh sản phẩm to bản, sắc nét, hoành tráng.
+   - **Tương thích:** Trang chi tiết lớp (`teacher/classes/[id]`) không bật `twoColumn` nên vẫn hiển thị đầy đủ Chức năng & Liên kết bên dưới bài làm như bình thường.
+2. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 81 (**Hiển thị đẹp mắt ảnh sản phẩm SPCK đa tỉ lệ dọc & ngang**):
+1. **Khung ảnh 2 lớp Dual-Layer Ambient Blur + `object-contain` (`project-card.tsx`):**
+   - Khắc phục lỗi ảnh dọc (chụp màn hình app mobile, biểu đồ dữ liệu...) bị cắt cụt/bể hình do `object-cover` trong khung dẹt ngang.
+   - Lớp nền (Backdrop): Phóng to nhẹ và làm mờ sâu (`blur-2xl opacity-35 dark:opacity-45 saturate-150`) tạo vầng hào quang chuyển sắc theo đúng tông màu ảnh, khử hoàn toàn cảm giác trống trải ở 2 bên.
+   - Lớp ảnh chính: `object-contain size-full` đổ bóng mềm (`drop-shadow-md`), bảo đảm 100% chi tiết ảnh (dọc, ngang, vuông) hiển thị trọn vẹn, sắc nét, không bị crop mất góc.
+2. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 80 (**Khôi phục MultiSelect cho Điểm mạnh & Cần cải thiện ở buổi học tiêu chuẩn**):
+1. **Khôi phục bộ chọn MultiSelect thủ công:**
+   - Thay thế `SelectedBadges` bằng `MultiSelect` cho cả Điểm mạnh (`strengths`) và Cần cải thiện (`improvements`) tại `review-editor.tsx`.
+   - Giáo viên có thể click dropdown để xem danh sách tiêu chí, tìm kiếm, tích/bỏ tích trực tiếp bằng tay hoặc gõ câu mới và nhấn Enter (tự động lưu vào `review_options` dùng chung).
+   - Tích hợp mượt mà với "Áp dụng bộ combo" và "Copy điểm mạnh/cải thiện" — khi áp combo hay copy, các tiêu chí vẫn được đổ vào danh sách đã chọn, hiển thị badge có nút xóa và nút "✕ Bỏ chọn tất cả".
+2. **Kiểm thử chất lượng:**
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 tests PASS.
+
+**Trước đó:** Đã hoàn thành Đợt 79 (**Nâng cấp văn phong gợi ý nội dung buổi học chuẩn sư phạm**):
+1. **Nâng cấp prompt gợi ý nội dung buổi học (`build_session_content_prompt`):**
+   - Hỗ trợ giáo viên nhập ghi chú/mô tả dài hay ngắn tùy ý (bài tập, mini-project, giáo trình...).
+   - AI chắt lọc và biên soạn thành danh sách gạch đầu dòng (3-6 ý) có cấu trúc sư phạm rõ ràng: Khởi động/Ôn tập -> Kiến thức trọng tâm -> Thực hành/Dự án mini -> Thử thách mở rộng.
+   - Mỗi gạch đầu dòng 1-2 câu hoàn chỉnh theo cấu trúc `[Hoạt động / Chủ đề / Dự án]: [Mô tả chi tiết việc học hoặc bài tập/sản phẩm cụ thể]`, tránh câu cụt lủn chỉ liệt kê từ khóa.
+   - Vẫn bảo toàn 100% nguyên tắc: TUYỆT ĐỐI KHÔNG tự thêm công nghệ/kiến thức mới ngoài ghi chú GV (đảm bảo tính chính xác khi chảy vào nhận xét học viên và báo cáo Zalo gửi phụ huynh).
+2. **Giao diện người dùng (`SessionContentSuggestDialog`):**
+   - Nâng cấp mô tả và placeholder ô nhập ghi chú để giáo viên biết có thể gõ hoặc dán nội dung chi tiết/dài tùy ý; mở rộng chiều cao mặc định (`rows={5}`).
+3. **Luôn tạo lại nhận xét AI mới khi áp nhận xét cả lớp (`applyReviewsFromSession`):**
+   - Trước đây: `applyReviewsFromSession` bỏ qua học sinh đã có sẵn nhận xét để tiết kiệm lượt AI.
+   - Cập nhật mới (user chốt 2026-10-13): Khi giáo viên chọn áp nhận xét từ buổi trước cho cả lớp, AI luôn tạo lại câu nhận xét mới cho 100% học sinh được áp (kể cả em đã có câu nhận xét cũ trước đó), bảo đảm đoạn văn nhận xét luôn tươi mới và bám sát ngữ cảnh buổi học hiện tại thay vì giữ nhận xét cũ.
+4. **Khắc phục lỗi không nhận diện buổi nguồn đã có nhận xét (lớp CSA05):**
+   - **Nguyên nhân gốc rễ:** Trước đây `page.tsx` và `applyReviewsFromSession` chỉ kiểm tra `row.strengths.length > 0 || row.improvements.length > 0`. Ở các buổi SPCK (như buổi 10, 11, 12 lớp CSA05), giáo viên đã có đầy đủ nhận xét AI (`ai_generated_comment`) cho cả 5 học sinh nhưng không tích checkbox điểm mạnh/cải thiện, dẫn đến hệ thống coi buổi đó là "chưa có nhận xét" và ẩn khỏi dropdown.
+   - **Khắc phục:** Mở rộng điều kiện kiểm tra buổi có nhận xét: chấp nhận cả trường hợp đã có câu nhận xét AI (`Boolean(row.ai_generated_comment)`). Giờ đây buổi 10, 11, 12 hiển thị chính xác `(5 em đã nhận xét)` ở buổi 13.
+5. **Bỏ tiêu đề buổi học khỏi prompt nhận xét (`build_review_prompt`):**
+   - Không đưa `Buổi học: {session_title}` vào prompt, cấm AI nhắc đến số thứ tự hay tên buổi học (như 'Trong buổi 10...', 'Ở buổi học này...').
+   - Thay bằng mục đích buổi học: Học lý thuyết & thực hành / Làm dự án SPCK / Kiểm tra định kỳ, kết hợp cùng nội dung chi tiết bài học (`session_content`).
+6. **Kiểm thử chất lượng:**
+   - `ai-service`: 91/91 tests PASS (thêm test kiểm tra mục đích buổi học thay vì tiêu đề).
+   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+
+**Trước đó:** Đã hoàn thành Đợt 78 (**Lọc danh sách áp nhận xét giống buổi trước theo hình thức buổi học** — *Lưu ý: Không commit theo yêu cầu của user*):
+1. **Lọc theo hình thức buổi học (`SessionFormat`):**
+   - Tính năng "Áp nhận xét giống buổi trước cho CẢ LỚP" (`SessionForm`) tự động lọc danh sách buổi có thể áp theo đúng hình thức đang chọn ở `SessionFormatSelector`:
+     - **Buổi học tiêu chuẩn (`standard`):** Chỉ hiển thị các buổi lý thuyết/thực hành thông thường (VD: 1, 2, 3, 4, 6, 7, 8).
+     - **Bài kiểm tra (`periodic_test`):** Chỉ hiển thị các buổi kiểm tra định kỳ / thi (VD: 5, 9, 14).
+     - **Làm đồ án (`project_period`):** Chỉ hiển thị các buổi giai đoạn hoàn thiện SPCK (VD: 10, 11, 12, 13).
+     - **Thuyết trình demo (`final_presentation`):** Chỉ hiển thị các buổi báo cáo Demo Day (VD: 14).
+2. **Cơ chế hoạt động & trải nghiệm người dùng (UX):**
+   - Bổ sung helper `filterCopySessionsByFormat` trong `session-format.ts`.
+   - Gắn `format: SessionFormat` vào interface `CopyFromSession`.
+   - `page.tsx` query các buổi khác trong lớp (`.neq("sessions.id", session.id)`) kèm theo cờ format (`is_periodic_test`, `is_project_period`, `is_final_presentation`), sử dụng `resolveSessionFormat` để xác định chính xác hình thức buổi học nguồn.
+   - Các logic lịch sử buổi trước của học viên (`priorCommentsByStudentId`, `priorSelectionsByStudentId`, `allPriorReviewsByStudentId`) được giữ nguyên chuẩn xác với điều kiện `sessions.session_number < current.session_number`.
+   - Nếu đổi hình thức buổi học mà buổi đang chọn không còn thuộc hình thức mới, `copyFrom` tự động reset về `""`.
+   - Hiển thị nhãn hình thức hiện tại ở tiêu đề khung và thông báo gợi ý rõ ràng khi chưa có buổi nào cùng hình thức có nhận xét.
+3. **Kiểm thử chất lượng:** 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+
+**Trước đó nữa:** Đã hoàn thành Đợt 77 (**Giữ trạng thái chưa nhận xét cho lớp sao chép mới**):
 1. **Khắc phục lỗi ô số buổi bị đánh dấu màu xanh & tiến độ 100% khi sao chép lớp:**
    - Trước đây `classes/[id]/page.tsx` tính màu ô số buổi và "Tiến độ lớp" dựa trên `filled = Boolean(session.content)` (đã có nội dung). Khi sao chép lớp, toàn bộ giáo án các buổi được sao chép nên các ô số buổi lập tức bị tô màu và tiến độ lớp bị đánh dấu 100%.
    - Chuyển logic tô màu ô số buổi và "Tiến độ lớp" sang đọc dữ liệu nhận xét thực tế (`student_reviews`):

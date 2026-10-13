@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CollapsibleCard } from "@/components/collapsible-card";
-import { ProjectCard, type ProjectView } from "@/components/project-card";
+import type { ProjectView } from "@/components/project-card";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,6 @@ import { DeleteClassButton } from "./delete-class-button";
 import { DuplicateClassDialog } from "./duplicate-class-dialog";
 import { EditClassDialog } from "./edit-class-dialog";
 import { GroupRandomizer } from "./group-randomizer";
-import { ProjectShowcase } from "./project-showcase";
 import {
   ShowcasePanel,
   type ShowcaseRatingRow,
@@ -440,40 +439,8 @@ export default async function ClassDetailPage({
             fullName: s.fullName,
           }))}
           ratings={showcaseRatings}
-          projects={projects.map((p) => ({
-            id: p.id,
-            name: p.name,
-            authorName: p.authorName,
-            imageUrls: p.image_urls,
-            features: p.features,
-            description: p.description,
-          }))}
+          projects={projects}
         />
-      </CollapsibleCard>
-
-      <CollapsibleCard
-        title={`🚀 Sản phẩm cuối khóa (${projects.length})`}
-        description="Sản phẩm học viên trong lớp đã khai báo"
-      >
-        <div className="mb-3 flex flex-wrap justify-end gap-2">
-          <ProjectShowcase classCode={cls.class_code} projects={projects} />
-        </div>
-        <div className="space-y-4">
-          {projects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Chưa có học viên nào khai báo sản phẩm.
-            </p>
-          ) : (
-            projects.map((project, i) => (
-              <div
-                key={project.id}
-                className={i > 0 ? "border-t pt-4" : undefined}
-              >
-                <ProjectCard project={project} />
-              </div>
-            ))
-          )}
-        </div>
       </CollapsibleCard>
     </div>
   );

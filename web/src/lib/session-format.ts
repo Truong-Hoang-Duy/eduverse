@@ -145,3 +145,14 @@ export function getSessionFormatBadge(
       return null;
   }
 }
+
+/**
+ * Lọc danh sách buổi có thể áp nhận xét theo hình thức buổi học đang chọn.
+ */
+export function filterCopySessionsByFormat<T extends { format: SessionFormat }>(
+  sessions: T[],
+  format: SessionFormat
+): T[] {
+  return sessions.filter((s) => s.format === format);
+}
+

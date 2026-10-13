@@ -70,20 +70,19 @@ export function SessionContentSuggestDialog({
         <DialogHeader>
           <DialogTitle>Gợi ý nội dung buổi học</DialogTitle>
           <DialogDescription>
-            Gõ ý muốn dạy (tự do, không cần chỉn chu) — AI viết lại gọn gàng, có
-            tham khảo nội dung 5 buổi gần nhất trong lớp để nối đúng tiến
-            trình. Để trống ô này thì AI tự dựa hoàn toàn vào các buổi trước để
-            đề xuất nội dung tiếp theo, không cần gõ gì. Không lưu gì cả — bạn
-            tự copy hoặc dùng rồi bấm &quot;Lưu nội dung&quot; ở form chính.
+            Gõ ý muốn dạy (ngắn gọn hoặc mô tả chi tiết bài học/bài tập) — AI biên soạn lại thành các
+            mục bài học sư phạm sinh động, có tham khảo 5 buổi gần nhất để nối đúng tiến trình. Để
+            trống ô này thì AI tự dựa hoàn toàn vào các buổi trước để đề xuất nội dung tiếp theo.
+            Không lưu gì cả — bạn tự copy hoặc dùng rồi bấm &quot;Lưu nội dung&quot; ở form chính.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <Textarea
-            rows={4}
+            rows={5}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="VD: hôm nay học vòng lặp for với while, cho làm bài đổi tiền tệ, ôn lại biến với if — hoặc để trống, AI tự nối tiếp buổi trước"
+            placeholder="VD: Nhập tự do ngắn hoặc dài (kiến thức cần dạy, bài tập/dự án thực hành, thử thách mở rộng, hoặc dán giáo trình) — AI sẽ biên soạn thành các gạch đầu dòng bài học sư phạm chuẩn mực. Để trống thì AI tự đề xuất tiếp theo."
           />
           <Button type="button" size="sm" onClick={handleSuggest} disabled={pending}>
             {pending ? "AI đang viết..." : "✨ Tạo gợi ý"}

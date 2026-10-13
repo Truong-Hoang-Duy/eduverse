@@ -242,7 +242,11 @@ export async function applyReviewsFromSession(input: {
 
     const source = sourceByStudent.get(student.id);
     if (!source || source.is_absent) continue;
-    if (source.strengths.length === 0 && source.improvements.length === 0) {
+    if (
+      source.strengths.length === 0 &&
+      source.improvements.length === 0 &&
+      !source.ai_generated_comment
+    ) {
       continue;
     }
 
@@ -273,7 +277,7 @@ export async function applyReviewsFromSession(input: {
   if (toUpsert.length === 0) {
     return {
       ...empty,
-      error: "Buổi nguồn chưa có tích chọn nào để áp sang (hoặc các em đã đánh vắng).",
+      error: "Buổi nguồn chưa có nhận xét nào để áp sang (hoặc các em đã đánh vắng).",
     };
   }
 
@@ -284,9 +288,10 @@ export async function applyReviewsFromSession(input: {
     return { ...empty, error: `Không lưu được nhận xét: ${upsertError.message}` };
   }
 
-  // --- Bước 2: gọi AI cho từng em (tích chọn đã an toàn trong DB) ---
-  // Bỏ qua em đã có sẵn câu nhận xét — khỏi phí lượt Gemini khi bấm lại lần 2.
-  const needComment = applied.filter((a) => !a.hasComment);
+  // --- Bước 2: gọi AI tạo nhận xét mới cho từng em (tích chọn đã an toàn trong DB) ---
+  // User chốt 2026-10-13: khi bấm áp nhận xét là đồng nghĩa với việc AI tạo nhận xét mới
+  // cho toàn bộ các em được áp theo ngữ cảnh buổi hiện tại, không giữ câu nhận xét cũ.
+  const needComment = applied;
   const aiConfig = await getAiConfig();
   const sessionTitle =
     sessionData.title ?? `Buổi ${sessionData.session_number}`;

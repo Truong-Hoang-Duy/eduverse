@@ -4,6 +4,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
+import type { ProjectView } from "@/components/project-card";
 import { ShowcaseTvScreen } from "@/components/showcase/showcase-tv-screen";
 import {
   TvOverlay,
@@ -40,6 +41,8 @@ import {
   type ExpiryPreset,
 } from "@/lib/showcase";
 import type { ActionResult } from "@/lib/types";
+
+import { ProjectShowcase } from "./project-showcase";
 
 export interface ShowcaseRow {
   token: string;
@@ -95,14 +98,7 @@ export function ShowcasePanel({
   loadError?: string | null;
   students: { id: string; fullName: string }[];
   ratings: ShowcaseRatingRow[];
-  projects?: {
-    id: string;
-    name: string;
-    authorName: string;
-    imageUrls?: string[];
-    features?: string[];
-    description?: string | null;
-  }[];
+  projects?: ProjectView[];
   /** @deprecated Đã bỏ tính năng thả tim */
   heartCount?: number;
 }) {
@@ -203,40 +199,50 @@ export function ShowcasePanel({
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        {status === "live" && (
-          <Badge className="rounded-md bg-green-600 hover:bg-green-600">
-            🟢 Đang bật · {formatRemaining(showcase?.expires_at ?? null)}
-          </Badge>
-        )}
-        {status === "expired" && (
-          <Badge variant="secondary" className="rounded-md">
-            ⏰ Đã hết hạn — bật lại để dùng tiếp
-          </Badge>
-        )}
-        {status === "off" && (
-          <Badge variant="secondary" className="rounded-md">
-            ⚪ Chưa bật
-          </Badge>
-        )}
-        {showcase && (
-          <span className="text-sm text-muted-foreground">
-            {showcase.view_count} lượt xem · {ratings.length} lượt chấm
-          </span>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {status === "live" && (
+            <Badge className="rounded-md bg-green-600 hover:bg-green-600">
+              🟢 Đang bật · {formatRemaining(showcase?.expires_at ?? null)}
+            </Badge>
+          )}
+          {status === "expired" && (
+            <Badge variant="secondary" className="rounded-md">
+              ⏰ Đã hết hạn — bật lại để dùng tiếp
+            </Badge>
+          )}
+          {status === "off" && (
+            <Badge variant="secondary" className="rounded-md">
+              ⚪ Chưa bật
+            </Badge>
+          )}
+          {showcase && (
+            <span className="text-sm text-muted-foreground">
+              {showcase.view_count} lượt xem · {ratings.length} lượt chấm
+            </span>
+          )}
+        </div>
+
+        {!showcase && projects.length > 0 && (
+          <div className="flex items-center gap-2">
+            <ProjectShowcase classCode={classCode} projects={projects} />
+          </div>
         )}
       </div>
 
       {/* Bật / gia hạn */}
-      <form action={enableAction} className="flex flex-wrap items-end gap-3">
+      <form action={enableAction} className="flex flex-wrap items-center gap-2.5 sm:gap-3">
         <input type="hidden" name="class_id" value={classId} />
         <input type="hidden" name="expiry" value={expiry} />
-        <div className="space-y-1.5">
-          <Label htmlFor={`expiry-${classId}`}>Hạn dùng của link</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor={`expiry-${classId}`} className="whitespace-nowrap text-sm font-medium">
+            Hạn dùng:
+          </Label>
           <Select
             value={expiry}
             onValueChange={(v) => setExpiry(v as ExpiryPreset)}
           >
-            <SelectTrigger id={`expiry-${classId}`} className="w-[190px]">
+            <SelectTrigger id={`expiry-${classId}`} className="w-[140px] sm:w-[155px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -248,12 +254,12 @@ export function ShowcasePanel({
             </SelectContent>
           </Select>
         </div>
-        <Button type="submit" disabled={enablePending}>
+        <Button type="submit" disabled={enablePending} className="whitespace-nowrap cursor-pointer">
           {enablePending
             ? "Đang xử lý..."
             : status === "live"
               ? "Gia hạn link"
-              : "🔗 Bật link cho phụ huynh"}
+              : "🔗 Bật link"}
         </Button>
         <FormMessage result={enableState} />
       </form>
@@ -261,7 +267,7 @@ export function ShowcasePanel({
       {showcase && (
         <>
           <div className="space-y-2 rounded-xl border p-3">
-            <Label htmlFor={`link-${classId}`}>Link gửi phụ huynh</Label>
+            <Label htmlFor={`link-${classId}`}>Đường dẫn sản phẩm cuối khóa</Label>
             <div className="flex flex-wrap gap-2">
               <input
                 id={`link-${classId}`}
@@ -273,9 +279,12 @@ export function ShowcasePanel({
               <Button type="button" variant="outline" onClick={copyLink}>
                 {copied ? "✓ Đã copy" : "📋 Copy"}
               </Button>
-              <Button type="button" variant="outline" onClick={openTv} className="gap-1.5 font-medium">
-                📺 Chiếu TV / QR
+              <Button type="button" variant="outline" onClick={openTv} className="gap-1.5 font-medium cursor-pointer">
+                📱 QR sản phẩm
               </Button>
+              {projects.length > 0 && (
+                <ProjectShowcase classCode={classCode} projects={projects} />
+              )}
             </div>
             {status !== "live" && (
               <p className="text-xs text-muted-foreground">
@@ -555,9 +564,9 @@ export function ShowcasePanel({
               id: p.id,
               name: p.name,
               authorName: p.authorName,
-              imageUrls: p.imageUrls ?? [],
-              features: p.features ?? [],
-              description: p.description ?? null,
+              imageUrls: p.image_urls,
+              features: p.features,
+              description: p.description,
             }))}
             onClose={closeTv}
           />
