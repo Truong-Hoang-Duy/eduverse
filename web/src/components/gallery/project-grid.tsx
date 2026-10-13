@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, ChevronDown, Laptop, Search, User, X } from "lucide-react";
 
-import { ProjectCard, type ProjectView } from "@/components/project-card";
+import {
+  ProjectCard,
+  ProjectFeaturesAndLinks,
+  type ProjectView,
+} from "@/components/project-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -404,7 +408,7 @@ export function ProjectGrid({
           {selected && (
             <>
               {/* CỘT TRÁI (DESKTOP) / KHỐI TRÊN (MOBILE): NỘI DUNG BÀI LÀM ĐẦY ĐỦ, THOÁNG ĐÃNG */}
-              <div className="w-full lg:w-[60%] xl:w-[62%] shrink-0 flex flex-col border-b lg:border-b-0 lg:border-r border-border/60 bg-muted/15 p-4 sm:p-5 lg:p-5 max-h-[48vh] lg:max-h-none overflow-y-auto lg:overflow-hidden lg:h-full">
+              <div className="w-full lg:w-[58%] xl:w-[60%] shrink-0 flex flex-col border-b lg:border-b-0 lg:border-r border-border/60 bg-muted/15 p-4 sm:p-5 lg:p-5 max-h-[50vh] lg:max-h-none overflow-y-auto scrollbar-slim lg:h-full">
                 <div className="flex items-start justify-between gap-3.5 pb-2.5 border-b border-border/60 shrink-0">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="flex size-9.5 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs">
@@ -455,19 +459,16 @@ export function ProjectGrid({
                   </div>
                 </div>
 
-                <div className="pt-2.5 flex-1 min-h-0 flex flex-col overflow-hidden">
+                <div className="pt-2.5 flex-1 min-h-0 flex flex-col">
                   <ProjectCard project={selected} hideHeading twoColumn />
                 </div>
               </div>
 
-              {/* CỘT PHẢI (DESKTOP) / KHỐI DƯỚI (MOBILE): NHẬN XÉT (CUỘN ĐỘC LẬP & FORM GHIM Ở ĐÁY) */}
-              <div className="w-full lg:w-[40%] xl:w-[38%] flex-1 min-h-0 flex flex-col overflow-hidden bg-card">
-                <CommentSection
-                  projectId={selected.id}
-                  classId={selected.classId}
-                  comments={selected.comments}
-                  currentUserId={currentUserId}
-                  placeholder={commentPlaceholder}
+              {/* CỘT PHẢI (DESKTOP) / KHỐI DƯỚI (MOBILE): PHẦN TRÊN LÀ CHỨC NĂNG & LIÊN KẾT, PHẦN DƯỚI LÀ NHẬN XÉT */}
+              <div className="w-full lg:w-[42%] xl:w-[40%] flex-1 min-h-0 flex flex-col overflow-hidden bg-card">
+                {/* 1. Phần trên: Các chức năng, Liên kết dự án & Nộp bài */}
+                <ProjectFeaturesAndLinks
+                  project={selected}
                   headerAction={
                     <div className="hidden lg:flex shrink-0">
                       <DialogClose asChild>
@@ -485,6 +486,17 @@ export function ProjectGrid({
                     </div>
                   }
                 />
+
+                {/* 2. Phần dưới: Nhận xét & Góp ý */}
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                  <CommentSection
+                    projectId={selected.id}
+                    classId={selected.classId}
+                    comments={selected.comments}
+                    currentUserId={currentUserId}
+                    placeholder={commentPlaceholder}
+                  />
+                </div>
               </div>
             </>
           )}

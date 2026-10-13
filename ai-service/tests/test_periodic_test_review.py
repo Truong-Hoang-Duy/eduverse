@@ -100,3 +100,17 @@ def test_normal_session_ignores_project_progress_notes_when_flag_is_off() -> Non
     prompt = build(is_project_period=False, project_progress_notes=["Tập trung làm bài"])
 
     assert "Tập trung làm bài" not in prompt
+
+
+def test_review_prompt_uses_purpose_instead_of_session_title() -> None:
+    # User chốt 2026-10-13: không cần tiêu đề buổi học, chỉ cần biết nội dung và mục đích buổi học.
+    prompt_std = build(session_title="Buổi 3: Lập trình game")
+    assert "Mục đích buổi học: Buổi học kiến thức và thực hành lập trình" in prompt_std
+    assert "Buổi học: Buổi 3: Lập trình game" not in prompt_std
+
+    prompt_project = build(is_project_period=True)
+    assert "Mục đích buổi học: Giai đoạn làm dự án / sản phẩm cuối khóa của học viên" in prompt_project
+
+    prompt_test = build(is_periodic_test=True)
+    assert "Mục đích buổi học: Buổi kiểm tra định kỳ / đánh giá năng lực học tập" in prompt_test
+

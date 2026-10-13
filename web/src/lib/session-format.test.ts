@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  filterCopySessionsByFormat,
   formatToFlags,
   getSessionFormatBadge,
   resolveSessionFormat,
@@ -155,6 +156,55 @@ describe("session-format", () => {
       expect(SESSION_FORMATS.periodic_test).toBeDefined();
       expect(SESSION_FORMATS.project_period).toBeDefined();
       expect(SESSION_FORMATS.final_presentation).toBeDefined();
+    });
+  });
+
+  describe("filterCopySessionsByFormat", () => {
+    const mockSessions = [
+      { id: "s1", sessionNumber: 1, format: "standard" as const, students: 10 },
+      { id: "s2", sessionNumber: 2, format: "standard" as const, students: 10 },
+      { id: "s3", sessionNumber: 3, format: "standard" as const, students: 10 },
+      { id: "s4", sessionNumber: 4, format: "standard" as const, students: 10 },
+      { id: "s5", sessionNumber: 5, format: "periodic_test" as const, students: 10 },
+      { id: "s6", sessionNumber: 6, format: "standard" as const, students: 10 },
+      { id: "s7", sessionNumber: 7, format: "standard" as const, students: 10 },
+      { id: "s8", sessionNumber: 8, format: "standard" as const, students: 10 },
+      { id: "s9", sessionNumber: 9, format: "periodic_test" as const, students: 10 },
+      { id: "s10", sessionNumber: 10, format: "project_period" as const, students: 10 },
+      { id: "s11", sessionNumber: 11, format: "project_period" as const, students: 10 },
+      { id: "s12", sessionNumber: 12, format: "project_period" as const, students: 10 },
+      { id: "s13", sessionNumber: 13, format: "project_period" as const, students: 10 },
+      { id: "s14_test", sessionNumber: 14, format: "periodic_test" as const, students: 10 },
+      { id: "s14_demo", sessionNumber: 14, format: "final_presentation" as const, students: 10 },
+    ];
+
+    it("lọc chính xác các buổi tiêu chuẩn: 1, 2, 3, 4, 6, 7, 8", () => {
+      const result = filterCopySessionsByFormat(mockSessions, "standard");
+      expect(result.map((s) => s.sessionNumber)).toEqual([1, 2, 3, 4, 6, 7, 8]);
+    });
+
+    it("lọc chính xác các buổi bài kiểm tra: 5, 9, 14", () => {
+      const result = filterCopySessionsByFormat(mockSessions, "periodic_test");
+      expect(result.map((s) => s.sessionNumber)).toEqual([5, 9, 14]);
+    });
+
+    it("lọc chính xác các buổi làm đồ án (SPCK): 10, 11, 12, 13", () => {
+      const result = filterCopySessionsByFormat(mockSessions, "project_period");
+      expect(result.map((s) => s.sessionNumber)).toEqual([10, 11, 12, 13]);
+    });
+
+    it("lọc chính xác buổi thuyết trình demo: 14", () => {
+      const result = filterCopySessionsByFormat(mockSessions, "final_presentation");
+      expect(result.map((s) => s.sessionNumber)).toEqual([14]);
+    });
+
+    it("trả về mảng rỗng nếu không có buổi nào cùng hình thức", () => {
+      const onlyStandard = [
+        { id: "s1", sessionNumber: 1, format: "standard" as const, students: 10 },
+      ];
+      expect(filterCopySessionsByFormat(onlyStandard, "periodic_test")).toEqual([]);
+      expect(filterCopySessionsByFormat(onlyStandard, "project_period")).toEqual([]);
+      expect(filterCopySessionsByFormat(onlyStandard, "final_presentation")).toEqual([]);
     });
   });
 });

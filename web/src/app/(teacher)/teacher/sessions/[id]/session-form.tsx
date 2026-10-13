@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { updateSession } from "@/lib/actions/sessions";
 import {
+  filterCopySessionsByFormat,
   formatToFlags,
   resolveSessionFormat,
   SESSION_FORMATS,
@@ -221,6 +222,8 @@ export interface CopyFromSession {
   sessionNumber: number;
   /** Số em có tích chọn ở buổi đó — cho GV biết áp sang được bao nhiêu. */
   students: number;
+  /** Hình thức của buổi học đó (tiêu chuẩn, bài kiểm tra, đồ án, thuyết trình) */
+  format: SessionFormat;
 }
 
 export function SessionForm({
@@ -242,12 +245,26 @@ export function SessionForm({
     resolveSessionFormat(session)
   );
   const flags = formatToFlags(format);
+
+  // Lọc danh sách buổi có thể áp nhận xét theo đúng hình thức đang chọn ở trên
+  const availableCopySessions = useMemo(
+    () => filterCopySessionsByFormat(copyFromSessions, format),
+    [copyFromSessions, format]
+  );
+
   // "" = không áp nhận xét từ buổi nào. Reset sau mỗi lần lưu để bấm Lưu lần
   // sau (VD sửa lại nội dung) không vô tình áp lại lần nữa.
   const [copyFrom, setCopyFrom] = useState("");
   useEffect(() => {
     if (state.success) setCopyFrom("");
   }, [state]);
+
+  // Nếu chuyển hình thức mà buổi đã chọn không thuộc hình thức mới -> reset về ""
+  useEffect(() => {
+    if (copyFrom && !availableCopySessions.some((s) => s.id === copyFrom)) {
+      setCopyFrom("");
+    }
+  }, [availableCopySessions, copyFrom]);
 
   return (
     <form action={formAction} className="space-y-3">
@@ -336,9 +353,14 @@ export function SessionForm({
       />
       {copyFromSessions.length > 0 && (
         <div className="space-y-1.5 rounded-lg border border-dashed p-3">
-          <Label htmlFor="copy_from_session_id">
-            Áp nhận xét giống buổi trước cho CẢ LỚP (tùy chọn)
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="copy_from_session_id">
+              Áp nhận xét giống buổi trước cho CẢ LỚP (tùy chọn)
+            </Label>
+            <span className="text-xs text-muted-foreground">
+              Hình thức: {SESSION_FORMATS[format].shortLabel}
+            </span>
+          </div>
           <input
             type="hidden"
             name="copy_from_session_id"
@@ -347,26 +369,37 @@ export function SessionForm({
           <Select
             value={copyFrom || "none"}
             onValueChange={(v) => setCopyFrom(v === "none" ? "" : v)}
+            disabled={availableCopySessions.length === 0}
           >
-            <SelectTrigger id="copy_from_session_id" size="sm" className="w-[280px]">
+            <SelectTrigger id="copy_from_session_id" size="sm" className="w-[320px]">
               <SelectValue placeholder="Không áp" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Không áp</SelectItem>
-              {copyFromSessions.map((s) => (
+              <SelectItem value="none">
+                {availableCopySessions.length === 0
+                  ? `Không có buổi ${SESSION_FORMATS[format].shortLabel.toLowerCase()} nào khác có nhận xét`
+                  : "Không áp"}
+              </SelectItem>
+              {availableCopySessions.map((s) => (
                 <SelectItem key={s.id} value={s.id}>
                   Buổi {s.sessionNumber} ({s.students} em đã nhận xét)
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">
-            Bấm &quot;Lưu nội dung&quot; sẽ GỘP điểm mạnh / cần cải thiện / xếp
-            loại của buổi đó vào mọi em ở buổi này (không xóa thứ đã tích), rồi
-            gọi AI viết nhận xét cho từng em. Bỏ qua em đã đánh vắng và em đã có
-            sẵn nhận xét. ⚠️ Mỗi em tốn 1 lượt Gemini — hết lượt thì em đó để
-            trống, đổi key rồi bấm &quot;AI tạo nhận xét&quot; ở từng em.
-          </p>
+          {availableCopySessions.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">
+              Chưa có buổi {SESSION_FORMATS[format].shortLabel.toLowerCase()} nào khác trong lớp có nhận xét để áp sang buổi này.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Bấm &quot;Lưu nội dung&quot; sẽ GỘP điểm mạnh / cần cải thiện của buổi
+              đó vào mọi em ở buổi này (không xóa thứ đã tích), rồi gọi AI viết nhận
+              xét mới cho từng em theo ngữ cảnh buổi học này. Bỏ qua em đã đánh vắng.
+              ⚠️ Mỗi em tốn 1 lượt Gemini — hết lượt thì em đó để trống, đổi key
+              rồi bấm &quot;AI tạo nhận xét&quot; ở từng em.
+            </p>
+          )}
         </div>
       )}
       <div className="flex items-center gap-3">

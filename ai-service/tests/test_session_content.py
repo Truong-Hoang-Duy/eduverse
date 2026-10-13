@@ -101,3 +101,12 @@ def test_draft_given_still_forbids_inventing_new_topics() -> None:
     prompt = build(draft="day vong lap for")
 
     assert "TUYỆT ĐỐI KHÔNG tự thêm kiến thức/chủ đề mới" in prompt
+
+
+def test_should_encourage_pedagogical_structure_and_action_oriented_bullets() -> None:
+    prompt = build()
+
+    assert "CẤU TRÚC CHO MỖI GẠCH ĐẦU DÒNG" in prompt
+    assert "giàu tính sư phạm" in prompt
+    assert "tiến trình buổi học" in prompt
+

@@ -21,8 +21,12 @@ import {
   isHandled,
   type PriorSelection,
 } from "./review-status";
-import { SessionForm } from "./session-form";
+import { type CopyFromSession, SessionForm } from "./session-form";
 import { ZaloPanel } from "./zalo-panel";
+import {
+  resolveSessionFormat,
+  type SessionFormat,
+} from "@/lib/session-format";
 
 interface SessionRow {
   id: string;
@@ -57,7 +61,14 @@ interface PriorReviewRow {
   strengths: string[];
   improvements: string[];
   is_absent: boolean;
-  sessions: { id: string; session_number: number; title?: string | null } | null;
+  sessions: {
+    id: string;
+    session_number: number;
+    title?: string | null;
+    is_periodic_test?: boolean | null;
+    is_project_period?: boolean | null;
+    is_final_presentation?: boolean | null;
+  } | null;
 }
 
 /**
@@ -106,6 +117,20 @@ export default async function SessionDetailPage({
   }
   const session = sessionData as unknown as SessionRow;
 
+  const hasFinalColumn =
+    (sessionData as unknown as { is_final_presentation?: boolean })
+      ?.is_final_presentation !== undefined;
+  const isFinalPresentation = hasFinalColumn
+    ? Boolean(session.is_final_presentation)
+    : !session.is_periodic_test &&
+      !session.is_project_period &&
+      session.session_number === 14;
+
+  const isFinalSession =
+    session.session_number === 14 ||
+    (Boolean(session.classes?.total_sessions) &&
+      session.session_number === session.classes?.total_sessions);
+
   const [
     { data: enrollments },
     { data: reviewsData },
@@ -137,15 +162,18 @@ export default async function SessionDetailPage({
       .select("id, name")
       .eq("teacher_id", profile.id)
       .order("name"),
-    // Nhận xét các buổi TRƯỚC (cùng lớp) — phục vụ: (1) AI tránh lặp lời văn,
-    // (2) copy điểm mạnh/cải thiện, (3) tổng hợp toàn khóa cho buổi thuyết trình.
+    // Nhận xét các buổi khác (cùng lớp) — phục vụ: (1) AI tránh lặp lời văn,
+    // (2) copy điểm mạnh/cải thiện, (3) tổng hợp toàn khóa cho buổi thuyết trình,
+    // (4) áp nhận xét giống buổi khác cho cả lớp theo hình thức buổi học.
     supabase
       .from("student_reviews")
       .select(
-        "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id)"
+        hasFinalColumn
+          ? "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id, is_periodic_test, is_project_period, is_final_presentation)"
+          : "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id, is_periodic_test, is_project_period)"
       )
       .eq("sessions.class_id", session.class_id)
-      .lt("sessions.session_number", session.session_number),
+      .neq("sessions.id", session.id),
     supabase
       .from("projects")
       .select("id, student_id, name, description, features")
@@ -177,20 +205,6 @@ export default async function SessionDetailPage({
     isHandled(reviewByStudentId.get(s.id) ?? null)
   ).length;
 
-  const hasFinalColumn =
-    (sessionData as unknown as { is_final_presentation?: boolean })
-      ?.is_final_presentation !== undefined;
-  const isFinalPresentation = hasFinalColumn
-    ? Boolean(session.is_final_presentation)
-    : !session.is_periodic_test &&
-      !session.is_project_period &&
-      session.session_number === 14;
-
-  const isFinalSession =
-    session.session_number === 14 ||
-    (Boolean(session.classes?.total_sessions) &&
-      session.session_number === session.classes?.total_sessions);
-
   const projects = (projectsData ?? []) as {
     id: string;
     student_id: string;
@@ -207,7 +221,11 @@ export default async function SessionDetailPage({
 
   for (const studentId of new Set(priorReviews.map((r) => r.student_id))) {
     const mine = priorReviews
-      .filter((r) => r.student_id === studentId)
+      .filter(
+        (r) =>
+          r.student_id === studentId &&
+          (r.sessions?.session_number ?? 0) < session.session_number
+      )
       .sort(
         (a, b) =>
           (b.sessions?.session_number ?? 0) - (a.sessions?.session_number ?? 0)
@@ -251,25 +269,32 @@ export default async function SessionDetailPage({
     );
   }
 
-  // Buổi trước có thể ÁP SANG cả lớp: chỉ buổi đã tích chọn cho ít nhất 1 em
-  // (bỏ buổi vắng/trống) — buổi rỗng có hiện cũng không áp được gì.
+  // Buổi có thể ÁP SANG cả lớp: chỉ buổi đã tích chọn cho ít nhất 1 em
+  // (bỏ buổi vắng/trống) — kèm hình thức buổi học để SessionForm lọc theo format đang chọn.
   const copySourceCounts = new Map<
     string,
-    { sessionNumber: number; students: number }
+    { sessionNumber: number; students: number; format: SessionFormat }
   >();
   for (const row of priorReviews) {
     if (row.is_absent) continue;
-    if (row.strengths.length === 0 && row.improvements.length === 0) continue;
+    if (
+      row.strengths.length === 0 &&
+      row.improvements.length === 0 &&
+      !row.ai_generated_comment
+    ) {
+      continue;
+    }
     const sessionRow = row.sessions;
     if (!sessionRow) continue;
     const bucket = copySourceCounts.get(sessionRow.id) ?? {
       sessionNumber: sessionRow.session_number,
       students: 0,
+      format: resolveSessionFormat(sessionRow),
     };
     bucket.students += 1;
     copySourceCounts.set(sessionRow.id, bucket);
   }
-  const copyFromSessions = [...copySourceCounts.entries()]
+  const copyFromSessions: CopyFromSession[] = [...copySourceCounts.entries()]
     .map(([id, v]) => ({ id, ...v }))
     .sort((a, b) => b.sessionNumber - a.sessionNumber);
 

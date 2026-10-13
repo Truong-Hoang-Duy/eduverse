@@ -80,14 +80,23 @@ def build_review_prompt(
             "Hãy viết nhận xét 3-5 câu cho một học viên sau buổi học, theo thứ "
             "tự: điểm mạnh trước, ĐIỂM CẦN CẢI THIỆN/LƯU Ý sau (bắt buộc phải có, "
             "không khen một chiều dù học viên giỏi), chốt bằng một lời "
-            "khuyên cụ thể mang tính xây dựng."
+            "khuyên cụ thể mang tính xây dựng. "
+            "Không nhắc đến số thứ tự buổi học hay tiêu đề buổi học."
         )
+
+    if is_project_period:
+        purpose = "Giai đoạn làm dự án / sản phẩm cuối khóa của học viên"
+    elif is_periodic_test:
+        purpose = "Buổi kiểm tra định kỳ / đánh giá năng lực học tập"
+    else:
+        purpose = "Buổi học kiến thức và thực hành lập trình"
+
     parts = [
         SYSTEM_ROLE,
         TONE_RULE,
         instruction,
         f"Học viên: {student_name}",
-        f"Buổi học: {session_title}",
+        f"Mục đích buổi học: {purpose}",
     ]
     if academic_level:
         # CHỈ là ngữ cảnh để chỉnh độ sâu/giọng — user chốt 2026-07-27 KHÔNG nêu
@@ -474,8 +483,8 @@ def build_session_content_prompt(
     """KHÔNG áp TONE_RULE — đây là mô tả giáo án, không phải nhận xét học viên."""
     parts = [
         SYSTEM_ROLE,
-        "Hãy viết lại thành đoạn 'Nội dung buổi học' ngắn gọn, rõ ràng cho một "
-        "buổi dạy lập trình, dựa trên ghi chú thô của giáo viên bên dưới.",
+        "Hãy biên soạn lại nội dung buổi học cho một buổi dạy lập trình thành các "
+        "mục rõ ràng, hấp dẫn, chuẩn phương pháp sư phạm dựa trên ghi chú của giáo viên bên dưới.",
         f"Khóa học: {course_name} — Lớp: {class_code}",
         f"Buổi số: {session_number}",
     ]
@@ -491,15 +500,16 @@ def build_session_content_prompt(
     if draft_text.strip():
         parts.append(f"Ghi chú thô của giáo viên cho buổi này: {draft_text}")
         no_invent_rule = (
-            "🔴 CHỈ viết những gì ghi chú của giáo viên đã nêu. TUYỆT ĐỐI KHÔNG "
-            "tự thêm kiến thức/chủ đề mới, kể cả khi thấy liên quan hoặc nên dạy "
-            "kèm."
+            "🔴 NGUYÊN TẮC BẢO TOÀN KIẾN THỨC: Giáo viên có thể ghi chú ngắn hoặc mô tả chi "
+            "tiết, bạn hãy chắt lọc và trau chuốt lời văn cho hay, nhưng CHỈ viết những gì ghi "
+            "chú của giáo viên đã nêu. TUYỆT ĐỐI KHÔNG tự thêm kiến thức/chủ đề mới, kể cả khi "
+            "thấy liên quan hoặc nên dạy kèm."
         )
     else:
         parts.append(
             "Giáo viên CHƯA ghi ý muốn dạy cho buổi này. Dựa HOÀN TOÀN vào tiến "
-            "trình các buổi TRƯỚC để tự đề xuất nội dung hợp lý tiếp theo (bài "
-            "học mới nối tiếp mạch kiến thức đã dạy, hoặc ôn tập nếu phù hợp) — "
+            "trình các buổi TRƯỚC để tự đề xuất nội dung bài học hấp dẫn, hợp lý tiếp theo "
+            "(bài học mới nối tiếp mạch kiến thức đã dạy, hoặc ôn tập/luyện tập dự án nếu phù hợp) — "
             "đây là ca DUY NHẤT được phép tự đề xuất chủ đề, vì không có ghi chú "
             "nào để bám vào."
         )
@@ -509,9 +519,13 @@ def build_session_content_prompt(
             "khóa học đang dạy."
         )
     parts.append(
-        "Viết lại thành DANH SÁCH GẠCH ĐẦU DÒNG (3-6 ý), mỗi ý MỘT việc sẽ dạy "
-        "hoặc một bài tập. Mỗi ý tối đa 1 câu ngắn, đi thẳng vào trọng tâm — văn "
-        "phong súc tích như ghi chú giáo án. Sắp theo thứ tự dạy trong buổi."
+        "Viết lại thành DANH SÁCH GẠCH ĐẦU DÒNG (3-6 ý), sắp xếp logic theo tiến trình "
+        "buổi học (khởi động/ôn tập -> bài học trọng tâm -> thực hành/dự án mini -> thử thách mở rộng nếu có).\n"
+        "QUY TẮC VĂN PHONG VÀ CẤU TRÚC CHO MỖI GẠCH ĐẦU DÒNG:\n"
+        "- Mỗi ý viết thành 1-2 câu trọn vẹn, giàu tính sư phạm, đi thẳng vào bản chất hoạt động học tập.\n"
+        "- Cấu trúc gợi ý cho mỗi ý: [Hoạt động / Tên chủ đề / Dự án]: [Mô tả chi tiết việc sẽ học hoặc bài tập/sản phẩm cụ thể học sinh sẽ thực hành].\n"
+        "- Diễn đạt chuyên nghiệp, sinh động và truyền cảm hứng; tránh viết cộc lốc hoặc chỉ liệt kê từ khóa trơ trọi "
+        "(Ví dụ: thay vì chỉ ghi 'Học vòng lặp for', hãy viết 'Khám phá vòng lặp for: tìm hiểu cú pháp và cơ chế biến đếm qua bài toán đếm số tự động')."
     )
     parts.append(
         f"{no_invent_rule} Nội dung này được dùng làm ngữ cảnh để viết nhận xét "
