@@ -342,8 +342,7 @@ export function SessionForm({
           placeholder="VD: Buổi này có bài kiểm tra 15 phút đầu giờ, các em còn lại ôn tập vòng lặp..."
         />
         <p className="text-xs text-muted-foreground">
-          Mô tả bối cảnh lớp học/việc học viên sẽ làm buổi này — CHỈ để AI tham
-          khảo khi viết nhận xét từng em bên dưới, không hiện cho phụ huynh.
+          Mô tả bối cảnh lớp học để AI tham khảo khi viết nhận xét, không hiển thị công khai.
         </p>
       </div>
       <SessionFormatSelector

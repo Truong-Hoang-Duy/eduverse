@@ -437,7 +437,7 @@ export default async function ClassDetailPage({
 
       <CollapsibleCard
         title="🔗 Tổng kết khóa học"
-        description="Trang công khai để phụ huynh xem sản phẩm cả lớp — gửi link hoặc chiếu QR trong buổi lễ cuối khóa"
+        description="Trang công khai xem sản phẩm cả lớp — gửi link hoặc chiếu QR trong buổi tổng kết"
       >
         <ShowcasePanel
           classId={cls.id}

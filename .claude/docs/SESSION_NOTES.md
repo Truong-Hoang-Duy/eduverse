@@ -28,10 +28,27 @@
    - **Khớp trọn khung ảnh:** Khi cuộn đến ảnh sản phẩm, chiều cao khung ảnh tự động mở rộng bao quát toàn bộ khoảng cách từ mép dưới Header đến mép trên Footer (`h-[calc(94dvh-230px)] min-h-[340px] max-h-[580px]` trên mobile, lên đến `620px-660px` trên desktop) kết hợp `object-contain max-h-full max-w-full`, đảm bảo nhìn trọn vẹn 100% tấm ảnh (ảnh ngang 16:9 hay ảnh dọc 9:16/slide đều không bị che khuất/cắt nát).
    - **Thao tác cảm ứng điện thoại:** Tích hợp thao tác vuốt tay trái/phải (Touch Swipe) trực tiếp trên điện thoại + phím mũi tên trái/phải trên bàn phím máy tính để xem các ảnh tiếp theo.
    - Đổi tiêu đề đầu trang showcase từ "Lễ tổng kết khóa học" thành **Tổng kết khóa học** (`showcase-view.tsx`).
-6. **Kiểm thử chất lượng:**
-   - `web`: 320/320 tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+6. **Tăng khoảng cách thanh Chức năng & Liên kết nộp bài (`project-card.tsx`):**
+   - Nâng thanh header từ `h-11` lên `py-3 sm:py-3.5 px-4 sm:px-6 min-h-[52px] sm:min-h-[56px]`, xóa bỏ tình trạng cụm tab và nút đóng dính sát mép trên/mép phải của modal, căn đều thẳng hàng với cột bên trái.
+   - Nâng cấp kích thước tab: khung tab bo tròn `p-1 rounded-xl bg-muted/80`, nút tab `px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-[13px]`, khoảng cách giữa các tab `gap-1.5`.
+   - Mở rộng không gian nội dung bên dưới: tăng padding từ `p-3 sm:p-3.5` lên `p-4 sm:p-5`, nâng chiều cao tổng thể từ `h-[190px] sm:h-[200px]` lên `min-h-[220px] sm:min-h-[240px]`, các pill tính năng và thẻ liên kết giãn cách rộng rãi (`gap-2.5`), không còn bị dồn sát viền.
+7. **Lược bỏ dòng chú thích ảnh bìa phụ huynh (`image-url-chips.tsx`):**
+   - Đã xóa câu chú thích: "Ảnh đầu tiên được dùng làm ảnh bìa trên trang phụ huynh. Link nào không hiện được ở khung xem trước thì cũng sẽ không hiện với người khác." khỏi form nộp ảnh bài làm của học sinh.
+8. **Đổi mô tả lớp Demo (`classes` table & `setup-demo-account.mjs`):**
+   - Đổi mô tả từ "Lớp học Demo dành cho học viên tham khảo & hướng dẫn" thành **Demo cho học viên tham khảo** trong script `setup-demo-account.mjs` và cập nhật trực tiếp bản ghi lớp `DEMO` trong database Supabase.
+9. **Tạo khoảng cách footer nút bấm trang Hồ sơ (`profile-form.tsx`, `password-form.tsx`):**
+   - Bổ sung `pb-6` cho `CardContent` ở cả form Thông tin cá nhân và Đổi mật khẩu, tạo khoảng đệm 24px thoáng đãng giữa ô input và viền phân cách footer của 2 nút "Lưu thay đổi" & "Đổi mật khẩu".
+10. **Lược bỏ từ 'phụ huynh' và tinh gọn các mô tả:**
+   - Thay thế toàn bộ từ 'phụ huynh' trên giao diện bằng các từ ngữ chung, trung tính và phù hợp hơn ('người xem', 'quý khách', 'công khai', 'học viên').
+   - Rút gọn súc tích các dòng mô tả, placeholder và thông báo trên trang chi tiết lớp, showcase, modal nộp bài, cài đặt mẫu thông báo và trang buổi học.
+   - Cập nhật số đếm đánh giá thành '{n} lượt đánh giá'.
+11. **Kiểm thử chất lượng:**
+   - `web`: 320/320 vitest tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+   - `ai-service`: 91/91 pytest PASS.
 
 Cập nhật bởi: Gemini
+
+
 
 
 

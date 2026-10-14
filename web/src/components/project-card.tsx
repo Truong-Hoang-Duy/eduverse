@@ -516,7 +516,7 @@ export function ProjectFeaturesAndLinks({
   if (!hasFeatures && !hasLinks) {
     if (!headerAction) return null;
     return (
-      <div className="shrink-0 px-4 py-2.5 flex items-center justify-end border-b border-border/60 bg-muted/20">
+      <div className="shrink-0 px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-end border-b border-border/60 bg-muted/20">
         {headerAction}
       </div>
     );
@@ -525,23 +525,23 @@ export function ProjectFeaturesAndLinks({
   const showTabs = hasFeatures && hasLinks;
 
   return (
-    <div className="shrink-0 h-[190px] sm:h-[200px] border-b border-border/60 bg-muted/10 flex flex-col overflow-hidden">
-      {/* Header thanh điều hướng: Tabs hoặc Tiêu đề + Nút đóng X */}
-      <div className="px-4 sm:px-5 h-11 shrink-0 flex items-center justify-between border-b border-border/50 gap-2 bg-muted/20">
-        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+    <div className="shrink-0 min-h-[220px] sm:min-h-[240px] border-b border-border/60 bg-muted/10 flex flex-col overflow-hidden">
+      {/* Header thanh điều hướng: Tabs hoặc Tiêu đề + Nút đóng X với khoảng cách rộng rãi */}
+      <div className="px-4 sm:px-6 py-3 sm:py-3.5 shrink-0 flex items-center justify-between border-b border-border/50 gap-3 bg-muted/20">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {showTabs ? (
-            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-muted/70 border border-border/60">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/80 border border-border/60 shadow-2xs">
               <button
                 type="button"
                 onClick={() => setActiveTab("features")}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-[13px] font-semibold transition-all cursor-pointer ${
                   activeTab === "features"
-                    ? "bg-background text-foreground shadow-2xs border border-border/50"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-background text-foreground shadow-xs border border-border/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/40"
                 }`}
               >
                 <span>✨ Chức năng</span>
-                <span className="rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
                   {project.features.length}
                 </span>
               </button>
@@ -549,31 +549,31 @@ export function ProjectFeaturesAndLinks({
               <button
                 type="button"
                 onClick={() => setActiveTab("links")}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-[13px] font-semibold transition-all cursor-pointer ${
                   activeTab === "links"
-                    ? "bg-background text-foreground shadow-2xs border border-border/50"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-background text-foreground shadow-xs border border-border/60"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/40"
                 }`}
               >
                 <span>🔗 Liên kết & Nộp bài</span>
-                <span className="rounded-full bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
                   {linksCount}
                 </span>
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs sm:text-[13px] font-bold uppercase tracking-wider text-muted-foreground">
               {hasFeatures ? (
                 <>
                   <span>✨ Các chức năng</span>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground border border-border/60">
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-foreground border border-border/60">
                     {project.features.length}
                   </span>
                 </>
               ) : (
                 <>
                   <span>🔗 Liên kết & Nộp bài</span>
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-foreground border border-border/60">
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-foreground border border-border/60">
                     {linksCount}
                   </span>
                 </>
@@ -585,14 +585,14 @@ export function ProjectFeaturesAndLinks({
         {headerAction && <div className="shrink-0">{headerAction}</div>}
       </div>
 
-      {/* Nội dung: Chức năng hoặc Liên kết */}
-      <div className="flex-1 min-h-0 p-3 sm:p-3.5 overflow-y-auto scrollbar-slim">
+      {/* Nội dung: Chức năng hoặc Liên kết với padding rộng rãi, không bị sát mép */}
+      <div className="flex-1 min-h-0 p-4 sm:p-5 overflow-y-auto scrollbar-slim">
         {(activeTab === "features" || !hasLinks) && hasFeatures && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             {sortedFeatures.map((feature) => (
               <div
                 key={feature}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-2xs hover:border-primary/50 hover:bg-accent/40 transition-colors"
+                className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-card px-3.5 py-1.5 text-xs sm:text-[13px] font-medium text-foreground shadow-2xs hover:border-primary/50 hover:bg-accent/40 transition-colors"
               >
                 <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
                 <span className="leading-normal">{feature}</span>
@@ -602,7 +602,7 @@ export function ProjectFeaturesAndLinks({
         )}
 
         {(activeTab === "links" || !hasFeatures) && hasLinks && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 content-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 content-start">
             {project.drive_url && (
               <LinkCard
                 href={project.drive_url}
