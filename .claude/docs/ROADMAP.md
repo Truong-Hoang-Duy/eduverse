@@ -1341,7 +1341,35 @@
   - Đổi mô tả lớp Demo từ "Lớp học Demo dành cho học viên tham khảo & hướng dẫn" thành **Demo cho học viên tham khảo** (`setup-demo-account.mjs` và cập nhật bản ghi lớp `DEMO` trong DB Supabase).
   - Tách khoảng cách giữa các ô input và footer nút bấm "Lưu thay đổi", "Đổi mật khẩu" trên trang Hồ sơ (`profile-form.tsx`, `password-form.tsx`).
   - Lược bỏ từ "phụ huynh" trên giao diện, thay bằng các từ ngữ chung/trung tính ("người xem", "quý khách", "công khai", "lượt đánh giá") và tinh gọn các mô tả, placeholder trên toàn hệ thống.
+  - Đổi "học sinh đang thuyết trình trên sân khấu" thành **học sinh đang thuyết trình** (`showcase-panel.tsx`, `showcase.ts`).
 - [x] **Kiểm thử chất lượng:** 320/320 vitest PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+
+### Đợt 93: Cải tiến nhận xét & gợi ý buổi học AI theo chuẩn sư phạm, phân loại 5 môn học theo trình tự phát triển và chống trùng lặp tiến trình (2026-10-14)
+- [x] **Phân loại môn học thích ứng theo trình tự từ nhỏ đến lớn (`ai-service/app/prompts.py`):**
+  - Tự động nhận diện 5 môn học phổ biến cho lứa tuổi dưới 18: `scratch` -> `gamemaker` -> `app` -> `web` -> `computer_science` (fallback: `general`).
+  - **1. Scratch (~7-11t):** Thao tác kéo thả khối lệnh, tư duy sự kiện, logic vòng lặp, cấm từ ngữ "gõ code", "lỗi cú pháp", "chấm phẩy".
+  - **2. Game Maker (~10-14t):** Cơ chế điều khiển, va chạm (collision), phòng chơi (room), hoạt ảnh (sprite), sự kiện game.
+  - **3. App — Python & Qt Designer (~11-15t):** Thiết kế giao diện kéo thả trên Qt Designer, widget (nút bấm, ô nhập, nhãn hiển thị), layout bố cục (dọc, ngang, lưới), signals & slots kết nối nút bấm với code Python, file `.ui`, tạo app máy tính hoàn chỉnh.
+  - **4. Web (~12-18t):** Thẻ HTML, trang trí bố cục/màu sắc Flexbox CSS, tương tác JS, độ tương thích màn hình responsive.
+  - **5. Computer Science (~13-18t):** Thuật toán, biến số, cấu trúc rẽ nhánh/lặp, hàm, cấu trúc dữ liệu và debug chuyên sâu.
+- [x] **Thuật ngữ song ngữ thân thiện phụ huynh & xóa bỏ văn mẫu sáo rỗng:**
+  - Mô tả hành vi trực quan trước, thuật ngữ tiếng Anh gốc trong ngoặc đơn; nghiêm cấm dịch thô máy móc ("khử bọ", "bắt sâu", "khe cắm").
+  - Cấm các từ nối sáo rỗng lặp đi lặp lại ("tuy nhiên", "bên cạnh đó", "mặc dù vậy", "tóm lại", "thầy hy vọng/tin rằng").
+  - Gắn điểm mạnh/yếu với bài tập/khái niệm cụ thể trong `session_content`.
+- [x] **Tiến trình thời gian và chống trùng lặp:**
+  - Thay đổi góc nhìn sư phạm theo thời gian học tập: buổi 1-3 làm quen thao tác & tự tin; buổi 4-8 thói quen tư duy & chủ động tự sửa lỗi; buổi 9+ tính độc lập, độ hoàn thiện sản phẩm & mini-goal.
+- [x] **Tích hợp Web Server Actions & ReviewEditor:**
+  - Bổ sung `courseName` và `sessionNumber` vào `generateAiReview` và `applyReviewsFromSession` (`reviews.ts`, `review-editor.tsx`).
+- [x] **Tinh chỉnh & cố định khung popup Gợi ý nội dung buổi học (`session-content-suggest-dialog.tsx`):**
+  - Mở rộng kích thước sang `sm:max-w-2xl lg:max-w-3xl` và cố định chiều cao `h-[92dvh] sm:h-[640px] max-h-[700px]`, triệt tiêu hoàn toàn co giãn nhảy khung khi tạo gợi ý.
+  - Tách bạch vùng nhập ghi chú ở trên và khung kết quả ở dưới (`flex-1 min-h-0`) với thanh cuộn mượt mà và empty state trực quan.
+  - Chuyển mô tả dài thành danh sách gạch đầu dòng ngắn gọn, phân định rõ chế độ Nhập ghi chú vs Để trống.
+  - Viết lại placeholder của Textarea theo dạng gạch đầu dòng ví dụ trực quan bám sát 5 môn học.
+- [x] **Đưa nội dung tab Sản phẩm (SPCK) vào nhận xét & Logic Buổi 13 hoàn thành bài:**
+  - Tự động chuyển `project_name`, `project_description`, `project_features` từ tab Sản phẩm sang AI Service khi `is_project_period = true`.
+  - Buổi 13: Nhận xét tích cực, chúc mừng và ghi nhận thành quả em đã hoàn thành sản phẩm; điểm cần cải thiện nhẹ nhàng hướng về kỹ năng tự tin thuyết trình cho buổi 14 Demo Day.
+  - Buổi 9-12 (In-progress): Nhận xét bám sát tiến độ từng buổi, không nói như thể đã hoàn thành 100%. Fallback an toàn nếu học viên chưa tạo sản phẩm.
+- [x] **Kiểm thử chất lượng:** 100/100 pytest PASS (thêm 9 unit tests mới trong `test_pedagogical_review.py`), 320/320 vitest PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
 
 
 

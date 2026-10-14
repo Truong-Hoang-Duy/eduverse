@@ -66,40 +66,95 @@ export function SessionContentSuggestDialog({
           ✨ Gợi ý nội dung
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Gợi ý nội dung buổi học</DialogTitle>
-          <DialogDescription>
-            Gõ ý muốn dạy (ngắn gọn hoặc mô tả chi tiết bài học/bài tập) — AI biên soạn lại thành các
-            mục bài học sư phạm sinh động, có tham khảo 5 buổi gần nhất để nối đúng tiến trình. Để
-            trống ô này thì AI tự dựa hoàn toàn vào các buổi trước để đề xuất nội dung tiếp theo.
-            Không lưu gì cả — bạn tự copy hoặc dùng rồi bấm &quot;Lưu nội dung&quot; ở form chính.
+      <DialogContent className="h-[92dvh] sm:h-[640px] max-h-[700px] w-[calc(100%-1.5rem)] sm:max-w-2xl lg:max-w-3xl flex flex-col p-4 sm:p-6 gap-3">
+        <DialogHeader className="shrink-0 space-y-1">
+          <DialogTitle className="text-base sm:text-lg">Gợi ý nội dung buổi học</DialogTitle>
+          <DialogDescription asChild>
+            <div className="space-y-1 text-xs text-muted-foreground pt-0.5">
+              <p>AI tự động nhận diện môn học và nối tiếp tiến trình các buổi trước:</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li><strong>Nhập ghi chú:</strong> Gõ từ khóa, bài tập hoặc dán giáo trình — AI biên soạn thành các mục sư phạm rõ ràng.</li>
+                <li><strong>Để trống:</strong> AI tự đề xuất nội dung bài học tiếp theo dựa trên mạch kiến thức các buổi trước.</li>
+              </ul>
+            </div>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3">
+        {/* Khu vực nhập ghi chú cố định không làm nhảy khung */}
+        <div className="shrink-0 space-y-2">
           <Textarea
-            rows={5}
+            rows={3}
+            className="h-24 sm:h-24 resize-none text-xs sm:text-sm"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="VD: Nhập tự do ngắn hoặc dài (kiến thức cần dạy, bài tập/dự án thực hành, thử thách mở rộng, hoặc dán giáo trình) — AI sẽ biên soạn thành các gạch đầu dòng bài học sư phạm chuẩn mực. Để trống thì AI tự đề xuất tiếp theo."
+            placeholder={`VD:\n- Kiến thức: Biến, vòng lặp, thiết kế widget trên Qt Designer...\n- Bài tập: Lập trình máy tính bỏ túi, xử lý va chạm game...\n- Hoặc dán giáo trình thô (để trống để AI tự đề xuất tiếp theo).`}
           />
-          <Button type="button" size="sm" onClick={handleSuggest} disabled={pending}>
-            {pending ? "AI đang viết..." : "✨ Tạo gợi ý"}
-          </Button>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSuggest}
+              disabled={pending}
+              className="gap-1.5"
+            >
+              {pending ? (
+                <>
+                  <span className="inline-block animate-spin">⏳</span>
+                  <span>AI đang biên soạn...</span>
+                </>
+              ) : (
+                <>
+                  <span>✨</span>
+                  <span>Tạo gợi ý</span>
+                </>
+              )}
+            </Button>
+            <span className="text-[11px] text-muted-foreground italic hidden sm:inline">
+              * Không tự động lưu vào hệ thống
+            </span>
+          </div>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
 
-          {suggestion && (
-            <div className="space-y-2 rounded-lg border border-dashed p-3">
-              <p className="text-sm whitespace-pre-wrap">{suggestion}</p>
-              <div className="flex items-center gap-2">
-                <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
-                  {copied ? "✓ Đã copy" : "📋 Copy"}
-                </Button>
-                <Button type="button" size="sm" onClick={handleUse}>
-                  ✅ Dùng gợi ý này
-                </Button>
+        {/* Khung kết quả cố định chiếm toàn bộ không gian còn lại (flex-1 min-h-0), không bao giờ co giãn nhảy khung */}
+        <div className="flex-1 min-h-0 flex flex-col rounded-xl border border-dashed bg-muted/30 p-3 sm:p-4 overflow-hidden">
+          {suggestion ? (
+            <>
+              <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+                <p className="text-xs sm:text-sm whitespace-pre-wrap leading-relaxed select-text font-sans">
+                  {suggestion}
+                </p>
               </div>
+              <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 pt-2.5 mt-2 border-t border-border/50">
+                <span className="text-[11px] text-muted-foreground">
+                  Bấm &quot;Dùng gợi ý này&quot; để điền vào ô chính rồi lưu
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
+                    {copied ? "✓ Đã copy" : "📋 Copy"}
+                  </Button>
+                  <Button type="button" size="sm" onClick={handleUse}>
+                    ✅ Dùng gợi ý này
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : pending ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4 space-y-3">
+              <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <p className="text-xs sm:text-sm text-muted-foreground animate-pulse">
+                AI đang phân tích tiến trình các buổi trước và biên soạn nội dung sư phạm...
+              </p>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4 text-muted-foreground/70 space-y-1.5">
+              <span className="text-2xl">✨</span>
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Khung hiển thị gợi ý bài học
+              </p>
+              <p className="text-xs max-w-sm">
+                Nhập ghi chú hoặc để trống, sau đó bấm nút <strong>&quot;Tạo gợi ý&quot;</strong> ở trên để AI biên soạn nội dung tại đây.
+              </p>
             </div>
           )}
         </div>

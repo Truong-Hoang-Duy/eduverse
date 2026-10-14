@@ -218,7 +218,7 @@ export async function deleteShowcaseRating(formData: FormData): Promise<void> {
 }
 
 /**
- * Ghi nhận hoặc hủy học sinh đang thuyết trình trên sân khấu (Live Spotlight).
+ * Ghi nhận hoặc hủy học sinh đang thuyết trình (Live Spotlight).
  */
 export async function setSpotlightProject(
   classId: string,
