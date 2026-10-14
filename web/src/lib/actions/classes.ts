@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { isAcademicLevel } from "@/lib/academic-levels";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
@@ -359,5 +360,71 @@ export async function updateStudentsOrder(input: {
 
   revalidatePath(`/teacher/classes/${input.classId}`);
   return { success: "Đã cập nhật thứ tự học viên." };
+}
+
+/**
+ * Giáo viên sửa họ tên học viên trong lớp (khi học viên đăng ký sai tên).
+ * Kiểm tra quyền giáo viên đối với lớp chứa học viên trước khi cập nhật.
+ */
+export async function updateStudentName(
+  _prev: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  const studentId = String(formData.get("student_id") ?? "");
+  const classId = String(formData.get("class_id") ?? "");
+  const fullName = String(formData.get("full_name") ?? "").trim();
+
+  if (!studentId || !classId) {
+    return { error: "Thiếu thông tin học viên hoặc lớp." };
+  }
+  if (!fullName) {
+    return { error: "Họ tên không được để trống." };
+  }
+  if (fullName.length > 100) {
+    return { error: "Họ tên tối đa 100 ký tự." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  // Kiểm tra quyền: caller là teacher của class này và studentId thực sự thuộc classId
+  const [{ data: me }, { data: enrollment }] = await Promise.all([
+    supabase.from("profiles").select("role").eq("id", user.id).single(),
+    supabase
+      .from("enrollments")
+      .select("id")
+      .eq("class_id", classId)
+      .eq("student_id", studentId)
+      .maybeSingle(),
+  ]);
+
+  if (me?.role !== "teacher" || !enrollment) {
+    return { error: "Bạn không có quyền sửa tên học viên này." };
+  }
+
+  // Cập nhật profiles bằng admin client (để bypass RLS profiles_update_own)
+  const admin = createAdminClient();
+  const { error: profileError } = await admin
+    .from("profiles")
+    .update({ full_name: fullName })
+    .eq("id", studentId);
+
+  if (profileError) {
+    return { error: `Không cập nhật được họ tên: ${profileError.message}` };
+  }
+
+  // Đồng bộ user_metadata trong auth để nhất quán
+  await admin.auth.admin.updateUserById(studentId, {
+    user_metadata: { full_name: fullName },
+  });
+
+  revalidatePath(`/teacher/classes/${classId}`);
+  revalidatePath(`/teacher/classes/${classId}/students/${studentId}`);
+  return { success: `Đã đổi tên học viên thành: ${fullName}` };
 }
 

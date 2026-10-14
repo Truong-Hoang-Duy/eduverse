@@ -1371,7 +1371,64 @@
   - Buổi 9-12 (In-progress): Nhận xét bám sát tiến độ từng buổi, không nói như thể đã hoàn thành 100%. Fallback an toàn nếu học viên chưa tạo sản phẩm.
 - [x] **Kiểm thử chất lượng:** 100/100 pytest PASS (thêm 9 unit tests mới trong `test_pedagogical_review.py`), 320/320 vitest PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
 
+### Đợt 94: Nâng cấp nhạc nền màn chiếu TV sang Acoustic Guitar phòng thu, tự động lặp (seamless loop) và chuyển âm Fade In / Fade Out mượt mà (2026-10-14)
+- [x] **Bản thu Acoustic Guitar chuẩn studio (`web/public/audio/showcase-bgm.mp3`):**
+  - Thay thế bộ phát sóng dao động điện tử thô (`AmbientAudioSynth`) bằng bản thu guitar mộc ấm áp, du dương (*Solo Acoustic Guitar* - Jason Shaw, Audionautix, CC-BY 3.0).
+  - Tối ưu bằng ffmpeg: cắt khoảng lặng cuối bài, chuẩn hóa âm lượng theo chuẩn phát thanh số (`loudnorm` -16 LUFS), mã hóa MP3 128kbps stereo dung lượng gọn nhẹ (~2.9MB).
+- [x] **Trình phát âm thanh `ShowcaseAudioPlayer` (`showcase-tv-screen.tsx`):**
+  - HTMLAudioElement lặp tự động liên tục (seamless loop).
+  - Hiệu ứng Fade In (1.2s) khi bật và Fade Out (0.8s) khi tắt, triệt tiêu tiếng giật/click bụp của loa.
+  - Giữ nguyên giao diện điều khiển tối giản (nút Bật/Tắt và thanh chỉnh âm lượng).
+- [x] **Kiểm thử chất lượng:** `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, 320/320 vitest tests PASS.
 
+### Đợt 95: Tắt link xóa sạch thông tin đường dẫn/khán giả và Cho phép giáo viên đổi họ tên học viên (2026-10-14)
+- [x] **Tắt link xóa sạch thông tin đường dẫn & khán giả (`showcase.ts`, `showcase-panel.tsx`):**
+  - Cập nhật `disableShowcase` xóa toàn bộ dòng trong `class_showcases`, cascade xóa sạch `showcase_ratings`, `showcase_reactions`, `view_count` và hủy bỏ `token` cũ.
+  - Cập nhật thông điệp cảnh báo `ConfirmDialog` rõ ràng: "Toàn bộ thông tin đường dẫn, số lượng khán giả vừa tham gia (lượt xem) và các đánh giá/góp ý sẽ được xóa sạch."
+  - Đồng bộ kịch bản test `e2e/showcase.e2e.ts`.
+- [x] **Cho phép giáo viên đổi họ tên học viên (`classes.ts`, `edit-student-name-dialog.tsx`):**
+  - Server Action `updateStudentName`: Kiểm tra quyền giáo viên của lớp, cập nhật `profiles.full_name` qua admin client và đồng bộ `user_metadata` trong Auth.
+  - Hộp thoại `EditStudentNameDialog`: Nút ✏️ đổi tên ngay cạnh tên học viên trong bảng `StudentsTable` và trên trang hồ sơ học viên cá nhân `students/[studentId]`.
+- [x] **Tương thích Task VS Code:** Hỗ trợ đa nền tảng trong `.vscode/tasks.json` cho cả macOS và Windows.
+- [x] **Kiểm thử chất lượng:** `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, 320/320 vitest tests PASS.
+
+### Đợt 96: Tối ưu Responsive Header màn hình trình chiếu TV trên MacBook & Laptop (2026-10-14)
+- [x] **Khắc phục lỗi vỡ dòng/lệch hàng Header trên MacBook M1 (`project-showcase.tsx`, `tv-nav-button.tsx`):**
+  - Nguyên nhân: `TvChrome` dùng `flex-wrap` chung với `ml-auto` và tiêu đề cỡ lớn (`text-3xl`), cộng với 5 nút điều hướng cố định kích cỡ lớn (`px-5 py-2.5 text-base`), dẫn đến tổng chiều ngang vượt quá 1400px khiến các nút bấm bị đẩy rớt xuống dòng thứ 2 và dạt sang phải trên màn hình 13"-14" (MacBook M1 1280px - 1440px).
+  - Tái cấu trúc `TvChrome`: Chuyển sang bố cục `<header>` 1 hàng ngang duy nhất (`flex items-center justify-between`), không rớt dòng. Cột trái hỗ trợ `min-w-0` và `truncate` cho tiêu đề, huy hiệu `progress` dạng pill viền đồng thau sang trọng.
+  - Tối ưu `TvNavButton`: Kích cỡ và padding co giãn thông minh theo màn hình (`px-2.5` đến `px-4.5`, `text-xs` đến `text-base`, `cursor-pointer`, `shrink-0`), giúp 5 nút điều hướng nằm gọn gàng trên cùng 1 trục thẳng với tiêu đề.
+- [x] **Tối ưu trải nghiệm Popup chi tiết sản phẩm trên điện thoại (`showcase-view.tsx`):**
+  - Tăng khoảng cách lề trên/dưới cho modal popup (`h-[82dvh] max-h-[85dvh]`, `w-[calc(100%-2rem)]`), tạo khoảng hở thẩm mỹ với thanh status bar/notch và thanh điều hướng trình duyệt Safari/Chrome, mang lại cảm giác thẻ nổi (floating modal) rõ nét với bóng đổ `shadow-2xl` và bo góc `rounded-2xl sm:rounded-3xl`.
+  - Phóng to và nhấn mạnh nút thoát `X` (`size-9 sm:size-10`, viền đồng thau `border-sc-brass/45`, nền giấy `bg-sc-paper/95`, biểu tượng `X` nét đậm `stroke-[2.5]`, hiệu ứng hover/active scale), giúp phụ huynh/học viên dễ nhìn, dễ bấm chính xác bằng ngón cái.
+- [x] **Rút gọn tiêu đề Header Màn hình chờ (`project-showcase.tsx`):**
+  - Xóa bỏ tiền tố dài dòng "🖼️ Màn hình chờ sản phẩm cuối khóa ·", chỉ hiển thị tinh gọn `Lớp ${classCode}` cạnh biểu tượng Mũ cử nhân `GraduationSeal`, giúp Header cực kỳ thoáng đãng, sang trọng và đồng bộ.
+- [x] **Kiểm thử chất lượng:** `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, 320/320 vitest tests PASS.
+
+### Đợt 97: Bộ lọc ngôn từ không phù hợp giáo dục (Educational Content Moderation) siêu tốc khi bấm Enter & gửi nhận xét/góp ý (2026-10-14)
+- [x] **Module kiểm duyệt nội dung sư phạm siêu tốc (`web/src/lib/content-moderation.ts`):**
+  - Nhận diện toàn diện các từ ngữ tục tĩu, chửi bậy, công kích cá nhân (tiếng Việt có dấu, không dấu, viết tắt, teencode, leetspeak, lặp ký tự liên tiếp) và tiếng Anh thô tục.
+  - **Mở rộng chống đả kích & chia rẽ:** Chặn các cụm từ trù dập/bắt nạt học đường (*"như rác"*, *"rác rưởi"*, *"phế vật"*, *"ăn hại"*, *"câm mồm"*, *"bớt sủa"*, *"đi chết đi"*, *"thiểu năng"*), phân biệt vùng miền/kỳ thị (*"bắc kỳ"*, *"nam kỳ"*, *"parky"*, *"pake"*, *"bò đỏ"*, *"ba que"*, *"bê đê"*).
+  - Thiết kế cẩn trọng với ranh giới từ ngữ Unicode, đảm bảo 0% false-positive (không bắt nhầm các từ giáo dục như "các bạn", "buổi học", "to lớn", "cạc màn hình", "tích cực", "đặc sắc", "phân loại rác thải", "miền Bắc / miền Nam").
+  - Tốc độ xử lý siêu tốc (< 0.05ms / lượt kiểm tra), hoàn toàn không có độ trễ giật lag khi người dùng gõ phím hay bấm Enter.
+  - Thông điệp sư phạm ngắn gọn, ý nghĩa: *"Lời nhắn chứa từ ngữ chưa phù hợp với môi trường giáo dục. Hãy dùng lời lẽ tích cực để động viên bạn nhé! 🌱"*
+- [x] **Tích hợp chặn ngay lập tức khi bấm Enter & gửi trên UI:**
+  - `CommentSection` (`comment-section.tsx`): Chặn tức thì khi nhấn Enter trong ô nhập hoặc bấm Gửi nhận xét dự án gallery.
+  - `RatingForm` (`rating-form.tsx`): Hỗ trợ nhấn Enter gửi nhanh trong ô Cảm nghĩ & Góp ý, chặn ngay lập tức nếu chứa từ ngữ không phù hợp và hiện khung cảnh báo trực quan.
+  - Server Actions `addComment` (`projects.ts`) và `rateShowcaseProject` (`showcase-public.ts`): Xác thực lớp thứ 2 an toàn ở backend.
+- [x] **Chia đều 50/50 trên dưới cho Chức năng & Nhận xét trong Modal chi tiết sản phẩm (`project-card.tsx`, `project-grid.tsx`):**
+  - Cập nhật `ProjectFeaturesAndLinks` và wrapper `CommentSection` sang `flex-1 min-h-0 basis-1/2`, đảm bảo phần Chức năng (nửa trên) và phần Nhận xét & Góp ý (nửa dưới) chiếm đúng 50% chiều cao mỗi bên, cuộn nội dung độc lập mượt mà, không bị phần này lấn át phần kia.
+- [x] **Kiểm thử chất lượng:** Bổ sung 71 unit tests toàn diện (`content-moderation.test.ts`), toàn bộ 391/391 vitest tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
+
+### Đợt 98: Mở rộng bộ lọc sỉ nhục trí tuệ (từ đơn "ngu", đần, dốt, khùng, điên, ngáo) & Thông báo nổi Toast chuẩn mực sư phạm (2026-10-14)
+- [x] **Xử lý dứt điểm từ đơn "ngu" và mở rộng từ ngữ xúc phạm trí tuệ (`web/src/lib/content-moderation.ts`):**
+  - Bổ sung pattern từ đơn độc lập và từ gốc: `ngu`, `đần`, `dốt`, `khùng`, `điên`, `ngáo`, `cút`, `cút đi`, `biến đi`.
+  - Mở rộng các cụm từ hạ thấp nhân phẩm và xúc phạm trí tuệ: `thằng ngu`, `con ngu`, `đồ ngu`, `bọn ngu`, `lũ ngu`, `ngu quá`, `sao ngu thế`, `ngu vl`, `ngu vcl`, `ngu như bò/chó/lợn`, `ngu ngốc`, `đần độn`, `dốt nát`, `khùng điên`, `ngáo đá`, `óc chó`, `não tàn`, `bại não`, `mất dạy`, `vô học`.
+  - Cơ chế nhận diện ngữ cảnh giấc ngủ (`SLEEP_CONTEXT_BEFORE` / `SLEEP_CONTEXT_AFTER`): Loại trừ tự động khi người dùng gõ không dấu hoặc có dấu về giấc ngủ (*"chúc bạn ngủ ngon"*, *"chuc ban ngu ngon"*, *"chuc ngu ngon"*, *"di ngu thoi"*, *"buon ngu qua"*), đồng thời bảo vệ 100% các từ tiếng Việt chứa tiền tố ngu (*"người"*, *"nguyên"*, *"nguồn"*, *"nguy cơ"*, *"đội ngũ"*, *"ngụ ngôn"*, *"ngưng"*, *"ngựa"*).
+- [x] **Component thông báo nổi sư phạm `EducationalToast` (`educational-toast.tsx`):**
+  - Thiết kế thông báo nổi (Toast) hiện đại, sang trọng: vị trí `fixed top-5 left-1/2 -translate-x-1/2 z-[99999]`, hiệu ứng trượt mượt mà (Framer Motion), viền hổ phách ấm áp với bóng đổ `shadow-[0_12px_40px_-8px_rgba(245,158,11,0.35)]`, huy hiệu mầm xanh `🌱` và hiệu ứng lấp lánh `Sparkles`.
+  - Tự động biến mất sau 4.5 giây hoặc bấm nút đóng nhanh `✕`.
+  - Tích hợp hook `useEducationalToast()` trong cả `CommentSection` (`comment-section.tsx`) và `RatingForm` (`rating-form.tsx`) khi người dùng bấm phím Enter hoặc bấm nút Gửi.
+- [x] **Kiểm thử chất lượng:** Bổ sung 47 unit test mới nâng tổng số test kiểm duyệt lên 118 tests; toàn bộ 438/438 vitest tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

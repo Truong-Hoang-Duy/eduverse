@@ -464,11 +464,12 @@ export function ProjectGrid({
                 </div>
               </div>
 
-              {/* CỘT PHẢI (DESKTOP) / KHỐI DƯỚI (MOBILE): PHẦN TRÊN LÀ CHỨC NĂNG & LIÊN KẾT, PHẦN DƯỚI LÀ NHẬN XÉT */}
+              {/* CỘT PHẢI (DESKTOP) / KHỐI DƯỚI (MOBILE): CHIA ĐỀU 50/50 TRÊN DƯỚI CHO CHỨC NĂNG VÀ NHẬN XÉT */}
               <div className="w-full lg:w-[42%] xl:w-[40%] flex-1 min-h-0 flex flex-col overflow-hidden bg-card">
-                {/* 1. Phần trên: Các chức năng, Liên kết dự án & Nộp bài */}
+                {/* 1. Phần trên: Các chức năng, Liên kết dự án & Nộp bài (50% chiều cao) */}
                 <ProjectFeaturesAndLinks
                   project={selected}
+                  className="flex-1 min-h-0 basis-1/2"
                   headerAction={
                     <div className="hidden lg:flex shrink-0">
                       <DialogClose asChild>
@@ -487,8 +488,8 @@ export function ProjectGrid({
                   }
                 />
 
-                {/* 2. Phần dưới: Nhận xét & Góp ý */}
-                <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+                {/* 2. Phần dưới: Nhận xét & Góp ý (50% chiều cao) */}
+                <div className="flex-1 min-h-0 basis-1/2 flex flex-col overflow-hidden">
                   <CommentSection
                     projectId={selected.id}
                     classId={selected.classId}

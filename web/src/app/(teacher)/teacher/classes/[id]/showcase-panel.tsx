@@ -317,9 +317,9 @@ export function ShowcasePanel({
                     ⏹ Tắt link
                   </Button>
                 }
-                title="Tắt link công khai?"
-                description="Người xem mở link sẽ thấy thông báo hết hiệu lực. Đánh giá vẫn được giữ khi bật lại."
-                confirmLabel="Tắt link"
+                title="Tắt và xóa link công khai?"
+                description="Toàn bộ thông tin đường dẫn, số lượng khán giả vừa tham gia (lượt xem) và các đánh giá/góp ý sẽ được xóa sạch."
+                confirmLabel="Tắt và xóa dữ liệu link"
                 action={disableShowcase}
                 fields={{ class_id: classId }}
               />
