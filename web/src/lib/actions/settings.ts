@@ -573,7 +573,7 @@ export async function seedDefaultTemplate(): Promise<void> {
 
   await supabase.from("zalo_templates").insert({
     teacher_id: user.id,
-    name: "Mẫu thông báo phụ huynh",
+    name: "Mẫu thông báo mặc định",
     template_text: DEFAULT_TEMPLATE,
   });
   revalidatePath("/teacher/settings");

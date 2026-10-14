@@ -61,7 +61,7 @@ async function main() {
         class_code: "DEMO",
         teacher_id: teacherId,
         total_sessions: 14,
-        description: "Lớp học Demo dành cho học viên tham khảo & hướng dẫn",
+        description: "Demo cho học viên tham khảo",
       })
       .select("id, class_code, total_sessions")
       .single();

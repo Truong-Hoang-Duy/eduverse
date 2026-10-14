@@ -32,7 +32,7 @@ export const SESSION_FORMATS: Record<SessionFormat, SessionFormatConfig> = {
     tagline: "Lý thuyết & bài tập thực hành",
     description: "Học kiến thức mới và thực hành bài tập thông thường.",
     detailHint:
-      "Giao diện nhận xét tiêu chuẩn gồm: Điểm mạnh, Cần cải thiện và lời nhận xét gửi phụ huynh.",
+      "Giao diện nhận xét tiêu chuẩn gồm: Điểm mạnh, Cần cải thiện và lời nhận xét chi tiết.",
     iconName: "book-open",
   },
   periodic_test: {

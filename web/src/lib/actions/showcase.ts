@@ -104,7 +104,7 @@ export async function enableShowcase(
   }
 
   revalidateClass(classId);
-  return { success: "Đã bật link cho phụ huynh." };
+  return { success: "Đã bật link xem sản phẩm." };
 }
 
 /** Tắt link — dữ liệu (bài chấm, tim) giữ nguyên, bật lại là có ngay. */
@@ -196,7 +196,7 @@ export async function saveShowcaseSettings(
   }
 
   revalidateClass(classId);
-  return { success: "Đã lưu thiết lập trang phụ huynh." };
+  return { success: "Đã lưu thiết lập trang xem sản phẩm." };
 }
 
 /**

@@ -44,7 +44,7 @@ export function PasswordForm() {
         }}
         className="flex flex-1 flex-col justify-between"
       >
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pb-6">
           <div className="space-y-2">
             <Label htmlFor="new-password">Mật khẩu mới</Label>
             <Input

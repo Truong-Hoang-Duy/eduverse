@@ -91,7 +91,7 @@ export function RatingForm({
             Gửi cảm nghĩ và góp ý cho em {studentName}
           </h3>
           <p className="text-xs text-sc-ink-soft">
-            Ẩn danh — Phụ huynh và các bạn cùng gửi cảm nghĩ & góp ý, động viên cho bài thuyết trình hôm nay.
+            Ẩn danh — Cùng gửi cảm nghĩ, góp ý & động viên cho bài thuyết trình hôm nay.
           </p>
         </div>
       </header>
