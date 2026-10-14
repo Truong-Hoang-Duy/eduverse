@@ -115,114 +115,113 @@ function AmbientParticles({ isDark }: { isDark: boolean }) {
 }
 
 /**
- * Trình phát nhạc nền thư giãn bằng Web Audio API Synthesizer (0 byte phụ thuộc, không lo bản quyền)
- * Tạo chuỗi hợp âm Lofi / Ambient Pad du dương, êm dịu
+ * Trình phát nhạc nền không lời cho màn chiếu TV (Acoustic Guitar ấm áp, du dương)
+ * Tự động lặp lại (seamless loop), hỗ trợ hiệu ứng chuyển âm mượt mà (Fade In / Fade Out)
  */
-class AmbientAudioSynth {
-  private ctx: AudioContext | null = null;
-  private gainNode: GainNode | null = null;
-  private isRunning = false;
-  private timerId: number | null = null;
-  private masterVolume = 0.35;
+class ShowcaseAudioPlayer {
+  private audio: HTMLAudioElement | null = null;
+  private fadeFrameId: number | null = null;
+  private targetVolume = 0.4;
+  private isPlaying = false;
 
-  private chords = [
-    // Fmaj7
-    [174.61, 220.0, 261.63, 329.63],
-    // G7
-    [196.0, 246.94, 293.66, 349.23],
-    // Em7
-    [164.81, 196.0, 246.94, 293.66],
-    // Am7
-    [220.0, 261.63, 329.63, 392.0],
-  ];
-  private chordIndex = 0;
+  constructor(src = "/audio/showcase-bgm.mp3") {
+    if (typeof window !== "undefined") {
+      this.audio = new Audio(src);
+      this.audio.loop = true;
+      this.audio.preload = "auto";
+      this.audio.volume = 0;
+    }
+  }
 
-  public init() {
-    if (!this.ctx) {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      this.ctx = new AudioCtx();
-      this.gainNode = this.ctx.createGain();
-      this.gainNode.gain.setValueAtTime(this.masterVolume, this.ctx.currentTime);
-      this.gainNode.connect(this.ctx.destination);
+  public play() {
+    if (!this.audio) return;
+    this.isPlaying = true;
+    this.clearFade();
+
+    const playPromise = this.audio.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          this.fadeIn(1200);
+        })
+        .catch(() => {
+          this.isPlaying = false;
+        });
     }
-    if (this.ctx.state === "suspended") {
-      void this.ctx.resume();
-    }
+  }
+
+  public pause() {
+    if (!this.audio) return;
+    this.isPlaying = false;
+    this.fadeOut(800, () => {
+      if (this.audio && !this.isPlaying) {
+        this.audio.pause();
+      }
+    });
   }
 
   public setVolume(vol: number) {
-    this.masterVolume = Math.max(0, Math.min(1, vol));
-    if (this.gainNode && this.ctx) {
-      this.gainNode.gain.setTargetAtTime(
-        this.masterVolume,
-        this.ctx.currentTime,
-        0.05
-      );
+    this.targetVolume = Math.max(0, Math.min(1, vol));
+    if (this.audio && this.isPlaying && this.fadeFrameId === null) {
+      this.audio.volume = this.targetVolume;
     }
   }
 
-  private playPadTone(freq: number, duration = 4.2) {
-    if (!this.ctx || !this.gainNode) return;
+  private fadeIn(durationMs: number) {
+    if (!this.audio || typeof window === "undefined") return;
+    this.clearFade();
+    const startTime = performance.now();
+    const startVol = this.audio.volume;
+    const target = this.targetVolume;
 
-    const osc = this.ctx.createOscillator();
-    const env = this.ctx.createGain();
-
-    // Dùng sóng tam giác (triangle) kết hợp sine tạo chất âm pad mềm mại, ấm áp
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-
-    // Envelope âm thanh: Attack 1.2s mượt, Decay/Release êm dịu
-    const now = this.ctx.currentTime;
-    env.gain.setValueAtTime(0.0001, now);
-    env.gain.exponentialRampToValueAtTime(0.08, now + 1.2);
-    env.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-    osc.connect(env);
-    env.connect(this.gainNode);
-
-    osc.start(now);
-    osc.stop(now + duration + 0.1);
-  }
-
-  public start() {
-    if (this.isRunning) return;
-    this.init();
-    this.isRunning = true;
-
-    const playNext = () => {
-      if (!this.isRunning || !this.ctx) return;
-      const notes = this.chords[this.chordIndex];
-      this.chordIndex = (this.chordIndex + 1) % this.chords.length;
-
-      // Đánh hợp âm pad
-      notes.forEach((freq) => this.playPadTone(freq, 4.4));
-
-      // Hẹn giờ cho hợp âm tiếp theo (mỗi 4 giây lặp lại)
-      this.timerId = window.setTimeout(playNext, 4000);
+    const step = (now: number) => {
+      if (!this.audio || !this.isPlaying) return;
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+      this.audio.volume = startVol + (target - startVol) * progress;
+      if (progress < 1) {
+        this.fadeFrameId = window.requestAnimationFrame(step);
+      } else {
+        this.fadeFrameId = null;
+      }
     };
-
-    playNext();
+    this.fadeFrameId = window.requestAnimationFrame(step);
   }
 
-  public stop() {
-    this.isRunning = false;
-    if (this.timerId !== null) {
-      window.clearTimeout(this.timerId);
-      this.timerId = null;
-    }
-    if (this.ctx && this.ctx.state === "running") {
-      void this.ctx.suspend();
+  private fadeOut(durationMs: number, onComplete?: () => void) {
+    if (!this.audio || typeof window === "undefined") return;
+    this.clearFade();
+    const startTime = performance.now();
+    const startVol = this.audio.volume;
+
+    const step = (now: number) => {
+      if (!this.audio) return;
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+      this.audio.volume = Math.max(0, startVol * (1 - progress));
+      if (progress < 1) {
+        this.fadeFrameId = window.requestAnimationFrame(step);
+      } else {
+        this.fadeFrameId = null;
+        onComplete?.();
+      }
+    };
+    this.fadeFrameId = window.requestAnimationFrame(step);
+  }
+
+  private clearFade() {
+    if (this.fadeFrameId !== null && typeof window !== "undefined") {
+      window.cancelAnimationFrame(this.fadeFrameId);
+      this.fadeFrameId = null;
     }
   }
 
   public destroy() {
-    this.stop();
-    if (this.ctx) {
-      void this.ctx.close();
-      this.ctx = null;
+    this.clearFade();
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.src = "";
+      this.audio = null;
     }
   }
 }
@@ -231,7 +230,7 @@ class AmbientAudioSynth {
  * Giao diện màn hình chiếu TV / Máy chiếu chuyên dụng trong Lễ tổng kết:
  * - Tự động nhận diện theme Sáng/Tối theo lựa chọn ở Header của app.
  * - Hỗ trợ nút chuyển đổi Sáng/Tối ngay trên thanh Header của màn chiếu.
- * - Trình phát hợp âm Lofi / Ambient Synth êm dịu, không cần file mp3.
+ * - Trình phát nhạc nền không lời Acoustic Guitar ấm áp tự động lặp lại (seamless loop).
  * - Cột trái: Mã QR sắc nét viền ánh kim, đếm số phụ huynh đang kết nối thời gian thực.
  * - Cột phải: Khung ảnh xoay vòng sản phẩm các em kèm mô tả, tính năng nổi bật.
  */
@@ -292,7 +291,7 @@ export function ShowcaseTvScreen({
   // Điều khiển âm thanh
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [volume, setVolume] = useState(0.4);
-  const synthRef = useRef<AmbientAudioSynth | null>(null);
+  const audioPlayerRef = useRef<ShowcaseAudioPlayer | null>(null);
 
   // Bộ đếm ngược khai mạc (phút:giây)
   const [countdownMinutes, setCountdownMinutes] = useState<number | null>(null);
@@ -334,23 +333,23 @@ export function ShowcaseTvScreen({
   const [showControls, setShowControls] = useState(true);
   const idleTimerRef = useRef<number | null>(null);
 
-  // Khởi tạo synth
+  // Khởi tạo audio player
   useEffect(() => {
-    const synth = new AmbientAudioSynth();
-    synthRef.current = synth;
+    const player = new ShowcaseAudioPlayer();
+    audioPlayerRef.current = player;
     return () => {
-      synth.destroy();
+      player.destroy();
     };
   }, []);
 
   // Xử lý bật/tắt nhạc
   const toggleMusic = useCallback(() => {
-    if (!synthRef.current) return;
+    if (!audioPlayerRef.current) return;
     if (isMusicPlaying) {
-      synthRef.current.stop();
+      audioPlayerRef.current.pause();
       setIsMusicPlaying(false);
     } else {
-      synthRef.current.start();
+      audioPlayerRef.current.play();
       setIsMusicPlaying(true);
     }
   }, [isMusicPlaying]);
@@ -358,8 +357,8 @@ export function ShowcaseTvScreen({
   // Điều chỉnh âm lượng
   const handleVolumeChange = (newVol: number) => {
     setVolume(newVol);
-    if (synthRef.current) {
-      synthRef.current.setVolume(newVol);
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.setVolume(newVol);
     }
   };
 
@@ -482,24 +481,25 @@ export function ShowcaseTvScreen({
 
       {/* Header sang trọng trên cùng */}
       <header
-        className={`relative z-10 flex shrink-0 items-center justify-between border-b px-8 py-4.5 backdrop-blur-md transition-colors ${
+        className={`relative z-10 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8 backdrop-blur-md transition-colors ${
           isDark
             ? "border-slate-800/80 bg-[#070a12]/80 text-white"
             : "border-[#e4d9c4] bg-[#faf6ee]/90 text-[#241c14] shadow-2xs"
         }`}
       >
-        <div className="flex items-center gap-3.5 sm:gap-4.5 min-w-0">
+        <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 min-w-0 shrink">
           <GraduationSeal
-            size={42}
-            className={isDark ? "text-amber-400" : "text-[#8a5e10]"}
+            size={32}
+            className={`shrink-0 sm:size-9 ${isDark ? "text-amber-400" : "text-[#8a5e10]"}`}
           />
           <h1
-            className={`font-display text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight whitespace-nowrap ${
+            title={`Báo cáo sản phẩm cuối khóa - Lớp ${classCode}`}
+            className={`truncate font-display text-sm sm:text-lg md:text-xl lg:text-2xl font-extrabold tracking-tight min-w-0 ${
               isDark ? "text-white" : "text-[#241c14]"
             }`}
           >
             Báo cáo sản phẩm cuối khóa - Lớp{" "}
-            <span className="whitespace-nowrap font-sans font-bold">{classCode}</span>
+            <span className="font-sans font-bold">{classCode}</span>
           </h1>
         </div>
 

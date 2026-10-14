@@ -4,7 +4,21 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-14, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 93 (**Cải tiến nhận xét & gợi ý buổi học AI theo chuẩn sư phạm, phân loại 5 môn học theo trình tự phát triển và chống trùng lặp tiến trình**):
+
+**Đang làm:** Đã hoàn thành toàn diện Đợt 94 -> Đợt 98 (Nhạc nền Acoustic, TV Responsive, Đổi tên học viên, Xóa dữ liệu link tắt, Bố cục 50/50, Bộ lọc ngôn từ sỉ nhục trí tuệ siêu tốc và Thông báo nổi EducationalToast):
+1. **Module lọc ngôn từ sư phạm siêu tốc & Mở rộng từ ngữ sỉ nhục trí tuệ (`web/src/lib/content-moderation.ts`):**
+   - Xử lý dứt điểm từ đơn "ngu" và các biến thể công kích cá nhân: `ngu`, `đần`, `dốt`, `khùng`, `điên`, `ngáo`, `cút`, `cút đi`, `biến đi`.
+   - Mở rộng các cụm từ hạ thấp nhân phẩm: `thằng ngu`, `con ngu`, `đồ ngu`, `bọn ngu`, `lũ ngu`, `ngu quá`, `sao ngu thế`, `ngu vl`, `ngu vcl`, `ngu như bò/chó/lợn`, `đần độn`, `dốt nát`, `khùng điên`, `óc chó`, `não tàn`, `bại não`, `mất dạy`, `vô học`.
+   - Cơ chế bảo vệ thông minh (`SLEEP_CONTEXT_BEFORE` / `SLEEP_CONTEXT_AFTER`): Không bao giờ bắt nhầm khi người dùng gõ không dấu hoặc có dấu về giấc ngủ (*"chúc bạn ngủ ngon"*, *"chuc ban ngu ngon"*, *"chuc ngu ngon"*, *"di ngu thoi"*, *"buon ngu qua"*), đồng thời bảo vệ 100% từ tiếng Việt hợp lệ (*"người"*, *"nguyên"*, *"nguồn"*, *"nguy cơ"*, *"đội ngũ"*, *"ngụ ngôn"*).
+2. **Thông báo nổi chuẩn mực sư phạm `EducationalToast` (`educational-toast.tsx`):**
+   - Hiển thị nổi thanh lịch ở đầu màn hình (`fixed top-5 left-1/2 -translate-x-1/2 z-[99999]`), viền hổ phách ấm áp, bóng đổ mờ ảo, mầm xanh `🌱` và hiệu ứng lấp lánh `Sparkles`.
+   - Tự biến mất sau 4.5s hoặc bấm nút tắt `✕`.
+   - Tích hợp hook `useEducationalToast()` vào `CommentSection` (`comment-section.tsx`) và `RatingForm` (`rating-form.tsx`) khi bấm Enter hoặc nút Gửi.
+3. **Kiểm thử chất lượng toàn diện:**
+   - 118 unit tests trong `content-moderation.test.ts`.
+   - `web/`: Toàn bộ 438/438 vitest tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+
 1. **Phân loại 5 môn học thích ứng theo trình tự từ nhỏ đến lớn (`ai-service/app/prompts.py`):**
    - Hàm `detect_course_domain(course_name)` tự động phân loại 5 bộ môn dạy lập trình cho lứa tuổi dưới 18 theo đúng lộ trình phát triển: `scratch` -> `gamemaker` -> `app` -> `web` -> `computer_science` (fallback: `general`).
    - Cung cấp từ điển hành vi sư phạm riêng biệt cho từng môn:

@@ -107,7 +107,10 @@ export async function enableShowcase(
   return { success: "Đã bật link xem sản phẩm." };
 }
 
-/** Tắt link — dữ liệu (bài chấm, tim) giữ nguyên, bật lại là có ngay. */
+/**
+ * Tắt link — xóa sạch thông tin đường dẫn, khán giả tham gia (lượt xem),
+ * bài chấm/nhận xét của khách và spotlight để buổi lễ sau bắt đầu mới hoàn toàn.
+ */
 export async function disableShowcase(formData: FormData): Promise<void> {
   const classId = String(formData.get("class_id") ?? "");
   if (!classId) return;
@@ -115,7 +118,7 @@ export async function disableShowcase(formData: FormData): Promise<void> {
   const supabase = await createClient();
   await supabase
     .from("class_showcases")
-    .update({ is_enabled: false, updated_at: new Date().toISOString() })
+    .delete()
     .eq("class_id", classId);
 
   revalidateClass(classId);

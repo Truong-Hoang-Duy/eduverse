@@ -575,10 +575,12 @@ describe("Thu hồi link", () => {
     expect(await runAs(null, () => loadShowcase(token))).toBeNull();
   });
 
-  it("should bring the same link back to life when switched on again", async () => {
+  it("should generate a fresh link with wiped audience data when switched on again", async () => {
     const again = await enable();
-    expect(again).toBe(token);
-    expect(await runAs(null, () => loadShowcase(token))).not.toBeNull();
+    expect(again).not.toBeNull();
+    expect(await runAs(null, () => loadShowcase(token))).toBeNull();
+    expect(await runAs(null, () => loadShowcase(again))).not.toBeNull();
+    token = again;
   });
 
   it("should kill the old link when the teacher rotates the token", async () => {

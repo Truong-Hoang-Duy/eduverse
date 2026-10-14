@@ -28,18 +28,23 @@ function TvChrome({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-3 border-b border-sc-line px-6 py-4.5 sm:px-10">
-      <GraduationSeal size={36} className="shrink-0 text-sc-brass" />
-      <h2 className="font-display text-2xl font-bold text-sc-ink sm:text-3xl">
-        {title}
-      </h2>
-      {progress && (
-        <span className="font-display text-lg font-semibold text-sc-ink-soft sm:text-xl">
-          {progress}
-        </span>
-      )}
-      <div className="ml-auto flex flex-wrap items-center gap-2.5">{children}</div>
-    </div>
+    <header className="flex shrink-0 items-center justify-between gap-3 sm:gap-4 lg:gap-6 border-b border-sc-line px-4 py-2.5 sm:px-6 sm:py-3 lg:px-8">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3 lg:gap-3.5 shrink">
+        <GraduationSeal size={28} className="shrink-0 text-sc-brass sm:size-8 lg:size-9" />
+        <h2
+          title={title}
+          className="truncate font-display text-sm sm:text-base md:text-xl lg:text-2xl font-bold text-sc-ink tracking-tight min-w-0"
+        >
+          {title}
+        </h2>
+        {progress && (
+          <span className="shrink-0 rounded-full border border-sc-brass/35 bg-sc-brass/10 px-2 py-0.5 font-display text-xs sm:text-sm font-semibold text-sc-brass">
+            {progress}
+          </span>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-2.5">{children}</div>
+    </header>
   );
 }
 
@@ -305,7 +310,7 @@ export function ProjectShowcase({
               <TvChrome
                 title={
                   view === "idle"
-                    ? `🖼️ Màn hình chờ sản phẩm cuối khóa · Lớp ${classCode}`
+                    ? `Lớp ${classCode}`
                     : `🎉 Tổng kết sản phẩm cuối khóa · Lớp ${classCode}`
                 }
                 progress={view === "idle" ? `${index + 1}/${slides.length}` : undefined}

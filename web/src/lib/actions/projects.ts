@@ -13,6 +13,10 @@ import {
   PROJECT_NAME_MAX,
   PROJECT_TEXT_MAX,
 } from "@/lib/project-limits";
+import {
+  EDUCATIONAL_MODERATION_WARNING,
+  checkEducationalContent,
+} from "@/lib/content-moderation";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
@@ -197,6 +201,11 @@ export async function addComment(
   }
   if (content.length > PROJECT_COMMENT_MAX) {
     return { error: `Nhận xét tối đa ${PROJECT_COMMENT_MAX} ký tự.` };
+  }
+
+  const check = checkEducationalContent(content);
+  if (!check.isAppropriate) {
+    return { error: check.message ?? EDUCATIONAL_MODERATION_WARNING };
   }
 
   const supabase = await createClient();

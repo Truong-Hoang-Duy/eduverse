@@ -3,7 +3,12 @@
 import { useEffect, useState, useTransition } from "react";
 
 import { GraduationSeal } from "@/components/showcase/emblem";
+import { EducationalToast, useEducationalToast } from "@/components/ui/educational-toast";
 import { rateShowcaseProject } from "@/lib/actions/showcase-public";
+import {
+  EDUCATIONAL_MODERATION_WARNING,
+  checkEducationalContent,
+} from "@/lib/content-moderation";
 import {
   RATING_CRITERIA,
   SHOWCASE_COMMENT_MAX,
@@ -42,6 +47,7 @@ export function RatingForm({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [pending, startSaving] = useTransition();
+  const { toastMessage, showToast, hideToast } = useEducationalToast();
 
   // Đổi sang em khác (hoặc nạp được bài chấm cũ) thì form phải theo — cùng một
   // component được dùng lại cho mọi em trong popup.
@@ -59,6 +65,15 @@ export function RatingForm({
   function save() {
     setMessage("");
     setError("");
+
+    if (comment.trim()) {
+      const check = checkEducationalContent(comment);
+      if (!check.isAppropriate) {
+        showToast(check.message ?? EDUCATIONAL_MODERATION_WARNING);
+        return;
+      }
+    }
+
     startSaving(async () => {
       const res = await rateShowcaseProject({
         token,
@@ -84,6 +99,9 @@ export function RatingForm({
 
   return (
     <section className="rounded-2xl border border-sc-brass/30 bg-sc-raised p-4">
+      {/* Thông báo nổi chuẩn mực sư phạm (Educational Toast) */}
+      <EducationalToast message={toastMessage} onClose={hideToast} />
+
       <header className="flex items-start gap-3 border-b border-sc-line pb-3">
         <GraduationSeal size={34} className="mt-0.5 shrink-0 text-sc-brass" />
         <div className="min-w-0">
@@ -115,9 +133,18 @@ export function RatingForm({
         <textarea
           rows={3}
           value={comment}
-          onChange={(e) => setComment(e.target.value)}
+          onChange={(e) => {
+            setComment(e.target.value);
+            if (error) setError("");
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              save();
+            }
+          }}
           maxLength={SHOWCASE_COMMENT_MAX}
-          placeholder={`Viết cảm nghĩ & góp ý hoặc điều bạn ấn tượng nhất về sản phẩm của em ${studentName}...`}
+          placeholder={`Viết cảm nghĩ & góp ý hoặc điều bạn ấn tượng nhất về sản phẩm của em ${studentName}... (bấm Enter để gửi)`}
           className="sc-ruled w-full resize-none rounded-xl border border-sc-line bg-transparent px-3 py-1 text-base sm:text-sm leading-7 text-sc-ink placeholder:text-sc-ink-soft/70 focus:border-sc-brass focus:outline-none"
         />
       </label>
@@ -136,7 +163,12 @@ export function RatingForm({
               : "Gửi cảm nghĩ & góp ý"}
         </button>
         {message && <p className="text-sm font-medium text-sc-brass">{message}</p>}
-        {error && <p className="text-sm font-medium text-sc-terracotta">{error}</p>}
+        {error && (
+          <p className="flex items-center gap-1.5 rounded-xl border border-sc-terracotta/40 bg-sc-terracotta/10 px-3 py-1.5 text-xs sm:text-sm font-medium text-sc-terracotta animate-in fade-in">
+            <span>⚠️</span>
+            <span>{error}</span>
+          </p>
+        )}
       </div>
     </section>
   );
