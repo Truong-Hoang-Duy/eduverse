@@ -56,6 +56,11 @@ def generate_review(body: GenerateReviewRequest) -> GenerateReviewResponse:
         previous_comment=body.previous_comment,
         prior_comments=body.prior_comments,
         academic_level=body.academic_level,
+        course_name=body.course_name,
+        session_number=body.session_number,
+        project_name=body.project_name,
+        project_description=body.project_description,
+        project_features=body.project_features,
     )
     data = generate_json(
         prompt,

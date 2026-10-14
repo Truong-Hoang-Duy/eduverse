@@ -1,5 +1,7 @@
 """Toàn bộ prompt Gemini — sửa prompt CHỈ ở file này (xem .claude/docs/AI-SERVICE.md)."""
 
+import re
+
 SYSTEM_ROLE = (
     "Bạn là giáo viên dạy lập trình cho học sinh nhỏ tuổi tại Việt Nam. "
     "Luôn trả lời bằng tiếng Việt, giọng thân thiện và khích lệ. "
@@ -38,6 +40,104 @@ STUDENT_HELP_RULE = (
 )
 
 
+def detect_course_domain(course_name: str | None) -> str:
+    """Xác định môn học: 'scratch' | 'gamemaker' | 'app' | 'web' | 'computer_science' | 'general'
+    
+    Trình tự từ nhỏ đến lớn: Scratch -> Game Maker -> App (Python & Qt Designer) -> Web -> Computer Science.
+    """
+    if not course_name:
+        return "general"
+    norm = course_name.lower()
+    if "scratch" in norm:
+        return "scratch"
+    if "game maker" in norm or "gamemaker" in norm or "gml" in norm:
+        return "gamemaker"
+    # 3. App (Python & Qt Designer / GUI App): xét trước khi xét Python thuần của Computer Science
+    if any(k in norm for k in ["qtdesign", "qt designer", "pyqt", "pyside", "gui", "desktop app", "ứng dụng"]) or bool(
+        re.search(r"\bapps?\b", norm)
+    ):
+        return "app"
+    # 4. Web
+    if any(k in norm for k in ["web", "frontend", "html", "css", "javascript", "react"]):
+        return "web"
+    # 5. Computer Science
+    if any(k in norm for k in ["python", "computer science", "khoa học máy tính", "cs", "c++", "thuật toán", "algorithm", "tin học"]):
+        return "computer_science"
+    return "general"
+
+
+COURSE_DOMAIN_GUIDELINES = {
+    # 1. Scratch (Lớp nhỏ nhất: Tiểu học / đầu THCS ~7-11 tuổi)
+    "scratch": (
+        "ĐẶC THÙ MÔN HỌC — SCRATCH (Lứa tuổi Tiểu học / đầu THCS ~7-11 tuổi):\n"
+        "- Công cụ kéo thả khối lệnh trực quan (Drag & Drop blocks).\n"
+        "- Thuật ngữ chuẩn mực: nhân vật (Sprite), sân khấu (Stage), trang phục (Costume), phông nền (Backdrop), "
+        "ghép khối lệnh, gửi nhận tin nhắn (Broadcast), tọa độ X-Y, âm thanh.\n"
+        "- TUYỆT ĐỐI TRÁNH: Không dùng các từ 'gõ code', 'lỗi cú pháp (syntax error)', 'dấu chấm phẩy', 'dòng code' "
+        "(vì Scratch kéo thả khối màu, không gõ code chữ).\n"
+        "- Văn phong: Tươi vui, ấm áp, sinh động, khích lệ trí tưởng tượng và sự kiên nhẫn khi lắp ghép khối lệnh."
+    ),
+    # 2. Game Maker (Lớp kế tiếp: THCS ~10-14 tuổi)
+    "gamemaker": (
+        "ĐẶC THÙ MÔN HỌC — GAME MAKER (Lứa tuổi THCS ~10-14 tuổi):\n"
+        "- Công cụ thiết kế và lập trình game 2D chuyên nghiệp.\n"
+        "- Thuật ngữ chuẩn mực: đối tượng (Object), hình ảnh nhân vật (Sprite), màn chơi / phòng game (Room), "
+        "sự kiện va chạm (Collision event), phím điều khiển (Step event), thanh máu/điểm số (Health/Score), "
+        "cảm giác điều khiển nhân vật mượt mà (Gameplay physics: trọng lực, bước nhảy).\n"
+        "- Văn phong: Kích thích tư duy thiết kế màn chơi (Game Design) và giải quyết các logic va chạm trong game."
+    ),
+    # 3. App — Python & Qt Designer (Lớp THCS ~11-15 tuổi)
+    "app": (
+        "ĐẶC THÙ MÔN HỌC — LẬP TRÌNH ỨNG DỤNG PYTHON & QT DESIGNER (Lứa tuổi THCS ~11-15 tuổi):\n"
+        "- Lập trình phần mềm ứng dụng có giao diện trực quan (GUI Desktop App) bằng ngôn ngữ Python kết hợp công cụ kéo thả Qt Designer.\n"
+        "- Thuật ngữ chuẩn mực: thiết kế giao diện trên Qt Designer, thành phần giao diện (Widget: nút bấm QPushButton, ô nhập văn bản QLineEdit, nhãn hiển thị QLabel, bảng danh sách QListWidget), "
+        "bố cục sắp xếp giao diện (Layout: dọc QVBoxLayout, ngang QHBoxLayout, lưới QGridLayout), "
+        "kết nối nút bấm với lệnh xử lý (Signals & Slots: click chuột kích hoạt hàm logic trong Python), "
+        "chuyển đổi file giao diện `.ui` sang code Python, xử lý tính toán và hiển thị kết quả ra màn hình app.\n"
+        "- QUY TẮC THUẬT NGỮ CHO PHỤ HUYNH: Ưu tiên 'thiết kế giao diện ứng dụng trên Qt Designer', 'kết nối nút bấm với hàm xử lý (signal và slot)', 'thành phần giao diện (widget)', 'bố cục giao diện (layout)'. TUYỆT ĐỐI TRÁNH dịch thô ngô nghê thành 'tiện ích', 'khe cắm', 'tín hiệu trừu tượng'.\n"
+        "- Văn phong: Khích lệ tư duy kết hợp giữa thẩm mỹ bố cục phần mềm và logic xử lý code Python đằng sau nút bấm (app tính toán, app quản lý chi tiêu/học tập, từ điển mini, thời tiết...)."
+    ),
+    # 4. Web — HTML/CSS/JS (Lớp lớn hơn: THCS & THPT ~12-18 tuổi)
+    "web": (
+        "ĐẶC THÙ MÔN HỌC — LẬP TRÌNH WEB (HTML/CSS/JS) (Lứa tuổi THCS & THPT ~12-18 tuổi):\n"
+        "- Xây dựng giao diện trang web thực tế, người dùng có thể mở xem trên trình duyệt điện thoại/máy tính.\n"
+        "- Thuật ngữ chuẩn mực: khung sườn trang web (thẻ HTML), trang trí bố cục/màu sắc/font chữ (CSS/Flexbox), "
+        "hiệu ứng tương tác & nút bấm (JavaScript), giao diện co giãn đẹp trên cả điện thoại và máy tính (Responsive).\n"
+        "- Văn phong: Kết hợp tư duy thẩm mỹ giao diện và tính logic thân thiện với người dùng (UX/UI)."
+    ),
+    # 5. Computer Science — Python/C++/Thuật toán (Lớp lớn nhất: THCS & THPT ~13-18 tuổi)
+    "computer_science": (
+        "ĐẶC THÙ MÔN HỌC — KHOA HỌC MÁY TÍNH / PYTHON / THUẬT TOÁN (Lứa tuổi THCS & THPT ~13-18 tuổi):\n"
+        "- Lập trình văn bản thuần túy (Text-based programming), tư duy máy tính và thuật toán giải quyết vấn đề chuyên sâu.\n"
+        "- Thuật ngữ chuẩn mực: dòng lệnh, biến lưu trữ dữ liệu (variable), câu lệnh điều kiện (if-else), "
+        "vòng lặp (for/while), hàm xử lý (function), danh sách (list/array), cấu trúc dữ liệu, tự đọc thông báo lỗi và sửa code (debug).\n"
+        "- Văn phong: Chững chạc, tôn trọng sự tư duy logic chuyên sâu, rèn luyện tính cẩn thận, kỷ luật và sự kiên trì khi gỡ lỗi."
+    ),
+    "general": (
+        "ĐẶC THÙ MÔN HỌC — LẬP TRÌNH CHO LỨA TUỔI DƯỚI 18:\n"
+        "- Dùng ngôn ngữ gần gũi, khích lệ tư duy logic và kỹ năng giải quyết vấn đề qua các sản phẩm thực tế."
+    ),
+}
+
+JARGON_CLARITY_RULE = (
+    "QUY TẮC THUẬT NGỮ DỄ HIỂU (BILINGUAL CLARITY FOR PARENTS):\n"
+    "- Người đọc là phụ huynh không chuyên về công nghệ. Mọi khái niệm kỹ thuật phải diễn giải bằng HÀNH ĐỘNG TRỰC QUAN "
+    "trong bài tập/sản phẩm (ví dụ: nhân vật làm được gì, trò chơi tính điểm ra sao).\n"
+    "- Nếu dùng thuật ngữ tiếng Anh, PHẢI đi kèm diễn giải tiếng Việt gần gũi theo công thức: "
+    "[Hành vi tiếng Việt] + ([Thuật ngữ tiếng Anh gốc]) — Ví dụ: 'tìm và tự sửa lỗi trong code (debug)', "
+    "'hộp chứa điểm số (biến score)', 'câu lệnh lặp lại hành động (vòng lặp loop)', 'khối lệnh dùng nhiều lần (hàm function)'.\n"
+    "- TUYỆT ĐỐI TRÁNH: Không dịch thô máy móc sang tiếng Việt gây khó hiểu, lạ tai (như 'khử bọ', 'bắt sâu', 'biến số trừu tượng', 'trình lắng nghe').\n"
+    "- Giữ tự nhiên các từ đã phổ thông: code, lập trình, game, dự án, sản phẩm, Scratch, Python."
+)
+
+CONTENT_ANCHORING_RULE = (
+    "QUY TẮC BẮT CẶP KIẾN THỨC BÀI HỌC (CONTENT-ANCHORING):\n"
+    "- TUYỆT ĐỐI KHÔNG nhận xét điểm mạnh hay điểm yếu bằng tính từ trừu tượng chung chung (tránh câu kiểu 'em tiếp thu nhanh', 'em hay gõ ẩu').\n"
+    "- BẮT BUỘC PHẢI bắt cặp điểm mạnh/yếu giáo viên đã chọn với MỘT HOẠT ĐỘNG HOẶC KHÁI NIỆM CỤ THỂ trong 'Nội dung buổi học' của buổi này "
+    "(Ví dụ: nếu buổi học về vòng lặp for và em có điểm yếu 'chưa cẩn thận', hãy chỉ ra cụ thể: em hay quên dấu hai chấm `:` hoặc thụt lề chưa đều khi viết vòng lặp)."
+)
+
+
 def build_review_prompt(
     student_name: str,
     session_title: str,
@@ -52,6 +152,11 @@ def build_review_prompt(
     test_process_notes: list[str] | None = None,
     is_project_period: bool = False,
     project_progress_notes: list[str] | None = None,
+    course_name: str | None = None,
+    session_number: int | None = None,
+    project_name: str | None = None,
+    project_description: str | None = None,
+    project_features: list[str] | None = None,
 ) -> str:
     """`is_periodic_test`: buổi có kiểm tra định kỳ (GV tự đánh dấu — KHÔNG cứng
     theo số buổi, vì buổi 14 tùy lớp có thể là thuyết trình thay vì kiểm tra;
@@ -81,7 +186,11 @@ def build_review_prompt(
             "tự: điểm mạnh trước, ĐIỂM CẦN CẢI THIỆN/LƯU Ý sau (bắt buộc phải có, "
             "không khen một chiều dù học viên giỏi), chốt bằng một lời "
             "khuyên cụ thể mang tính xây dựng. "
-            "Không nhắc đến số thứ tự buổi học hay tiêu đề buổi học."
+            "Không nhắc đến số thứ tự buổi học hay tiêu đề buổi học.\n"
+            "CẤM CÁC TỪ NỐI RẬP KHUÔN: Tuyệt đối không dùng các từ nối văn mẫu máy móc "
+            "như 'tuy nhiên', 'bên cạnh đó', 'mặc dù vậy', 'tóm lại', 'thầy hy vọng/tin rằng em sẽ phát huy'. "
+            "Hãy chuyển ý tự nhiên bằng các liên từ tiếng Việt sinh động: 'Đáng khen là...', 'Riêng ở phần...', "
+            "'Chỉ cần em chú ý thêm chút ở...', 'Nếu rèn thêm thói quen... thì code sẽ gọn gàng hơn'."
         )
 
     if is_project_period:
@@ -91,13 +200,22 @@ def build_review_prompt(
     else:
         purpose = "Buổi học kiến thức và thực hành lập trình"
 
+    domain = detect_course_domain(course_name)
     parts = [
         SYSTEM_ROLE,
         TONE_RULE,
+        JARGON_CLARITY_RULE,
+        CONTENT_ANCHORING_RULE,
+        COURSE_DOMAIN_GUIDELINES.get(domain, COURSE_DOMAIN_GUIDELINES["general"]),
         instruction,
         f"Học viên: {student_name}",
         f"Mục đích buổi học: {purpose}",
     ]
+    if course_name:
+        parts.append(f"Khóa học: {course_name}")
+    if session_number:
+        parts.append(f"Buổi số trong khóa: {session_number}")
+
     if academic_level:
         # CHỈ là ngữ cảnh để chỉnh độ sâu/giọng — user chốt 2026-07-27 KHÔNG nêu
         # thẳng xếp loại cho phụ huynh (tránh câu kiểu "em học lực yếu").
@@ -126,14 +244,38 @@ def build_review_prompt(
             f"{', '.join(test_process_notes)} — dùng cho PHẦN 2 (kết quả kiểm "
             "tra định kỳ)."
         )
-    if is_project_period and project_progress_notes:
-        # KHÔNG tách thành phần riêng như kiểm tra định kỳ — SPCK chỉ là quan
-        # sát bổ sung, hòa vào đoạn nhận xét chung (khác is_periodic_test).
-        parts.append(
-            "Quan sát của giáo viên về quá trình làm sản phẩm cuối khóa (SPCK) "
-            f"của em: {', '.join(project_progress_notes)} — nhắc tới như một "
-            "phần tự nhiên của nhận xét, KHÔNG tách thành mục riêng."
-        )
+    if is_project_period:
+        spck_parts = []
+        if project_name:
+            spck_parts.append(f"- Tên sản phẩm cuối khóa (SPCK) của em: {project_name}")
+        if project_description:
+            spck_parts.append(f"- Ý tưởng / mô tả sản phẩm: {project_description}")
+        if project_features:
+            spck_parts.append(f"- Các tính năng chính em đăng ký làm: {', '.join(project_features)}")
+        if project_progress_notes:
+            spck_parts.append(f"- Quan sát của giáo viên trong buổi hôm nay: {', '.join(project_progress_notes)}")
+
+        if session_number == 13:
+            session_13_guideline = (
+                "🔴 QUY TẮC ĐẶC BIỆT CHO BUỔI 13 (BUỔI HOÀN THÀNH SẢN PHẨM CUỐI KHÓA):\n"
+                "- Buổi 13 là buổi học sinh đã HOÀN THÀNH XONG SẢN PHẨM trước thềm buổi 14 thuyết trình/tổng kết.\n"
+                "- Hướng nhận xét: TÍCH CỰC, KHÍCH LỆ VÀ GHI NHẬN THÀNH QUẢ. Chúc mừng em đã kiên trì hiện thực hóa ý tưởng thành sản phẩm, khen ngợi tính năng nổi bật hoặc sự sáng tạo của dự án.\n"
+                "- Điểm cải thiện/lưu ý: Nhẹ nhàng, xây dựng, tập trung vào kỹ năng tự tin chia sẻ/thuyết trình trước lớp ở buổi 14 Demo Day sắp tới, hoặc trau chuốt thêm slide/âm thanh/hình ảnh cuối cùng."
+            )
+        else:
+            session_13_guideline = (
+                "🔴 QUY TẮC CHO BUỔI ĐANG THỰC HIỆN ĐỒ ÁN (IN-PROGRESS):\n"
+                "- Đây là buổi học sinh đang trong quá trình thực hiện dự án: Nhận xét bám sát vào tiến độ làm việc của buổi hôm nay (đang dựng giao diện, lập trình tính năng nào, xử lý lỗi gì), TUYỆT ĐỐI KHÔNG viết như thể em đã hoàn thành 100% dự án."
+            )
+
+        if spck_parts or session_number == 13:
+            detail_text = "\n".join(spck_parts)
+            parts.append(
+                f"NGỮ CẢNH SẢN PHẨM CUỐI KHÓA (SPCK):\n"
+                f"{detail_text}\n"
+                f"{session_13_guideline}\n"
+                "- Hòa các thông tin sản phẩm và quan sát trên vào một đoạn nhận xét liền mạch tự nhiên gửi phụ huynh, KHÔNG tách thành mục riêng."
+            )
     if previous_comment:
         parts.append(
             f"Bản nháp bạn đã viết trước đó cho ĐÚNG buổi này (giáo viên bấm tạo "
@@ -145,11 +287,22 @@ def build_review_prompt(
             "Nhận xét các buổi TRƯỚC của CHÍNH học viên này (chỉ để bạn biết đã "
             f"viết gì rồi, KHÔNG phải nội dung buổi này):\n{joined}"
         )
+        progression_hint = ""
+        if session_number:
+            if session_number <= 3:
+                progression_hint = " Đây là giai đoạn đầu khóa (buổi 1-3): tập trung vào sự hào hứng làm quen và sự bỡ ngỡ ban đầu."
+            elif session_number <= 8:
+                progression_hint = " Đây là giai đoạn giữa khóa (buổi 4-8): tập trung rèn luyện thói quen tự kiểm tra code và giải quyết lỗi độc lập."
+            elif session_number == 13:
+                progression_hint = " Đây là buổi 13 (buổi hoàn thành sản phẩm): nhận xét tích cực ghi nhận thành quả đóng gói dự án và chuẩn bị tâm thế tự tin cho buổi thuyết trình."
+            else:
+                progression_hint = " Đây là giai đoạn làm đồ án (buổi 9-12): hướng tới hoàn thiện từng tính năng sản phẩm, thử thách bài nâng cao hoặc đặt mini-goal cụ thể."
+
         parts.append(
-            "QUAN TRỌNG: nhận xét buổi này PHẢI viết khác các buổi trên — đổi câu "
-            "mở đầu, đổi cách sắp xếp câu, đổi từ ngữ diễn đạt, không lặp lại "
-            "khuôn mẫu câu/cụm từ đã dùng ở các buổi trước, dù nội dung khen/góp ý "
-            "có thể tương tự do học viên vẫn giữ điểm mạnh/yếu đó."
+            "QUAN TRỌNG VỀ TIẾN TRÌNH THỜI GIAN VÀ CHỐNG TRÙNG LẶP:\n"
+            "- Nhận xét buổi này PHẢI viết khác các buổi trên: đổi câu mở đầu, đổi cách sắp xếp câu, đổi góc nhìn (quan sát lúc gỡ lỗi, lúc hoàn thiện sản phẩm, hoặc năng lượng học tập).\n"
+            "- Khi học viên tiếp tục có cùng điểm mạnh/yếu với các buổi trước: KHÔNG được dùng từ đồng nghĩa để lặp lại ý cũ một cách máy móc. Hãy liên kết với kiến thức/sản phẩm mới của buổi hôm nay và nhìn nhận sự kiên trì hoặc cách em đối mặt với thử thách hôm nay."
+            f"{progression_hint}"
         )
     parts.append('Trả về JSON: {"comment": "<đoạn nhận xét>"}')
     return "\n".join(parts)
@@ -481,8 +634,11 @@ def build_session_content_prompt(
     prior_sessions: list[tuple[int, str]],
 ) -> str:
     """KHÔNG áp TONE_RULE — đây là mô tả giáo án, không phải nhận xét học viên."""
+    domain = detect_course_domain(course_name)
     parts = [
         SYSTEM_ROLE,
+        COURSE_DOMAIN_GUIDELINES.get(domain, COURSE_DOMAIN_GUIDELINES["general"]),
+        JARGON_CLARITY_RULE,
         "Hãy biên soạn lại nội dung buổi học cho một buổi dạy lập trình thành các "
         "mục rõ ràng, hấp dẫn, chuẩn phương pháp sư phạm dựa trên ghi chú của giáo viên bên dưới.",
         f"Khóa học: {course_name} — Lớp: {class_code}",

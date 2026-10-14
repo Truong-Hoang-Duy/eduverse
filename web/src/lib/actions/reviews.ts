@@ -132,7 +132,7 @@ export async function applyReviewsFromSession(input: {
   const { data: sessionData } = await supabase
     .from("sessions")
     .select(
-      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period"
+      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, classes(courses(name))"
     )
     .eq("id", input.sessionId)
     .single();
@@ -159,6 +159,7 @@ export async function applyReviewsFromSession(input: {
     { data: sourceRows },
     { data: currentRows },
     { data: priorRows },
+    { data: projectsRows },
   ] = await Promise.all([
     supabase
       .from("enrollments")
@@ -182,6 +183,10 @@ export async function applyReviewsFromSession(input: {
       .eq("sessions.class_id", sessionData.class_id)
       .lt("sessions.session_number", sessionData.session_number)
       .not("ai_generated_comment", "is", null),
+    supabase
+      .from("projects")
+      .select("student_id, name, description, features")
+      .eq("class_id", sessionData.class_id),
   ]);
 
   const students = ((enrollments ?? []) as unknown as {
@@ -217,6 +222,15 @@ export async function applyReviewsFromSession(input: {
     );
     priorCommentsByStudent.set(row.student_id, list);
   }
+
+  const projectByStudent = new Map(
+    ((projectsRows ?? []) as {
+      student_id: string;
+      name: string;
+      description: string | null;
+      features: string[] | null;
+    }[]).map((p) => [p.student_id, p])
+  );
 
   // --- Bước 1: gộp tích chọn rồi lưu (không đụng Gemini) ---
   const toUpsert: {
@@ -296,12 +310,20 @@ export async function applyReviewsFromSession(input: {
   const sessionTitle =
     sessionData.title ?? `Buổi ${sessionData.session_number}`;
 
+  const courseName =
+    (
+      sessionData as unknown as {
+        classes: { courses: { name: string } | null } | null;
+      }
+    )?.classes?.courses?.name ?? "";
+
   // Chưa có OpenAI key (đang chọn OpenAI) → KHÔNG tự ý gọi bằng key khác, bỏ
   // qua bước AI nhưng tích chọn ở bước 1 vẫn đã lưu — báo rõ lý do trong `error`.
   let comments: { studentId: string; comment: string }[] = [];
   if (aiConfig.ok && needComment.length > 0) {
     const results = await Promise.allSettled(
       needComment.map(async (a) => {
+        const proj = projectByStudent.get(a.studentId);
         const data = await callAiService<{ comment: string }>("/generate-review", {
           api_key: aiConfig.api_key,
           provider: aiConfig.provider,
@@ -310,6 +332,11 @@ export async function applyReviewsFromSession(input: {
           session_content: sessionData.content ?? "",
           strengths: a.strengths,
           improvements: a.improvements,
+          course_name: courseName || null,
+          session_number: sessionData.session_number,
+          project_name: proj?.name || null,
+          project_description: proj?.description || null,
+          project_features: proj?.features ?? [],
           session_context: sessionData.review_context || null,
           is_periodic_test: sessionData.is_periodic_test,
           test_process_notes: [],
@@ -453,6 +480,11 @@ export interface GenerateReviewInput {
   sessionContent: string;
   strengths: string[];
   improvements: string[];
+  courseName?: string;
+  sessionNumber?: number;
+  projectName?: string;
+  projectDescription?: string;
+  projectFeatures?: string[];
   /** Bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay kiểm tra) — chỉ để
    *  AI tham khảo, không phải nội dung nhận xét. */
   sessionContext?: string;
@@ -504,6 +536,11 @@ export async function generateAiReview(
       session_content: input.sessionContent,
       strengths: input.strengths,
       improvements: input.improvements,
+      course_name: input.courseName || null,
+      session_number: input.sessionNumber ?? null,
+      project_name: input.projectName || null,
+      project_description: input.projectDescription || null,
+      project_features: input.projectFeatures ?? [],
       session_context: input.sessionContext || null,
       is_periodic_test: input.isPeriodicTest ?? false,
       test_process_notes: input.testProcessNotes ?? [],
