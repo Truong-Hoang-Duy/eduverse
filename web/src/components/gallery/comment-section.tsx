@@ -7,8 +7,13 @@ import { CornerDownRight, MessageSquareText, Send, Sparkles, X } from "lucide-re
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
+import { EducationalToast, useEducationalToast } from "@/components/ui/educational-toast";
 import { Input } from "@/components/ui/input";
 import { addComment, deleteComment } from "@/lib/actions/projects";
+import {
+  EDUCATIONAL_MODERATION_WARNING,
+  checkEducationalContent,
+} from "@/lib/content-moderation";
 import { PROJECT_COMMENT_MAX } from "@/lib/project-limits";
 import { createClient } from "@/lib/supabase/client";
 import type { ActionResult } from "@/lib/types";
@@ -43,6 +48,7 @@ export function CommentSection({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [state, setState] = useState<ActionResult>({});
   const [replyTo, setReplyTo] = useState<string | null>(null);
+  const { toastMessage, showToast, hideToast } = useEducationalToast();
   const formRef = useRef<HTMLFormElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -153,6 +159,14 @@ export function CommentSection({
       return;
     }
 
+    // Kiểm tra ngôn từ chuẩn mực sư phạm (< 0.1ms)
+    const check = checkEducationalContent(rawContent);
+    if (!check.isAppropriate) {
+      showToast(check.message ?? EDUCATIONAL_MODERATION_WARNING);
+      inputRef.current?.focus();
+      return;
+    }
+
     fd.set("content", content);
     const activeReply = replyTo;
     setReplyTo(null);
@@ -213,6 +227,9 @@ export function CommentSection({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-background">
+      {/* Thông báo nổi chuẩn mực sư phạm (Educational Toast) */}
+      <EducationalToast message={toastMessage} onClose={hideToast} />
+
       {/* 1. HEADER NHẬN XÉT CỐ ĐỊNH SANG TRỌNG - THOÁNG ĐÃNG, KHÔNG SÁT MÉP */}
       <div className="shrink-0 px-6 py-4 flex items-center justify-between border-b border-border/60 bg-muted/20 backdrop-blur-xs gap-4">
         <div className="flex items-center gap-3 min-w-0">
@@ -476,6 +493,21 @@ export function CommentSection({
             }
             maxLength={PROJECT_COMMENT_MAX}
             disabled={isSubmitting}
+            onChange={() => {
+              if (state.error) setState({});
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const val = e.currentTarget.value.trim();
+                if (val) {
+                  const check = checkEducationalContent(val);
+                  if (!check.isAppropriate) {
+                    e.preventDefault();
+                    showToast(check.message ?? EDUCATIONAL_MODERATION_WARNING);
+                  }
+                }
+              }
+            }}
             className="h-9.5 flex-1 border-0 bg-transparent px-3 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/70"
           />
           <Button

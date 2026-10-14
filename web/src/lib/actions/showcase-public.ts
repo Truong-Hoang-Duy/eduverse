@@ -1,6 +1,10 @@
 "use server";
 
 import {
+  EDUCATIONAL_MODERATION_WARNING,
+  checkEducationalContent,
+} from "@/lib/content-moderation";
+import {
   SHOWCASE_COMMENT_MAX,
   isShowcaseToken,
   type MyRating,
@@ -49,6 +53,13 @@ export async function rateShowcaseProject(input: {
   const comment = input.comment.trim();
   if (comment.length > SHOWCASE_COMMENT_MAX) {
     return { error: `Cảm nghĩ & góp ý tối đa ${SHOWCASE_COMMENT_MAX} ký tự.` };
+  }
+
+  if (comment) {
+    const check = checkEducationalContent(comment);
+    if (!check.isAppropriate) {
+      return { error: check.message ?? EDUCATIONAL_MODERATION_WARNING };
+    }
   }
 
   const scores = [input.product, input.presentation, input.creativity];

@@ -37,6 +37,7 @@ import {
 } from "@/lib/actions/classes";
 import { sortStudentsByVietnameseName } from "@/lib/student-sort";
 
+import { EditStudentNameDialog } from "./edit-student-name-dialog";
 import { ResetPasswordDialog } from "./reset-password-dialog";
 
 export interface StudentRow {
@@ -298,12 +299,19 @@ export function StudentsTable({
                 </div>
               </TableCell>
               <TableCell className="font-medium">
-                <Link
-                  href={`/teacher/classes/${classId}/students/${student.studentId}`}
-                  className="text-primary transition-colors hover:underline"
-                >
-                  {student.fullName}
-                </Link>
+                <div className="flex items-center gap-1.5">
+                  <Link
+                    href={`/teacher/classes/${classId}/students/${student.studentId}`}
+                    className="text-primary transition-colors hover:underline"
+                  >
+                    {student.fullName}
+                  </Link>
+                  <EditStudentNameDialog
+                    studentId={student.studentId}
+                    classId={classId}
+                    currentName={student.fullName}
+                  />
+                </div>
               </TableCell>
               <TableCell>{student.username ?? "—"}</TableCell>
               <TableCell>

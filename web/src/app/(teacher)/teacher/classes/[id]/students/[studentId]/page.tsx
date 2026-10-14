@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
+import { EditStudentNameDialog } from "../../edit-student-name-dialog";
 import { StudentSummaryPanel } from "../../student-summary-panel";
 
 export const metadata = { title: "Hồ sơ học viên — Eduverse" };
@@ -109,6 +110,11 @@ export default async function StudentProfilePage({
           <h1 className="text-2xl font-bold tracking-tight">
             {student.full_name}
           </h1>
+          <EditStudentNameDialog
+            studentId={studentId}
+            classId={id}
+            currentName={student.full_name}
+          />
           {student.username && (
             <span className="text-sm text-muted-foreground">
               @{student.username}

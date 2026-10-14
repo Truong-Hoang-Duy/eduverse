@@ -9,6 +9,7 @@ import { CheckMark, GraduationSeal } from "@/components/showcase/emblem";
 import { SealAvatar } from "@/components/showcase/seal-avatar";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -342,9 +343,19 @@ export function ShowcaseView({
 
       <Dialog open={current !== null} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent
+          showCloseButton={false}
           style={{ touchAction: "pan-y" }}
-          className={`${fontClass} showcase-theme flex flex-col h-[94dvh] sm:h-[90dvh] max-h-[96dvh] w-[calc(100%-1rem)] sm:w-full max-w-[calc(100%-1rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl gap-0 overflow-hidden border border-sc-line bg-sc-raised p-0 text-sc-ink ring-0`}
+          className={`${fontClass} showcase-theme relative flex flex-col h-[82dvh] sm:h-[86dvh] max-h-[85dvh] sm:max-h-[88dvh] w-[calc(100%-2rem)] sm:w-full max-w-[calc(100%-2rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl gap-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-sc-brass/40 bg-sc-raised p-0 text-sc-ink shadow-2xl ring-0`}
         >
+          <DialogClose
+            type="button"
+            aria-label="Đóng chi tiết sản phẩm"
+            className="absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5 z-20 flex size-9 sm:size-10 items-center justify-center rounded-full border border-sc-brass/45 bg-sc-paper/95 text-sc-ink shadow-xs transition-all hover:bg-sc-brass hover:text-sc-paper hover:scale-105 active:scale-95 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-sc-brass"
+          >
+            <X className="size-5 sm:size-6 stroke-[2.5]" />
+            <span className="sr-only">Đóng</span>
+          </DialogClose>
+
           {current && (
             <ProjectDetail
               token={token}
@@ -552,7 +563,7 @@ function ProjectDetail({
 
   return (
     <>
-      <DialogHeader className="shrink-0 border-b border-sc-line p-3.5 sm:p-5 pr-12 text-left bg-sc-raised/95 backdrop-blur-md">
+      <DialogHeader className="shrink-0 border-b border-sc-line p-3.5 sm:p-5 pr-14 sm:pr-16 text-left bg-sc-raised/95 backdrop-blur-md">
         <DialogTitle className="flex items-center gap-3">
           <SealAvatar name={project.author_name} size={44} />
           <div className="min-w-0">

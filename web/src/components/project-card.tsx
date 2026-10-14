@@ -482,9 +482,11 @@ export function ProjectCard({
 export function ProjectFeaturesAndLinks({
   project,
   headerAction,
+  className = "",
 }: {
   project: ProjectView;
   headerAction?: React.ReactNode;
+  className?: string;
 }) {
   const hasLinks = Boolean(
     project.repo_url ||
@@ -525,7 +527,7 @@ export function ProjectFeaturesAndLinks({
   const showTabs = hasFeatures && hasLinks;
 
   return (
-    <div className="shrink-0 min-h-[220px] sm:min-h-[240px] border-b border-border/60 bg-muted/10 flex flex-col overflow-hidden">
+    <div className={`flex-1 min-h-0 basis-1/2 border-b border-border/60 bg-muted/10 flex flex-col overflow-hidden ${className}`}>
       {/* Header thanh điều hướng: Tabs hoặc Tiêu đề + Nút đóng X với khoảng cách rộng rãi */}
       <div className="px-4 sm:px-6 py-3 sm:py-3.5 shrink-0 flex items-center justify-between border-b border-border/50 gap-3 bg-muted/20">
         <div className="flex items-center gap-2 min-w-0 flex-1">
