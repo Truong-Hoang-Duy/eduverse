@@ -353,7 +353,7 @@ export function ShowcasePanel({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Bấm chọn em đang thuyết trình trên sân khấu. Màn hình người xem sẽ tự động hiện thông báo nổi:{" "}
+              Bấm chọn học sinh đang thuyết trình. Màn hình người xem sẽ tự động hiện thông báo nổi:{" "}
               <strong className="text-foreground">🔴 Đang thuyết trình: Em [Tên] — Bấm để xem</strong> để mở ngay sản phẩm của em đó.
             </p>
 

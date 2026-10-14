@@ -3,48 +3,41 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-13, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 92 (**Tối ưu giao diện Quét mã QR Sản phẩm cuối khóa: Danh sách ngang tinh giản, Xem ảnh full trên máy tính kèm Lightbox, Tách biệt và tự động dọn sạch Nhận xét góp ý theo link**):
-1. **Tinh gọn giao diện trang quét mã QR (`showcase-view.tsx`):**
-   - Loại bỏ hoàn toàn bộ lọc rườm rà (các nút chuyển chế độ xem `Lưới | Danh sách | Trình chiếu`, dropdown sắp xếp, nút lọc chưa góp ý, danh sách nút chọn nhanh học viên).
-   - Chỉ giữ lại ô tìm kiếm đơn giản, thanh lịch, tinh tế.
-   - Cố định hiển thị dưới dạng danh sách hàng ngang: Tên học sinh và tên sản phẩm nằm ngang trên cùng một hàng (`[Avatar] [Tên học viên] — [Tên sản phẩm] [Badge trạng thái] [Xem →]`), bấm vào hàng mới mở popup chi tiết.
-2. **Hiển thị ảnh full một hình ảnh trên máy tính & Điều hướng trái/phải (`showcase-view.tsx`):**
-   - Popup chi tiết sản phẩm (`ProjectDetail`) trên máy tính và điện thoại hiển thị trọn vẹn 1 hình ảnh to đẹp mắt với ambient backdrop làm mờ lung linh, không chia 2 cột nhỏ nát ảnh nữa.
-   - Bổ sung nút bấm sang trái/phải (`◀` `▶`), indicator `X / Y`, và dãy thumbnail ảnh bên dưới để chuyển qua lại mượt mà.
-   - Tích hợp `ImageLightbox`: bấm vào ảnh mở xem toàn màn hình (Full Screen) với điều hướng mũi tên bàn phím và nút bấm trái/phải.
-3. **Phần nhận xét góp ý độc lập & Vòng đời theo link (`showcase-view.tsx`, `showcase.ts`, `page.tsx`):**
-   - Loại bỏ hoàn toàn khối `project.comments` ("Góp ý bài làm ban đầu" từ `project_comments` của học sinh) khỏi trang showcase để đảm bảo phần nhận xét góp ý của phụ huynh/khách hoàn toàn độc lập.
-   - Khi tạo link mới hoặc đổi token (`enableShowcase`, `rotateShowcaseToken`), toàn bộ nhận xét góp ý cũ được xóa sạch để bắt đầu phiên nhận xét mới toanh.
-   - Khi link hết hạn (`isShowcaseExpired`), tự động dọn sạch toàn bộ `showcase_ratings` của showcase đó.
-4. **Tái cấu trúc thứ tự & Kích thước chi tiết sản phẩm (`showcase-view.tsx`):**
-   - Đưa phần **Mô tả dự án** lên đầu tiên ngay sau tiêu đề/thông tin tác giả.
-   - Đổi tiêu đề "Em đã làm được" thành **Tính năng**.
-   - Đổi tiêu đề "Em tìm hiểu thêm" thành **Đường dẫn dự án** (chứa nút bấm mở Mã nguồn GitHub, Dùng thử sản phẩm, Slide thuyết trình Canvas/liên kết ngoài).
-   - Đặt khung **Hình ảnh sản phẩm** nằm bên dưới 2 phần trên (Mô tả và Tính năng/Đường dẫn), kèm cơ chế xem ảnh Ambient Blur, nút chuyển ảnh ◀ ▶, thumbnail và Lightbox phóng to.
-5. **Tối ưu toàn diện Responsive điện thoại & Ghim mép Header/Footer trọn vẹn khung ảnh (`showcase-view.tsx`):**
-   - Đổi modal sang cấu trúc `flex-col h-[94dvh] sm:h-[90dvh] max-h-[96dvh] w-[calc(100%-1rem)] sm:w-full max-w-[calc(100%-1rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl`.
-   - **Ghim cố định 2 đầu mép:** Header (`shrink-0 border-b`) luôn ghim mép trên, Footer phân trang (`shrink-0 border-t`) luôn ghim mép dưới với nền `backdrop-blur-md` chống trôi mất khi cuộn.
-   - **Khớp trọn khung ảnh:** Khi cuộn đến ảnh sản phẩm, chiều cao khung ảnh tự động mở rộng bao quát toàn bộ khoảng cách từ mép dưới Header đến mép trên Footer (`h-[calc(94dvh-230px)] min-h-[340px] max-h-[580px]` trên mobile, lên đến `620px-660px` trên desktop) kết hợp `object-contain max-h-full max-w-full`, đảm bảo nhìn trọn vẹn 100% tấm ảnh (ảnh ngang 16:9 hay ảnh dọc 9:16/slide đều không bị che khuất/cắt nát).
-   - **Thao tác cảm ứng điện thoại:** Tích hợp thao tác vuốt tay trái/phải (Touch Swipe) trực tiếp trên điện thoại + phím mũi tên trái/phải trên bàn phím máy tính để xem các ảnh tiếp theo.
-   - Đổi tiêu đề đầu trang showcase từ "Lễ tổng kết khóa học" thành **Tổng kết khóa học** (`showcase-view.tsx`).
-6. **Tăng khoảng cách thanh Chức năng & Liên kết nộp bài (`project-card.tsx`):**
-   - Nâng thanh header từ `h-11` lên `py-3 sm:py-3.5 px-4 sm:px-6 min-h-[52px] sm:min-h-[56px]`, xóa bỏ tình trạng cụm tab và nút đóng dính sát mép trên/mép phải của modal, căn đều thẳng hàng với cột bên trái.
-   - Nâng cấp kích thước tab: khung tab bo tròn `p-1 rounded-xl bg-muted/80`, nút tab `px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-[13px]`, khoảng cách giữa các tab `gap-1.5`.
-   - Mở rộng không gian nội dung bên dưới: tăng padding từ `p-3 sm:p-3.5` lên `p-4 sm:p-5`, nâng chiều cao tổng thể từ `h-[190px] sm:h-[200px]` lên `min-h-[220px] sm:min-h-[240px]`, các pill tính năng và thẻ liên kết giãn cách rộng rãi (`gap-2.5`), không còn bị dồn sát viền.
-7. **Lược bỏ dòng chú thích ảnh bìa phụ huynh (`image-url-chips.tsx`):**
-   - Đã xóa câu chú thích: "Ảnh đầu tiên được dùng làm ảnh bìa trên trang phụ huynh. Link nào không hiện được ở khung xem trước thì cũng sẽ không hiện với người khác." khỏi form nộp ảnh bài làm của học sinh.
-8. **Đổi mô tả lớp Demo (`classes` table & `setup-demo-account.mjs`):**
-   - Đổi mô tả từ "Lớp học Demo dành cho học viên tham khảo & hướng dẫn" thành **Demo cho học viên tham khảo** trong script `setup-demo-account.mjs` và cập nhật trực tiếp bản ghi lớp `DEMO` trong database Supabase.
-9. **Tạo khoảng cách footer nút bấm trang Hồ sơ (`profile-form.tsx`, `password-form.tsx`):**
-   - Bổ sung `pb-6` cho `CardContent` ở cả form Thông tin cá nhân và Đổi mật khẩu, tạo khoảng đệm 24px thoáng đãng giữa ô input và viền phân cách footer của 2 nút "Lưu thay đổi" & "Đổi mật khẩu".
-10. **Lược bỏ từ 'phụ huynh' và tinh gọn các mô tả:**
-   - Thay thế toàn bộ từ 'phụ huynh' trên giao diện bằng các từ ngữ chung, trung tính và phù hợp hơn ('người xem', 'quý khách', 'công khai', 'học viên').
-   - Rút gọn súc tích các dòng mô tả, placeholder và thông báo trên trang chi tiết lớp, showcase, modal nộp bài, cài đặt mẫu thông báo và trang buổi học.
-   - Cập nhật số đếm đánh giá thành '{n} lượt đánh giá'.
-11. **Kiểm thử chất lượng:**
-   - `web`: 320/320 vitest tests PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
-   - `ai-service`: 91/91 pytest PASS.
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-14, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 93 (**Cải tiến nhận xét & gợi ý buổi học AI theo chuẩn sư phạm, phân loại 5 môn học theo trình tự phát triển và chống trùng lặp tiến trình**):
+1. **Phân loại 5 môn học thích ứng theo trình tự từ nhỏ đến lớn (`ai-service/app/prompts.py`):**
+   - Hàm `detect_course_domain(course_name)` tự động phân loại 5 bộ môn dạy lập trình cho lứa tuổi dưới 18 theo đúng lộ trình phát triển: `scratch` -> `gamemaker` -> `app` -> `web` -> `computer_science` (fallback: `general`).
+   - Cung cấp từ điển hành vi sư phạm riêng biệt cho từng môn:
+     - **1. Scratch (~7-11t):** Thao tác kéo thả khối lệnh, tư duy sự kiện, logic vòng lặp, sáng tạo hình ảnh/âm thanh; **cấm tuyệt đối** dùng từ ngữ gõ code, lỗi cú pháp, chấm phẩy.
+     - **2. Game Maker (~10-14t):** Cơ chế điều khiển (movement), va chạm (collision), phòng chơi (room), hoạt ảnh (sprite) và logic sự kiện game; không dùng từ ngữ lập trình web.
+     - **3. App — Python & Qt Designer (~11-15t):** Thiết kế giao diện kéo thả trên Qt Designer, thành phần giao diện (Widget: nút bấm, ô nhập, nhãn hiển thị, bảng danh sách), bố cục sắp xếp (Layout: dọc, ngang, lưới), kết nối nút bấm với hàm xử lý (Signals & Slots: click chuột kích hoạt lệnh Python), chuyển file `.ui` sang Python, hiển thị kết quả ra app. Quy tắc song ngữ cho phụ huynh: giải thích rõ ràng, tránh dịch thô ngô nghê (*"tiện ích"*, *"khe cắm"*).
+     - **4. Web — HTML/CSS/JS (~12-18t):** Cấu trúc trang (thẻ HTML), trang trí bố cục/màu sắc (CSS/Flexbox), tương tác nút bấm (JS) và độ tương thích màn hình điện thoại/máy tính (responsive).
+     - **5. Computer Science — Python/C++/Thuật toán (~13-18t):** Text-based programming, giải thuật, biến số, cấu trúc rẽ nhánh/lặp, hàm, cấu trúc dữ liệu và kỹ năng truy vết tìm lỗi (debug).
+2. **Quy tắc diễn đạt tự nhiên & thuật ngữ song ngữ dễ hiểu cho phụ huynh:**
+   - Ưu tiên mô tả hành vi trực quan trước, thuật ngữ tiếng Anh gốc đặt trong ngoặc đơn (ví dụ: *"lập trình sự kiện va chạm (collision)"*, *"bố cục linh hoạt (flexbox)"*, *"truy vết tìm lỗi (debug)"*, *"thành phần giao diện (widget)"*).
+   - **Nghiêm cấm dịch thô máy móc** sang tiếng Việt gây ngô nghê/lạ tai (như *"khử bọ"*, *"bắt sâu"*, *"phòng game"*, *"khe cắm"*).
+   - **Xóa bỏ văn mẫu sáo rỗng:** cấm các từ nối rập khuôn lặp đi lặp lại (*"tuy nhiên"*, *"bên cạnh đó"*, *"mặc dù vậy"*, *"tóm lại"*, *"thầy hy vọng/tin rằng"*).
+   - Bắt buộc gắn điểm mạnh/yếu với sản phẩm/khái niệm cụ thể trong `session_content`.
+3. **Tiến trình thời gian và chống trùng lặp khi chọn điểm mạnh/yếu giống nhau:**
+   - Dựa vào `prior_comments` và `session_number` để biến đổi góc nhìn theo giai đoạn học tập:
+     - *Buổi đầu (1-3):* Chú trọng sự tự tin, làm quen thao tác, hòa nhập môi trường lớp học.
+     - *Buổi giữa (4-8):* Nhận xét sự tiến bộ về thói quen tư duy, khả năng chủ động tự sửa lỗi, tốc độ hoàn thành bài.
+     - *Buổi sau/dự án (9+):* Đánh giá tính độc lập, độ hoàn thiện sản phẩm và những thử thách/mục tiêu nhỏ (mini-goal) tiếp theo.
+4. **Tích hợp Web Server Actions & Giao diện:**
+   - `web/src/lib/actions/reviews.ts`: Bổ sung `courseName` và `sessionNumber` vào `GenerateReviewInput`, truyền sang payload `/generate-review`; cập nhật `applyReviewsFromSession` query `classes(courses(name))` để tự động truyền thông tin khóa học khi áp nhận xét hàng loạt.
+   - `web/src/app/(teacher)/teacher/sessions/[id]/review-editor.tsx`: Truyền trực tiếp `courseName` và `sessionNumber` có sẵn từ component cha vào `generateAiReview`.
+5. **Tinh chỉnh & cố định khung popup Gợi ý nội dung buổi học (`session-content-suggest-dialog.tsx`):**
+   - **Mở rộng kích thước & cố định khung:** Nâng độ rộng lên `sm:max-w-2xl lg:max-w-3xl` và chiều cao cố định `h-[92dvh] sm:h-[640px] max-h-[700px]`, triệt tiêu hoàn toàn hiện tượng co giãn giật khung (layout shift) khi chuyển đổi giữa lúc nhập liệu, trạng thái chờ AI và lúc kết quả hiển thị.
+   - **Tách bạch 2 khu vực rõ ràng:** Khu vực nhập ghi chú ở trên (`shrink-0 h-24`), khu vực kết quả ở dưới chiếm trọn phần còn lại (`flex-1 min-h-0`) với thanh cuộn mượt mà, empty state thanh lịch và các nút thao tác (Copy, Dùng gợi ý) ghim mép chân thẻ.
+   - **Gạch đầu dòng súc tích:** Rút gọn mô tả thành danh sách bullet points dễ nắm bắt; placeholder gợi ý ví dụ sát sườn 5 bộ môn.
+6. **Đưa nội dung tab Sản phẩm (SPCK) vào nhận xét & Logic Buổi 13 hoàn thành bài:**
+   - **Chuyển tiếp dữ liệu SPCK:** Khi buổi học làm đồ án (`is_project_period = true`), tự động chuyển `project_name`, `project_description`, `project_features` học viên đã nhập ở tab Sản phẩm sang AI Service để nhận xét cá nhân hóa, gắn chặt với đề tài từng em (tránh trùng lặp 100%). Hỗ trợ cả áp nhận xét hàng loạt (`applyReviewsFromSession`).
+   - **Quy tắc Buổi 13 (Buổi hoàn thành sản phẩm):** Nhận xét theo hướng **tích cực, khen ngợi và ghi nhận thành quả** em đã đóng gói xong sản phẩm; điểm cần cải thiện nhẹ nhàng hướng về chuẩn bị tâm thế tự tin thuyết trình cho buổi 14 (Demo Day).
+   - **Quy tắc Buổi 9-12 (In-progress):** Nhận xét bám sát tiến độ hoàn thiện từng buổi, không nói như thể đã xong toàn bộ dự án.
+   - **Cơ chế Fallback an toàn:** Nếu học viên chưa tạo sản phẩm trên hệ thống, AI vẫn viết nhận xét tự nhiên dựa trên quan sát GV chọn mà không bị lỗi.
+7. **Kiểm thử chất lượng toàn diện:**
+   - `ai-service`: Bổ sung tests cho SPCK và Buổi 13 (`test_pedagogical_review.py`), toàn bộ **100/100 tests pytest PASS**.
+   - `web`: **320/320 vitest tests PASS**, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
 
 Cập nhật bởi: Gemini
 

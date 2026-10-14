@@ -1,6 +1,6 @@
 -- ---------------------------------------------------------------------------
 -- Chế độ "Đang thuyết trình" (Live Spotlight) cho trang Showcase cuối khóa.
--- Cho phép giáo viên ghim một học sinh đang thuyết trình trên sân khấu,
+-- Cho phép giáo viên ghim một học sinh đang thuyết trình,
 -- điện thoại phụ huynh nhận thông báo nổi và bấm để xem ngay sản phẩm.
 -- ---------------------------------------------------------------------------
 

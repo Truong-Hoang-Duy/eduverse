@@ -55,6 +55,13 @@ class GenerateReviewRequest(AiRequest):
     # Nhãn tiếng Việt của mức xếp loại học lực (Giỏi/Khá/...) — CHỈ để điều
     # chỉnh độ sâu/giọng nhận xét, KHÔNG nêu thẳng cho phụ huynh. Xem prompts.py.
     academic_level: str | None = None
+    # Khóa học (Scratch / Game Maker / App / Web / Computer Science) — định hình thuật ngữ và lứa tuổi <18
+    course_name: str | None = None
+    session_number: int | None = None
+    # Thông tin sản phẩm cuối khóa do học viên nhập ở tab Sản phẩm (dùng khi is_project_period)
+    project_name: str | None = None
+    project_description: str | None = None
+    project_features: list[str] = []
 
 
 class GenerateReviewResponse(BaseModel):
