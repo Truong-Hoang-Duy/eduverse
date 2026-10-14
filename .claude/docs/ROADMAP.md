@@ -1336,6 +1336,11 @@
   - Khung ảnh co giãn vừa khít từ mép dưới Header đến mép trên Footer (`h-[calc(94dvh-230px)] min-h-[340px] max-h-[580px]` trên mobile, lên tới `620px-660px` trên desktop) kết hợp `object-contain` hiển thị trọn vẹn 100% không bị che khuất.
   - Tích hợp thao tác vuốt tay trái/phải (Touch Swipe) trên điện thoại và phím mũi tên ◀ ▶ trên máy tính.
   - Đổi tiêu đề đầu trang showcase từ "Lễ tổng kết khóa học" thành **Tổng kết khóa học**.
+  - Tăng khoảng cách lề và mở rộng kích thước thanh **Chức năng** & **Liên kết nộp bài** (`project-card.tsx`), xóa bỏ hiện tượng dính sát mép trên/mép phải của modal, tăng padding nội dung và độ cao tối thiểu.
+  - Xóa câu chú thích ảnh bìa phụ huynh và khung xem trước khỏi form nộp ảnh bài làm của học sinh (`image-url-chips.tsx`).
+  - Đổi mô tả lớp Demo từ "Lớp học Demo dành cho học viên tham khảo & hướng dẫn" thành **Demo cho học viên tham khảo** (`setup-demo-account.mjs` và cập nhật bản ghi lớp `DEMO` trong DB Supabase).
+  - Tách khoảng cách giữa các ô input và footer nút bấm "Lưu thay đổi", "Đổi mật khẩu" trên trang Hồ sơ (`profile-form.tsx`, `password-form.tsx`).
+  - Lược bỏ từ "phụ huynh" trên giao diện, thay bằng các từ ngữ chung/trung tính ("người xem", "quý khách", "công khai", "lượt đánh giá") và tinh gọn các mô tả, placeholder trên toàn hệ thống.
 - [x] **Kiểm thử chất lượng:** 320/320 vitest PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
 
 

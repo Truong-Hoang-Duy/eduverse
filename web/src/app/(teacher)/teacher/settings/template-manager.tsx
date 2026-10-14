@@ -401,7 +401,7 @@ export function TemplateManager({ templates }: { templates: TemplateRow[] }) {
       {templates.length === 0 && (
         <form action={seedDefaultTemplate}>
           <Button type="submit" size="sm" variant="secondary">
-            ⚡ Thêm mẫu thông báo phụ huynh mặc định
+            ⚡ Thêm mẫu thông báo mặc định
           </Button>
         </form>
       )}

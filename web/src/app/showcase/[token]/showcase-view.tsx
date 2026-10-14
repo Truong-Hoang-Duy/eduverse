@@ -35,7 +35,7 @@ import { StarDisplay } from "./star-rating";
 import { ThemeSwitch } from "./theme-switch";
 
 /**
- * Trang phụ huynh xem sản phẩm cuối khóa — concept "Bảng vàng": giấy khen gặp
+ * Trang xem sản phẩm cuối khóa — concept "Bảng vàng": giấy khen gặp
  * bảng tin lớp học. Motif xuyên suốt là TRIỆN TỐT NGHIỆP (xem `emblem.tsx`),
  * dùng ở ba cỡ: crest đầu trang, vòng quanh avatar, con dấu "đã nhận xét".
  *
@@ -303,7 +303,7 @@ export function ShowcaseView({
           <div className="mt-6 rounded-2xl border border-dashed border-sc-brass/40 p-10 text-center">
             <p className="font-display text-lg">Lớp chưa có sản phẩm nào được đăng</p>
             <p className="mt-1 text-sm text-sc-ink-soft">
-              Quý phụ huynh vui lòng quay lại sau ít phút nhé.
+              Vui lòng quay lại sau ít phút nhé.
             </p>
           </div>
         ) : visible.length === 0 ? (
@@ -573,7 +573,7 @@ function ProjectDetail({
         {project.rating_count > 0 && (
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm sm:text-base text-sc-ink-soft">
-              {project.rating_count} phụ huynh đã chấm điểm
+              {project.rating_count} lượt đánh giá
             </span>
           </div>
         )}
@@ -746,7 +746,7 @@ function ProjectDetail({
           </div>
         )}
 
-        {/* Phần nhận xét góp ý của phụ huynh / khách gửi cho bài làm qua link này */}
+        {/* Phần nhận xét góp ý của người xem / khách gửi cho bài làm qua link này */}
         {allowRatings ? (
           visitorId ? (
             <RatingForm

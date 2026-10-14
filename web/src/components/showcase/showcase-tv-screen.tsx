@@ -994,7 +994,7 @@ export function ShowcaseTvScreen({
                   isDark ? "text-white" : "text-[#241c14]"
                 }`}
               >
-                Chào mừng Quý phụ huynh & Các em học sinh!
+                Chào mừng Quý khách & Các em học sinh!
               </h3>
               <p
                 className={`mt-3 max-w-xl text-base sm:text-lg lg:text-xl font-medium leading-relaxed ${

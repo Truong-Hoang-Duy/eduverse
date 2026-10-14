@@ -76,7 +76,7 @@ function average(values: (number | null)[]): number | null {
 }
 
 /**
- * Khối "Link cho phụ huynh" trong trang lớp.
+ * Khối "Tổng kết khóa học / Link xem sản phẩm" trong trang lớp.
  *
  * Link công khai nghĩa là ai cầm được link cũng xem được HỌ TÊN các em, nên khối
  * này luôn phải nói rõ trạng thái (bật/tắt/còn bao lâu) và luôn có đường thu hồi
@@ -288,7 +288,7 @@ export function ShowcasePanel({
             </div>
             {status !== "live" && (
               <p className="text-xs text-muted-foreground">
-                Link đang KHÔNG mở được — bấm nút bật ở trên để phụ huynh xem được.
+                Link đang tắt — bật ở trên để mở quyền truy cập.
               </p>
             )}
           </div>
@@ -317,8 +317,8 @@ export function ShowcasePanel({
                     ⏹ Tắt link
                   </Button>
                 }
-                title="Tắt link cho phụ huynh?"
-                description="Phụ huynh mở link sẽ thấy thông báo hết hiệu lực. Bài chấm vẫn được giữ, bật lại là hiện đủ như cũ."
+                title="Tắt link công khai?"
+                description="Người xem mở link sẽ thấy thông báo hết hiệu lực. Đánh giá vẫn được giữ khi bật lại."
                 confirmLabel="Tắt link"
                 action={disableShowcase}
                 fields={{ class_id: classId }}
@@ -353,7 +353,7 @@ export function ShowcasePanel({
             </div>
 
             <p className="text-xs text-muted-foreground">
-              Bấm chọn em đang thuyết trình trên sân khấu. Màn hình điện thoại của phụ huynh sẽ tự động hiện thông báo nổi:{" "}
+              Bấm chọn em đang thuyết trình trên sân khấu. Màn hình người xem sẽ tự động hiện thông báo nổi:{" "}
               <strong className="text-foreground">🔴 Đang thuyết trình: Em [Tên] — Bấm để xem</strong> để mở ngay sản phẩm của em đó.
             </p>
 
@@ -401,7 +401,7 @@ export function ShowcasePanel({
                 rows={3}
                 defaultValue={showcase.intro ?? ""}
                 maxLength={SHOWCASE_INTRO_MAX}
-                placeholder="VD: Kính chào quý phụ huynh! Đây là toàn bộ sản phẩm các con đã hoàn thành sau 14 buổi học..."
+                placeholder="VD: Chào mừng mọi người! Đây là toàn bộ sản phẩm các bạn đã hoàn thành sau khóa học..."
               />
             </div>
 
@@ -413,7 +413,7 @@ export function ShowcasePanel({
                   defaultChecked={showcase.allow_ratings}
                   className="size-4"
                 />
-                Cho phụ huynh chấm điểm + nhận xét (ẩn danh)
+                Cho phép người xem đánh giá + nhận xét (ẩn danh)
               </label>
               <input type="hidden" name="allow_reactions" value="false" />
               <label className="flex items-start gap-2 text-sm">
@@ -424,11 +424,10 @@ export function ShowcasePanel({
                   className="mt-0.5 size-4"
                 />
                 <span>
-                  Hiện điểm trung bình cho phụ huynh xem
+                  Hiện điểm trung bình công khai
                   <span className="block text-xs text-muted-foreground">
-                    Mặc định TẮT: bảng điểm công khai giữa buổi lễ biến trang này
-                    thành bảng xếp hạng các con trước mặt phụ huynh. Nhận xét chữ
-                    vẫn hiện bình thường dù tắt.
+                    Mặc định TẮT: tránh so sánh xếp hạng điểm số công khai. Nhận xét
+                    chữ vẫn hiện bình thường dù tắt.
                   </span>
                 </span>
               </label>
@@ -436,7 +435,7 @@ export function ShowcasePanel({
 
             {students.length > 0 && (
               <div className="space-y-1.5">
-                <Label>Ẩn khỏi trang phụ huynh</Label>
+                <Label>Ẩn khỏi trang công khai</Label>
                 <p className="text-xs text-muted-foreground">
                   Tick tên em nào thì sản phẩm em đó KHÔNG hiện trên link công khai
                   (em chưa xong, hoặc gia đình không muốn công khai).
@@ -470,7 +469,7 @@ export function ShowcasePanel({
           {summary.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">
-                ⭐ Điểm phụ huynh chấm (chỉ bạn thấy bảng này)
+                ⭐ Điểm đánh giá (chỉ bạn thấy bảng này)
               </p>
               <div className="overflow-x-auto rounded-xl border">
                 <table className="w-full text-sm">
@@ -501,7 +500,7 @@ export function ShowcasePanel({
             </div>
           )}
 
-          {/* Cảm nghĩ & Góp ý — hiện ngay trên trang phụ huynh, giáo viên gỡ được ở đây */}
+          {/* Cảm nghĩ & Góp ý — hiện trên trang công khai, giáo viên gỡ được ở đây */}
           <div className="space-y-2">
             <p className="text-sm font-medium">
               💬 Cảm nghĩ & Góp ý ({withComment.length})
@@ -540,7 +539,7 @@ export function ShowcasePanel({
                         </Button>
                       }
                       title="Gỡ lượt chấm này?"
-                      description="Cả cảm nghĩ & góp ý lẫn điểm của lượt này sẽ biến mất khỏi trang phụ huynh ngay lập tức và không khôi phục được."
+                      description="Cả cảm nghĩ & góp ý lẫn điểm của lượt này sẽ biến mất khỏi trang công khai ngay lập tức và không khôi phục được."
                       confirmLabel="Gỡ"
                       action={deleteShowcaseRating}
                       fields={{ id: r.id, class_id: classId }}

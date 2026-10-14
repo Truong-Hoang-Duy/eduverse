@@ -383,7 +383,7 @@ export default async function SessionDetailPage({
 
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base">📱 Tin nhắn Zalo cho phụ huynh</CardTitle>
+          <CardTitle className="text-base">📱 Tin nhắn Zalo tổng hợp</CardTitle>
           <CardDescription>
             AI tổng hợp các nhận xét đã lưu của buổi này thành tin nhắn theo mẫu.
           </CardDescription>

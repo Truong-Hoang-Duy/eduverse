@@ -15,7 +15,7 @@ import { IMAGE_URL_MAX, imageUrlError, imageUrlWarning } from "@/lib/image-url";
  * Hướng dẫn có đủ các bước, nhưng đặt luôn link + gợi ý ngay tại đây để khỏi
  * phải rời trang giữa chừng lúc đang điền sản phẩm. Khung xem trước ngay bên
  * dưới là cách kiểm tra chắc chắn nhất: link nào không hiện ảnh ở đây thì cũng
- * sẽ không hiện với thầy cô và phụ huynh.
+ * sẽ không hiện với mọi người.
  */
 export function ImageUrlChips({
   urls,
@@ -154,10 +154,6 @@ export function ImageUrlChips({
         </>
       )}
 
-      <p className="text-xs text-muted-foreground">
-        Ảnh đầu tiên được dùng làm ảnh bìa trên trang phụ huynh. Link nào không
-        hiện được ở khung xem trước thì cũng sẽ không hiện với người khác.
-      </p>
     </div>
   );
 }

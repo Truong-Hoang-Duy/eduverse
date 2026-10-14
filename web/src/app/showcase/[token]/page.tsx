@@ -48,8 +48,8 @@ export default async function ShowcasePage({
             Link không còn hiệu lực
           </h1>
           <p className="text-sm text-sc-ink-soft">
-            Đường dẫn này đã hết hạn hoặc được giáo viên gỡ xuống. Quý phụ huynh
-            vui lòng liên hệ giáo viên chủ nhiệm lớp để nhận link mới.
+            Đường dẫn này đã hết hạn hoặc đã được gỡ xuống. Vui lòng
+            liên hệ giáo viên để nhận liên kết mới.
           </p>
         </div>
       </main>

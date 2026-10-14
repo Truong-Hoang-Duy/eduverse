@@ -739,9 +739,8 @@ export function ReviewEditor({
 
         {isAbsent && (
           <p className="rounded-lg border border-dashed border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-300">
-            Đã đánh dấu vắng và LƯU luôn — em được tính là xử lý xong, không còn
-            trong bộ lọc &quot;Chưa hoàn thành&quot;, và được bỏ qua khi tổng hợp
-            tin Zalo cho phụ huynh. Bỏ tick nếu đánh nhầm.
+            Đã đánh dấu vắng và tự động lưu — bỏ qua khi tổng hợp tin Zalo. Bỏ
+            chọn nếu đánh nhầm.
           </p>
         )}
 
@@ -1587,7 +1586,7 @@ export function ReviewEditor({
                   htmlFor={`comment-${studentId}`}
                   className="text-sm font-bold text-foreground flex items-center gap-1.5"
                 >
-                  <span>💬</span> Nhận xét gửi phụ huynh
+                  <span>💬</span> Lời nhận xét
                 </Label>
                 <div className="flex items-center gap-2">
                   <Button
