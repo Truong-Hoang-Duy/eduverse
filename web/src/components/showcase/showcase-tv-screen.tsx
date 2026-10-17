@@ -498,8 +498,7 @@ export function ShowcaseTvScreen({
               isDark ? "text-white" : "text-[#241c14]"
             }`}
           >
-            Báo cáo sản phẩm cuối khóa - Lớp{" "}
-            <span className="font-sans font-bold">{classCode}</span>
+            Báo cáo sản phẩm cuối khóa - Lớp {classCode}
           </h1>
         </div>
 
