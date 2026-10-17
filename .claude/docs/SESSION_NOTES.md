@@ -3,9 +3,17 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-14, bởi: Gemini)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-17, bởi: Gemini)
 
-**Đang làm:** Đã hoàn thành toàn diện Đợt 94 -> Đợt 98 (Nhạc nền Acoustic, TV Responsive, Đổi tên học viên, Xóa dữ liệu link tắt, Bố cục 50/50, Bộ lọc ngôn từ sỉ nhục trí tuệ siêu tốc và Thông báo nổi EducationalToast):
+**Đang làm:** Đã hoàn thành Đợt 99 (**Căn giữa popup xem chi tiết sản phẩm trên màn hình Showcase / Quét QR**):
+1. **Khắc phục lỗi popup bị tụt xuống đáy màn hình (`web/src/app/showcase/[token]/showcase-view.tsx`):**
+   - **Nguyên nhân gốc rễ:** Trong `DialogContent`, thuộc tính `className` chứa class `relative`. Do cơ chế gộp class của `tailwind-merge` (`twMerge`), class `relative` đã ghi đè và loại bỏ class `fixed` mặc định của `DialogContent` (`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`). Do mất `fixed`, phần tử dialog rơi vào luồng tài liệu thông thường (bên dưới thẻ `<main>`) và bị đẩy tụt xuống đáy trang, khiến phần đáy popup bị cắt cụt khỏi màn hình trên cả điện thoại và máy tính.
+   - **Giải pháp:** Loại bỏ class thừa `relative` khỏi `DialogContent className`. Giữ nguyên `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2` giúp popup luôn được căn giữa hoàn hảo cả chiều ngang lẫn chiều dọc trên mọi kích thước màn hình (mobile & desktop), hiển thị trọn vẹn Header, Mô tả, Tính năng, Hình ảnh sản phẩm và thanh điều hướng chân trang (`[← Bạn trước] [1/X] [Bạn tiếp →]`).
+2. **Kiểm thử chất lượng:**
+   - Đã kiểm chứng trực quan bằng headless browser subagent trên cả giao diện Desktop và Mobile (390x844).
+   - `web/`: Toàn bộ 438/438 vitest tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+**Trước đó:** Đã hoàn thành toàn diện Đợt 94 -> Đợt 98 (Nhạc nền Acoustic, TV Responsive, Đổi tên học viên, Xóa dữ liệu link tắt, Bố cục 50/50, Bộ lọc ngôn từ sỉ nhục trí tuệ siêu tốc và Thông báo nổi EducationalToast):
 1. **Module lọc ngôn từ sư phạm siêu tốc & Mở rộng từ ngữ sỉ nhục trí tuệ (`web/src/lib/content-moderation.ts`):**
    - Xử lý dứt điểm từ đơn "ngu" và các biến thể công kích cá nhân: `ngu`, `đần`, `dốt`, `khùng`, `điên`, `ngáo`, `cút`, `cút đi`, `biến đi`.
    - Mở rộng các cụm từ hạ thấp nhân phẩm: `thằng ngu`, `con ngu`, `đồ ngu`, `bọn ngu`, `lũ ngu`, `ngu quá`, `sao ngu thế`, `ngu vl`, `ngu vcl`, `ngu như bò/chó/lợn`, `đần độn`, `dốt nát`, `khùng điên`, `óc chó`, `não tàn`, `bại não`, `mất dạy`, `vô học`.

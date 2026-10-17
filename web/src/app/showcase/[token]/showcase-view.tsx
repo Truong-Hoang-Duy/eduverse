@@ -345,7 +345,7 @@ export function ShowcaseView({
         <DialogContent
           showCloseButton={false}
           style={{ touchAction: "pan-y" }}
-          className={`${fontClass} showcase-theme relative flex flex-col h-[82dvh] sm:h-[86dvh] max-h-[85dvh] sm:max-h-[88dvh] w-[calc(100%-2rem)] sm:w-full max-w-[calc(100%-2rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl gap-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-sc-brass/40 bg-sc-raised p-0 text-sc-ink shadow-2xl ring-0`}
+          className={`${fontClass} showcase-theme flex flex-col h-[82dvh] sm:h-[86dvh] max-h-[85dvh] sm:max-h-[88dvh] w-[calc(100%-2rem)] sm:w-full max-w-[calc(100%-2rem)] sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl gap-0 overflow-hidden rounded-2xl sm:rounded-3xl border border-sc-brass/40 bg-sc-raised p-0 text-sc-ink shadow-2xl ring-0`}
         >
           <DialogClose
             type="button"
