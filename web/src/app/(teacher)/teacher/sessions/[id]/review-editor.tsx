@@ -939,6 +939,7 @@ export function ReviewEditor({
                                 prev === grp.group ? null : grp.group
                               )
                             }
+                            title={grp.group}
                             className={cn(
                               "w-full h-11 px-3 flex items-center justify-between rounded-lg border transition-all cursor-pointer select-none bg-background",
                               isOpen
@@ -948,29 +949,22 @@ export function ReviewEditor({
                                   : "border-border/70 hover:border-border hover:bg-muted/20"
                             )}
                           >
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center gap-1.5 min-w-0">
                               <span className="text-sm shrink-0">{grp.icon}</span>
                               <span className="text-xs font-semibold text-foreground truncate">
                                 {grp.group}
                               </span>
-                              {groupSelectedCount > 0 ? (
+                              {groupSelectedCount > 0 && (
                                 <Badge
                                   variant="secondary"
-                                  className="text-[10px] px-1.5 py-0.5 h-4.5 bg-primary/15 text-primary border border-primary/30 font-semibold shrink-0"
+                                  className="text-[10px] px-1.5 py-0 h-4 bg-primary/15 text-primary border border-primary/30 font-semibold shrink-0"
                                 >
-                                  ✓ Đã chọn {groupSelectedCount}
+                                  ✓ {groupSelectedCount}
                                 </Badge>
-                              ) : (
-                                <span className="text-[11px] text-muted-foreground shrink-0 hidden sm:inline">
-                                  (Chưa chọn)
-                                </span>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-1 text-muted-foreground shrink-0 ml-2">
-                              <span className="text-[11px] font-medium text-primary">
-                                {isOpen ? "Thu lại" : "Xổ xuống"}
-                              </span>
+                            <div className="flex items-center gap-1 text-muted-foreground shrink-0 ml-1.5">
                               <ChevronDown
                                 className={cn(
                                   "size-3.5 text-primary transition-transform duration-200",
@@ -1223,37 +1217,81 @@ export function ReviewEditor({
                                         })()}
                                       </div>
                                     )
-                                  ) : (
-                                    <div className="flex flex-wrap gap-1 max-h-[220px] overflow-y-auto pr-1">
-                                      {grp.items.map((item) => {
-                                        const isSelected =
-                                          selectedObservations.includes(item);
-                                        const isImprovement = isImprovementObservation(item);
-                                        return (
-                                          <button
-                                            key={item}
-                                            type="button"
-                                            onClick={() => toggleObservation(item)}
-                                            className={cn(
-                                              "text-[11px] px-2 py-0.5 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none leading-tight",
-                                              isSelected
-                                                ? isImprovement
-                                                  ? "border-amber-500/60 bg-amber-500/15 text-amber-800 dark:text-amber-200 font-medium shadow-2xs ring-1 ring-amber-500/30"
-                                                  : "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
-                                                : isImprovement
-                                                  ? "border-amber-500/30 bg-amber-500/5 text-muted-foreground hover:border-amber-500/50 hover:text-foreground hover:bg-amber-500/10"
-                                                  : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
-                                            )}
-                                          >
-                                            <span className="text-[10px] font-bold">
-                                              {isSelected ? "✓" : isImprovement ? "💡" : "+"}
+                                  ) : (() => {
+                                    const strengths = grp.items.filter(
+                                      (it) => !isImprovementObservation(it)
+                                    );
+                                    const improvements = grp.items.filter(
+                                      isImprovementObservation
+                                    );
+                                    return (
+                                      <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
+                                        {strengths.length > 0 && (
+                                          <div className="space-y-1">
+                                            <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                                              <span>✨</span> Điểm làm tốt & khá ({strengths.length})
                                             </span>
-                                            <span>{item}</span>
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
+                                            <div className="flex flex-wrap gap-1">
+                                              {strengths.map((item) => {
+                                                const isSelected =
+                                                  selectedObservations.includes(item);
+                                                return (
+                                                  <button
+                                                    key={item}
+                                                    type="button"
+                                                    onClick={() => toggleObservation(item)}
+                                                    className={cn(
+                                                      "text-[11px] px-2 py-0.5 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none leading-tight",
+                                                      isSelected
+                                                        ? "border-primary bg-primary/10 text-primary font-medium shadow-2xs ring-1 ring-primary/25"
+                                                        : "border-border/60 bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground hover:bg-muted/30"
+                                                    )}
+                                                  >
+                                                    <span className="text-[10px] font-bold">
+                                                      {isSelected ? "✓" : "+"}
+                                                    </span>
+                                                    <span>{item}</span>
+                                                  </button>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {improvements.length > 0 && (
+                                          <div className="space-y-1 pt-1.5 border-t border-border/30">
+                                            <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                                              <span>💡</span> Cần lưu ý & cải thiện ({improvements.length})
+                                            </span>
+                                            <div className="flex flex-wrap gap-1">
+                                              {improvements.map((item) => {
+                                                const isSelected =
+                                                  selectedObservations.includes(item);
+                                                return (
+                                                  <button
+                                                    key={item}
+                                                    type="button"
+                                                    onClick={() => toggleObservation(item)}
+                                                    className={cn(
+                                                      "text-[11px] px-2 py-0.5 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none leading-tight",
+                                                      isSelected
+                                                        ? "border-amber-500/60 bg-amber-500/15 text-amber-800 dark:text-amber-200 font-medium shadow-2xs ring-1 ring-amber-500/30"
+                                                        : "border-amber-500/30 bg-amber-500/5 text-muted-foreground hover:border-amber-500/50 hover:text-foreground hover:bg-amber-500/10"
+                                                    )}
+                                                  >
+                                                    <span className="text-[10px] font-bold">
+                                                      {isSelected ? "✓" : "💡"}
+                                                    </span>
+                                                    <span>{item}</span>
+                                                  </button>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             </>
@@ -1282,7 +1320,7 @@ export function ReviewEditor({
                       <span>
                         {isPeriodicExam
                           ? "Điểm mạnh & điểm cần cải thiện được AI phân tích từ quá trình học và bài kiểm tra định kỳ để đưa vào nhận xét."
-                          : "Điểm mạnh & điểm cần cải thiện được AI tự động phân tích và tổng hợp đa chiều từ lịch sử 13 buổi học trước để đưa vào nhận xét toàn khóa."}
+                          : "Điểm mạnh & cần cải thiện được AI tổng hợp từ lịch sử 13 buổi trước vào nhận xét toàn khóa."}
                       </span>
                     </p>
                   </div>

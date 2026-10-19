@@ -3,9 +3,17 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-17, bởi: Gemini)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-19, bởi: Gemini)
+**Đang làm:** Đã hoàn thành bộ ba cải tiến sư phạm cho **Nhận xét học viên & Nội dung bài học** (Đợt 101 -> 103):
+1. **Đợt 101 (Nhận xét Buổi 14 & ĐNL):** Mở rộng ngân hàng quan sát 3 ô chọn lên 81 mục (27 mục/ô), không dùng từ đại ngôn ("tốt", "khá", "cần cải thiện"). Nâng cấp Bảng Đánh Giá Năng Lực (ĐNL) theo dòng chảy 2 giai đoạn (quá trình học 1-13 ➔ đúc kết SPCK/thuyết trình buổi 14). Chuẩn hóa xưng hô: tuyệt đối chỉ xưng "em", không gọi tên riêng.
+2. **Đợt 102 (Nội dung buổi học):** Tách riêng `SESSION_CONTENT_SYSTEM_ROLE`, cấm triệt để từ "em" trong tóm tắt bài học; chuyển sang định dạng chỉ liệt kê các đầu mục ngắn gọn (5-15 từ), không diễn giải lan man.
+3. **Đợt 103 (Nhận xét từng buổi học):** Bổ sung `CẤM MỞ ĐẦU VĂN MẪU SÁO RỖNG` vào `TONE_RULE` và `build_review_prompt` (cấm tuyệt đối *"Đáng khen là..."*, *"Rất đáng khen..."*, *"Riêng ở phần..."*), mở đầu tự nhiên theo quan sát của giáo viên và chuyển ý nhẹ nhàng, xây dựng.
+- Kiểm thử chất lượng: Toàn bộ 102/102 pytest tests PASS, 438/438 vitest tests PASS, `pnpm typecheck` 0 lỗi.
 
-**Đang làm:** Đã hoàn thành Đợt 100 (**Đồng bộ font chữ mã lớp trên Header Màn chiếu TV / QR**):
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 100 (**Đồng bộ font chữ mã lớp trên Header Màn chiếu TV / QR**):
 1. **Đồng bộ font chữ mã lớp (`web/src/components/showcase/showcase-tv-screen.tsx`):**
    - Loại bỏ thẻ bọc `<span className="font-sans font-bold">{classCode}</span>` trong tiêu đề `<h1>` của Header màn chiếu.
    - Mã lớp (ví dụ: `CSA05`) giờ đây cùng kế thừa đồng nhất font chữ `font-display font-extrabold tracking-tight` với toàn bộ cụm `Báo cáo sản phẩm cuối khóa - Lớp {classCode}`, tạo nên sự liền mạch, sang trọng và chuẩn mực nhận diện thương hiệu "Bảng vàng".
@@ -14,26 +22,11 @@
 
 **Trước đó:** Đã hoàn thành Đợt 99 (**Căn giữa popup xem chi tiết sản phẩm trên màn hình Showcase / Quét QR**):
 1. **Khắc phục lỗi popup bị tụt xuống đáy màn hình (`web/src/app/showcase/[token]/showcase-view.tsx`):**
-   - **Nguyên nhân gốc rễ:** Trong `DialogContent`, thuộc tính `className` chứa class `relative`. Do cơ chế gộp class của `tailwind-merge` (`twMerge`), class `relative` đã ghi đè và loại bỏ class `fixed` mặc định của `DialogContent` (`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`). Do mất `fixed`, phần tử dialog rơi vào luồng tài liệu thông thường (bên dưới thẻ `<main>`) và bị đẩy tụt xuống đáy trang, khiến phần đáy popup bị cắt cụt khỏi màn hình trên cả điện thoại và máy tính.
-   - **Giải pháp:** Loại bỏ class thừa `relative` khỏi `DialogContent className`. Giữ nguyên `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2` giúp popup luôn được căn giữa hoàn hảo cả chiều ngang lẫn chiều dọc trên mọi kích thước màn hình (mobile & desktop), hiển thị trọn vẹn Header, Mô tả, Tính năng, Hình ảnh sản phẩm và thanh điều hướng chân trang (`[← Bạn trước] [1/X] [Bạn tiếp →]`).
+   - Loại bỏ class thừa `relative` khỏi `DialogContent className`. Giữ nguyên `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2` giúp popup luôn được căn giữa hoàn hảo cả chiều ngang lẫn chiều dọc trên mọi kích thước màn hình.
 2. **Kiểm thử chất lượng:**
-   - Đã kiểm chứng trực quan bằng headless browser subagent trên cả giao diện Desktop và Mobile (390x844).
    - `web/`: Toàn bộ 438/438 vitest tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
 
-**Trước đó:** Đã hoàn thành toàn diện Đợt 94 -> Đợt 98 (Nhạc nền Acoustic, TV Responsive, Đổi tên học viên, Xóa dữ liệu link tắt, Bố cục 50/50, Bộ lọc ngôn từ sỉ nhục trí tuệ siêu tốc và Thông báo nổi EducationalToast):
-1. **Module lọc ngôn từ sư phạm siêu tốc & Mở rộng từ ngữ sỉ nhục trí tuệ (`web/src/lib/content-moderation.ts`):**
-   - Xử lý dứt điểm từ đơn "ngu" và các biến thể công kích cá nhân: `ngu`, `đần`, `dốt`, `khùng`, `điên`, `ngáo`, `cút`, `cút đi`, `biến đi`.
-   - Mở rộng các cụm từ hạ thấp nhân phẩm: `thằng ngu`, `con ngu`, `đồ ngu`, `bọn ngu`, `lũ ngu`, `ngu quá`, `sao ngu thế`, `ngu vl`, `ngu vcl`, `ngu như bò/chó/lợn`, `đần độn`, `dốt nát`, `khùng điên`, `óc chó`, `não tàn`, `bại não`, `mất dạy`, `vô học`.
-   - Cơ chế bảo vệ thông minh (`SLEEP_CONTEXT_BEFORE` / `SLEEP_CONTEXT_AFTER`): Không bao giờ bắt nhầm khi người dùng gõ không dấu hoặc có dấu về giấc ngủ (*"chúc bạn ngủ ngon"*, *"chuc ban ngu ngon"*, *"chuc ngu ngon"*, *"di ngu thoi"*, *"buon ngu qua"*), đồng thời bảo vệ 100% từ tiếng Việt hợp lệ (*"người"*, *"nguyên"*, *"nguồn"*, *"nguy cơ"*, *"đội ngũ"*, *"ngụ ngôn"*).
-2. **Thông báo nổi chuẩn mực sư phạm `EducationalToast` (`educational-toast.tsx`):**
-   - Hiển thị nổi thanh lịch ở đầu màn hình (`fixed top-5 left-1/2 -translate-x-1/2 z-[99999]`), viền hổ phách ấm áp, bóng đổ mờ ảo, mầm xanh `🌱` và hiệu ứng lấp lánh `Sparkles`.
-   - Tự biến mất sau 4.5s hoặc bấm nút tắt `✕`.
-   - Tích hợp hook `useEducationalToast()` vào `CommentSection` (`comment-section.tsx`) và `RatingForm` (`rating-form.tsx`) khi bấm Enter hoặc nút Gửi.
-3. **Kiểm thử chất lượng toàn diện:**
-   - 118 unit tests trong `content-moderation.test.ts`.
-   - `web/`: Toàn bộ 438/438 vitest tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
-
-
+**Trước đó:** Đã hoàn thành toàn diện Đợt 94 -> Đợt 98 (Nhạc nền Acoustic, TV Responsive, Đổi tên học viên, Xóa dữ liệu link tắt, Bố cục 50/50, Bộ lọc ngôn từ sỉ nhục trí tuệ siêu tốc và Thông báo nổi EducationalToast).
 1. **Phân loại 5 môn học thích ứng theo trình tự từ nhỏ đến lớn (`ai-service/app/prompts.py`):**
    - Hàm `detect_course_domain(course_name)` tự động phân loại 5 bộ môn dạy lập trình cho lứa tuổi dưới 18 theo đúng lộ trình phát triển: `scratch` -> `gamemaker` -> `app` -> `web` -> `computer_science` (fallback: `general`).
    - Cung cấp từ điển hành vi sư phạm riêng biệt cho từng môn:

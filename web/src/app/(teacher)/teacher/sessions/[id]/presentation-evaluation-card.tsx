@@ -413,13 +413,13 @@ export function PresentationEvaluationCard({
                       {/* Textarea comment: Đường nét phẳng, focus mềm mại, không viền hộp thô */}
                       <div className="relative">
                         <Textarea
-                          rows={2}
+                          rows={3}
                           value={evalItem.comment}
                           onChange={(e) =>
                             handleDnlCommentChange(criterion.key, e.target.value)
                           }
                           placeholder={`Nhập hoặc tạo nhận xét cho tiêu chí ${formattedIndex}: ${criterion.description.toLowerCase()}...`}
-                          className="text-xs sm:text-sm bg-background/90 focus-visible:ring-1 focus-visible:ring-primary/50 resize-y rounded-lg border-muted-foreground/20 leading-relaxed"
+                          className="text-xs sm:text-sm bg-background/90 focus-visible:ring-1 focus-visible:ring-primary/50 resize-y rounded-lg border-muted-foreground/20 leading-relaxed min-h-[72px]"
                         />
                         {hasComment && (
                           <span className="absolute bottom-1.5 right-2 text-[10px] text-muted-foreground/50 pointer-events-none">
