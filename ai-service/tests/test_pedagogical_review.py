@@ -182,3 +182,19 @@ def test_session_13_positive_completion_guideline() -> None:
     assert "TÍCH CỰC, KHÍCH LỆ VÀ GHI NHẬN THÀNH QUẢ" in prompt
     assert "thuyết trình trước lớp ở buổi 14 Demo Day" in prompt
 
+
+def test_review_prompt_forbids_robotic_starters_and_transitions() -> None:
+    prompt = prompts.build_review_prompt(
+        student_name="Huy",
+        session_title="Buổi 3",
+        session_content="Thiết kế giao diện máy tính bỏ túi",
+        strengths=["Tiếp thu nhanh"],
+        improvements=["Cần cẩn thận"],
+        session_context=None,
+        previous_comment=None,
+    )
+
+    assert "CẤM MỞ ĐẦU VĂN MẪU SÁO RỖNG" in prompt
+    assert "TUYỆT ĐỐI CẤM mở đầu bằng các từ sáo rỗng, máy móc như 'Đáng khen là...'" in prompt
+    assert "'Đáng khen là...', 'Riêng ở phần...'" not in prompt
+

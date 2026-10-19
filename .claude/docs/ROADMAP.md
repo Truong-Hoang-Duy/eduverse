@@ -1371,7 +1371,47 @@
   - Buổi 9-12 (In-progress): Nhận xét bám sát tiến độ từng buổi, không nói như thể đã hoàn thành 100%. Fallback an toàn nếu học viên chưa tạo sản phẩm.
 - [x] **Kiểm thử chất lượng:** 100/100 pytest PASS (thêm 9 unit tests mới trong `test_pedagogical_review.py`), 320/320 vitest PASS, `pnpm typecheck` và `pnpm lint` 0 lỗi.
 
+### Đợt 94: Tinh gọn chữ và mở rộng ngân hàng nhận xét 3 ô chọn Buổi 14 (Thuyết trình & Sản phẩm cuối khóa) (2026-10-19)
+- [x] **Tinh gọn tiêu đề nhóm & giao diện 3 nút bấm (`review-editor.tsx`, `presentation-evaluation.ts`):**
+  - Rút ngắn tên 3 nhóm: `Kỹ năng thuyết trình`, `Sản phẩm & Demo`, `Tư duy & Phản biện`.
+  - Tinh gọn trigger button: Badge rút gọn thành `✓ {count}` (ẩn khi chưa chọn), loại bỏ chữ `Xổ xuống` / `Thu lại` rườm rà.
+  - Tiêu đề 3 ô hiển thị trọn vẹn 100% trên giao diện máy tính/laptop, triệt tiêu hoàn toàn hiện tượng cắt chữ `...`.
+  - Rút gọn dòng chú thích gợi ý AI ở chân form nhập.
+- [x] **Mở rộng và chuẩn hóa ngân hàng quan sát buổi thuyết trình (`presentation-evaluation.ts`):**
+  - Tăng số lượng nhận xét từ 21 mục lên 81 mục (mỗi ô 27 mục) ngắn gọn, súc tích (3-6 từ/mục).
+  - Loại bỏ hoàn toàn các từ đại ngôn ("xuất sắc", "tuyệt vời", "hoàn hảo") — thay thế bằng thang đánh giá đúng mực sư phạm: "tốt", "khá", "tương đối", "ổn định", "rõ ràng", "đạt yêu cầu", "cần rèn luyện thêm".
+  - Phân tách rõ rệt 3 thang mức độ: Tốt, Khá và Cần lưu ý & cải thiện.
+- [x] **Tự động phân nhóm trực quan trong popup Menu thả xuống (`review-editor.tsx`):**
+  - Hiển thị tách biệt 2 khu vực: `✨ Điểm làm tốt & khá` ở trên và `💡 Cần lưu ý & cải thiện` ở dưới kèm icon và phân biệt màu sắc viền/nền.
+- [x] **Nâng cấp Bảng Đánh Giá Năng Lực & Tổng Điểm theo dòng chảy 2 giai đoạn (`ai-service/app/prompts.py`, `presentation-evaluation-card.tsx`):**
+  - **Đoạn nhận xét tổng kết chính (`comment`):** Nâng độ dài lên 180 - 260 từ (2 đoạn mạch lạc). Đoạn 1 nhận xét quá trình học tập (Buổi 1-13) về tính chuyên cần, thái độ, tiếp thu kiến thức và sự kiên nhẫn vượt khó; Đoạn 2 đúc kết vào sản phẩm cuối khóa & thuyết trình (Buổi 14), chuyển hóa kiến thức vào đề tài và chỉ rõ 1-2 điểm cần lưu ý cải thiện (tuyệt đối không khen 1 chiều).
+  - **9 tiêu chí ĐNL (`dnl_evaluations`):** Nâng độ dài lên 35 - 60 từ (2-3 câu hoàn chỉnh), đi theo cấu trúc: `[Biểu hiện quá trình học] ➔ [Minh chứng thực tế trên SPCK / Thuyết trình] ➔ [Góp ý rèn luyện]`.
+  - **Khung nhập liệu (`presentation-evaluation-card.tsx`):** Nâng chiều cao textarea từ `rows={2}` lên `rows={3}` (`min-h-[72px]`) để hiển thị trọn vẹn và thoải mái các câu nhận xét chi tiết.
+- [x] **Quy chuẩn xưng hô AI trên toàn hệ thống (`ai-service/app/prompts.py`):**
+  - Cập nhật `SYSTEM_ROLE` và toàn bộ các prompt (`build_review_prompt`, `build_final_presentation_review_prompt`, `build_student_summary_prompt`): Bắt buộc luôn xưng/gọi học viên là "em" — TUYỆT ĐỐI KHÔNG xưng tên riêng hay gọi thẳng tên học viên trong văn bản nhận xét.
+- [x] **Kiểm thử chất lượng:**
+  - `web`: 320/320 vitest PASS (bổ sung assertions kiểm tra cấm từ "xuất sắc", "tuyệt vời" và số lượng mục >= 20), `pnpm typecheck` và `pnpm lint` 0 lỗi.
+  - `ai-service`: 100/100 pytest PASS.
 
+### Đợt 95: Tinh gọn Gợi ý nội dung buổi học & Cấm từ "em" trong tóm tắt giáo án (2026-10-19)
+- [x] **Tách riêng System Role cho Tóm tắt bài học (`ai-service/app/prompts.py`):**
+  - Tạo `SESSION_CONTENT_SYSTEM_ROLE` độc lập, loại bỏ `SYSTEM_ROLE` của nhận xét học viên.
+  - Quy định nghiêm ngặt: **TUYỆT ĐỐI KHÔNG dùng các từ 'em', 'học sinh', 'học viên', 'thầy', 'cô'** vì đây là tóm tắt chương trình/giáo án khách quan.
+- [x] **Siết gọn định dạng — Chỉ liệt kê các đầu mục ngắn gọn (Bullet Headings):**
+  - Chuyển đổi định dạng: mỗi gạch đầu dòng là 1 ĐẦU MỤC ngắn gọn, súc tích (5-15 từ trên 1 dòng duy nhất), theo chuẩn `[Phân loại/Chủ đề]: [Tên bài học/Kỹ năng/Bài thực hành cụ thể]`.
+  - Cấm triệt để viết thành câu văn hay đoạn mô tả dài dòng, lan man.
+- [x] **Kiểm thử chất lượng:**
+  - `ai-service`: Cập nhật `test_session_content.py` với assertions kiểm tra cấm từ "em" và yêu cầu đầu mục súc tích. Toàn bộ **101/101 pytest PASS**.
+  - `web`: 320/320 vitest PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+### Đợt 96: Triệt tiêu văn mẫu máy móc & Chuẩn hóa mở đầu tự nhiên trong Nhận xét từng buổi học (2026-10-19)
+- [x] **Cấm hoàn toàn các từ mở đầu sáo rỗng (`ai-service/app/prompts.py`):**
+  - Bổ sung vào `TONE_RULE`: **TUYỆT ĐỐI KHÔNG** mở đầu nhận xét bằng các từ máy móc: *"Đáng khen là..."*, *"Rất đáng khen..."*, *"Điểm sáng là..."*, *"Một điểm cộng là..."*, *"Đáng biểu dương là..."*.
+  - Sửa `build_review_prompt`: Loại bỏ hoàn toàn gợi ý `'Đáng khen là...', 'Riêng ở phần...'`; thay bằng hướng dẫn mở đầu tự nhiên đi thẳng vào hành động, sự chủ động, thái độ tập trung hoặc cách em tiếp thu bài học cụ thể trong buổi.
+  - Chuyển ý tự nhiên, mềm mại và chân thành sang điểm cần cải thiện, không dùng các từ nối rập khuôn cắt gãy.
+- [x] **Kiểm thử chất lượng:**
+  - `ai-service`: Thêm `test_review_prompt_forbids_robotic_starters_and_transitions` trong `test_pedagogical_review.py`. Toàn bộ **102/102 pytest PASS**.
+  - `web`: 320/320 vitest PASS, `pnpm typecheck` 0 lỗi.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

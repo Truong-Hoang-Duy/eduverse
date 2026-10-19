@@ -3,8 +3,17 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-14, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 93 (**Cải tiến nhận xét & gợi ý buổi học AI theo chuẩn sư phạm, phân loại 5 môn học theo trình tự phát triển và chống trùng lặp tiến trình**):
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-19, bởi: Gemini)
+**Đang làm:** Đã hoàn thành triệt tiêu văn mẫu máy móc và các từ mở đầu sáo rỗng trong **Nhận xét từng buổi học** (`build_review_prompt` & `TONE_RULE`):
+- `ai-service/app/prompts.py`:
+  - `TONE_RULE`: Bổ sung điều khoản `CẤM MỞ ĐẦU VĂN MẪU SÁO RỖNG`: Tuyệt đối cấm các từ máy móc như "Đáng khen là...", "Rất đáng khen...", "Điểm sáng là...", "Một điểm cộng là...", "Đáng biểu dương là...".
+  - `build_review_prompt`: Loại bỏ hoàn toàn gợi ý máy móc `'Đáng khen là...', 'Riêng ở phần...'`; thay bằng hướng dẫn mở đầu tự nhiên theo góc nhìn quan sát trực tiếp của giáo viên (vào thẳng hành động, thái độ, tư duy hoặc cách tiếp thu bài cụ thể của em) và chuyển ý mềm mại, xây dựng sang điểm cần cải thiện.
+- `ai-service/tests/test_pedagogical_review.py`: Bổ sung unit test `test_review_prompt_forbids_robotic_starters_and_transitions` kiểm tra cấm các từ mở đầu sáo rỗng. Toàn bộ **102/102 pytest tests PASS**.
+- Toàn bộ kiểm thử hệ thống: `pnpm typecheck` (0 lỗi), `pnpm test` (320/320 tests pass).
+
+Cập nhật bởi: Gemini
+
+---
 1. **Phân loại 5 môn học thích ứng theo trình tự từ nhỏ đến lớn (`ai-service/app/prompts.py`):**
    - Hàm `detect_course_domain(course_name)` tự động phân loại 5 bộ môn dạy lập trình cho lứa tuổi dưới 18 theo đúng lộ trình phát triển: `scratch` -> `gamemaker` -> `app` -> `web` -> `computer_science` (fallback: `general`).
    - Cung cấp từ điển hành vi sư phạm riêng biệt cho từng môn:
