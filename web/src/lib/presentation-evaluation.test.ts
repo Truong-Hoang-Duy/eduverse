@@ -196,7 +196,12 @@ describe("presentation-evaluation", () => {
     for (const grp of PRESENTATION_OBSERVATION_GROUPS) {
       expect(grp.group).toBeTruthy();
       expect(grp.icon).toBeTruthy();
-      expect(grp.items.length).toBeGreaterThanOrEqual(5);
+      expect(grp.items.length).toBeGreaterThanOrEqual(20);
+      for (const item of grp.items) {
+        expect(item.toLowerCase()).not.toContain("xuất sắc");
+        expect(item.toLowerCase()).not.toContain("tuyệt vời");
+        expect(item.toLowerCase()).not.toContain("hoàn hảo");
+      }
     }
 
     expect(FINAL_EXAM_OBSERVATION_GROUPS.length).toBeGreaterThanOrEqual(2);

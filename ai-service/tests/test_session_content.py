@@ -103,10 +103,18 @@ def test_draft_given_still_forbids_inventing_new_topics() -> None:
     assert "TUYỆT ĐỐI KHÔNG tự thêm kiến thức/chủ đề mới" in prompt
 
 
-def test_should_encourage_pedagogical_structure_and_action_oriented_bullets() -> None:
+def test_should_encourage_concise_bullet_headings_not_long_descriptions() -> None:
     prompt = build()
 
-    assert "CẤU TRÚC CHO MỖI GẠCH ĐẦU DÒNG" in prompt
-    assert "giàu tính sư phạm" in prompt
-    assert "tiến trình buổi học" in prompt
+    assert "CHỈ LIỆT KÊ CÁC ĐẦU MỤC SẼ HỌC" in prompt
+    assert "ĐẦU MỤC ngắn gọn, súc tích" in prompt
+    assert "TUYỆT ĐỐI KHÔNG viết thành câu văn hay đoạn mô tả dài dòng" in prompt
+
+
+def test_should_forbid_student_pronoun_em_in_session_content() -> None:
+    prompt = build()
+
+    assert "TUYỆT ĐỐI KHÔNG dùng các từ 'em'" in prompt
+    # Không áp SYSTEM_ROLE xưng 'em' của phần nhận xét
+    assert prompts.SYSTEM_ROLE not in prompt
 
