@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  cleanInstructionsForDisplay,
+  encodeInstructionsWithAttachments,
+  extractAttachmentPaths,
   formatTitleFromFileName,
   getDisplayFileName,
   getNextSessionNumber,
@@ -117,5 +120,42 @@ describe("getDisplayFileName", () => {
     expect(
       getDisplayFileName("course_123/1729000000000-att-customer-sales-data.csv")
     ).toBe("customer-sales-data.csv");
+  });
+});
+
+describe("encodeInstructionsWithAttachments & extractAttachmentPaths", () => {
+  it("trả về mảng rỗng khi không có metadata đính kèm", () => {
+    expect(extractAttachmentPaths(null, null)).toEqual([]);
+    expect(extractAttachmentPaths("", [])).toEqual([]);
+    expect(extractAttachmentPaths("Chấm điểm logic vòng lặp", null)).toEqual([]);
+  });
+
+  it("ưu tiên mảng dbAttachmentPaths nếu tồn tại và có phần tử", () => {
+    const fromDb = ["path/to/data.csv"];
+    const encoded = encodeInstructionsWithAttachments("Hướng dẫn", [
+      "other/path.csv",
+    ]);
+    expect(extractAttachmentPaths(encoded, fromDb)).toEqual(fromDb);
+  });
+
+  it("mã hóa và trích xuất đúng danh sách file từ instructions", () => {
+    const paths = ["course/1-att-hw3_data.csv", "course/1-att-test.py"];
+    const encoded = encodeInstructionsWithAttachments("Hướng dẫn chấm", paths);
+    expect(encoded).toContain("Hướng dẫn chấm");
+    expect(encoded).toContain("<!--attachments:");
+
+    const extracted = extractAttachmentPaths(encoded, null);
+    expect(extracted).toEqual(paths);
+
+    const cleaned = cleanInstructionsForDisplay(encoded);
+    expect(cleaned).toBe("Hướng dẫn chấm");
+  });
+
+  it("mã hóa khi instructions ban đầu rỗng", () => {
+    const paths = ["course/data.csv"];
+    const encoded = encodeInstructionsWithAttachments(null, paths);
+    expect(encoded?.startsWith("<!--attachments:")).toBe(true);
+    expect(extractAttachmentPaths(encoded, null)).toEqual(paths);
+    expect(cleanInstructionsForDisplay(encoded)).toBe("");
   });
 });

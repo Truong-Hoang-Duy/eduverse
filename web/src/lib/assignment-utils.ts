@@ -58,3 +58,66 @@ export function getDisplayFileName(path: string): string {
   }
   return raw;
 }
+
+const ATTACHMENT_META_PREFIX = "<!--attachments:";
+const ATTACHMENT_META_SUFFIX = "-->";
+
+/**
+ * Đóng gói danh sách file đính kèm vào trường instructions (fallback an toàn nếu DB chưa có cột riêng).
+ */
+export function encodeInstructionsWithAttachments(
+  instructions?: string | null,
+  attachmentPaths?: string[] | null
+): string | null {
+  const clean = removeAttachmentMeta(instructions ?? "");
+  const paths = (attachmentPaths ?? []).filter(Boolean);
+  if (paths.length === 0) {
+    return clean || null;
+  }
+  const meta = `${ATTACHMENT_META_PREFIX}${JSON.stringify(paths)}${ATTACHMENT_META_SUFFIX}`;
+  return clean ? `${clean}\n${meta}` : meta;
+}
+
+/**
+ * Trích xuất danh sách file đính kèm: ưu tiên cột DB, nếu rỗng thì giải mã từ instructions.
+ */
+export function extractAttachmentPaths(
+  instructions?: string | null,
+  dbAttachmentPaths?: string[] | null
+): string[] {
+  if (Array.isArray(dbAttachmentPaths) && dbAttachmentPaths.length > 0) {
+    return dbAttachmentPaths;
+  }
+  if (!instructions || typeof instructions !== "string") {
+    return [];
+  }
+  const startIdx = instructions.indexOf(ATTACHMENT_META_PREFIX);
+  if (startIdx === -1) return [];
+  const endIdx = instructions.indexOf(ATTACHMENT_META_SUFFIX, startIdx);
+  if (endIdx === -1) return [];
+  try {
+    const jsonStr = instructions.slice(
+      startIdx + ATTACHMENT_META_PREFIX.length,
+      endIdx
+    );
+    const parsed = JSON.parse(jsonStr);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Làm sạch trường instructions khi hiển thị cho người dùng hoặc gửi sang AI
+ * (loại bỏ phần metadata kỹ thuật của attachments).
+ */
+export function cleanInstructionsForDisplay(
+  instructions?: string | null
+): string {
+  if (!instructions || typeof instructions !== "string") return "";
+  return removeAttachmentMeta(instructions);
+}
+
+function removeAttachmentMeta(text: string): string {
+  return text.replace(/<!--attachments:[\s\S]*?-->/g, "").trim();
+}

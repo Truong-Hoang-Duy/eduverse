@@ -1512,23 +1512,27 @@
 - [x] **Database Migration & Types (`20261022220000_assignment_attachment_files.sql` & `database.types.ts`):**
   - Bổ sung cột `attachment_file_paths text[] not null default '{}'` vào bảng `assignments`.
   - Cập nhật types cho `assignments` Row, Insert, Update.
-  - Cơ chế fallback an toàn ở server action nếu DB chưa áp dụng migration.
+  - Cơ chế fallback mã hóa metadata vào `instructions` an toàn 100% kể cả khi chưa chạy SQL migration.
 - [x] **AI Service nâng cấp (`ai-service`):**
   - Mở rộng model `GradeSubmissionRequest` và `HelpStudentRequest` nhận `attachment_file_paths`.
   - `storage.py`: Tải các file đính kèm, chuẩn hóa tên file với `_clean_spec_filename`, phân loại định dạng gửi kèm vào Gemini.
   - `prompts.py`: Chỉ dẫn Gemini đối chiếu trực tiếp mã code/câu lệnh/kết quả của học viên với dữ liệu thực tế trong các file đính kèm (dataset CSV, JSON, code mẫu...).
 - [x] **Quản lý & Tải lên file dữ liệu (`assignment-form.tsx`):**
   - Bổ sung picker chọn nhiều file dữ liệu (`.csv, .json, .sql, .py, .txt, .md, .pdf, .docx...`).
-  - Danh sách chip hiển thị tên file, dung lượng và nút xóa `✕` từng file trước khi tạo.
+  - Danh sách chip hiển thị tên file, dung lượng, nút `👁` xem trước nội dung file tại chỗ và nút `✕` xóa file.
   - Đồng bộ hai chiều với `DataTransfer` trên input file.
 - [x] **Xem & Tải đầy đủ tất cả tệp (`view-spec-dialog.tsx`):**
   - Xem cả file đề chính lẫn các file dữ liệu đính kèm với hệ thống chuyển tab mượt mà.
-  - Hỗ trợ xem trực tiếp (inline preview) file văn bản, code, CSV, PDF, ảnh.
+  - **Xem bảng dữ liệu CSV chuyên nghiệp (`CsvTableView`):** Hiển thị bảng dữ liệu với số thứ tự, header cố định, toggle dạng bảng và dạng văn bản.
+  - **Tải lên bổ sung trực tiếp:** Nút `+ Đính kèm thêm file` ngay trong dialog kèm action `attachAssignmentFiles` cho phép đính kèm file vào đề bài đã có sẵn.
+  - **Xóa tệp đính kèm linh hoạt:** Action `removeAssignmentAttachment` xóa tệp đính kèm và tự động dọn dẹp Storage.
   - Nút `⬇ Tải file` trực tiếp cho từng file qua signed URL bảo mật 600s.
+- [x] **Huy hiệu tệp đính kèm (`saved-assignments.tsx`):**
+  - Thẻ đề bài hiển thị rõ badge `📎 {count} tệp dữ liệu` kèm tooltip tên file.
 - [x] **Dọn dẹp Storage:**
   - Đồng bộ `spec-storage.ts`, `admin-report.ts` và `deleteAssignment` để xóa sạch cả đề chính và các tệp đính kèm khi xóa đề bài.
 - [x] **Kiểm thử chất lượng:**
-  - 454/454 vitest unit tests PASS (`assignment-utils.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` thành công 100%.
+  - 458/458 vitest unit tests PASS (`assignment-utils.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` thành công 100%.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

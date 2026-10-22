@@ -5,26 +5,28 @@
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-22, bởi: Gemini)
 **Đang làm:** Đã hoàn thành Đợt 106 (**Hỗ trợ đính kèm file dữ liệu/bổ sung (CSV, JSON, starter code...) vào đề bài & xem/tải đầy đủ**):
-1. **Migration DB:** `supabase/migrations/20261022220000_assignment_attachment_files.sql`: bổ sung cột `attachment_file_paths text[] not null default '{}'` vào bảng `assignments`.
-2. **Tương thích ngược & Chống crash:** Các Server Action `createAssignment`, `getAssignmentSpec`, `gradeFiles`, `helpStudent`, `deleteAssignment` đều có fallback tự động nếu DB chưa áp dụng migration.
-3. **AI Service (`ai-service`):**
+1. **Migration DB & Cơ chế lưu trữ fallback 100% an toàn (`assignment-utils.ts`):**
+   - Migration `supabase/migrations/20261022220000_assignment_attachment_files.sql`: bổ sung cột `attachment_file_paths text[] not null default '{}'` vào bảng `assignments`.
+   - Các helper `encodeInstructionsWithAttachments`, `extractAttachmentPaths`, `cleanInstructionsForDisplay`: mã hóa và giải mã metadata đính kèm vào `instructions` an toàn — tệp đính kèm được lưu trữ, xem và chấm bài hoàn hảo ngay cả khi giáo viên chưa kịp chạy SQL migration trên Supabase.
+2. **AI Service (`ai-service`):**
    - Mở rộng model `GradeSubmissionRequest` và `HelpStudentRequest` với trường `attachment_file_paths: list[str]`.
    - `ai-service/app/storage.py`: Tải các file đính kèm từ bucket `assignment-specs`, làm sạch tên file với `_clean_spec_filename` (bỏ tiền tố timestamp và `att-`), phân loại định dạng và gửi kèm sang Gemini.
    - `ai-service/app/prompts.py`: Bổ sung chỉ dẫn cho Gemini đối chiếu trực tiếp code, câu truy vấn và kết quả của học viên với dữ liệu thực tế trong các tệp đính kèm (dataset CSV, JSON, code mẫu...).
-4. **Giao diện tạo đề bài (`assignment-form.tsx`):**
+3. **Giao diện tạo đề bài & xem trước file tại chỗ (`assignment-form.tsx`):**
    - Bổ sung picker chọn nhiều file dữ liệu đính kèm (`.csv, .json, .sql, .py, .txt, .md, .pdf, .docx...`).
-   - Hiển thị danh sách file chip với tên file, dung lượng định dạng đẹp mắt và nút `✕` để gỡ bỏ file.
+   - Hiển thị danh sách file chip với tên file, dung lượng định dạng đẹp mắt, nút `👁` xem thử nội dung file tại chỗ trước khi tải lên và nút `✕` để gỡ bỏ.
    - Đồng bộ hai chiều với `DataTransfer` trên input file của form.
-5. **Giao diện xem & tải đề bài đầy đủ (`view-spec-dialog.tsx`):**
-   - Cho phép giáo viên xem cả file đề bài chính lẫn các file dữ liệu đính kèm.
-   - Chuyển đổi tab linh hoạt giữa Đề chính và các Tệp dữ liệu.
-   - Hỗ trợ hiển thị nội dung trực tiếp (inline preview) với văn bản, code, CSV, PDF, ảnh.
+4. **Giao diện xem đề, xem bảng dữ liệu CSV & quản lý tệp trực tiếp (`view-spec-dialog.tsx`):**
+   - Xem cả file đề chính lẫn các file dữ liệu đính kèm với hệ thống chuyển tab mượt mà.
+   - **Xem bảng dữ liệu CSV chuyên nghiệp (`CsvTableView`):** Phân tích dòng/cột CSV hiển thị bảng dữ liệu trực quan với số thứ tự dòng, tiêu đề cố định (sticky header), chế độ xem dạng bảng hoặc xem văn bản thô.
+   - **Tải lên bổ sung trực tiếp:** Nút `+ Đính kèm thêm file` ngay trong dialog kèm action `attachAssignmentFiles` cho phép thêm file dữ liệu vào các đề bài đã tạo trước đó mà không cần tạo lại.
+   - **Xóa tệp đính kèm linh hoạt:** Action `removeAssignmentAttachment` cho phép xóa bớt tệp đính kèm và tự động dọn dẹp Storage.
    - Tích hợp nút `⬇ Tải file` trực tiếp qua signed URL an toàn cho từng file.
-6. **Dọn dẹp Storage:**
-   - Cập nhật `spec-storage.ts`, `admin-report.ts`, và `deleteAssignment` để xóa sạch cả `spec_file_path` lẫn toàn bộ `attachment_file_paths` khi xóa đề bài, không để lại file rác / orphan files.
-7. **Kiểm thử chất lượng:**
-   - `assignment-utils.test.ts`: 15/15 tests PASS (bổ sung test cho `getDisplayFileName`).
-   - Toàn bộ 454/454 unit tests vitest PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` (Next.js turbopack) 100% thành công.
+5. **Hiển thị huy hiệu đính kèm trên danh sách đề đã lưu (`saved-assignments.tsx`):**
+   - Thẻ đề bài hiển thị rõ badge `📎 {count} tệp dữ liệu` kèm tooltip danh sách tên file.
+6. **Kiểm thử chất lượng:**
+   - `assignment-utils.test.ts`: 19/19 tests PASS.
+   - Toàn bộ 458/458 unit tests vitest PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` (Next.js turbopack) 100% thành công.
 
 Cập nhật bởi: Gemini
 

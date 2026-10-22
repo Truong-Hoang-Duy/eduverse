@@ -23,6 +23,8 @@ export interface SavedAssignment {
   courseId: string;
   sessionNumber: number;
   title: string;
+  attachmentCount?: number;
+  attachmentNames?: string[];
 }
 
 /**
@@ -155,9 +157,22 @@ export function SavedAssignments({
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
                       {a.sessionNumber}
                     </span>
-                    <p className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {a.title}
-                    </p>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p className="truncate text-sm font-medium">
+                        {a.title}
+                      </p>
+                      {a.attachmentCount != null && a.attachmentCount > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span
+                            className="inline-flex items-center gap-1 rounded bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+                            title={a.attachmentNames?.join(", ")}
+                          >
+                            <span>📎</span>
+                            <span>{a.attachmentCount} tệp dữ liệu</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     {/* Trên điện thoại không có hover — nút luôn hiện, chỉ
                         mờ đi cho đỡ rối trên máy rộng. */}
                     <div className="flex shrink-0 items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">

@@ -70,9 +70,27 @@ export function AssignmentForm({
   const [fileName, setFileName] = useState("");
   const [fileError, setFileError] = useState("");
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
+  const [previewModalFile, setPreviewModalFile] = useState<{
+    name: string;
+    content?: string;
+    url?: string;
+  } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const attachmentRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  async function handlePreviewLocalFile(file: File) {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    if (["txt", "md", "csv", "json", "py", "sql", "js", "ts"].includes(ext)) {
+      const text = await file.text();
+      setPreviewModalFile({ name: file.name, content: text });
+    } else if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext)) {
+      const url = URL.createObjectURL(file);
+      setPreviewModalFile({ name: file.name, url });
+    } else {
+      setPreviewModalFile({ name: file.name });
+    }
+  }
 
   function syncAttachmentFiles(files: File[]) {
     setAttachmentFiles(files);
@@ -189,7 +207,8 @@ export function AssignmentForm({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? <Button size="sm">+ Tạo đề bài mới</Button>}
       </DialogTrigger>
@@ -294,15 +313,25 @@ export function AssignmentForm({
                         className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2 py-1 text-xs"
                       >
                         <span className="text-muted-foreground">📄</span>
-                        <span
-                          className="max-w-[180px] truncate font-medium"
-                          title={f.name}
+                        <button
+                          type="button"
+                          onClick={() => handlePreviewLocalFile(f)}
+                          className="max-w-[170px] truncate text-left font-medium hover:text-primary hover:underline"
+                          title={`Xem thử nội dung ${f.name}`}
                         >
                           {f.name}
-                        </span>
+                        </button>
                         <span className="text-[10px] text-muted-foreground">
                           ({formatFileSize(f.size)})
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => handlePreviewLocalFile(f)}
+                          className="ml-0.5 text-muted-foreground hover:text-primary"
+                          title="Xem trước tệp này"
+                        >
+                          👁
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleRemoveAttachment(idx)}
@@ -363,5 +392,40 @@ export function AssignmentForm({
         </form>
       </DialogContent>
     </Dialog>
+
+    {previewModalFile && (
+      <Dialog
+        open={!!previewModalFile}
+        onOpenChange={(next) => !next && setPreviewModalFile(null)}
+      >
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="truncate">
+              Xem trước: {previewModalFile.name}
+            </DialogTitle>
+            <DialogDescription>
+              Nội dung tệp đính kèm trước khi tải lên
+            </DialogDescription>
+          </DialogHeader>
+          {previewModalFile.content != null ? (
+            <pre className="max-h-[60vh] overflow-auto rounded-lg border bg-muted/20 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
+              {previewModalFile.content}
+            </pre>
+          ) : previewModalFile.url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewModalFile.url}
+              alt={previewModalFile.name}
+              className="max-h-[60vh] w-full rounded-lg border bg-muted/20 object-contain"
+            />
+          ) : (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Tệp định dạng nhị phân, sẽ được lưu và tải về khi cần.
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
+    )}
+    </>
   );
 }
