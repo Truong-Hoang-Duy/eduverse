@@ -25,3 +25,19 @@ export function getNextSessionNumber(existingSessions: number[]): number {
 
   return max + 1;
 }
+
+/**
+ * Tự động tạo tiêu đề đề bài từ tên file upload:
+ * - Cắt bỏ phần mở rộng đuôi file (.pdf, .docx, .txt, .md, ...)
+ * - Thay thế các ký tự gạch dưới '_' bằng khoảng trắng
+ * - Chuẩn hóa các khoảng trắng liên tiếp và cắt tỉa 2 đầu (trim)
+ */
+export function formatTitleFromFileName(fileName: string): string {
+  if (!fileName || typeof fileName !== "string") return "";
+
+  const trimmed = fileName.trim();
+  const lastDot = trimmed.lastIndexOf(".");
+  const rawName = lastDot > 0 ? trimmed.slice(0, lastDot) : trimmed;
+
+  return rawName.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
+}

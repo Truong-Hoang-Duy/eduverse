@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { getNextSessionNumber } from "./assignment-utils";
+import {
+  formatTitleFromFileName,
+  getNextSessionNumber,
+} from "./assignment-utils";
 
 describe("getNextSessionNumber", () => {
   it("trả về 1 khi danh sách trống hoặc rỗng", () => {
@@ -36,5 +39,47 @@ describe("getNextSessionNumber", () => {
     expect(getNextSessionNumber([3, 1, 2])).toBe(4);
     expect(getNextSessionNumber([4, 2, 1])).toBe(3);
     expect(getNextSessionNumber([1, 1, 2, 2])).toBe(3);
+  });
+});
+
+describe("formatTitleFromFileName", () => {
+  it("trả về chuỗi rỗng khi không có tên file hoặc input không hợp lệ", () => {
+    expect(formatTitleFromFileName("")).toBe("");
+    expect(formatTitleFromFileName("   ")).toBe("");
+    // @ts-expect-error test invalid input
+    expect(formatTitleFromFileName(null)).toBe("");
+  });
+
+  it("cắt bỏ phần mở rộng đuôi file thông dụng", () => {
+    expect(formatTitleFromFileName("Bai_tap.docx")).toBe("Bai tap");
+    expect(formatTitleFromFileName("de_thi_cuoi_ky.pdf")).toBe("de thi cuoi ky");
+    expect(formatTitleFromFileName("huong_dan.txt")).toBe("huong dan");
+    expect(formatTitleFromFileName("readme.md")).toBe("readme");
+    expect(formatTitleFromFileName("screenshot.png")).toBe("screenshot");
+  });
+
+  it("chuyển dấu gạch dưới thành khoảng trắng và chuẩn hóa khoảng trắng thừa", () => {
+    expect(formatTitleFromFileName("bai___tap____vong__lap.pdf")).toBe(
+      "bai tap vong lap"
+    );
+    expect(formatTitleFromFileName("  De_bai_so_1  .docx")).toBe("De bai so 1");
+  });
+
+  it("giữ nguyên định dạng tiêu đề có dấu gạch ngang, dấu ngoặc vuông và tiếng Việt có dấu", () => {
+    expect(
+      formatTitleFromFileName("[CSB - Homework] Buổi 1.pdf")
+    ).toBe("[CSB - Homework] Buổi 1");
+    expect(
+      formatTitleFromFileName("[CSB - Checkpoints] Buổi 5.docx")
+    ).toBe("[CSB - Checkpoints] Buổi 5");
+    expect(
+      formatTitleFromFileName("Buổi 1 - Làm quen với Scratch.md")
+    ).toBe("Buổi 1 - Làm quen với Scratch");
+  });
+
+  it("xử lý file có nhiều dấu chấm (chỉ cắt đuôi mở rộng cuối cùng)", () => {
+    expect(formatTitleFromFileName("buoi_1.2_nang_cao.pdf")).toBe(
+      "buoi 1.2 nang cao"
+    );
   });
 });

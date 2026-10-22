@@ -11,13 +11,17 @@
 2. **Nút thêm đề theo từng khóa và trạng thái rỗng (Empty State):**
    - Với khóa chưa có đề bài nào (như CSA, CSI, JSB): Khung nét đứt thanh lịch kèm nút `+ Thêm đề buổi 1`.
    - Với khóa đã có đề bài (như CSB): Bổ sung nút `+ Thêm đề` trên header khóa học và thẻ nét đứt `[+] Thêm đề buổi {nextSession}` ở cuối lưới danh sách đề bài.
-3. **Thuật toán tự động phát hiện số buổi kế tiếp thông minh (`assignment-utils.ts`):**
+3. **Tự động lấy tiêu đề đề bài theo tên file upload (`assignment-utils.ts`, `assignment-form.tsx`):**
+   - Hàm `formatTitleFromFileName`: Tự động cắt bỏ phần mở rộng (.pdf, .docx, .txt, .md...), chuyển dấu `_` thành khoảng trắng và chuẩn hóa khoảng cách.
+   - Khi chọn file đề, ô "Tiêu đề đề bài" lập tức được điền tự động theo tên file, giáo viên có thể giữ nguyên hoặc chỉnh sửa tùy ý.
+   - Bố cục form đưa trường "File đề" lên trước "Tiêu đề đề bài" giúp luồng thao tác tự nhiên từ trên xuống dưới.
+4. **Thuật toán tự động phát hiện số buổi kế tiếp thông minh (`assignment-utils.ts`):**
    - Hàm `getNextSessionNumber`: Tự động tìm số buổi còn khuyết nhỏ nhất (ví dụ CSB có buổi 1-7 và 9-12 sẽ tự động gợi ý buổi 8), nếu các buổi liên tục thì gợi ý `max + 1`, giúp giáo viên thao tác cực nhanh mà không phải gõ số buổi thủ công.
    - Tự động đồng bộ và gợi ý lại số buổi khi giáo viên đổi khóa học trong popup.
-4. **Hỗ trợ tạo đề nhanh trong `GradingTool` & `HelpTool` (`grading-tool.tsx`, `help-tool.tsx`):**
+5. **Hỗ trợ tạo đề nhanh trong `GradingTool` & `HelpTool` (`grading-tool.tsx`, `help-tool.tsx`):**
    - Khi chọn khóa học chưa có đề bài nào, hiển thị link `+ Tạo đề mới cho khóa này` ngay cạnh nhãn "Đề bài *" thay vì chỉ hiển thị thông báo "Khóa này chưa có đề".
-5. **Kiểm thử chất lượng:**
-   - `web/`: 444/444 vitest tests PASS (bổ sung test suite cho `assignment-utils.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` 100% thành công.
+6. **Kiểm thử chất lượng:**
+   - `web/`: 449/449 vitest tests PASS (bao gồm 10 tests cho `assignment-utils.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` 100% thành công.
 
 Cập nhật bởi: Gemini
 

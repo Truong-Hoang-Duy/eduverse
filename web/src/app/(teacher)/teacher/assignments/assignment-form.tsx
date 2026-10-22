@@ -24,7 +24,10 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createAssignment } from "@/lib/actions/grading";
-import { getNextSessionNumber } from "@/lib/assignment-utils";
+import {
+  formatTitleFromFileName,
+  getNextSessionNumber,
+} from "@/lib/assignment-utils";
 import { checkFileReadable } from "@/lib/file-check";
 import type { ActionResult } from "@/lib/types";
 
@@ -63,6 +66,7 @@ export function AssignmentForm({
   const [sessionNumber, setSessionNumber] = useState(
     defaultSessionNumber != null ? String(defaultSessionNumber) : ""
   );
+  const [title, setTitle] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileError, setFileError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -87,6 +91,7 @@ export function AssignmentForm({
         setSessionNumber("");
       }
 
+      setTitle("");
       setFileName("");
       setFileError("");
       if (fileRef.current) fileRef.current.value = "";
@@ -109,6 +114,7 @@ export function AssignmentForm({
     if (state.success) {
       setOpen(false);
       setFileName("");
+      setTitle("");
       setCourseId(defaultCourseId ?? "");
       setSessionNumber(
         defaultSessionNumber != null ? String(defaultSessionNumber) : ""
@@ -122,6 +128,7 @@ export function AssignmentForm({
   /**
    * Chỉ kiểm file tại chỗ để báo lỗi ngay; file lên Storage khi bấm "Tạo đề bài"
    * (trong createAssignment) nên bỏ dở giữa chừng không để lại rác.
+   * Đồng thời tự động trích xuất tiêu đề đề bài từ tên file.
    */
   async function handleFileChange(file: File | undefined) {
     setFileError("");
@@ -135,6 +142,12 @@ export function AssignmentForm({
       return;
     }
     setFileName(file.name);
+
+    // Tự động lấy tiêu đề đề bài theo tên file upload
+    const autoTitle = formatTitleFromFileName(file.name);
+    if (autoTitle) {
+      setTitle(autoTitle);
+    }
   }
 
   return (
@@ -183,15 +196,7 @@ export function AssignmentForm({
                 />
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="assignment-title">Tiêu đề đề bài *</Label>
-              <Input
-                id="assignment-title"
-                name="title"
-                placeholder="VD: Vẽ tam giác sao bằng vòng lặp for"
-                required
-              />
-            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="spec-file">
                 File đề (PDF / Word / ảnh / text / md) *
@@ -214,6 +219,24 @@ export function AssignmentForm({
               )}
               {fileError && <p className="text-xs text-destructive">{fileError}</p>}
             </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="assignment-title">Tiêu đề đề bài *</Label>
+                <span className="text-xs text-muted-foreground">
+                  (Tự động điền theo tên file)
+                </span>
+              </div>
+              <Input
+                id="assignment-title"
+                name="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="VD: [CSB - Homework] Buổi 1 (tự điền khi chọn file)"
+                required
+              />
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="instructions">Hướng dẫn chấm (tùy chọn)</Label>
               <Textarea
@@ -228,7 +251,13 @@ export function AssignmentForm({
           <DialogFooter className="mt-4">
             <Button
               type="submit"
-              disabled={pending || !courseId || !sessionNumber || !fileName}
+              disabled={
+                pending ||
+                !courseId ||
+                !sessionNumber ||
+                !title.trim() ||
+                !fileName
+              }
             >
               {pending ? "Đang tải lên & tạo..." : "Tạo đề bài"}
             </Button>
