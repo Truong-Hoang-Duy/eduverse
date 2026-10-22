@@ -260,5 +260,26 @@ describe("presentation-evaluation", () => {
       }
     }
   });
+
+  it("should format MindX letter sections when present", () => {
+    const defaultEval = createDefaultFinalEvaluation("Em học rất tốt");
+    expect(defaultEval.mindx_letter).toBeDefined();
+    expect(defaultEval.mindx_letter?.learned_from_mindx).toBe("");
+
+    const evalWithLetter: FinalPresentationEvaluation = {
+      ...defaultEval,
+      mindx_letter: {
+        learned_from_mindx: "Nắm vững lập trình Python hướng đối tượng",
+        suggestions_from_mindx: "Bố mẹ tiếp tục nhắc em rèn tính cẩn thận khi nộp bài",
+        future_direction: "Định hướng lên Computer Science Intensive (CSI)",
+      },
+    };
+
+    const text = formatFullEvaluationText("Đinh Duy Khôi", evalWithLetter);
+    expect(text).toContain("=== THƯ TỪ MINDX (GỬI PHỤ HUYNH) ===");
+    expect(text).toContain("Nắm vững lập trình Python hướng đối tượng");
+    expect(text).toContain("Bố mẹ tiếp tục nhắc em rèn tính cẩn thận khi nộp bài");
+    expect(text).toContain("Định hướng lên Computer Science Intensive (CSI)");
+  });
 });
 

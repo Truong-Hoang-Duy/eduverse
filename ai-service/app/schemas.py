@@ -155,10 +155,17 @@ class FinalPresentationReviewRequest(AiRequest):
     session_number: int | None = None
 
 
+class MindxLetterEvaluation(BaseModel):
+    learned_from_mindx: str = ""
+    suggestions_from_mindx: str = ""
+    future_direction: str = ""
+
+
 class FinalPresentationReviewResponse(BaseModel):
     comment: str
     demo_score: DemoScoreBreakdown
     dnl_evaluations: dict[str, DnlCriterionEvaluation]
+    mindx_letter: MindxLetterEvaluation | None = None
 
 
 # ---------- /suggest-session-content ----------

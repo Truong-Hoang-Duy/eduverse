@@ -53,6 +53,7 @@ import {
   type ObservationLevel,
   PRESENTATION_OBSERVATION_GROUPS,
 } from "@/lib/presentation-evaluation";
+import { PRELOADED_MINDX_LETTERS } from "@/lib/preloaded-mindx-letters";
 import {
   getSpckLevel,
   getSpckSkillGroup,
@@ -250,23 +251,51 @@ export function ReviewEditor({
     ? PRESENTATION_OBSERVATION_GROUPS
     : FINAL_EXAM_OBSERVATION_GROUPS;
 
+  const initialComment = existing?.ai_generated_comment ?? "";
+
   useEffect(() => {
     if (hasFinalEvaluation) {
       try {
         const cached = localStorage.getItem(
           `eduverse_rubric_${sessionId}_${studentId}`
         );
+        const preloaded = PRELOADED_MINDX_LETTERS[studentId];
         if (cached) {
-          setFinalEvaluation(JSON.parse(cached));
+          const parsed = JSON.parse(cached) as FinalPresentationEvaluation;
+          if (
+            preloaded &&
+            (!parsed.mindx_letter ||
+              !parsed.mindx_letter.learned_from_mindx?.trim())
+          ) {
+            parsed.mindx_letter = preloaded;
+            try {
+              localStorage.setItem(
+                `eduverse_rubric_${sessionId}_${studentId}`,
+                JSON.stringify(parsed)
+              );
+            } catch {}
+          }
+          setFinalEvaluation(parsed);
+        } else if (preloaded) {
+          const initial = createDefaultFinalEvaluation(initialComment);
+          initial.mindx_letter = preloaded;
+          setFinalEvaluation(initial);
+          try {
+            localStorage.setItem(
+              `eduverse_rubric_${sessionId}_${studentId}`,
+              JSON.stringify(initial)
+            );
+          } catch {}
         }
       } catch {}
     }
-  }, [hasFinalEvaluation, sessionId, studentId]);
+  }, [hasFinalEvaluation, sessionId, studentId, initialComment]);
 
   const formRef = useRef<HTMLFormElement>(null);
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const [aiError, setAiError] = useState("");
   const [aiPending, startAi] = useTransition();
+  const [aiLetterPending, startAiLetter] = useTransition();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -542,6 +571,55 @@ export function ReviewEditor({
         setAiError(res.error);
       } else {
         setComment(res.comment ?? "");
+      }
+    });
+  }
+
+  function handleGenerateMindxLetterOnly() {
+    startAiLetter(async () => {
+      const combinedNotes = [
+        ...selectedObservations,
+        ...(customObservationNotes.trim() ? [customObservationNotes.trim()] : []),
+      ].join(". ");
+
+      const res = await generateFinalPresentationReview({
+        studentName,
+        classCode: classCode ?? "",
+        courseName: courseName ?? "",
+        academicLevel: academicLevelLabel(academicLevel) ?? undefined,
+        projectName: isFinalPresentation ? project?.name : undefined,
+        projectDescription: isFinalPresentation
+          ? (project?.description ?? undefined)
+          : undefined,
+        projectFeatures: isFinalPresentation
+          ? (project?.features ?? undefined)
+          : undefined,
+        presentationNotes: combinedNotes || undefined,
+        priorReviews: allPriorReviews ?? [],
+        currentStrengths: [],
+        currentImprovements: [],
+        isExam: !isFinalPresentation && Boolean(isPeriodicTest),
+        isPeriodicExam,
+        sessionNumber,
+      });
+
+      if (res.error) {
+        setAiError(res.error);
+      } else if (res.evaluation?.mindx_letter) {
+        setFinalEvaluation((prev) => {
+          const base = prev ?? createDefaultFinalEvaluation(comment);
+          const updated = {
+            ...base,
+            mindx_letter: res.evaluation!.mindx_letter,
+          };
+          try {
+            localStorage.setItem(
+              `eduverse_rubric_${sessionId}_${studentId}`,
+              JSON.stringify(updated)
+            );
+          } catch {}
+          return updated;
+        });
       }
     });
   }
@@ -1740,13 +1818,33 @@ export function ReviewEditor({
                           variant="outline"
                           size="sm"
                           onClick={() => {
+                            const preloaded = PRELOADED_MINDX_LETTERS[studentId];
                             if (!finalEvaluation) {
                               const initial = createDefaultFinalEvaluation(comment);
+                              if (preloaded) {
+                                initial.mindx_letter = preloaded;
+                              }
                               setFinalEvaluation(initial);
                               try {
                                 localStorage.setItem(
                                   `eduverse_rubric_${sessionId}_${studentId}`,
                                   JSON.stringify(initial)
+                                );
+                              } catch {}
+                            } else if (
+                              preloaded &&
+                              (!finalEvaluation.mindx_letter ||
+                                !finalEvaluation.mindx_letter.learned_from_mindx?.trim())
+                            ) {
+                              const updated = {
+                                ...finalEvaluation,
+                                mindx_letter: preloaded,
+                              };
+                              setFinalEvaluation(updated);
+                              try {
+                                localStorage.setItem(
+                                  `eduverse_rubric_${sessionId}_${studentId}`,
+                                  JSON.stringify(updated)
                                 );
                               } catch {}
                             }
@@ -1778,6 +1876,12 @@ export function ReviewEditor({
                               data={finalEvaluation}
                               hideDemoScore={hideDemoScore}
                               isPeriodicExam={isPeriodicExam}
+                              onGenerateMindxLetter={
+                                isFinalPresentation
+                                  ? handleGenerateMindxLetterOnly
+                                  : undefined
+                              }
+                              isGeneratingMindxLetter={aiLetterPending}
                               onChange={(updated) => {
                                 setFinalEvaluation(updated);
                                 try {
