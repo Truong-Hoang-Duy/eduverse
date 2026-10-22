@@ -4,28 +4,32 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-22, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 105 (**Bổ sung các điểm tạo/thêm đề bài mới trực tiếp trong khu vực Đề bài đã lưu & công cụ chấm bài**):
-1. **Nút "Thêm đề bài mới" ở Header Đề bài đã lưu (`saved-assignments.tsx`):**
-   - Đặt ngay cạnh dropdown lọc khóa học, cho phép giáo viên tạo đề ngay tại khu vực quản lý đề bài mà không phải cuộn lên đầu trang.
-   - Tự động nhận diện bộ lọc: Khi đang lọc theo 1 khóa học cụ thể, modal tự động chọn sẵn khóa học đó.
-2. **Nút thêm đề theo từng khóa và trạng thái rỗng (Empty State):**
-   - Với khóa chưa có đề bài nào (như CSA, CSI, JSB): Khung nét đứt thanh lịch kèm nút `+ Thêm đề buổi 1`.
-   - Với khóa đã có đề bài (như CSB): Bổ sung nút `+ Thêm đề` trên header khóa học và thẻ nét đứt `[+] Thêm đề buổi {nextSession}` ở cuối lưới danh sách đề bài.
-3. **Tự động lấy tiêu đề đề bài theo tên file upload (`assignment-utils.ts`, `assignment-form.tsx`):**
-   - Hàm `formatTitleFromFileName`: Tự động cắt bỏ phần mở rộng (.pdf, .docx, .txt, .md...), chuyển dấu `_` thành khoảng trắng và chuẩn hóa khoảng cách.
-   - Khi chọn file đề, ô "Tiêu đề đề bài" lập tức được điền tự động theo tên file, giáo viên có thể giữ nguyên hoặc chỉnh sửa tùy ý.
-   - Bố cục form đưa trường "File đề" lên trước "Tiêu đề đề bài" giúp luồng thao tác tự nhiên từ trên xuống dưới.
-4. **Thuật toán tự động phát hiện số buổi kế tiếp thông minh (`assignment-utils.ts`):**
-   - Hàm `getNextSessionNumber`: Tự động tìm số buổi còn khuyết nhỏ nhất (ví dụ CSB có buổi 1-7 và 9-12 sẽ tự động gợi ý buổi 8), nếu các buổi liên tục thì gợi ý `max + 1`, giúp giáo viên thao tác cực nhanh mà không phải gõ số buổi thủ công.
-   - Tự động đồng bộ và gợi ý lại số buổi khi giáo viên đổi khóa học trong popup.
-5. **Hỗ trợ tạo đề nhanh trong `GradingTool` & `HelpTool` (`grading-tool.tsx`, `help-tool.tsx`):**
-   - Khi chọn khóa học chưa có đề bài nào, hiển thị link `+ Tạo đề mới cho khóa này` ngay cạnh nhãn "Đề bài *" thay vì chỉ hiển thị thông báo "Khóa này chưa có đề".
-6. **Kiểm thử chất lượng:**
-   - `web/`: 449/449 vitest tests PASS (bao gồm 10 tests cho `assignment-utils.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` 100% thành công.
+**Đang làm:** Đã hoàn thành Đợt 106 (**Hỗ trợ đính kèm file dữ liệu/bổ sung (CSV, JSON, starter code...) vào đề bài & xem/tải đầy đủ**):
+1. **Migration DB:** `supabase/migrations/20261022220000_assignment_attachment_files.sql`: bổ sung cột `attachment_file_paths text[] not null default '{}'` vào bảng `assignments`.
+2. **Tương thích ngược & Chống crash:** Các Server Action `createAssignment`, `getAssignmentSpec`, `gradeFiles`, `helpStudent`, `deleteAssignment` đều có fallback tự động nếu DB chưa áp dụng migration.
+3. **AI Service (`ai-service`):**
+   - Mở rộng model `GradeSubmissionRequest` và `HelpStudentRequest` với trường `attachment_file_paths: list[str]`.
+   - `ai-service/app/storage.py`: Tải các file đính kèm từ bucket `assignment-specs`, làm sạch tên file với `_clean_spec_filename` (bỏ tiền tố timestamp và `att-`), phân loại định dạng và gửi kèm sang Gemini.
+   - `ai-service/app/prompts.py`: Bổ sung chỉ dẫn cho Gemini đối chiếu trực tiếp code, câu truy vấn và kết quả của học viên với dữ liệu thực tế trong các tệp đính kèm (dataset CSV, JSON, code mẫu...).
+4. **Giao diện tạo đề bài (`assignment-form.tsx`):**
+   - Bổ sung picker chọn nhiều file dữ liệu đính kèm (`.csv, .json, .sql, .py, .txt, .md, .pdf, .docx...`).
+   - Hiển thị danh sách file chip với tên file, dung lượng định dạng đẹp mắt và nút `✕` để gỡ bỏ file.
+   - Đồng bộ hai chiều với `DataTransfer` trên input file của form.
+5. **Giao diện xem & tải đề bài đầy đủ (`view-spec-dialog.tsx`):**
+   - Cho phép giáo viên xem cả file đề bài chính lẫn các file dữ liệu đính kèm.
+   - Chuyển đổi tab linh hoạt giữa Đề chính và các Tệp dữ liệu.
+   - Hỗ trợ hiển thị nội dung trực tiếp (inline preview) với văn bản, code, CSV, PDF, ảnh.
+   - Tích hợp nút `⬇ Tải file` trực tiếp qua signed URL an toàn cho từng file.
+6. **Dọn dẹp Storage:**
+   - Cập nhật `spec-storage.ts`, `admin-report.ts`, và `deleteAssignment` để xóa sạch cả `spec_file_path` lẫn toàn bộ `attachment_file_paths` khi xóa đề bài, không để lại file rác / orphan files.
+7. **Kiểm thử chất lượng:**
+   - `assignment-utils.test.ts`: 15/15 tests PASS (bổ sung test cho `getDisplayFileName`).
+   - Toàn bộ 454/454 unit tests vitest PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` (Next.js turbopack) 100% thành công.
 
 Cập nhật bởi: Gemini
 
 ---
+**Trước đó:** Đã hoàn thành Đợt 105 (**Bổ sung các điểm tạo/thêm đề bài mới trực tiếp trong khu vực Đề bài đã lưu & công cụ chấm bài**):
 **Trước đó:** Đã hoàn thành Đợt 104 (**Bổ sung 3 phần nhận xét "Thư từ MindX" dưới Demo Score chuẩn Denise LMS & Tự động điền 5 em lớp CSA05**):
 1. **Quy tắc lộ trình MindX K12 & Ma trận CẤM NHẢY CÓC BỘ MÔN (`ai-service/app/prompts.py`):**
    - Hàm `detect_course_level(course_name)` tự động phân loại 3 cấp bậc: `basic` -> `advance` -> `intensive`.

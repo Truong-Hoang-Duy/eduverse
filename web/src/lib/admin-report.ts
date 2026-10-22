@@ -143,15 +143,20 @@ export async function findOrphanSpecFiles(
   admin: ReturnType<typeof createAdminClient>
 ): Promise<OrphanFile[]> {
   const [{ data: assignments }, specFiles] = await Promise.all([
-    admin.from("assignments").select("spec_file_path"),
+    admin.from("assignments").select("spec_file_path, attachment_file_paths"),
     listAllSpecFiles(admin),
   ]);
 
-  const referenced = new Set(
-    (assignments ?? [])
-      .map((a) => a.spec_file_path)
-      .filter((p): p is string => Boolean(p))
-  );
+  const referenced = new Set<string>();
+  for (const a of assignments ?? []) {
+    if (a.spec_file_path) referenced.add(a.spec_file_path);
+    const row = a as unknown as { attachment_file_paths?: string[] };
+    if (Array.isArray(row.attachment_file_paths)) {
+      for (const p of row.attachment_file_paths) {
+        if (p) referenced.add(p);
+      }
+    }
+  }
   const graceCutoff = Date.now() - ORPHAN_FILE_GRACE_MS;
 
   return specFiles.filter((file) => {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatTitleFromFileName,
+  getDisplayFileName,
   getNextSessionNumber,
 } from "./assignment-utils";
 
@@ -81,5 +82,40 @@ describe("formatTitleFromFileName", () => {
     expect(formatTitleFromFileName("buoi_1.2_nang_cao.pdf")).toBe(
       "buoi 1.2 nang cao"
     );
+  });
+});
+
+describe("getDisplayFileName", () => {
+  it("trả về chuỗi rỗng khi không có đường dẫn hoặc input không hợp lệ", () => {
+    expect(getDisplayFileName("")).toBe("");
+    // @ts-expect-error test invalid input
+    expect(getDisplayFileName(null)).toBe("");
+  });
+
+  it("trả về nguyên gốc nếu file không có tiền tố timestamp", () => {
+    expect(getDisplayFileName("hw3_data.csv")).toBe("hw3_data.csv");
+    expect(getDisplayFileName("folder/subfolder/data.json")).toBe("data.json");
+  });
+
+  it("loại bỏ thư mục và tiền tố timestamp", () => {
+    expect(
+      getDisplayFileName("course_123/1729000000000-bai_tap.docx")
+    ).toBe("bai_tap.docx");
+    expect(getDisplayFileName("1729000000000-de_thi.pdf")).toBe("de_thi.pdf");
+  });
+
+  it("loại bỏ tiền tố att- và timestamp của file đính kèm", () => {
+    expect(
+      getDisplayFileName("course_123/1729000000000-att-hw3_data.csv")
+    ).toBe("hw3_data.csv");
+    expect(
+      getDisplayFileName("1729000000000-att-sample_code.py")
+    ).toBe("sample_code.py");
+  });
+
+  it("giữ nguyên tên file có dấu gạch ngang", () => {
+    expect(
+      getDisplayFileName("course_123/1729000000000-att-customer-sales-data.csv")
+    ).toBe("customer-sales-data.csv");
   });
 });

@@ -1,9 +1,12 @@
 import base64
 import binascii
+import logging
 
 from fastapi import APIRouter, HTTPException
 
 from google.genai import types
+
+logger = logging.getLogger(__name__)
 
 from app import prompts
 from app.llm import Provider, generate_json
@@ -117,15 +120,32 @@ def _inline_parts(files: list[InlineFile], provider: Provider) -> list:
 
 
 def _spec_and_submission_parts(
-    provider: Provider, spec_file_path: str, files: list[InlineFile]
+    provider: Provider,
+    spec_file_path: str,
+    files: list[InlineFile],
+    attachment_file_paths: list[str] | None = None,
 ) -> list:
-    """Đề bài (Storage) + bài làm (inline), cùng kiểu content với `provider`."""
+    """Đề bài (Storage) + file dữ liệu/đính kèm (Storage) + bài làm (inline)."""
     submission_parts = _inline_parts(files, provider)
+    spec_parts = []
     if provider == "openai":
-        spec_part = download_as_openai_content(SPEC_BUCKET, spec_file_path)
+        spec_parts.append(download_as_openai_content(SPEC_BUCKET, spec_file_path))
     else:
-        spec_part = download_as_part(SPEC_BUCKET, spec_file_path)
-    return [spec_part, *submission_parts]
+        spec_parts.append(download_as_part(SPEC_BUCKET, spec_file_path))
+
+    if attachment_file_paths:
+        for att_path in attachment_file_paths:
+            if not att_path:
+                continue
+            try:
+                if provider == "openai":
+                    spec_parts.append(download_as_openai_content(SPEC_BUCKET, att_path))
+                else:
+                    spec_parts.append(download_as_part(SPEC_BUCKET, att_path))
+            except Exception as exc:
+                logger.warning("Không tải được file đính kèm %s: %s", att_path, exc)
+
+    return [*spec_parts, *submission_parts]
 
 
 def _keep_requested_parts(data: dict, mode: str) -> dict:
@@ -156,7 +176,12 @@ def _keep_requested_parts(data: dict, mode: str) -> dict:
 @router.post("/grade-submission", response_model=GradeSubmissionResponse)
 def grade_submission(body: GradeSubmissionRequest) -> GradeSubmissionResponse:
     # Đề bài lấy từ Storage (được lưu); bài làm gửi inline, không lưu ở đâu cả.
-    file_parts = _spec_and_submission_parts(body.provider, body.spec_file_path, body.files)
+    file_parts = _spec_and_submission_parts(
+        body.provider,
+        body.spec_file_path,
+        body.files,
+        attachment_file_paths=body.attachment_file_paths,
+    )
 
     prompt = prompts.build_grading_prompt(
         course_name=body.course_name,
@@ -197,7 +222,12 @@ def help_student(body: HelpStudentRequest) -> HelpStudentResponse:
     `files` rỗng là hợp lệ: đó là ca "em chưa biết bắt đầu từ đâu", chỉ cần đề
     bài. Đây là điểm khác duy nhất về đầu vào so với `/grade-submission`.
     """
-    file_parts = _spec_and_submission_parts(body.provider, body.spec_file_path, body.files)
+    file_parts = _spec_and_submission_parts(
+        body.provider,
+        body.spec_file_path,
+        body.files,
+        attachment_file_paths=body.attachment_file_paths,
+    )
 
     prompt = prompts.build_student_help_prompt(
         course_name=body.course_name,

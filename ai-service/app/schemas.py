@@ -235,6 +235,7 @@ GradingMode = Literal["quiz", "practice", "both"]
 
 class GradeSubmissionRequest(AiRequest):
     spec_file_path: str  # đề bài (bucket assignment-specs) — thứ duy nhất được lưu
+    attachment_file_paths: list[str] = Field(default_factory=list)  # file dữ liệu / đính kèm kèm theo đề
     files: list[InlineFile] = Field(min_length=1)
     course_name: str
     assignment_title: str
@@ -315,6 +316,7 @@ class HelpStudentRequest(AiRequest):
     """
 
     spec_file_path: str
+    attachment_file_paths: list[str] = Field(default_factory=list)
     files: list[InlineFile] = Field(default_factory=list)
     course_name: str = ""
     assignment_title: str

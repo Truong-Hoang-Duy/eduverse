@@ -41,3 +41,20 @@ export function formatTitleFromFileName(fileName: string): string {
 
   return rawName.replace(/_+/g, " ").replace(/\s+/g, " ").trim();
 }
+
+/**
+ * Rút gọn đường dẫn Storage thành tên file hiển thị sạch đẹp
+ * (loại bỏ thư mục cha và tiền tố timestamp / att-).
+ */
+export function getDisplayFileName(path: string): string {
+  if (!path || typeof path !== "string") return "";
+  const raw = path.split("/").pop() ?? path;
+  const parts = raw.split("-");
+  if (parts.length >= 2 && /^\d+$/.test(parts[0])) {
+    if (parts[1] === "att" && parts.length >= 3) {
+      return parts.slice(2).join("-");
+    }
+    return parts.slice(1).join("-");
+  }
+  return raw;
+}

@@ -69,8 +69,44 @@ export function AssignmentForm({
   const [title, setTitle] = useState("");
   const [fileName, setFileName] = useState("");
   const [fileError, setFileError] = useState("");
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  const attachmentRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  function syncAttachmentFiles(files: File[]) {
+    setAttachmentFiles(files);
+    if (attachmentRef.current) {
+      const dt = new DataTransfer();
+      files.forEach((f) => dt.items.add(f));
+      attachmentRef.current.files = dt.files;
+    }
+  }
+
+  function handleAddAttachments(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+    const newFiles = Array.from(fileList);
+    const existingNames = new Set(attachmentFiles.map((f) => f.name));
+    const merged = [...attachmentFiles];
+    for (const f of newFiles) {
+      if (!existingNames.has(f.name)) {
+        merged.push(f);
+        existingNames.add(f.name);
+      }
+    }
+    syncAttachmentFiles(merged);
+  }
+
+  function handleRemoveAttachment(indexToRemove: number) {
+    const next = attachmentFiles.filter((_, idx) => idx !== indexToRemove);
+    syncAttachmentFiles(next);
+  }
+
+  function formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
 
   // Khi mở popup, tự động điền khóa học và số buổi phù hợp
   function handleOpenChange(nextOpen: boolean) {
@@ -94,6 +130,7 @@ export function AssignmentForm({
       setTitle("");
       setFileName("");
       setFileError("");
+      syncAttachmentFiles([]);
       if (fileRef.current) fileRef.current.value = "";
     }
   }
@@ -120,6 +157,7 @@ export function AssignmentForm({
         defaultSessionNumber != null ? String(defaultSessionNumber) : ""
       );
       setFileError("");
+      syncAttachmentFiles([]);
       if (fileRef.current) fileRef.current.value = "";
       formRef.current?.reset();
     }
@@ -218,6 +256,66 @@ export function AssignmentForm({
                 </p>
               )}
               {fileError && <p className="text-xs text-destructive">{fileError}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="attachment-files">
+                  File dữ liệu / đính kèm bổ sung (tùy chọn)
+                </Label>
+                <span className="text-xs text-muted-foreground">
+                  (CSV, JSON, code mẫu...)
+                </span>
+              </div>
+              <Input
+                id="attachment-files"
+                ref={attachmentRef}
+                name="attachment_files"
+                type="file"
+                multiple
+                accept=".csv,.json,.sql,.py,.txt,.md,.pdf,.png,.jpg,.jpeg,.docx"
+                onChange={(e) => {
+                  handleAddAttachments(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Đính kèm tệp dữ liệu (như file .csv) để học viên tải về và AI đối chiếu khi chấm hoặc hướng dẫn.
+              </p>
+              {attachmentFiles.length > 0 && (
+                <div className="mt-2 space-y-1.5 rounded-lg border bg-muted/30 p-2.5">
+                  <p className="text-xs font-medium text-foreground">
+                    Đã chọn {attachmentFiles.length} file đính kèm:
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {attachmentFiles.map((f, idx) => (
+                      <span
+                        key={`${f.name}-${idx}`}
+                        className="inline-flex items-center gap-1.5 rounded-md border bg-background px-2 py-1 text-xs"
+                      >
+                        <span className="text-muted-foreground">📄</span>
+                        <span
+                          className="max-w-[180px] truncate font-medium"
+                          title={f.name}
+                        >
+                          {f.name}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          ({formatFileSize(f.size)})
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(idx)}
+                          className="ml-0.5 text-muted-foreground hover:text-destructive"
+                          title="Bỏ file này"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">

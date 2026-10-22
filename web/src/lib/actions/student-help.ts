@@ -60,14 +60,42 @@ export async function helpStudent(input: {
   }
 
   // RLS chỉ cho giáo viên của khóa đọc được đề này.
-  const { data: assignment } = await supabase
+  interface AssignmentForHelp {
+    title: string;
+    instructions: string | null;
+    spec_file_path: string | null;
+    attachment_file_paths?: string[] | null;
+    courses: unknown;
+  }
+
+  let assignment: AssignmentForHelp | null = null;
+
+  const resWithAtt = await supabase
     .from("assignments")
-    .select("title, instructions, spec_file_path, courses(name)")
+    .select(
+      "title, instructions, spec_file_path, attachment_file_paths, courses(name)"
+    )
     .eq("id", input.assignmentId)
     .single();
+
+  if (resWithAtt.error || !resWithAtt.data) {
+    const fallbackRes = await supabase
+      .from("assignments")
+      .select("title, instructions, spec_file_path, courses(name)")
+      .eq("id", input.assignmentId)
+      .single();
+    if (!fallbackRes.data) {
+      return { error: "Không tìm thấy đề bài." };
+    }
+    assignment = fallbackRes.data;
+  } else {
+    assignment = resWithAtt.data;
+  }
+
   if (!assignment) {
     return { error: "Không tìm thấy đề bài." };
   }
+
   if (!assignment.spec_file_path) {
     return { error: "Đề bài chưa có file — tạo lại đề với file đính kèm." };
   }
@@ -82,6 +110,7 @@ export async function helpStudent(input: {
       api_key: aiConfig.api_key,
       provider: aiConfig.provider,
       spec_file_path: assignment.spec_file_path,
+      attachment_file_paths: assignment.attachment_file_paths ?? [],
       files: input.files.map((f) => ({
         name: f.name,
         mime_type: f.mimeType || null,
