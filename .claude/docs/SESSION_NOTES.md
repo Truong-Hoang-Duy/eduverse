@@ -3,12 +3,38 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-19, bởi: Gemini)
-**Đang làm:** Đã hoàn thành bộ ba cải tiến sư phạm cho **Nhận xét học viên & Nội dung bài học** (Đợt 101 -> 103):
-1. **Đợt 101 (Nhận xét Buổi 14 & ĐNL):** Mở rộng ngân hàng quan sát 3 ô chọn lên 81 mục (27 mục/ô), không dùng từ đại ngôn ("tốt", "khá", "cần cải thiện"). Nâng cấp Bảng Đánh Giá Năng Lực (ĐNL) theo dòng chảy 2 giai đoạn (quá trình học 1-13 ➔ đúc kết SPCK/thuyết trình buổi 14). Chuẩn hóa xưng hô: tuyệt đối chỉ xưng "em", không gọi tên riêng.
-2. **Đợt 102 (Nội dung buổi học):** Tách riêng `SESSION_CONTENT_SYSTEM_ROLE`, cấm triệt để từ "em" trong tóm tắt bài học; chuyển sang định dạng chỉ liệt kê các đầu mục ngắn gọn (5-15 từ), không diễn giải lan man.
-3. **Đợt 103 (Nhận xét từng buổi học):** Bổ sung `CẤM MỞ ĐẦU VĂN MẪU SÁO RỖNG` vào `TONE_RULE` và `build_review_prompt` (cấm tuyệt đối *"Đáng khen là..."*, *"Rất đáng khen..."*, *"Riêng ở phần..."*), mở đầu tự nhiên theo quan sát của giáo viên và chuyển ý nhẹ nhàng, xây dựng.
-- Kiểm thử chất lượng: Toàn bộ 102/102 pytest tests PASS, 438/438 vitest tests PASS, `pnpm typecheck` 0 lỗi.
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-22, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 104 (**Bổ sung 3 phần nhận xét "Thư từ MindX" dưới Demo Score chuẩn Denise LMS & Tự động điền 5 em lớp CSA05**):
+1. **Quy tắc lộ trình MindX K12 & Ma trận CẤM NHẢY CÓC BỘ MÔN (`ai-service/app/prompts.py`):**
+   - Hàm `detect_course_level(course_name)` tự động phân loại 3 cấp bậc: `basic` -> `advance` -> `intensive`.
+   - Hàm `resolve_next_mindx_course(course_name)` định tuyến tự động theo ma trận bất biến:
+     - *Scratch:* Scratch Basic ➔ Scratch Advance ➔ Scratch Intensive (Bậc cuối ➔ GameMaker Basic / App Basic).
+     - *GameMaker:* GameMaker Basic ➔ GameMaker Advance ➔ GameMaker Intensive (Bậc cuối ➔ App Python Basic / Web Basic).
+     - *App:* App Basic ➔ App Advance ➔ App Intensive (Bậc cuối ➔ CSB / Web Basic).
+     - *Web:* Web Basic ➔ Web Advance ➔ Web Intensive (Bậc cuối ➔ Dự án Doanh nghiệp / Fullstack).
+     - *Computer Science:* CSB ➔ CSA ➔ CSI (Bậc cuối ➔ Luyện thi Đội tuyển HSG Tin học / AI & Data Science).
+   - Truyền chỉ dẫn cứng vào Prompt: **CẤM TUYỆT ĐỐI NHẢY CÓC** sang bộ môn khác khi học viên chưa hoàn thành bậc Intensive của bộ môn hiện tại.
+2. **Schema & Endpoint Sinh Nhận xét Buổi 14 (`ai-service`):**
+   - Mở rộng model `FinalPresentationReviewResponse` với `mindx_letter: MindxLetterEvaluation` gồm 3 trường:
+     - `learned_from_mindx` (Con đã học được gì từ MindX?)
+     - `suggestions_from_mindx` (Những điều mà Mindx muốn đề xuất tới bố mẹ sau một thời gian đồng hành với em)
+     - `future_direction` (Định hướng tương lai cho học viên)
+   - Kiểm thử `ai-service`: Toàn bộ 105/105 pytest tests PASS.
+3. **Giao diện Bảng Đánh Giá Năng Lực & Thư từ MindX (`web`):**
+   - `web/src/lib/presentation-evaluation.ts`: Mở rộng interface `FinalPresentationEvaluation` và tích hợp vào `formatFullEvaluationText` khi copy toàn bộ.
+   - `web/src/app/(teacher)/teacher/sessions/[id]/presentation-evaluation-card.tsx`: Đặt khối "Thư từ MindX" ngay dưới Demo Score với 3 khung soạn thảo (`@learnedFromMindx`, `@suggestionsFromMindx`, `@futureDirection`), thanh công cụ định dạng trực quan (`B`, `I`, `U`, căn lề), nút Copy riêng từng phần và nút "Copy cả 3 phần Thư", tự động đồng bộ và lưu tạm vào `localStorage`.
+   - Bổ sung nút **"✨ AI tạo Thư từ MindX"** độc lập ngay trên header khối Thư từ MindX: Cho phép giáo viên tạo riêng/sinh lại 3 phần Thư mà **GIỮ NGUYÊN 100%** nhận xét, 9 tiêu chí ĐNL và điểm số Demo hiện có.
+4. **Tự động điền 5 học viên lớp CSA05 (`web/src/lib/preloaded-mindx-letters.ts` & `review-editor.tsx`):**
+   - Đã dùng AI trích xuất dữ liệu thực tế (dự án SPCK, lịch sử chuyên cần 13 buổi, nhận xét đã có) từ DB Supabase và tạo thư cá nhân hóa chuẩn xác cho cả 5 học viên lớp CSA05:
+     1. *Tạ Hoàng Gia Bảo:* KingCoPr (Dự đoán giá máy tính), vắng 1/13 buổi ➔ định hướng Computer Science Intensive (CSI).
+     2. *Đặng Nam Phong:* Mushroom (Phân loại nấm với Streamlit), vắng 2/13 buổi (buổi 3 & 6) ➔ định hướng CSI.
+     3. *Đinh Duy Khôi:* Dự đoán giá linh kiện PC (Random Forest), 100% chuyên cần 13/13 buổi ➔ định hướng CSI.
+     4. *Đồng Nghĩa Phú:* obesity (Chẩn đoán béo phì), vắng 1/13 buổi (buổi 13) ➔ định hướng CSI.
+     5. *Phạm Gia Hưng:* Dự đoán Giá Nhà California (Pandas + Streamlit), vắng 2/13 buổi ➔ định hướng CSI.
+   - Cơ chế tự động merge vào `localStorage` và `finalEvaluation` state khi mở Popup, bảo toàn tuyệt đối mọi nhận xét, tiêu chí ĐNL và điểm số mà thầy/cô đã tạo trước đó.
+5. **Kiểm thử chất lượng:**
+   - `ai-service/`: 105/105 tests PASS.
+   - `web/`: 439/439 tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
 
 Cập nhật bởi: Gemini
 

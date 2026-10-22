@@ -142,3 +142,72 @@ def test_periodic_exam_review_prompt_for_session_5() -> None:
     assert "dnl_evaluations" in prompt
 
 
+def test_detect_course_level() -> None:
+    from app.prompts import detect_course_level
+
+    assert detect_course_level("Scratch Basic") == "basic"
+    assert detect_course_level("CSB01") == "basic"
+    assert detect_course_level("Lập trình Game Maker cơ bản") == "basic"
+
+    assert detect_course_level("Computer Scientist Advance") == "advance"
+    assert detect_course_level("CSA05") == "advance"
+    assert detect_course_level("Web Nâng cao") == "advance"
+
+    assert detect_course_level("Computer Science Intensive") == "intensive"
+    assert detect_course_level("CSI02") == "intensive"
+    assert detect_course_level("Scratch Chuyên sâu") == "intensive"
+
+
+def test_resolve_next_mindx_course_strictly_no_jumping() -> None:
+    from app.prompts import resolve_next_mindx_course
+
+    # 1. Scratch
+    sc_basic = resolve_next_mindx_course("Scratch Basic")
+    assert sc_basic["next_course"] == "Scratch Advance"
+    assert sc_basic["is_final_level"] is False
+
+    sc_adv = resolve_next_mindx_course("Scratch Advance")
+    assert sc_adv["next_course"] == "Scratch Intensive"
+    assert sc_adv["is_final_level"] is False
+
+    sc_int = resolve_next_mindx_course("Scratch Intensive")
+    assert "GameMaker" in str(sc_int["next_course"]) or "App" in str(sc_int["next_course"])
+    assert sc_int["is_final_level"] is True
+
+    # 2. Computer Science: CSB -> CSA -> CSI
+    csb = resolve_next_mindx_course("Computer Science Basic (CSB)")
+    assert csb["next_course"] == "Computer Science Advance (CSA)"
+    assert csb["is_final_level"] is False
+
+    csa = resolve_next_mindx_course("Computer Scientist Advance")
+    assert csa["next_course"] == "Computer Science Intensive (CSI)"
+    assert csa["is_final_level"] is False
+
+    csi = resolve_next_mindx_course("CSI01")
+    assert "Luyện thi" in str(csi["next_course"]) or "AI" in str(csi["next_course"])
+    assert csi["is_final_level"] is True
+
+
+def test_final_presentation_review_prompt_includes_mindx_letter() -> None:
+    prompt = build_final_presentation_review_prompt(
+        student_name="Đinh Duy Khôi",
+        class_code="CSA05",
+        course_name="Computer Scientist Advance",
+        academic_level="Giỏi",
+        project_name="Hệ thống Quản lý Thư viện Thông minh",
+        project_description="Phần mềm quản lý sách viết bằng Python",
+        project_features=["Quản lý đầu sách", "Mượn trả sách", "Thống kê"],
+        presentation_notes="Thuyết trình rất tự tin, phong thái chững chạc.",
+        prior_reviews_text="THỐNG KÊ CHUYÊN CẦN: Đi học đầy đủ 13/13 buổi (100%)",
+        current_strengths=["Tư duy thuật toán tốt"],
+        current_improvements=["Cần chú ý tối ưu code"],
+    )
+
+    assert "mindx_letter" in prompt
+    assert "learned_from_mindx" in prompt
+    assert "suggestions_from_mindx" in prompt
+    assert "future_direction" in prompt
+    assert "QUY TẮC CẤM NHẢY CÓC BỘ MÔN" in prompt
+    assert "Computer Science Intensive (CSI)" in prompt
+
+

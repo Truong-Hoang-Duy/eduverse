@@ -23,10 +23,17 @@ export interface DemoScoreBreakdown {
 }
 
 
+export interface MindxLetterEvaluation {
+  learned_from_mindx: string;
+  suggestions_from_mindx: string;
+  future_direction: string;
+}
+
 export interface FinalPresentationEvaluation {
   comment: string;
   demo_score: DemoScoreBreakdown;
   dnl_evaluations: Record<string, DnlCriterionEvaluation>;
+  mindx_letter?: MindxLetterEvaluation;
 }
 
 export type ObservationLevel = "Giỏi" | "Khá" | "Trung bình" | "Cần cố gắng";
@@ -627,6 +634,26 @@ export function formatFullEvaluationText(
     );
   }
 
+  if (
+    data.mindx_letter &&
+    (data.mindx_letter.learned_from_mindx ||
+      data.mindx_letter.suggestions_from_mindx ||
+      data.mindx_letter.future_direction)
+  ) {
+    lines.push(
+      "",
+      `=== THƯ TỪ MINDX (GỬI PHỤ HUYNH) ===`,
+      `* Con đã học được gì từ MindX?:`,
+      data.mindx_letter.learned_from_mindx || "(Chưa có nội dung)",
+      "",
+      `* Những điều mà Mindx muốn đề xuất tới bố mẹ sau một thời gian đồng hành với em:`,
+      data.mindx_letter.suggestions_from_mindx || "(Chưa có nội dung)",
+      "",
+      `* Định hướng tương lai cho học viên:`,
+      data.mindx_letter.future_direction || "(Chưa có nội dung)"
+    );
+  }
+
   return lines.join("\n");
 }
 
@@ -646,6 +673,11 @@ export function createDefaultFinalEvaluation(
     comment,
     demo_score: distributeScores(7.0),
     dnl_evaluations: dnl,
+    mindx_letter: {
+      learned_from_mindx: "",
+      suggestions_from_mindx: "",
+      future_direction: "",
+    },
   };
 }
 

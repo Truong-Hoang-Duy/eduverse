@@ -234,6 +234,20 @@ def generate_final_presentation_review(
         ],
     }
 
+    mindx_letter_schema = {
+        "type": "object",
+        "properties": {
+            "learned_from_mindx": {"type": "string"},
+            "suggestions_from_mindx": {"type": "string"},
+            "future_direction": {"type": "string"},
+        },
+        "required": [
+            "learned_from_mindx",
+            "suggestions_from_mindx",
+            "future_direction",
+        ],
+    }
+
     data = generate_json(
         prompt,
         response_schema={
@@ -242,12 +256,21 @@ def generate_final_presentation_review(
                 "comment": {"type": "string"},
                 "demo_score": demo_score_schema,
                 "dnl_evaluations": dnl_evaluations_schema,
+                "mindx_letter": mindx_letter_schema,
             },
-            "required": ["comment", "demo_score", "dnl_evaluations"],
+            "required": ["comment", "demo_score", "dnl_evaluations", "mindx_letter"],
         },
         api_key=body.api_key,
         provider=body.provider,
     )
+
+    if isinstance(data, dict):
+        if "mindx_letter" not in data or not isinstance(data["mindx_letter"], dict):
+            data["mindx_letter"] = {
+                "learned_from_mindx": "",
+                "suggestions_from_mindx": "",
+                "future_direction": "",
+            }
 
     # Bảo đảm tổng cả điểm kiến thức + demo sản phẩm tự động chia đều không dưới 6.0
     if isinstance(data, dict) and "demo_score" in data:

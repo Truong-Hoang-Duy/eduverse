@@ -48,12 +48,16 @@ export function PresentationEvaluationCard({
   onChange,
   hideDemoScore = false,
   isPeriodicExam = false,
+  onGenerateMindxLetter,
+  isGeneratingMindxLetter = false,
 }: {
   studentName: string;
   data: FinalPresentationEvaluation;
   onChange: (updated: FinalPresentationEvaluation) => void;
   hideDemoScore?: boolean;
   isPeriodicExam?: boolean;
+  onGenerateMindxLetter?: () => void;
+  isGeneratingMindxLetter?: boolean;
 }) {
   const [copiedAll, setCopiedAll] = useState(false);
   const [activeCopiedKey, setActiveCopiedKey] = useState<string | null>(null);
@@ -85,6 +89,37 @@ export function PresentationEvaluationCard({
     }
     setCopiedHistory((prev) => ({ ...prev, ...allCopied }));
     setTimeout(() => setCopiedAll(false), 2500);
+  }
+
+  function handleMindxLetterChange(
+    field: "learned_from_mindx" | "suggestions_from_mindx" | "future_direction",
+    value: string
+  ) {
+    onChange({
+      ...data,
+      mindx_letter: {
+        learned_from_mindx: data.mindx_letter?.learned_from_mindx ?? "",
+        suggestions_from_mindx: data.mindx_letter?.suggestions_from_mindx ?? "",
+        future_direction: data.mindx_letter?.future_direction ?? "",
+        [field]: value,
+      },
+    });
+  }
+
+  async function handleCopyMindxLetterAll() {
+    const letter = data.mindx_letter;
+    if (!letter) return;
+    const fullLetter = [
+      `[Con đã học được gì từ MindX?]`,
+      letter.learned_from_mindx || "",
+      "",
+      `[Những điều mà Mindx muốn đề xuất tới bố mẹ sau một thời gian đồng hành với em]`,
+      letter.suggestions_from_mindx || "",
+      "",
+      `[Định hướng tương lai cho học viên]`,
+      letter.future_direction || "",
+    ].join("\n");
+    await handleCopyText("mindx_letter_all", fullLetter);
   }
 
   const knowledgeScore = Number(data.demo_score.knowledge_score ?? 3.5);
@@ -595,6 +630,237 @@ export function PresentationEvaluationCard({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* --- PHẦN 3: THƯ TỪ MINDX (GỬI PHỤ HUYNH CHUẨN DENISE LMS) --- */}
+      {!hideDemoScore && (
+        <div className="space-y-4 rounded-xl bg-muted/20 p-4 sm:p-5">
+          {/* Header Thư từ MindX */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold text-foreground">
+                Thư từ MindX
+              </span>
+              <Badge
+                variant="secondary"
+                className="text-[10px] bg-primary/10 text-primary border-0 font-medium"
+              >
+                Chuẩn Denise LMS
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              {onGenerateMindxLetter && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onGenerateMindxLetter}
+                  disabled={isGeneratingMindxLetter}
+                  className="h-7 px-2.5 text-xs cursor-pointer border-primary/30 text-primary hover:bg-primary/10 hover:text-primary transition-all font-medium"
+                  title="Chỉ sinh lại nội dung 3 phần Thư từ MindX, giữ nguyên 100% điểm số và nhận xét ĐNL"
+                >
+                  {isGeneratingMindxLetter ? "⏳ Đang tạo thư..." : "✨ AI tạo Thư từ MindX"}
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleCopyMindxLetterAll}
+                className={`h-7 px-2.5 text-xs cursor-pointer transition-all ${
+                  activeCopiedKey === "mindx_letter_all"
+                    ? "bg-emerald-600 text-white hover:bg-emerald-600 font-semibold"
+                    : copiedHistory["mindx_letter_all"]
+                    ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {activeCopiedKey === "mindx_letter_all"
+                  ? "✓ Đã chép cả 3 phần"
+                  : copiedHistory["mindx_letter_all"]
+                  ? "✓ Chép lại cả 3 phần"
+                  : "📋 Copy cả 3 phần Thư"}
+              </Button>
+            </div>
+          </div>
+
+          {/* 3 Khối soạn thảo theo đúng giao diện mẫu của MindX */}
+          <div className="space-y-4 pt-1">
+            {/* Khối 1: Learned From Mindx */}
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs font-bold text-foreground">
+                    Learned From Mindx
+                  </Label>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                    · Con đã học được gì từ MindX?
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    handleCopyText(
+                      "learned_from_mindx",
+                      data.mindx_letter?.learned_from_mindx ?? ""
+                    )
+                  }
+                  className={`h-6 px-2 text-[11px] cursor-pointer transition-all ${
+                    activeCopiedKey === "learned_from_mindx"
+                      ? "bg-emerald-600 text-white hover:bg-emerald-600 font-semibold"
+                      : copiedHistory["learned_from_mindx"]
+                      ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {activeCopiedKey === "learned_from_mindx"
+                    ? "✓ Đã chép"
+                    : copiedHistory["learned_from_mindx"]
+                    ? "✓ Chép lại"
+                    : "📋 Copy"}
+                </Button>
+              </div>
+              <div className="rounded-lg border border-muted-foreground/20 bg-background overflow-hidden">
+                <div className="flex items-center gap-3 px-3 py-1 border-b bg-muted/40 text-xs text-muted-foreground select-none font-mono">
+                  <span className="font-bold hover:text-foreground cursor-default" title="In đậm">B</span>
+                  <span className="italic hover:text-foreground cursor-default" title="In nghiêng">I</span>
+                  <span className="underline hover:text-foreground cursor-default" title="Gạch chân">U</span>
+                  <span className="text-border">|</span>
+                  <span className="hover:text-foreground cursor-default" title="Căn trái">≡</span>
+                  <span className="hover:text-foreground cursor-default" title="Căn giữa">⫶</span>
+                  <span className="hover:text-foreground cursor-default" title="Căn phải">≡</span>
+                </div>
+                <Textarea
+                  rows={4}
+                  value={data.mindx_letter?.learned_from_mindx ?? ""}
+                  onChange={(e) =>
+                    handleMindxLetterChange("learned_from_mindx", e.target.value)
+                  }
+                  placeholder="@learnedFromMindx"
+                  className="text-xs sm:text-sm border-0 focus-visible:ring-0 resize-y leading-relaxed min-h-[85px] rounded-none bg-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Khối 2: Suggestions From Mindx */}
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs font-bold text-foreground">
+                    Suggestions From Mindx
+                  </Label>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                    · Những điều mà Mindx muốn đề xuất tới bố mẹ sau một thời gian đồng hành với em
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    handleCopyText(
+                      "suggestions_from_mindx",
+                      data.mindx_letter?.suggestions_from_mindx ?? ""
+                    )
+                  }
+                  className={`h-6 px-2 text-[11px] cursor-pointer transition-all ${
+                    activeCopiedKey === "suggestions_from_mindx"
+                      ? "bg-emerald-600 text-white hover:bg-emerald-600 font-semibold"
+                      : copiedHistory["suggestions_from_mindx"]
+                      ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {activeCopiedKey === "suggestions_from_mindx"
+                    ? "✓ Đã chép"
+                    : copiedHistory["suggestions_from_mindx"]
+                    ? "✓ Chép lại"
+                    : "📋 Copy"}
+                </Button>
+              </div>
+              <div className="rounded-lg border border-muted-foreground/20 bg-background overflow-hidden">
+                <div className="flex items-center gap-3 px-3 py-1 border-b bg-muted/40 text-xs text-muted-foreground select-none font-mono">
+                  <span className="font-bold hover:text-foreground cursor-default" title="In đậm">B</span>
+                  <span className="italic hover:text-foreground cursor-default" title="In nghiêng">I</span>
+                  <span className="underline hover:text-foreground cursor-default" title="Gạch chân">U</span>
+                  <span className="text-border">|</span>
+                  <span className="hover:text-foreground cursor-default" title="Căn trái">≡</span>
+                  <span className="hover:text-foreground cursor-default" title="Căn giữa">⫶</span>
+                  <span className="hover:text-foreground cursor-default" title="Căn phải">≡</span>
+                </div>
+                <Textarea
+                  rows={4}
+                  value={data.mindx_letter?.suggestions_from_mindx ?? ""}
+                  onChange={(e) =>
+                    handleMindxLetterChange("suggestions_from_mindx", e.target.value)
+                  }
+                  placeholder="@suggestionsFromMindx"
+                  className="text-xs sm:text-sm border-0 focus-visible:ring-0 resize-y leading-relaxed min-h-[85px] rounded-none bg-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Khối 3: Future Direction */}
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs font-bold text-foreground">
+                    Future Direction
+                  </Label>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">
+                    · Định hướng tương lai cho học viên (Basic ➔ Advance ➔ Intensive)
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    handleCopyText(
+                      "future_direction",
+                      data.mindx_letter?.future_direction ?? ""
+                    )
+                  }
+                  className={`h-6 px-2 text-[11px] cursor-pointer transition-all ${
+                    activeCopiedKey === "future_direction"
+                      ? "bg-emerald-600 text-white hover:bg-emerald-600 font-semibold"
+                      : copiedHistory["future_direction"]
+                      ? "text-emerald-600 dark:text-emerald-400 font-medium"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {activeCopiedKey === "future_direction"
+                    ? "✓ Đã chép"
+                    : copiedHistory["future_direction"]
+                    ? "✓ Chép lại"
+                    : "📋 Copy"}
+                </Button>
+              </div>
+              <div className="rounded-lg border border-muted-foreground/20 bg-background overflow-hidden">
+                <div className="flex items-center gap-3 px-3 py-1 border-b bg-muted/40 text-xs text-muted-foreground select-none font-mono">
+                  <span className="font-bold hover:text-foreground cursor-default" title="In đậm">B</span>
+                  <span className="italic hover:text-foreground cursor-default" title="In nghiêng">I</span>
+                  <span className="underline hover:text-foreground cursor-default" title="Gạch chân">U</span>
+                  <span className="text-border">|</span>
+                  <span className="hover:text-foreground cursor-default" title="Căn trái">≡</span>
+                  <span className="hover:text-foreground cursor-default" title="Căn giữa">⫶</span>
+                  <span className="hover:text-foreground cursor-default" title="Căn phải">≡</span>
+                </div>
+                <Textarea
+                  rows={4}
+                  value={data.mindx_letter?.future_direction ?? ""}
+                  onChange={(e) =>
+                    handleMindxLetterChange("future_direction", e.target.value)
+                  }
+                  placeholder="@futureDirection"
+                  className="text-xs sm:text-sm border-0 focus-visible:ring-0 resize-y leading-relaxed min-h-[85px] rounded-none bg-transparent"
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
