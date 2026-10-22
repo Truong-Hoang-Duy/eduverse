@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import { getDisplayFileName } from "@/lib/assignment-utils";
 import { docxToText } from "@/lib/docx-text";
 import { looksEncrypted } from "@/lib/file-check";
 import {
@@ -38,6 +39,7 @@ export async function createAssignment(
   const title = String(formData.get("title") ?? "").trim();
   const instructions = String(formData.get("instructions") ?? "").trim();
   const file = formData.get("spec_file");
+  const attachmentFilesRaw = formData.getAll("attachment_files");
 
   if (!courseId || !sessionNumber || !title) {
     return { error: "Vui lòng chọn khóa, số buổi và nhập tiêu đề." };
@@ -62,6 +64,24 @@ export async function createAssignment(
     };
   }
 
+  // Validate các file đính kèm/dữ liệu bổ sung (nếu có)
+  const attachmentFiles = attachmentFilesRaw.filter(
+    (f): f is File => f instanceof File && f.size > 0
+  );
+
+  for (const att of attachmentFiles) {
+    if (att.size > SPEC_MAX_BYTES) {
+      return {
+        error: `File đính kèm "${att.name}" nặng quá 8MB — hãy nén lại hoặc giảm bớt dung lượng.`,
+      };
+    }
+    if (/\.(doc|xls|ppt)$/i.test(att.name)) {
+      return {
+        error: `File đính kèm "${att.name}" là định dạng Office đời cũ, hệ thống không đọc được chữ. Hãy lưu lại dạng mới hơn và thử lại.`,
+      };
+    }
+  }
+
   const supabase = await createClient();
   const path = `${courseId}/${Date.now()}-${sanitizeFileName(file.name)}`;
   const { error: uploadError } = await supabase.storage
@@ -71,19 +91,75 @@ export async function createAssignment(
     return { error: `Upload file đề thất bại: ${uploadError.message}` };
   }
 
+  // Upload các file đính kèm
+  const uploadedAttPaths: string[] = [];
+  for (const att of attachmentFiles) {
+    const attBytes = new Uint8Array(await att.arrayBuffer());
+    if (looksEncrypted(attBytes)) {
+      await removeSpecFiles(supabase, [path, ...uploadedAttPaths]);
+      return {
+        error: `File đính kèm "${att.name}" đang bị phần mềm bảo mật mã hóa không thể đọc được nội dung.`,
+      };
+    }
+    const attPath = `${courseId}/${Date.now()}-att-${sanitizeFileName(att.name)}`;
+    const { error: attUploadError } = await supabase.storage
+      .from(SPEC_BUCKET)
+      .upload(attPath, attBytes, {
+        contentType: att.type || "application/octet-stream",
+      });
+    if (attUploadError) {
+      await removeSpecFiles(supabase, [path, ...uploadedAttPaths]);
+      return {
+        error: `Upload file đính kèm "${att.name}" thất bại: ${attUploadError.message}`,
+      };
+    }
+    uploadedAttPaths.push(attPath);
+  }
+
+  // Lưu thông tin đề bài vào database
   const { error } = await supabase.from("assignments").insert({
     course_id: courseId,
     session_number: sessionNumber,
     title,
     spec_file_path: path,
+    attachment_file_paths: uploadedAttPaths,
     instructions: instructions || null,
   });
+
   if (error) {
-    await removeSpecFiles(supabase, [path]);
-    if (error.code === "23505") {
-      return { error: `Buổi ${sessionNumber} của khóa này đã có đề — mỗi buổi một đề.` };
+    // Nếu lỗi do cột attachment_file_paths chưa có trong DB (chưa chạy migration)
+    if (
+      error.message?.includes("attachment_file_paths") ||
+      error.code === "42703"
+    ) {
+      const { error: fallbackError } = await supabase
+        .from("assignments")
+        .insert({
+          course_id: courseId,
+          session_number: sessionNumber,
+          title,
+          spec_file_path: path,
+          instructions: instructions || null,
+        });
+
+      if (fallbackError) {
+        await removeSpecFiles(supabase, [path, ...uploadedAttPaths]);
+        if (fallbackError.code === "23505") {
+          return {
+            error: `Buổi ${sessionNumber} của khóa này đã có đề — mỗi buổi một đề.`,
+          };
+        }
+        return { error: `Không tạo được đề: ${fallbackError.message}` };
+      }
+    } else {
+      await removeSpecFiles(supabase, [path, ...uploadedAttPaths]);
+      if (error.code === "23505") {
+        return {
+          error: `Buổi ${sessionNumber} của khóa này đã có đề — mỗi buổi một đề.`,
+        };
+      }
+      return { error: `Không tạo được đề: ${error.message}` };
     }
-    return { error: `Không tạo được đề: ${error.message}` };
   }
 
   revalidatePath("/teacher/assignments");
@@ -122,35 +198,145 @@ export async function deleteAssignment(formData: FormData): Promise<void> {
   const supabase = await createClient();
 
   // Đọc path TRƯỚC khi xóa dòng — xóa xong là không còn đường tìm lại file.
-  const { data: assignment } = await supabase
+  const filesToDelete: string[] = [];
+  const { data: assignment, error } = await supabase
     .from("assignments")
-    .select("spec_file_path")
+    .select("spec_file_path, attachment_file_paths")
     .eq("id", id)
     .single();
 
+  if (!error && assignment) {
+    if (assignment.spec_file_path) filesToDelete.push(assignment.spec_file_path);
+    if (Array.isArray(assignment.attachment_file_paths)) {
+      filesToDelete.push(...assignment.attachment_file_paths);
+    }
+  } else {
+    const { data: fallback } = await supabase
+      .from("assignments")
+      .select("spec_file_path")
+      .eq("id", id)
+      .single();
+    if (fallback?.spec_file_path) filesToDelete.push(fallback.spec_file_path);
+  }
+
   await supabase.from("assignments").delete().eq("id", id);
-  await removeSpecFiles(supabase, [assignment?.spec_file_path ?? null]);
+  if (filesToDelete.length > 0) {
+    await removeSpecFiles(supabase, filesToDelete);
+  }
 
   revalidatePath("/teacher/assignments");
 }
 
-/** Đuôi file mở ra đọc thẳng dạng chữ; còn lại xem bằng link ký (ảnh/PDF). */
+/** Đuôi file mở ra đọc thẳng dạng chữ; còn lại xem bằng link ký (ảnh/PDF/tải về). */
 const TEXT_EXTENSIONS = [
   "txt", "md", "markdown", "json", "csv", "sql",
   "js", "jsx", "ts", "tsx", "py", "java", "c", "cpp", "cs", "html", "css",
 ];
 
+export interface AssignmentSpecFile {
+  path: string;
+  fileName: string;
+  isMain: boolean;
+  kind: "text" | "image" | "pdf" | "download";
+  content?: string;
+  url?: string;
+}
+
 export type AssignmentSpec =
-  | { kind: "text"; fileName: string; content: string }
+  | { kind: "text"; fileName: string; content: string; url?: string }
   | { kind: "image" | "pdf" | "download"; fileName: string; url: string };
 
+async function loadSpecFile(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  path: string,
+  isMain: boolean
+): Promise<{ file?: AssignmentSpecFile; error?: string }> {
+  const fileName = getDisplayFileName(path);
+  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+
+  // Tạo signed URL có thời hạn 10 phút (600s) cho mọi file để hỗ trợ xem/tải
+  const { data: signed } = await supabase.storage
+    .from(SPEC_BUCKET)
+    .createSignedUrl(path, 600);
+  const downloadUrl = signed?.signedUrl;
+
+  if (TEXT_EXTENSIONS.includes(ext)) {
+    const { data: blob, error } = await supabase.storage
+      .from(SPEC_BUCKET)
+      .download(path);
+    if (!error && blob) {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      if (looksEncrypted(bytes)) {
+        return {
+          error: `File "${fileName}" bị phần mềm bảo mật mã hóa nên không đọc được nội dung thật.`,
+        };
+      }
+      return {
+        file: {
+          path,
+          fileName,
+          isMain,
+          kind: "text",
+          content: new TextDecoder().decode(bytes),
+          url: downloadUrl,
+        },
+      };
+    }
+  }
+
+  if (ext === "docx") {
+    const { data: blob, error } = await supabase.storage
+      .from(SPEC_BUCKET)
+      .download(path);
+    if (!error && blob) {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      if (looksEncrypted(bytes)) {
+        return {
+          error: `File "${fileName}" bị phần mềm bảo mật mã hóa nên không đọc được nội dung thật.`,
+        };
+      }
+      const text = docxToText(bytes);
+      if (text) {
+        return {
+          file: {
+            path,
+            fileName,
+            isMain,
+            kind: "text",
+            content: text,
+            url: downloadUrl,
+          },
+        };
+      }
+    }
+  }
+
+  const isImg = /^(png|jpe?g|gif|webp|svg)$/i.test(ext);
+  const kind: AssignmentSpecFile["kind"] =
+    ext === "pdf" ? "pdf" : isImg ? "image" : "download";
+
+  return {
+    file: {
+      path,
+      fileName,
+      isMain,
+      kind,
+      url: downloadUrl,
+    },
+  };
+}
+
 /**
- * Đọc file đề đã lưu để GV xem lại trên giao diện. Bucket là private nên ảnh/PDF
- * phải đi qua link ký ngắn hạn; file chữ trả thẳng nội dung.
+ * Đọc file đề và các file dữ liệu đính kèm đã lưu để GV xem lại trên giao diện.
+ * Trả về file đề chính (`spec`) và đầy đủ danh sách tất cả file (`files`) để xem và tải về.
  */
 export async function getAssignmentSpec(
   assignmentId: string
-): Promise<{ spec?: AssignmentSpec; error?: string }> {
+): Promise<{
+  spec?: AssignmentSpec;
+  files?: AssignmentSpecFile[];
+  error?: string;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -160,63 +346,77 @@ export async function getAssignmentSpec(
   }
 
   // RLS (assignments_teacher_all): GV của khóa khác không thấy dòng nào.
-  const { data: assignment } = await supabase
+  let assignment: {
+    spec_file_path: string | null;
+    attachment_file_paths?: string[] | null;
+  } | null = null;
+
+  const { data, error } = await supabase
     .from("assignments")
-    .select("spec_file_path")
+    .select("spec_file_path, attachment_file_paths")
     .eq("id", assignmentId)
     .single();
-  if (!assignment) {
-    return { error: "Không tìm thấy đề bài này (hoặc đề thuộc khóa của giáo viên khác)." };
+
+  if (error || !data) {
+    const { data: fallback, error: fallbackError } = await supabase
+      .from("assignments")
+      .select("spec_file_path")
+      .eq("id", assignmentId)
+      .single();
+    if (fallbackError || !fallback) {
+      return {
+        error:
+          "Không tìm thấy đề bài này (hoặc đề thuộc khóa của giáo viên khác).",
+      };
+    }
+    assignment = fallback;
+  } else {
+    assignment = data;
   }
+
   if (!assignment.spec_file_path) {
     return { error: "Đề bài này chưa có file đính kèm." };
   }
 
-  const path = assignment.spec_file_path;
-  const fileName = path.split("/").pop() ?? "đề bài";
-  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+  const pathsToLoad = [
+    { path: assignment.spec_file_path, isMain: true },
+    ...(assignment.attachment_file_paths ?? []).map((p) => ({
+      path: p,
+      isMain: false,
+    })),
+  ];
 
-  const { data: blob, error } = await supabase.storage
-    .from("assignment-specs")
-    .download(path);
-  if (error || !blob) {
-    return { error: `Không tải được file đề: ${error?.message ?? "không rõ lỗi"}` };
-  }
-
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  if (looksEncrypted(bytes)) {
-    return {
-      error:
-        "File đề này bị phần mềm bảo mật của công ty mã hóa từ lúc upload nên không đọc được nội dung thật — AI cũng sẽ chấm sai. Hãy xóa đề này và tạo lại bằng file .txt/.md.",
-    };
-  }
-
-  if (TEXT_EXTENSIONS.includes(ext)) {
-    return { spec: { kind: "text", fileName, content: new TextDecoder().decode(bytes) } };
-  }
-
-  // Word: trích chữ ra xem thẳng trong popup. Đọc không ra (file hỏng, đề chỉ là
-  // ảnh chụp dán vào Word) thì rơi xuống dưới cho tải về mở bằng Word.
-  if (ext === "docx") {
-    const text = docxToText(bytes);
-    if (text) {
-      return { spec: { kind: "text", fileName, content: text } };
+  const files: AssignmentSpecFile[] = [];
+  for (const item of pathsToLoad) {
+    const res = await loadSpecFile(supabase, item.path, item.isMain);
+    if (res.error && item.isMain) {
+      return { error: res.error };
+    }
+    if (res.file) {
+      files.push(res.file);
     }
   }
 
-  const { data: signed, error: signErr } = await supabase.storage
-    .from("assignment-specs")
-    .createSignedUrl(path, 600);
-  if (signErr || !signed) {
-    return { error: `Không mở được file đề: ${signErr?.message ?? "không rõ lỗi"}` };
+  if (files.length === 0) {
+    return { error: "Không tải được file đề bài." };
   }
 
-  // Tới đây .docx nghĩa là trích chữ THẤT BẠI (xem nhánh trên) → cho tải về mở
-  // bằng Word, còn hơn hiện bytes rác.
-  const kind: AssignmentSpec["kind"] =
-    ext === "pdf" ? "pdf" : ext === "docx" ? "download" : "image";
+  const mainFile = files.find((f) => f.isMain) ?? files[0];
+  const spec: AssignmentSpec =
+    mainFile.kind === "text"
+      ? {
+          kind: "text",
+          fileName: mainFile.fileName,
+          content: mainFile.content ?? "",
+          url: mainFile.url,
+        }
+      : {
+          kind: mainFile.kind,
+          fileName: mainFile.fileName,
+          url: mainFile.url ?? "",
+        };
 
-  return { spec: { kind, fileName, url: signed.signedUrl } };
+  return { spec, files };
 }
 
 // ---------- Chấm bài — KHÔNG lưu gì, chỉ trả kết quả để copy ----------
@@ -335,14 +535,42 @@ export async function gradeFiles(input: {
   }
 
   // RLS chỉ cho giáo viên của khóa đọc được đề này.
-  const { data: assignment } = await supabase
+  interface AssignmentForGrading {
+    title: string;
+    instructions: string | null;
+    spec_file_path: string | null;
+    attachment_file_paths?: string[] | null;
+    courses: unknown;
+  }
+
+  let assignment: AssignmentForGrading | null = null;
+
+  const resWithAtt = await supabase
     .from("assignments")
-    .select("title, instructions, spec_file_path, courses(name)")
+    .select(
+      "title, instructions, spec_file_path, attachment_file_paths, courses(name)"
+    )
     .eq("id", input.assignmentId)
     .single();
+
+  if (resWithAtt.error || !resWithAtt.data) {
+    const fallbackRes = await supabase
+      .from("assignments")
+      .select("title, instructions, spec_file_path, courses(name)")
+      .eq("id", input.assignmentId)
+      .single();
+    if (!fallbackRes.data) {
+      return { error: "Không tìm thấy đề bài." };
+    }
+    assignment = fallbackRes.data;
+  } else {
+    assignment = resWithAtt.data;
+  }
+
   if (!assignment) {
     return { error: "Không tìm thấy đề bài." };
   }
+
   if (!assignment.spec_file_path) {
     return { error: "Đề bài chưa có file — tạo lại đề với file đính kèm." };
   }
@@ -357,6 +585,7 @@ export async function gradeFiles(input: {
       api_key: aiConfig.api_key,
       provider: aiConfig.provider,
       spec_file_path: assignment.spec_file_path,
+      attachment_file_paths: assignment.attachment_file_paths ?? [],
       files: input.files.map((f) => ({
         name: f.name,
         mime_type: f.mimeType || null,
@@ -378,3 +607,4 @@ export async function gradeFiles(input: {
     };
   }
 }
+

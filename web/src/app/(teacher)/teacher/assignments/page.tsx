@@ -61,7 +61,14 @@ export default async function AssignmentsPage() {
         <PageHeader
           title="Chấm bài"
           description="Chấm bài tập hàng ngày — chọn khóa và đề, tải file bài làm lên"
-          action={courses.length > 0 ? <AssignmentForm courses={courses} /> : null}
+          action={
+            courses.length > 0 ? (
+              <AssignmentForm
+                courses={courses}
+                existingAssignments={savedAssignments}
+              />
+            ) : null
+          }
         />
         <GradingTabs />
       </div>

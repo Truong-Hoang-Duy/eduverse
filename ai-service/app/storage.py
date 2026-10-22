@@ -207,11 +207,22 @@ def _download_bytes(bucket: str, path: str) -> bytes:
         ) from exc
 
 
+def _clean_spec_filename(path: str) -> str:
+    raw_name = path.split("/")[-1]
+    # Bỏ tiền tố timestamp vd: 1729600000-hw3_data.csv hoặc 1729600000-att-hw3_data.csv
+    parts = raw_name.split("-")
+    if len(parts) >= 2 and parts[0].isdigit():
+        if parts[1] == "att" and len(parts) >= 3:
+            return "-".join(parts[2:])
+        return "-".join(parts[1:])
+    return raw_name
+
+
 def download_as_part(bucket: str, path: str) -> types.Part:
     """Tải 1 file từ Storage và bọc thành Part cho Gemini (multimodal)."""
-    return bytes_to_part(path, _download_bytes(bucket, path))
+    return bytes_to_part(_clean_spec_filename(path), _download_bytes(bucket, path))
 
 
 def download_as_openai_content(bucket: str, path: str) -> dict:
     """Tải 1 file từ Storage và bọc thành content block cho OpenAI."""
-    return bytes_to_openai_content(path, _download_bytes(bucket, path))
+    return bytes_to_openai_content(_clean_spec_filename(path), _download_bytes(bucket, path))

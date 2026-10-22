@@ -918,8 +918,10 @@ def build_grading_prompt(
 
     parts = [
         SYSTEM_ROLE,
-        "Nhiệm vụ: CHẤM BÀI TẬP LẬP TRÌNH. File đầu tiên đính kèm là ĐỀ BÀI, "
-        "các file sau là BÀI LÀM của học viên.",
+        "Nhiệm vụ: CHẤM BÀI TẬP LẬP TRÌNH. File đầu tiên đính kèm là ĐỀ BÀI CHÍNH. "
+        "Nếu có các file tài liệu/dữ liệu đính kèm kèm theo đề (như file dữ liệu CSV, JSON, file code mẫu starter), "
+        "hãy dùng nội dung đó làm cơ sở chuẩn để kiểm tra tính đúng đắn của code và kết quả. "
+        "Các file sau đó là BÀI LÀM của học viên.",
         f"Khóa học: {course_name}",
         f"Bài tập: {assignment_title}",
     ]
@@ -953,8 +955,9 @@ def build_grading_prompt(
     if grade_practice:
         parts.append(
             "PHẦN THỰC HÀNH — cách chấm: (1) đọc kỹ đề và liệt kê các yêu cầu; "
-            "(2) đối chiếu bài làm với từng yêu cầu; (3) cho điểm trên thang 100, "
-            "cân nhắc: đúng yêu cầu đề (quan trọng nhất), chất lượng code, sự sáng "
+            "(2) đối chiếu bài làm với từng yêu cầu; nếu đề có file dữ liệu (như CSV, JSON) "
+            "hãy đối chiếu câu trả lời và kết quả lọc/tính toán của học viên với dữ liệu thực tế trong file; "
+            "(3) cho điểm trên thang 100, cân nhắc: đúng yêu cầu đề (quan trọng nhất), chất lượng code, sự sáng "
             "tạo. Chấm khắt khe, công bằng."
         )
         parts.append(
@@ -1007,7 +1010,8 @@ def build_student_help_prompt(
     parts = [
         SYSTEM_ROLE,
         "Nhiệm vụ: GIÚP MỘT HỌC VIÊN ĐANG BÍ BÀI TẬP. File đầu tiên đính kèm là "
-        "ĐỀ BÀI. Em nhắn tin hỏi giáo viên, và đoạn em sắp đọc chính là câu trả "
+        "ĐỀ BÀI CHÍNH (có thể kèm các file dữ liệu đính kèm như CSV, JSON, code mẫu). "
+        "Em nhắn tin hỏi giáo viên, và đoạn em sắp đọc chính là câu trả "
         "lời của giáo viên gửi lại cho em.",
         "TUYỆT ĐỐI KHÔNG chấm điểm, không xếp loại, không nhận xét kiểu tổng kết.",
         STUDENT_HELP_RULE,

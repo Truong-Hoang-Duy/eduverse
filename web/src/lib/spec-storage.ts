@@ -54,10 +54,19 @@ export async function specPathsOfCourses(
 
   const { data } = await supabase
     .from("assignments")
-    .select("spec_file_path")
+    .select("spec_file_path, attachment_file_paths")
     .in("course_id", courseIds);
 
-  return (data ?? [])
-    .map((a) => a.spec_file_path)
-    .filter((p): p is string => Boolean(p));
+  const paths: string[] = [];
+  for (const a of data ?? []) {
+    if (a.spec_file_path) paths.push(a.spec_file_path);
+    const row = a as unknown as { attachment_file_paths?: string[] };
+    if (Array.isArray(row.attachment_file_paths)) {
+      for (const p of row.attachment_file_paths) {
+        if (p) paths.push(p);
+      }
+    }
+  }
+
+  return paths;
 }

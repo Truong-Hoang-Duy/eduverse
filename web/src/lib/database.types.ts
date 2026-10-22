@@ -41,6 +41,7 @@ export type Database = {
     Tables: {
       assignments: {
         Row: {
+          attachment_file_paths: string[]
           course_id: string
           created_at: string
           id: string
@@ -51,6 +52,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          attachment_file_paths?: string[]
           course_id: string
           created_at?: string
           id?: string
@@ -61,6 +63,7 @@ export type Database = {
           title: string
         }
         Update: {
+          attachment_file_paths?: string[]
           course_id?: string
           created_at?: string
           id?: string
