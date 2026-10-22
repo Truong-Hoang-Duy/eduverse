@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
-import { getDisplayFileName } from "@/lib/assignment-utils";
+import {
+  cleanInstructionsForDisplay,
+  encodeInstructionsWithAttachments,
+  extractAttachmentPaths,
+  getDisplayFileName,
+} from "@/lib/assignment-utils";
 import { docxToText } from "@/lib/docx-text";
 import { looksEncrypted } from "@/lib/file-check";
 import {
@@ -116,14 +121,19 @@ export async function createAssignment(
     uploadedAttPaths.push(attPath);
   }
 
-  // Lưu thông tin đề bài vào database
+  // Lưu thông tin đề bài vào database (mã hóa metadata đính kèm vào instructions để tương thích 100%)
+  const encodedInstructions = encodeInstructionsWithAttachments(
+    instructions,
+    uploadedAttPaths
+  );
+
   const { error } = await supabase.from("assignments").insert({
     course_id: courseId,
     session_number: sessionNumber,
     title,
     spec_file_path: path,
     attachment_file_paths: uploadedAttPaths,
-    instructions: instructions || null,
+    instructions: encodedInstructions,
   });
 
   if (error) {
@@ -139,7 +149,7 @@ export async function createAssignment(
           session_number: sessionNumber,
           title,
           spec_file_path: path,
-          instructions: instructions || null,
+          instructions: encodedInstructions,
         });
 
       if (fallbackError) {
@@ -201,22 +211,27 @@ export async function deleteAssignment(formData: FormData): Promise<void> {
   const filesToDelete: string[] = [];
   const { data: assignment, error } = await supabase
     .from("assignments")
-    .select("spec_file_path, attachment_file_paths")
+    .select("spec_file_path, instructions, attachment_file_paths")
     .eq("id", id)
     .single();
 
   if (!error && assignment) {
     if (assignment.spec_file_path) filesToDelete.push(assignment.spec_file_path);
-    if (Array.isArray(assignment.attachment_file_paths)) {
-      filesToDelete.push(...assignment.attachment_file_paths);
-    }
+    const attPaths = extractAttachmentPaths(
+      assignment.instructions,
+      assignment.attachment_file_paths
+    );
+    filesToDelete.push(...attPaths);
   } else {
     const { data: fallback } = await supabase
       .from("assignments")
-      .select("spec_file_path")
+      .select("spec_file_path, instructions")
       .eq("id", id)
       .single();
     if (fallback?.spec_file_path) filesToDelete.push(fallback.spec_file_path);
+    if (fallback?.instructions) {
+      filesToDelete.push(...extractAttachmentPaths(fallback.instructions, null));
+    }
   }
 
   await supabase.from("assignments").delete().eq("id", id);
@@ -225,6 +240,213 @@ export async function deleteAssignment(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/teacher/assignments");
+}
+
+/**
+ * Đính kèm thêm file dữ liệu vào một đề bài ĐÃ CÓ SẴN mà không cần tạo lại đề.
+ */
+export async function attachAssignmentFiles(
+  assignmentId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  const filesRaw = formData.getAll("attachment_files");
+  const files = filesRaw.filter(
+    (f): f is File => f instanceof File && f.size > 0
+  );
+
+  if (files.length === 0) {
+    return { error: "Vui lòng chọn ít nhất một file để đính kèm." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  // Đọc thông tin đề bài hiện tại
+  let courseId = "";
+  let currentInstructions: string | null = null;
+  let currentAttPaths: string[] | null = null;
+
+  const { data: assignment, error: fetchErr } = await supabase
+    .from("assignments")
+    .select("course_id, spec_file_path, instructions, attachment_file_paths")
+    .eq("id", assignmentId)
+    .single();
+
+  if (!fetchErr && assignment) {
+    courseId = assignment.course_id;
+    currentInstructions = assignment.instructions;
+    currentAttPaths = assignment.attachment_file_paths;
+  } else {
+    const { data: fallback, error: fbErr } = await supabase
+      .from("assignments")
+      .select("course_id, spec_file_path, instructions")
+      .eq("id", assignmentId)
+      .single();
+    if (fbErr || !fallback) {
+      return { error: "Không tìm thấy đề bài." };
+    }
+    courseId = fallback.course_id;
+    currentInstructions = fallback.instructions;
+    currentAttPaths = null;
+  }
+
+  const existingPaths = extractAttachmentPaths(
+    currentInstructions,
+    currentAttPaths
+  );
+
+  for (const f of files) {
+    if (f.size > SPEC_MAX_BYTES) {
+      return {
+        error: `File "${f.name}" nặng quá 8MB — hãy nén lại hoặc giảm bớt dung lượng.`,
+      };
+    }
+    if (/\.(doc|xls|ppt)$/i.test(f.name)) {
+      return {
+        error: `File "${f.name}" là định dạng Office đời cũ, hệ thống không đọc được chữ.`,
+      };
+    }
+  }
+
+  const newUploadedPaths: string[] = [];
+  for (const f of files) {
+    const bytes = new Uint8Array(await f.arrayBuffer());
+    if (looksEncrypted(bytes)) {
+      await removeSpecFiles(supabase, newUploadedPaths);
+      return {
+        error: `File "${f.name}" bị phần mềm bảo mật mã hóa, không thể tải lên.`,
+      };
+    }
+    const attPath = `${courseId}/${Date.now()}-att-${sanitizeFileName(f.name)}`;
+    const { error: uploadErr } = await supabase.storage
+      .from(SPEC_BUCKET)
+      .upload(attPath, bytes, {
+        contentType: f.type || "application/octet-stream",
+      });
+    if (uploadErr) {
+      await removeSpecFiles(supabase, newUploadedPaths);
+      return {
+        error: `Upload file "${f.name}" thất bại: ${uploadErr.message}`,
+      };
+    }
+    newUploadedPaths.push(attPath);
+  }
+
+  const allAttachmentPaths = [...existingPaths, ...newUploadedPaths];
+  const updatedInstructions = encodeInstructionsWithAttachments(
+    currentInstructions,
+    allAttachmentPaths
+  );
+
+  // Thử cập nhật cả attachment_file_paths và instructions
+  const { error: updateErr } = await supabase
+    .from("assignments")
+    .update({
+      attachment_file_paths: allAttachmentPaths,
+      instructions: updatedInstructions,
+    })
+    .eq("id", assignmentId);
+
+  if (updateErr) {
+    // Fallback nếu cột attachment_file_paths chưa có trong DB
+    const { error: fbUpdateErr } = await supabase
+      .from("assignments")
+      .update({
+        instructions: updatedInstructions,
+      })
+      .eq("id", assignmentId);
+
+    if (fbUpdateErr) {
+      await removeSpecFiles(supabase, newUploadedPaths);
+      return {
+        error: `Không thể cập nhật đề bài: ${fbUpdateErr.message}`,
+      };
+    }
+  }
+
+  revalidatePath("/teacher/assignments");
+  return {
+    success: `Đã đính kèm thêm ${newUploadedPaths.length} tệp dữ liệu vào đề bài.`,
+  };
+}
+
+/**
+ * Xóa một file đính kèm khỏi đề bài và dọn sạch Storage.
+ */
+export async function removeAssignmentAttachment(
+  assignmentId: string,
+  filePath: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  let currentInstructions: string | null = null;
+  let currentAttPaths: string[] | null = null;
+
+  const { data: assignment, error: fetchErr } = await supabase
+    .from("assignments")
+    .select("instructions, attachment_file_paths")
+    .eq("id", assignmentId)
+    .single();
+
+  if (!fetchErr && assignment) {
+    currentInstructions = assignment.instructions;
+    currentAttPaths = assignment.attachment_file_paths;
+  } else {
+    const { data: fallback, error: fbErr } = await supabase
+      .from("assignments")
+      .select("instructions")
+      .eq("id", assignmentId)
+      .single();
+    if (fbErr || !fallback) {
+      return { error: "Không tìm thấy đề bài." };
+    }
+    currentInstructions = fallback.instructions;
+    currentAttPaths = null;
+  }
+
+  const existingPaths = extractAttachmentPaths(
+    currentInstructions,
+    currentAttPaths
+  );
+  const remainingPaths = existingPaths.filter((p) => p !== filePath);
+  const updatedInstructions = encodeInstructionsWithAttachments(
+    currentInstructions,
+    remainingPaths
+  );
+
+  const { error: updateErr } = await supabase
+    .from("assignments")
+    .update({
+      attachment_file_paths: remainingPaths,
+      instructions: updatedInstructions,
+    })
+    .eq("id", assignmentId);
+
+  if (updateErr) {
+    await supabase
+      .from("assignments")
+      .update({
+        instructions: updatedInstructions,
+      })
+      .eq("id", assignmentId);
+  }
+
+  // Dọn dẹp file trong Storage
+  await removeSpecFiles(supabase, [filePath]);
+
+  revalidatePath("/teacher/assignments");
+  return { success: "Đã xóa tệp dữ liệu khỏi đề bài." };
 }
 
 /** Đuôi file mở ra đọc thẳng dạng chữ; còn lại xem bằng link ký (ảnh/PDF/tải về). */
@@ -348,19 +570,20 @@ export async function getAssignmentSpec(
   // RLS (assignments_teacher_all): GV của khóa khác không thấy dòng nào.
   let assignment: {
     spec_file_path: string | null;
+    instructions: string | null;
     attachment_file_paths?: string[] | null;
   } | null = null;
 
   const { data, error } = await supabase
     .from("assignments")
-    .select("spec_file_path, attachment_file_paths")
+    .select("spec_file_path, instructions, attachment_file_paths")
     .eq("id", assignmentId)
     .single();
 
   if (error || !data) {
     const { data: fallback, error: fallbackError } = await supabase
       .from("assignments")
-      .select("spec_file_path")
+      .select("spec_file_path, instructions")
       .eq("id", assignmentId)
       .single();
     if (fallbackError || !fallback) {
@@ -378,9 +601,14 @@ export async function getAssignmentSpec(
     return { error: "Đề bài này chưa có file đính kèm." };
   }
 
+  const attachmentPaths = extractAttachmentPaths(
+    assignment.instructions,
+    assignment.attachment_file_paths
+  );
+
   const pathsToLoad = [
     { path: assignment.spec_file_path, isMain: true },
-    ...(assignment.attachment_file_paths ?? []).map((p) => ({
+    ...attachmentPaths.map((p) => ({
       path: p,
       isMain: false,
     })),
@@ -575,6 +803,11 @@ export async function gradeFiles(input: {
     return { error: "Đề bài chưa có file — tạo lại đề với file đính kèm." };
   }
 
+  const attachmentPaths = extractAttachmentPaths(
+    assignment.instructions,
+    assignment.attachment_file_paths
+  );
+
   const aiConfig = await getAiConfig();
   if (!aiConfig.ok) {
     return { error: aiConfig.error };
@@ -585,7 +818,7 @@ export async function gradeFiles(input: {
       api_key: aiConfig.api_key,
       provider: aiConfig.provider,
       spec_file_path: assignment.spec_file_path,
-      attachment_file_paths: assignment.attachment_file_paths ?? [],
+      attachment_file_paths: attachmentPaths,
       files: input.files.map((f) => ({
         name: f.name,
         mime_type: f.mimeType || null,
@@ -594,7 +827,7 @@ export async function gradeFiles(input: {
       course_name:
         (assignment.courses as unknown as { name: string } | null)?.name ?? "",
       assignment_title: assignment.title,
-      instructions: assignment.instructions,
+      instructions: cleanInstructionsForDisplay(assignment.instructions),
       mode: input.mode ?? "practice",
     });
     return { grade };
