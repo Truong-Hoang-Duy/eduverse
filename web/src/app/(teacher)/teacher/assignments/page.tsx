@@ -6,6 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  extractAttachmentPaths,
+  getDisplayFileName,
+} from "@/lib/assignment-utils";
 import { createClient } from "@/lib/supabase/server";
 
 import { AssignmentForm } from "./assignment-form";
@@ -24,6 +28,8 @@ interface AssignmentRow {
   course_id: string;
   session_number: number;
   title: string;
+  spec_file_path: string | null;
+  instructions: string | null;
 }
 
 export default async function AssignmentsPage() {
@@ -33,19 +39,26 @@ export default async function AssignmentsPage() {
     supabase.from("courses").select("id, code, name").order("code"),
     supabase
       .from("assignments")
-      .select("id, course_id, session_number, title")
+      .select(
+        "id, course_id, session_number, title, spec_file_path, instructions"
+      )
       .order("session_number"),
   ]);
 
   const courses = (coursesData ?? []) as CourseChoice[];
   const assignments = (assignmentsData ?? []) as AssignmentRow[];
 
-  const savedAssignments: SavedAssignment[] = assignments.map((a) => ({
-    id: a.id,
-    courseId: a.course_id,
-    sessionNumber: a.session_number,
-    title: a.title,
-  }));
+  const savedAssignments: SavedAssignment[] = assignments.map((a) => {
+    const attPaths = extractAttachmentPaths(a.instructions, null);
+    return {
+      id: a.id,
+      courseId: a.course_id,
+      sessionNumber: a.session_number,
+      title: a.title,
+      attachmentCount: attPaths.length,
+      attachmentNames: attPaths.map(getDisplayFileName),
+    };
+  });
 
   const assignmentChoices: AssignmentChoice[] = assignments.map((a) => ({
     id: a.id,

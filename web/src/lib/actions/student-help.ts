@@ -2,6 +2,10 @@
 
 import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import {
+  cleanInstructionsForDisplay,
+  extractAttachmentPaths,
+} from "@/lib/assignment-utils";
 import { GRADING_BUDGET } from "@/lib/submission-files";
 import { createClient } from "@/lib/supabase/server";
 
@@ -100,6 +104,11 @@ export async function helpStudent(input: {
     return { error: "Đề bài chưa có file — tạo lại đề với file đính kèm." };
   }
 
+  const attachmentPaths = extractAttachmentPaths(
+    assignment.instructions,
+    assignment.attachment_file_paths
+  );
+
   const aiConfig = await getAiConfig();
   if (!aiConfig.ok) {
     return { error: aiConfig.error };
@@ -110,7 +119,7 @@ export async function helpStudent(input: {
       api_key: aiConfig.api_key,
       provider: aiConfig.provider,
       spec_file_path: assignment.spec_file_path,
-      attachment_file_paths: assignment.attachment_file_paths ?? [],
+      attachment_file_paths: attachmentPaths,
       files: input.files.map((f) => ({
         name: f.name,
         mime_type: f.mimeType || null,
@@ -119,7 +128,7 @@ export async function helpStudent(input: {
       course_name:
         (assignment.courses as unknown as { name: string } | null)?.name ?? "",
       assignment_title: assignment.title,
-      instructions: assignment.instructions,
+      instructions: cleanInstructionsForDisplay(assignment.instructions),
       question: input.question?.trim() || null,
     });
     return { help };
