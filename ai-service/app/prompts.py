@@ -64,9 +64,168 @@ def detect_course_domain(course_name: str | None) -> str:
     if any(k in norm for k in ["web", "frontend", "html", "css", "javascript", "react"]):
         return "web"
     # 5. Computer Science
-    if any(k in norm for k in ["python", "computer science", "khoa học máy tính", "cs", "c++", "thuật toán", "algorithm", "tin học"]):
+    if any(k in norm for k in ["python", "computer science", "computer scientist", "khoa học máy tính", "c++", "thuật toán", "algorithm", "tin học"]) or bool(
+        re.search(r"\bcs[a-z0-9]*\b", norm)
+    ):
         return "computer_science"
     return "general"
+
+
+def detect_course_level(course_name: str | None) -> str:
+    """Xác định cấp bậc khóa học: 'basic' | 'advance' | 'intensive'
+    Tuân thủ phân cấp 3 bậc bất biến của MindX K12: Basic -> Advance -> Intensive.
+    """
+    if not course_name:
+        return "basic"
+    norm = course_name.lower()
+    # 1. Bậc Intensive (xét trước)
+    if any(k in norm for k in ["intensive", "chuyên sâu", "chuyen sau", "level 3", "bậc 3"]) or bool(
+        re.search(r"\b(csi|jsi)\d*\b", norm)
+    ):
+        return "intensive"
+    # 2. Bậc Advance
+    if any(k in norm for k in ["advance", "advanced", "nâng cao", "nang cao", "trung cấp", "level 2", "bậc 2"]) or bool(
+        re.search(r"\b(csa|jsa)\d*\b", norm)
+    ):
+        return "advance"
+    # 3. Mặc định là Basic (CSB, JSB, cơ bản, starter, level 1...)
+    return "basic"
+
+
+def resolve_next_mindx_course(course_name: str | None) -> dict[str, str | bool]:
+    """Xác định khóa học kế tiếp theo ma trận lộ trình đào tạo MindX K12.
+    QUY TẮC BẤT BIẾN: CẤM NHẢY CÓC BỘ MÔN.
+    - Basic -> Advance -> Intensive trong cùng một bộ môn.
+    - Chỉ khi ở bậc cuối (Intensive) mới chuyển sang bộ môn tiếp theo hoặc chuyên sâu thi đấu/AI.
+    """
+    domain = detect_course_domain(course_name)
+    level = detect_course_level(course_name)
+
+    roadmap: dict[str, dict[str, str | dict[str, str | bool]]] = {
+        "scratch": {
+            "title": "Lập trình Scratch",
+            "basic": {
+                "next": "Scratch Advance",
+                "desc": "học sâu hơn về logic biến số, phép toán phức tạp, kịch bản nhiều nhân vật và thiết kế game hoàn chỉnh",
+                "is_final": False,
+            },
+            "advance": {
+                "next": "Scratch Intensive",
+                "desc": "chinh phục các bài toán thuật toán đồ họa, cơ chế vật lý game và dự án sáng tạo quy mô lớn",
+                "is_final": False,
+            },
+            "intensive": {
+                "next": "GameMaker Basic hoặc App Creator Basic",
+                "desc": "bước sang môi trường thiết kế game 2D chuyên nghiệp với GameMaker hoặc làm quen với lập trình ứng dụng",
+                "is_final": True,
+            },
+        },
+        "gamemaker": {
+            "title": "Thiết kế & Lập trình Game 2D (GameMaker)",
+            "basic": {
+                "next": "GameMaker Advance",
+                "desc": "nâng cấp cơ chế gameplay phức tạp, hệ thống AI quái vật, phòng chơi nhiều cấp độ và hiệu ứng chuyển động",
+                "is_final": False,
+            },
+            "advance": {
+                "next": "GameMaker Intensive",
+                "desc": "làm chủ ngôn ngữ lập trình GML (GameMaker Language), tối ưu hóa hiệu năng và đóng gói game hoàn chỉnh",
+                "is_final": False,
+            },
+            "intensive": {
+                "next": "Lập trình Ứng dụng Python Basic hoặc Lập trình Web Basic",
+                "desc": "chuyển tiếp sang lập trình phần mềm ứng dụng thực tế bằng Python hoặc xây dựng trang web tương tác",
+                "is_final": True,
+            },
+        },
+        "app": {
+            "title": "Lập trình Ứng dụng Python (Qt Designer)",
+            "basic": {
+                "next": "App Advance",
+                "desc": "thiết kế giao diện phần mềm đa màn hình, kết nối tín hiệu (Signals & Slots) phức tạp và lập trình hướng đối tượng trong Python",
+                "is_final": False,
+            },
+            "advance": {
+                "next": "App Intensive",
+                "desc": "phát triển phần mềm hoàn chỉnh kết nối cơ sở dữ liệu SQLite, đóng gói file thực thi .exe và xử lý nghiệp vụ thực tế",
+                "is_final": False,
+            },
+            "intensive": {
+                "next": "Computer Science Basic (CSB) hoặc Web Basic",
+                "desc": "chuyển tiếp sang đi sâu vào Khoa học Máy tính & Thuật toán hoặc xây dựng ứng dụng Web Fullstack",
+                "is_final": True,
+            },
+        },
+        "web": {
+            "title": "Lập trình Web (HTML/CSS/JS)",
+            "basic": {
+                "next": "Web Advance",
+                "desc": "làm chủ JavaScript nâng cao, hiệu ứng tương tác động, giao diện thích ứng đa màn hình (Responsive CSS/Flexbox) và gọi API",
+                "is_final": False,
+            },
+            "advance": {
+                "next": "Web Intensive",
+                "desc": "xây dựng ứng dụng web hiện đại với ReactJS, kết nối Backend (NodeJS/Database) và triển khai lên môi trường Internet",
+                "is_final": False,
+            },
+            "intensive": {
+                "next": "Chuyên sâu Dự án Doanh nghiệp / Fullstack Engineering",
+                "desc": "tham gia các dự án thực chiến, xây dựng sản phẩm cá nhân phục vụ người dùng thật hoặc nghiên cứu chuyên sâu kiến trúc hệ thống",
+                "is_final": True,
+            },
+        },
+        "computer_science": {
+            "title": "Khoa học Máy tính / Thuật toán (Python/C++)",
+            "basic": {
+                "next": "Computer Science Advance (CSA)",
+                "desc": "học sâu về lập trình hướng đối tượng (OOP), cấu trúc dữ liệu và các thuật toán tìm kiếm, sắp xếp kinh điển",
+                "is_final": False,
+            },
+            "advance": {
+                "next": "Computer Science Intensive (CSI)",
+                "desc": "chinh phục các thuật toán nâng cao (đệ quy, quy hoạch động, đồ thị), tối ưu hóa độ phức tạp thuật toán và giải quyết bài toán lớn",
+                "is_final": False,
+            },
+            "intensive": {
+                "next": "Luyện thi Đội tuyển HSG Tin học / Tin học Trẻ hoặc Chuyên sâu AI & Data Science",
+                "desc": "tham gia các đội tuyển thi đấu lập trình, kỳ thi Olympic Tin học, Tin học trẻ hoặc rẽ nhánh chuyên sâu Trí tuệ Nhân tạo & Khoa học Dữ liệu",
+                "is_final": True,
+            },
+        },
+        "general": {
+            "title": "Lập trình K12",
+            "basic": {
+                "next": "Khóa học Nâng cao (Advance) cùng bộ môn",
+                "desc": "tiếp tục nâng cao kiến thức nền tảng và rèn luyện tư duy lập trình chuyên sâu hơn",
+                "is_final": False,
+            },
+            "advance": {
+                "next": "Khóa học Chuyên sâu (Intensive) cùng bộ môn",
+                "desc": "hoàn thiện năng lực làm chủ công nghệ ở cấp độ cao nhất của bộ môn",
+                "is_final": False,
+            },
+            "intensive": {
+                "next": "Khóa học Chuyên đề Mở rộng hoặc Bộ môn Tiếp theo trong lộ trình MindX",
+                "desc": "bước sang lĩnh vực công nghệ mới hoặc thử sức ở các sân chơi sáng tạo mở rộng",
+                "is_final": True,
+            },
+        },
+    }
+
+    domain_data = roadmap.get(domain, roadmap["general"])
+    domain_title = str(domain_data["title"])
+    level_dict = domain_data.get(level, domain_data["basic"])
+    if not isinstance(level_dict, dict):
+        level_dict = domain_data["basic"]  # type: ignore[assignment]
+
+    return {
+        "domain": domain,
+        "domain_title": domain_title,
+        "level": level,
+        "next_course": str(level_dict["next"]),
+        "next_desc": str(level_dict["desc"]),
+        "is_final_level": bool(level_dict["is_final"]),
+    }
 
 
 COURSE_DOMAIN_GUIDELINES = {
@@ -600,6 +759,34 @@ def build_final_presentation_review_prompt(
         "     + NẾU EM ĐI HỌC ĐẦY ĐỦ (không vắng buổi nào): Nhận xét PHẢI ghi nhận và khen ngợi tính chuyên cần, đi học đầy đủ, đúng giờ, thái độ học tập tích cực, là nền tảng vững chắc giúp em hoàn thành tốt sản phẩm cuối khóa.\n"
         "     + NẾU EM CÓ VẮNG HỌC (dù chỉ 1-2 buổi): Nhận xét PHẢI nêu rõ em có vắng buổi học (nêu rõ số buổi vắng nếu có), nhắc nhở việc nghỉ học làm gián đoạn bài học và có thể ảnh hưởng đến tiến độ dự án, đồng thời động viên em cố gắng sắp xếp đi học đầy đủ hơn."
     )
+
+    next_course_info = resolve_next_mindx_course(course_name)
+    level_label = str(next_course_info["level"]).upper()
+    domain_label = str(next_course_info["domain_title"])
+    target_next = str(next_course_info["next_course"])
+    target_desc = str(next_course_info["next_desc"])
+
+    if next_course_info["is_final_level"]:
+        progression_rule = (
+            f"Học viên đã hoàn thành cấp độ cao nhất ({level_label}) của bộ môn {domain_label}. "
+            f"Định hướng đề xuất em bước tiếp sang: '{target_next}' ({target_desc}). "
+            f"Nêu rõ vì sao nền tảng vững chắc từ khóa học này sẽ giúp em bứt phá ở bậc học tiếp theo."
+        )
+    else:
+        progression_rule = (
+            f"QUY TẮC CẤM NHẢY CÓC BỘ MÔN (BẮT BUỘC): Học viên đang ở cấp độ {level_label} của bộ môn {domain_label}. "
+            f"BẮT BUỘC định hướng em học tiếp khóa học cấp độ kế tiếp: '{target_next}' ({target_desc}). "
+            f"TUYỆT ĐỐI KHÔNG định hướng sang bộ môn khác khi em chưa hoàn thành bậc Intensive của bộ môn này! "
+            f"Gắn liền định hướng này với thế mạnh nổi trội của em trong khóa học."
+        )
+
+    mindx_letter_section = (
+        "4. 'mindx_letter': Ba phần nhận xét theo cấu trúc Thư từ MindX gửi phụ huynh (chuẩn Denise LMS):\n"
+        "   - 'learned_from_mindx' (Con đã học được gì từ MindX?): Đoạn văn (90-140 từ) tóm tắt các giá trị cốt lõi, kiến thức và kỹ năng thực tế em đã tích lũy và làm chủ được trong suốt khóa học. Bắt buộc gắn liền với sản phẩm cuối khóa (nếu có) hoặc bài làm cụ thể của em (ví dụ: tư duy logic, cấu trúc dữ liệu, giải thuật, thao tác phần mềm, khả năng giải quyết vấn đề...). Văn phong tự hào, chân thành, chuẩn mực sư phạm.\n"
+        "   - 'suggestions_from_mindx' (Những điều mà Mindx muốn đề xuất tới bố mẹ sau một thời gian đồng hành với em): Đoạn văn (90-140 từ) chân thành, mang tính xây dựng cao. Dựa vào lịch sử các điểm cần cải thiện qua 13 buổi và thái độ chuyên cần, đưa ra 2-3 lời khuyên hoặc hành động thiết thực mà phụ huynh có thể đồng hành cùng con tại nhà (duy trì thời gian luyện tập code hàng tuần trên hệ thống, rèn tính cẩn thận rà soát lỗi trước khi nộp, khích lệ kiên trì khi gặp bug...).\n"
+        f"   - 'future_direction' (Định hướng tương lai cho học viên): Đoạn văn (80-120 từ). {progression_rule}"
+    )
+    parts.append(mindx_letter_section)
 
     return "\n".join(parts)
 
