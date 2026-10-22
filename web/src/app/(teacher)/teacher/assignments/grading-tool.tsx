@@ -37,7 +37,7 @@ import {
 } from "@/lib/submission-files";
 import { useSubmissionPicker } from "@/lib/use-submission-picker";
 
-import type { CourseChoice } from "./assignment-form";
+import { AssignmentForm, type CourseChoice } from "./assignment-form";
 import { ViewSpecDialog } from "./view-spec-dialog";
 
 export type { CourseChoice };
@@ -184,14 +184,29 @@ export function GradingTool({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <Label>Đề bài *</Label>
-            {selectedAssignment && (
+            {selectedAssignment ? (
               <ViewSpecDialog
                 assignmentId={selectedAssignment.id}
                 sessionNumber={selectedAssignment.sessionNumber}
                 title={selectedAssignment.title}
                 variant="link"
               />
-            )}
+            ) : courseId && courseAssignments.length === 0 ? (
+              <AssignmentForm
+                courses={courses}
+                defaultCourseId={courseId}
+                defaultSessionNumber={1}
+                existingAssignments={assignments}
+                trigger={
+                  <button
+                    type="button"
+                    className="cursor-pointer text-xs text-primary hover:underline"
+                  >
+                    + Tạo đề mới cho khóa này
+                  </button>
+                }
+              />
+            ) : null}
           </div>
           <Select
             value={assignmentId}

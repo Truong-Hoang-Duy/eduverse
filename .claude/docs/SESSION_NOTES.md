@@ -4,7 +4,33 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-22, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 104 (**Bổ sung 3 phần nhận xét "Thư từ MindX" dưới Demo Score chuẩn Denise LMS & Tự động điền 5 em lớp CSA05**):
+**Đang làm:** Đã hoàn thành Đợt 106 (**Hỗ trợ đính kèm file dữ liệu/bổ sung (CSV, JSON, starter code...) vào đề bài & xem/tải đầy đủ**):
+1. **Migration DB:** `supabase/migrations/20261022220000_assignment_attachment_files.sql`: bổ sung cột `attachment_file_paths text[] not null default '{}'` vào bảng `assignments`.
+2. **Tương thích ngược & Chống crash:** Các Server Action `createAssignment`, `getAssignmentSpec`, `gradeFiles`, `helpStudent`, `deleteAssignment` đều có fallback tự động nếu DB chưa áp dụng migration.
+3. **AI Service (`ai-service`):**
+   - Mở rộng model `GradeSubmissionRequest` và `HelpStudentRequest` với trường `attachment_file_paths: list[str]`.
+   - `ai-service/app/storage.py`: Tải các file đính kèm từ bucket `assignment-specs`, làm sạch tên file với `_clean_spec_filename` (bỏ tiền tố timestamp và `att-`), phân loại định dạng và gửi kèm sang Gemini.
+   - `ai-service/app/prompts.py`: Bổ sung chỉ dẫn cho Gemini đối chiếu trực tiếp code, câu truy vấn và kết quả của học viên với dữ liệu thực tế trong các tệp đính kèm (dataset CSV, JSON, code mẫu...).
+4. **Giao diện tạo đề bài (`assignment-form.tsx`):**
+   - Bổ sung picker chọn nhiều file dữ liệu đính kèm (`.csv, .json, .sql, .py, .txt, .md, .pdf, .docx...`).
+   - Hiển thị danh sách file chip với tên file, dung lượng định dạng đẹp mắt và nút `✕` để gỡ bỏ file.
+   - Đồng bộ hai chiều với `DataTransfer` trên input file của form.
+5. **Giao diện xem & tải đề bài đầy đủ (`view-spec-dialog.tsx`):**
+   - Cho phép giáo viên xem cả file đề bài chính lẫn các file dữ liệu đính kèm.
+   - Chuyển đổi tab linh hoạt giữa Đề chính và các Tệp dữ liệu.
+   - Hỗ trợ hiển thị nội dung trực tiếp (inline preview) với văn bản, code, CSV, PDF, ảnh.
+   - Tích hợp nút `⬇ Tải file` trực tiếp qua signed URL an toàn cho từng file.
+6. **Dọn dẹp Storage:**
+   - Cập nhật `spec-storage.ts`, `admin-report.ts`, và `deleteAssignment` để xóa sạch cả `spec_file_path` lẫn toàn bộ `attachment_file_paths` khi xóa đề bài, không để lại file rác / orphan files.
+7. **Kiểm thử chất lượng:**
+   - `assignment-utils.test.ts`: 15/15 tests PASS (bổ sung test cho `getDisplayFileName`).
+   - Toàn bộ 454/454 unit tests vitest PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` (Next.js turbopack) 100% thành công.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 105 (**Bổ sung các điểm tạo/thêm đề bài mới trực tiếp trong khu vực Đề bài đã lưu & công cụ chấm bài**):
+**Trước đó:** Đã hoàn thành Đợt 104 (**Bổ sung 3 phần nhận xét "Thư từ MindX" dưới Demo Score chuẩn Denise LMS & Tự động điền 5 em lớp CSA05**):
 1. **Quy tắc lộ trình MindX K12 & Ma trận CẤM NHẢY CÓC BỘ MÔN (`ai-service/app/prompts.py`):**
    - Hàm `detect_course_level(course_name)` tự động phân loại 3 cấp bậc: `basic` -> `advance` -> `intensive`.
    - Hàm `resolve_next_mindx_course(course_name)` định tuyến tự động theo ma trận bất biến:
