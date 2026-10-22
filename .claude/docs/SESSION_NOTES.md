@@ -4,7 +4,25 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-22, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 104 (**Bổ sung 3 phần nhận xét "Thư từ MindX" dưới Demo Score chuẩn Denise LMS & Tự động điền 5 em lớp CSA05**):
+**Đang làm:** Đã hoàn thành Đợt 105 (**Bổ sung các điểm tạo/thêm đề bài mới trực tiếp trong khu vực Đề bài đã lưu & công cụ chấm bài**):
+1. **Nút "Thêm đề bài mới" ở Header Đề bài đã lưu (`saved-assignments.tsx`):**
+   - Đặt ngay cạnh dropdown lọc khóa học, cho phép giáo viên tạo đề ngay tại khu vực quản lý đề bài mà không phải cuộn lên đầu trang.
+   - Tự động nhận diện bộ lọc: Khi đang lọc theo 1 khóa học cụ thể, modal tự động chọn sẵn khóa học đó.
+2. **Nút thêm đề theo từng khóa và trạng thái rỗng (Empty State):**
+   - Với khóa chưa có đề bài nào (như CSA, CSI, JSB): Khung nét đứt thanh lịch kèm nút `+ Thêm đề buổi 1`.
+   - Với khóa đã có đề bài (như CSB): Bổ sung nút `+ Thêm đề` trên header khóa học và thẻ nét đứt `[+] Thêm đề buổi {nextSession}` ở cuối lưới danh sách đề bài.
+3. **Thuật toán tự động phát hiện số buổi kế tiếp thông minh (`assignment-utils.ts`):**
+   - Hàm `getNextSessionNumber`: Tự động tìm số buổi còn khuyết nhỏ nhất (ví dụ CSB có buổi 1-7 và 9-12 sẽ tự động gợi ý buổi 8), nếu các buổi liên tục thì gợi ý `max + 1`, giúp giáo viên thao tác cực nhanh mà không phải gõ số buổi thủ công.
+   - Tự động đồng bộ và gợi ý lại số buổi khi giáo viên đổi khóa học trong popup.
+4. **Hỗ trợ tạo đề nhanh trong `GradingTool` & `HelpTool` (`grading-tool.tsx`, `help-tool.tsx`):**
+   - Khi chọn khóa học chưa có đề bài nào, hiển thị link `+ Tạo đề mới cho khóa này` ngay cạnh nhãn "Đề bài *" thay vì chỉ hiển thị thông báo "Khóa này chưa có đề".
+5. **Kiểm thử chất lượng:**
+   - `web/`: 444/444 vitest tests PASS (bổ sung test suite cho `assignment-utils.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` 100% thành công.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 104 (**Bổ sung 3 phần nhận xét "Thư từ MindX" dưới Demo Score chuẩn Denise LMS & Tự động điền 5 em lớp CSA05**):
 1. **Quy tắc lộ trình MindX K12 & Ma trận CẤM NHẢY CÓC BỘ MÔN (`ai-service/app/prompts.py`):**
    - Hàm `detect_course_level(course_name)` tự động phân loại 3 cấp bậc: `basic` -> `advance` -> `intensive`.
    - Hàm `resolve_next_mindx_course(course_name)` định tuyến tự động theo ma trận bất biến:

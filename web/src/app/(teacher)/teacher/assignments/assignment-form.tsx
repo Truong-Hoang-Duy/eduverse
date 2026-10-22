@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { createAssignment } from "@/lib/actions/grading";
+import { getNextSessionNumber } from "@/lib/assignment-utils";
 import { checkFileReadable } from "@/lib/file-check";
 import type { ActionResult } from "@/lib/types";
 
@@ -33,27 +34,90 @@ export interface CourseChoice {
   name: string;
 }
 
-export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
+export interface ExistingAssignmentBrief {
+  courseId: string;
+  sessionNumber: number;
+}
+
+export interface AssignmentFormProps {
+  courses: CourseChoice[];
+  defaultCourseId?: string;
+  defaultSessionNumber?: number;
+  existingAssignments?: ExistingAssignmentBrief[];
+  trigger?: React.ReactNode;
+}
+
+export function AssignmentForm({
+  courses,
+  defaultCourseId,
+  defaultSessionNumber,
+  existingAssignments,
+  trigger,
+}: AssignmentFormProps) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
     createAssignment,
     {}
   );
   const [open, setOpen] = useState(false);
-  const [courseId, setCourseId] = useState("");
+  const [courseId, setCourseId] = useState(defaultCourseId ?? "");
+  const [sessionNumber, setSessionNumber] = useState(
+    defaultSessionNumber != null ? String(defaultSessionNumber) : ""
+  );
   const [fileName, setFileName] = useState("");
   const [fileError, setFileError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  // Khi mở popup, tự động điền khóa học và số buổi phù hợp
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (nextOpen) {
+      const targetCourse =
+        defaultCourseId ?? (courses.length === 1 ? courses[0].id : "");
+      setCourseId(targetCourse);
+
+      if (defaultSessionNumber != null) {
+        setSessionNumber(String(defaultSessionNumber));
+      } else if (targetCourse && existingAssignments) {
+        const courseSessions = existingAssignments
+          .filter((a) => a.courseId === targetCourse)
+          .map((a) => a.sessionNumber);
+        setSessionNumber(String(getNextSessionNumber(courseSessions)));
+      } else {
+        setSessionNumber("");
+      }
+
+      setFileName("");
+      setFileError("");
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  // Khi người dùng đổi khóa trong popup, tự động gợi ý số buổi tiếp theo của khóa đó
+  function handleCourseChange(selectedId: string) {
+    setCourseId(selectedId);
+    if (existingAssignments) {
+      const courseSessions = existingAssignments
+        .filter((a) => a.courseId === selectedId)
+        .map((a) => a.sessionNumber);
+      setSessionNumber(String(getNextSessionNumber(courseSessions)));
+    }
+  }
 
   // Tạo xong thì đóng popup và dọn form cho lần tạo sau.
   useEffect(() => {
     if (state.success) {
       setOpen(false);
       setFileName("");
-      setCourseId("");
+      setCourseId(defaultCourseId ?? "");
+      setSessionNumber(
+        defaultSessionNumber != null ? String(defaultSessionNumber) : ""
+      );
       setFileError("");
       if (fileRef.current) fileRef.current.value = "";
+      formRef.current?.reset();
     }
-  }, [state.success]);
+  }, [state.success, defaultCourseId, defaultSessionNumber]);
 
   /**
    * Chỉ kiểm file tại chỗ để báo lỗi ngay; file lên Storage khi bấm "Tạo đề bài"
@@ -74,9 +138,9 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm">+ Tạo đề bài mới</Button>
+        {trigger ?? <Button size="sm">+ Tạo đề bài mới</Button>}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
@@ -85,81 +149,87 @@ export function AssignmentForm({ courses }: { courses: CourseChoice[] }) {
             Đề thuộc khóa học, mỗi buổi một đề
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction}>
+        <form ref={formRef} action={formAction}>
           <input type="hidden" name="course_id" value={courseId} />
           <div className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
-            <div className="space-y-1.5">
-              <Label>Khóa học *</Label>
-              <Select value={courseId} onValueChange={setCourseId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn khóa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {courses.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.code} — {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
+              <div className="space-y-1.5">
+                <Label>Khóa học *</Label>
+                <Select value={courseId} onValueChange={handleCourseChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn khóa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.code} — {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="session_number">Buổi số *</Label>
+                <Input
+                  id="session_number"
+                  name="session_number"
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={sessionNumber}
+                  onChange={(e) => setSessionNumber(e.target.value)}
+                  placeholder="VD: 1"
+                  required
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="session_number">Buổi số *</Label>
+              <Label htmlFor="assignment-title">Tiêu đề đề bài *</Label>
               <Input
-                id="session_number"
-                name="session_number"
-                type="number"
-                min={1}
-                max={100}
+                id="assignment-title"
+                name="title"
+                placeholder="VD: Vẽ tam giác sao bằng vòng lặp for"
                 required
               />
             </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="assignment-title">Tiêu đề đề bài *</Label>
-            <Input
-              id="assignment-title"
-              name="title"
-              placeholder="VD: Vẽ tam giác sao bằng vòng lặp for"
-              required
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="spec-file">
-              File đề (PDF / Word / ảnh / text / md) *
-            </Label>
-            <Input
-              id="spec-file"
-              ref={fileRef}
-              name="spec_file"
-              type="file"
-              accept=".pdf,.docx,.png,.jpg,.jpeg,.txt,.md"
-              onChange={(e) => handleFileChange(e.target.files?.[0])}
-            />
-            <p className="text-xs text-muted-foreground">
-              Nên dùng .txt/.md — file gõ trong Notepad chắc chắn đọc được.
-            </p>
-            {fileName && (
-              <p className="text-xs text-green-600 dark:text-green-400">
-                ✓ {fileName}
+            <div className="space-y-1.5">
+              <Label htmlFor="spec-file">
+                File đề (PDF / Word / ảnh / text / md) *
+              </Label>
+              <Input
+                id="spec-file"
+                ref={fileRef}
+                name="spec_file"
+                type="file"
+                accept=".pdf,.docx,.png,.jpg,.jpeg,.txt,.md"
+                onChange={(e) => handleFileChange(e.target.files?.[0])}
+              />
+              <p className="text-xs text-muted-foreground">
+                Nên dùng .txt/.md — file gõ trong Notepad chắc chắn đọc được.
               </p>
-            )}
-            {fileError && <p className="text-xs text-destructive">{fileError}</p>}
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="instructions">Hướng dẫn chấm (tùy chọn)</Label>
-            <Textarea
-              id="instructions"
-              name="instructions"
-              rows={2}
-              placeholder="VD: Ưu tiên đúng logic vòng lặp; không trừ điểm lỗi chính tả trong chuỗi..."
-            />
-          </div>
+              {fileName && (
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  ✓ {fileName}
+                </p>
+              )}
+              {fileError && <p className="text-xs text-destructive">{fileError}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="instructions">Hướng dẫn chấm (tùy chọn)</Label>
+              <Textarea
+                id="instructions"
+                name="instructions"
+                rows={2}
+                placeholder="VD: Ưu tiên đúng logic vòng lặp; không trừ điểm lỗi chính tả trong chuỗi..."
+              />
+            </div>
             <FormMessage result={state} />
           </div>
           <DialogFooter className="mt-4">
-            <Button type="submit" disabled={pending || !courseId || !fileName}>
+            <Button
+              type="submit"
+              disabled={pending || !courseId || !sessionNumber || !fileName}
+            >
               {pending ? "Đang tải lên & tạo..." : "Tạo đề bài"}
             </Button>
           </DialogFooter>

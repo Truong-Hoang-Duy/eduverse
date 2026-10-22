@@ -1483,6 +1483,28 @@
   - `ai-service`: Thêm `test_review_prompt_forbids_robotic_starters_and_transitions` trong `test_pedagogical_review.py`. Toàn bộ **102/102 pytest PASS**.
   - `web`: 438/438 vitest PASS, `pnpm typecheck` 0 lỗi.
 
+### Đợt 104: Bổ sung 3 phần nhận xét "Thư từ MindX" dưới Demo Score & Tự động điền 5 em lớp CSA05 (2026-10-22)
+- [x] Quy tắc lộ trình MindX K12 & Ma trận CẤM NHẢY CÓC BỘ MÔN (`ai-service/app/prompts.py`).
+- [x] Schema & Endpoint Sinh Nhận xét Buổi 14 (`FinalPresentationReviewResponse` với `mindx_letter`).
+- [x] Giao diện Bảng Đánh Giá Năng Lực & Thư từ MindX (`presentation-evaluation-card.tsx`).
+- [x] Tự động điền 5 học viên lớp CSA05 (`preloaded-mindx-letters.ts`).
+- [x] Kiểm thử: 105/105 pytest PASS, 439/439 vitest PASS.
+
+### Đợt 105: Bổ sung các điểm tạo/thêm đề bài mới trực tiếp trong khu vực Đề bài đã lưu & công cụ chấm bài (2026-10-22)
+- [x] **Nút "Thêm đề bài mới" ở Header Đề bài đã lưu (`saved-assignments.tsx`):**
+  - Đặt cạnh dropdown lọc khóa học, tiện lợi cho giáo viên thao tác ngay tại khu vực đề bài.
+  - Tự động nhận diện khóa học đang lọc để chọn sẵn trong modal.
+- [x] **Nút thêm đề theo từng khóa và trạng thái rỗng (Empty State):**
+  - Khóa chưa có đề bài (như CSA, CSI, JSB): Khung nét đứt thanh lịch kèm nút `+ Thêm đề buổi 1`.
+  - Khóa đã có đề bài (như CSB): Nút `+ Thêm đề` trên header khóa học và thẻ nét đứt `[+] Thêm đề buổi {nextSession}` ở cuối lưới danh sách thẻ đề bài.
+- [x] **Thuật toán tự động phát hiện số buổi kế tiếp thông minh (`assignment-utils.ts`):**
+  - Tự động tìm số buổi còn khuyết nhỏ nhất (ví dụ CSB có 1-7 và 9-12 -> tự gợi ý 8), hoặc `max + 1` nếu các buổi liên tục.
+  - Tự động gợi ý lại khi giáo viên chuyển đổi khóa học trong form popup.
+- [x] **Hỗ trợ tạo đề nhanh trong `GradingTool` & `HelpTool` (`grading-tool.tsx`, `help-tool.tsx`):**
+  - Hiển thị link `+ Tạo đề mới cho khóa này` ngay cạnh nhãn "Đề bài *" khi chọn khóa chưa có đề.
+- [x] **Kiểm thử chất lượng:**
+  - 444/444 vitest unit tests PASS (`assignment-utils.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` thành công 100%.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả
