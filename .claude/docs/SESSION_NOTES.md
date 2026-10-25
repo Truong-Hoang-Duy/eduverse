@@ -4,7 +4,22 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-25, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 113 (**Tối ưu nút "Mở xem" & "Copy link gửi học sinh" trỏ thẳng file PDF trực tiếp, gia hạn Signed URL 1 năm & Khôi phục 100% tài liệu gốc CSA**):
+**Đang làm:** Đã hoàn thành Đợt 114 (**Khắc phục sự cố Timeout 504 khi gọi AI trên Vercel, tăng giới hạn 60s & Chống crash trắng trang tuyệt đối**):
+1. **Nguyên nhân sự cố:**
+   - Trình duyệt báo `Failed to load resource: the server responded with a status of 504 ()` và `Uncaught Error: An unexpected response was received from the server`.
+   - Vercel Serverless Functions trên gói Hobby mặc định timeout ở 10–15s. Khi máy chủ AI trên Render ở trạng thái ngủ đông (cold start 30–60s) hoặc Gemini sinh bài nhận xét dài, Vercel ngắt kết nối với mã 504 HTML. Phía React Client (`review-editor.tsx`) thiếu `try ... catch` nên lỗi 504 trở thành unhandled exception làm sập trắng toàn bộ ứng dụng (`Application error: a client-side exception has occurred...`).
+2. **Khắc phục toàn diện:**
+   - **Tăng Serverless Timeout lên 60 giây (`vercel.json` & `web/vercel.json`):** Cấu hình `maxDuration: 60` cho toàn bộ functions trên Vercel.
+   - **Chủ động timeout 55 giây (`ai-client.ts`):** `callAiService` dùng timeout 55s để luôn ngắt kết nối và trả về JSON Error có kiểm soát TRƯỚC KHI Vercel kill function ở mốc 60s.
+   - **Bọc `try ... catch` an toàn ở Client (`review-editor.tsx`, `session-content-suggest-dialog.tsx`, `project-review-tool.tsx`):** Mọi ngoại lệ mạng hoặc 504 đều được bắt và hiển thị thông báo dịu dàng cho người dùng, bảo vệ React không bao giờ bị crash sập trang.
+   - **Phòng vệ Null-safety (`presentation-evaluation-card.tsx`):** Dùng fallback an toàn cho `demo_score` và `dnl_evaluations`, tránh lỗi `Cannot read properties of undefined`.
+3. **Kiểm thử chất lượng:**
+   - `web/`: 466/466 tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 113 (**Tối ưu nút "Mở xem" & "Copy link gửi học sinh" trỏ thẳng file PDF trực tiếp, gia hạn Signed URL 1 năm & Khôi phục 100% tài liệu gốc CSA**):
 1. **Mở xem & Copy link trực tiếp tới file PDF trên Supabase Storage (`view-spec-dialog.tsx`):**
    - Khi ở tab "Đề bài chính", nút `↗ Mở xem` (trên cả header dialog lẫn thanh toolbar) và nút `Copy link gửi học sinh` mở và chép trực tiếp signed URL của file PDF trên Supabase Storage (`mainFile.url`).
    - Giáo viên có thể mở tab mới hoặc gửi link này cho học sinh mở xem trực tiếp file PDF toàn màn hình trên trình duyệt mà không cần đăng nhập.
