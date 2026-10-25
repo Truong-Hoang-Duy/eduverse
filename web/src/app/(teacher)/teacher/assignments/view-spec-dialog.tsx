@@ -25,6 +25,53 @@ import { CsvTableView } from "@/components/csv-table-view";
 import { isCheckpointAssignment } from "@/lib/assignment-utils";
 import { cn } from "@/lib/utils";
 
+function getFileFormatBadge(
+  fileName: string,
+  kind?: AssignmentSpecFile["kind"]
+) {
+  const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+  if (kind === "pdf" || ext === "pdf") {
+    return (
+      <span className="rounded bg-rose-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-rose-600 dark:bg-rose-500/20 dark:text-rose-400">
+        PDF
+      </span>
+    );
+  }
+  if (ext === "csv") {
+    return (
+      <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
+        CSV Data
+      </span>
+    );
+  }
+  if (ext === "docx") {
+    return (
+      <span className="rounded bg-blue-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-blue-600 dark:bg-blue-500/20 dark:text-blue-400">
+        Word DOCX
+      </span>
+    );
+  }
+  if (["py", "sql", "js", "ts", "json", "html", "css"].includes(ext)) {
+    return (
+      <span className="rounded bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+        {ext.toUpperCase()} Code
+      </span>
+    );
+  }
+  if (kind === "image") {
+    return (
+      <span className="rounded bg-purple-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-purple-600 dark:bg-purple-500/20 dark:text-purple-400">
+        Ảnh
+      </span>
+    );
+  }
+  return (
+    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-muted-foreground">
+      {ext ? ext.toUpperCase() : "File"}
+    </span>
+  );
+}
+
 export function ViewSpecDialog({
   assignmentId,
   sessionNumber,
@@ -43,6 +90,7 @@ export function ViewSpecDialog({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [error, setError] = useState("");
   const [pending, startLoad] = useTransition();
+  const [copiedContent, setCopiedContent] = useState(false);
 
   // Trạng thái đính kèm thêm file trực tiếp từ popup xem
   const [showAddForm, setShowAddForm] = useState(false);
@@ -79,6 +127,7 @@ export function ViewSpecDialog({
     setShowReplaceMainForm(false);
     setAddMsg("");
     setCopiedLink(false);
+    setCopiedContent(false);
     loadSpecData();
   }
 
@@ -142,6 +191,14 @@ export function ViewSpecDialog({
     setTimeout(() => setCopiedLink(false), 2500);
   }
 
+  // Copy nội dung văn bản
+  function handleCopyContent(text?: string) {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedContent(true);
+    setTimeout(() => setCopiedContent(false), 2500);
+  }
+
   // Xóa bớt một tệp đính kèm
   function handleRemoveFile(filePath: string, fileName: string) {
     if (!confirm(`Bạn có chắc chắn muốn xóa tệp "${fileName}" khỏi đề bài này?`)) {
@@ -194,15 +251,15 @@ export function ViewSpecDialog({
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
           <DialogHeader>
             <div className="flex flex-wrap items-start justify-between gap-3 pr-6">
               <div>
-                <DialogTitle>{title}</DialogTitle>
+                <DialogTitle className="text-base sm:text-lg">{title}</DialogTitle>
                 <DialogDescription>
                   Buổi {sessionNumber}
                   {totalFiles > 1
-                    ? ` · Tổng cộng ${totalFiles} tệp (1 đề chính + ${totalFiles - 1} tệp dữ liệu đính kèm)`
+                    ? ` · Tổng cộng ${totalFiles} tệp (1 đề chính + ${totalFiles - 1} tài liệu tùy chọn)`
                     : activeFile
                       ? ` · ${activeFile.fileName}`
                       : ""}
@@ -307,10 +364,10 @@ export function ViewSpecDialog({
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-foreground">
-                  Đính kèm thêm file dữ liệu vào đề này:
+                  Đính kèm thêm file tài liệu vào đề này:
                 </span>
                 <span className="text-[11px] text-muted-foreground">
-                  (CSV, JSON, Python, Dataset...)
+                  (PDF, CSV, JSON, Python, Dataset, Slide...)
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -350,43 +407,65 @@ export function ViewSpecDialog({
             </p>
           )}
 
-          {/* Thanh chuyển đổi giữa các file */}
+          {/* Thanh chuyển đổi tài liệu (Document Tab Switcher) */}
           {!pending && !error && isMultiple && (
-            <div className="flex flex-wrap items-center gap-1.5 border-b pb-3">
-              {files.map((file, idx) => {
-                const isSelected = idx === selectedIndex;
-                return (
-                  <button
-                    key={`${file.path}-${idx}`}
-                    type="button"
-                    onClick={() => setSelectedIndex(idx)}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
-                      isSelected
-                        ? "bg-primary text-primary-foreground shadow-xs"
-                        : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    <span>{file.isMain ? "📋 Đề chính:" : "📎 Dữ liệu:"}</span>
-                    <span
-                      className="max-w-[170px] truncate"
-                      title={file.fileName}
+            <div className="space-y-1.5 rounded-xl border border-border/70 bg-muted/20 p-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Chuyển đổi tài liệu ({totalFiles} tệp):
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  Bấm vào tài liệu bên dưới để xem hoặc tải
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {files.map((file, idx) => {
+                  const isSelected = idx === selectedIndex;
+                  return (
+                    <button
+                      key={`${file.path}-${idx}`}
+                      type="button"
+                      onClick={() => setSelectedIndex(idx)}
+                      className={cn(
+                        "group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all",
+                        isSelected
+                          ? "bg-background text-foreground shadow-xs font-semibold border border-border/80 ring-1 ring-primary/20"
+                          : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
+                      )}
                     >
-                      {file.fileName}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span className="text-sm">
+                        {file.isMain ? "📋" : "📎"}
+                      </span>
+                      <span
+                        className="max-w-[170px] truncate sm:max-w-[220px]"
+                        title={file.fileName}
+                      >
+                        {file.fileName}
+                      </span>
+                      {file.isMain ? (
+                        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                          Đề chính
+                        </span>
+                      ) : (
+                        getFileFormatBadge(file.fileName, file.kind)
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
           {!pending && !error && activeFile && (
             <div className="space-y-3">
               {/* Header tệp đang chọn + Nút Tải + Nút Thay/Xóa */}
-              <div className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/40 px-3.5 py-2.5 text-xs border border-border/60">
                 <div className="flex items-center gap-2 truncate">
+                  <span className="text-base">
+                    {activeFile.isMain ? "📋" : "📎"}
+                  </span>
                   <span
-                    className="truncate font-semibold text-foreground"
+                    className="truncate font-bold text-foreground text-xs sm:text-sm"
                     title={activeFile.fileName}
                   >
                     {activeFile.fileName}
@@ -397,19 +476,54 @@ export function ViewSpecDialog({
                     </Badge>
                   ) : (
                     <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-                      Dữ liệu đính kèm
+                      Tài liệu tùy chọn
                     </Badge>
                   )}
+                  {getFileFormatBadge(activeFile.fileName, activeFile.kind)}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-1.5">
+                <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                  {/* Nút Sao chép nội dung text/code */}
+                  {!isCsv &&
+                    activeFile.kind === "text" &&
+                    activeFile.content && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopyContent(activeFile.content)}
+                        className="h-7 gap-1 px-2 text-xs"
+                      >
+                        <span>{copiedContent ? "✓" : "📋"}</span>
+                        <span>
+                          {copiedContent ? "Đã chép!" : "Sao chép"}
+                        </span>
+                      </Button>
+                    )}
+
+                  {/* Nút Mở tab mới (cho PDF / Ảnh) */}
+                  {activeFile.url &&
+                    (activeFile.kind === "pdf" ||
+                      activeFile.kind === "image") && (
+                      <a
+                        href={activeFile.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex h-7 items-center gap-1 rounded border border-input bg-background px-2 text-xs font-medium text-foreground shadow-2xs hover:bg-accent"
+                        title="Mở tài liệu trên tab mới để xem toàn màn hình hoặc in"
+                      >
+                        <span>↗</span>
+                        <span>Mở tab mới</span>
+                      </a>
+                    )}
+
+                  {/* Nút Tải file */}
                   {activeFile.url && (
                     <a
                       href={activeFile.url}
                       download={activeFile.fileName}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded bg-background px-2.5 py-1 text-xs font-medium text-primary shadow-2xs hover:bg-accent"
+                      className="inline-flex h-7 items-center gap-1 rounded bg-primary px-2.5 text-xs font-semibold text-primary-foreground shadow-2xs hover:bg-primary/90"
                     >
                       <span>⬇</span>
                       <span>Tải file</span>
@@ -463,7 +577,33 @@ export function ViewSpecDialog({
                 </div>
               </div>
 
-              {/* Preview định dạng CSV dạng Bảng dữ liệu hoặc Văn bản */}
+              {/* 1. Preview PDF */}
+              {activeFile.kind === "pdf" && activeFile.url && (
+                <div className="space-y-2">
+                  <div className="relative overflow-hidden rounded-xl border border-border/80 bg-muted/10 shadow-inner">
+                    <iframe
+                      src={`${activeFile.url}#view=FitH`}
+                      title={activeFile.fileName}
+                      className="h-[68vh] min-h-[500px] w-full border-none"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1">
+                    <span>
+                      💡 Bạn có thể cuộn, phóng to, in hoặc tìm kiếm trực tiếp trên thanh công cụ PDF.
+                    </span>
+                    <a
+                      href={activeFile.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-primary hover:underline"
+                    >
+                      Mở tab riêng toàn màn hình ↗
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. Preview định dạng CSV dạng Bảng dữ liệu hoặc Văn bản */}
               {isCsv && (
                 <CsvTableView
                   content={
@@ -473,48 +613,93 @@ export function ViewSpecDialog({
                 />
               )}
 
-              {/* Preview định dạng text/code thông thường */}
+              {/* 3. Preview định dạng text/code thông thường */}
               {!isCsv && activeFile.kind === "text" && (
-                <pre className="max-h-[55vh] overflow-auto rounded-lg border bg-muted/20 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
+                <pre className="max-h-[60vh] overflow-auto rounded-xl border bg-muted/20 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
                   {activeFile.content}
                 </pre>
               )}
 
-              {/* Preview định dạng ảnh */}
-              {activeFile.kind === "image" && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={activeFile.url}
-                  alt={activeFile.fileName}
-                  className="max-h-[60vh] w-full rounded-lg border bg-muted/20 object-contain"
-                />
+              {/* 4. Preview định dạng ảnh */}
+              {activeFile.kind === "image" && activeFile.url && (
+                <div className="overflow-hidden rounded-xl border bg-muted/20 p-2 text-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={activeFile.url}
+                    alt={activeFile.fileName}
+                    className="max-h-[65vh] w-full rounded-lg object-contain mx-auto shadow-2xs"
+                  />
+                </div>
               )}
 
-              {/* Định dạng nhị phân/Word */}
+              {/* 5. Định dạng nhị phân/Word */}
               {activeFile.kind === "download" && (
-                <div className="space-y-3 rounded-lg border border-dashed p-6 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    File này là định dạng nhị phân hoặc không thể hiển thị trực tiếp — hãy tải về máy để mở.
+                <div className="space-y-3 rounded-xl border border-dashed p-6 text-center bg-muted/10">
+                  <span className="text-3xl">📦</span>
+                  <p className="text-sm font-semibold text-foreground">
+                    Tài liệu &quot;{activeFile.fileName}&quot;
+                  </p>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                    File này là định dạng nhị phân hoặc không thể hiển thị trực tiếp — hãy tải về máy để mở bằng ứng dụng tương thích.
                   </p>
                   {activeFile.url && (
-                    <a
-                      href={activeFile.url}
-                      download={activeFile.fileName}
-                      className="inline-block text-sm font-medium text-primary hover:underline"
-                    >
-                      ⬇ Tải {activeFile.fileName}
-                    </a>
+                    <div className="pt-1">
+                      <a
+                        href={activeFile.url}
+                        download={activeFile.fileName}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-2xs hover:bg-primary/90 transition-colors"
+                      >
+                        <span>⬇</span>
+                        <span>Tải {activeFile.fileName}</span>
+                      </a>
+                    </div>
                   )}
                 </div>
               )}
 
-              {/* Preview PDF */}
-              {activeFile.kind === "pdf" && (
-                <iframe
-                  src={activeFile.url}
-                  title={activeFile.fileName}
-                  className="h-[60vh] w-full rounded-lg border"
-                />
+              {/* Danh sách tải nhanh tất cả tài liệu nếu có nhiều file */}
+              {totalFiles > 1 && (
+                <div className="rounded-xl border border-border/70 bg-card p-3 sm:p-4 shadow-2xs space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <span>📁</span>
+                      <span>Tải nhanh các tài liệu của đề bài này:</span>
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {totalFiles} tệp khả dụng
+                    </span>
+                  </div>
+
+                  <div className="grid gap-1.5 sm:grid-cols-2">
+                    {files.map((file, idx) => (
+                      <div
+                        key={`quick-download-${file.path}-${idx}`}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 px-2.5 py-1.5 text-xs"
+                      >
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span>{file.isMain ? "📋" : "📎"}</span>
+                          <span
+                            className="truncate font-medium text-foreground"
+                            title={file.fileName}
+                          >
+                            {file.fileName}
+                          </span>
+                        </div>
+                        {file.url && (
+                          <a
+                            href={file.url}
+                            download={file.fileName}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="shrink-0 inline-flex items-center gap-1 rounded bg-background px-2 py-0.5 text-[11px] font-semibold text-primary border border-border/60 shadow-2xs hover:bg-accent transition-colors"
+                          >
+                            <span>⬇ Tải</span>
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           )}

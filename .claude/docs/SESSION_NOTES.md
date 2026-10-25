@@ -4,29 +4,46 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-25, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 107 (**Link công khai xem đề Checkpoints không cần đăng nhập, Sửa/xóa/thay thế file đề bài chính đã lưu & Bỏ thông tin demo mặc định trên màn hình đăng nhập**):
-1. **Link công khai xem đề Checkpoints không cần đăng nhập (`/checkpoints/[id]` & `/checkpoint/[id]`):**
-   - Helper `isCheckpointAssignment(title)`: nhận diện không phân biệt hoa thường mọi tiêu đề có chứa từ khóa 'checkpoint' hoặc 'checkpoints' (ví dụ: `Checkpoints 1`, `checkpoint 2`, `[CSA - Checkpoints] Buổi 5 Đề bài`).
-   - `web/src/middleware.ts`: bypass chuyển hướng đăng nhập cho đường dẫn `/checkpoints/`, `/checkpoint/` và `/api/checkpoints/`.
-   - `web/src/lib/checkpoint-data.ts`: hàm server-only `loadPublicCheckpoint(id)` đọc an toàn bằng `createAdminClient()`, kiểm tra bắt buộc tiêu đề phải chứa 'checkpoint', hỗ trợ cả UUID lẫn alias thân thiện (`csa-5`, `csb-9`, v.v.), tải nội dung file đề chính và các tệp đính kèm với signed URL.
-   - **Tối ưu parser `docxToText` (`docx-text.ts`):** thay thế regex nested lồng nhau gây V8 regex backtracking stack overflow bằng quét token tuyến tính `TOKEN_RE`, xử lý trơn tru các file Word XML lớn mà không tốn tài nguyên.
-   - **Kiến trúc tải dữ liệu mượt mà (`CheckpointClientLoader` + API route `/api/checkpoints/[id]`):** tách biệt khâu tải và giải mã file sang Node runtime, có Skeleton loading mượt mà, tránh lỗi nghẽn RSC React flight stream pipe.
-   - Giao diện xem đề học viên (`checkpoint-view.tsx`): hiển thị tiêu đề, khóa học, số buổi, hướng dẫn làm bài, xem bảng CSV chuyên nghiệp (`CsvTableView`), xem code/text/PDF/ảnh, nút tải file về máy và nút copy link đề bài (`CopyLinkButton`).
-   - Thẻ đề bài đã lưu (`saved-assignments.tsx`) & dialog xem đề (`view-spec-dialog.tsx`): hiển thị huy hiệu `Checkpoints (Link mở)`, nút 🔗 copy nhanh đường dẫn chia sẻ cho học viên và nút xem trang học viên trên tab mới.
-   - **Đã kiểm tra thực tế Checkpoint Buổi 5 lớp CSA:** Đề bài `[CSA - Checkpoints] Buổi 5 Đề bài` (ID: `69318418-114e-4a7c-bbfb-27f43f7bb72e`) hoạt động 100% trên cả đường link UUID lẫn alias `/checkpoints/csa-5`, hiển thị trọn vẹn 10 câu hỏi trắc nghiệm (Pandas, Data Cleaning) và phần thực hành với file `car-sales-data.csv`.
-2. **Sửa, xóa và ghi đè file đề bài chính đã lưu (`updateAssignment`, `replaceAssignmentSpecFile`, `removeAssignmentMainFile`):**
-   - Action `updateAssignment`: cho phép giáo viên vừa sửa tiêu đề vừa chọn file đề bài mới để ghi đè file cũ (hoặc đánh dấu xóa file cũ). Tự động dọn sạch file cũ trong Storage bucket `assignment-specs`.
-   - Dialog chỉnh sửa (`edit-assignment-title-button.tsx`): nâng cấp hiển thị tên file đề hiện tại, nút xóa file hiện tại và ô chọn file mới để ghi đè, kèm cảnh báo rõ ràng.
-   - Dialog xem đề (`view-spec-dialog.tsx`): bổ sung nút `🔄 Thay file khác` và `✕ Xóa file` ngay trên header file đề chính kèm form ghi đè trực tiếp mà không cần mở dialog sửa.
-3. **Bỏ tài khoản & mật khẩu demo mặc định trên giao diện Login (`login-form.tsx`):**
-   - `username` và `password` khởi tạo bằng chuỗi rỗng `""`, không tự điền sẵn `demo` / `demo` trên UI. Backend `auth.ts` vẫn hỗ trợ nếu người dùng chủ động nhập.
-4. **Kiểm thử chất lượng:**
-   - 465/465 unit tests vitest PASS (10/10 tests `docx-text.test.ts`, 22/22 tests `assignment-utils.test.ts`, 3/3 tests `csv-table-view.test.ts`).
-   - E2E tests `e2e/checkpoint.e2e.ts`: PASS 100% (3/3 tests) gọi trực tiếp dữ liệu Supabase thật.
-   - `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi (0 warnings).
-   - `pnpm build` (Next.js Turbopack) 100% thành công, 19/19 static pages.
+**Đang làm:** Đã hoàn thành Đợt 108 (**Nhúng xem PDF trực tiếp, Thanh chuyển đổi tài liệu tùy chọn trực quan & Hỗ trợ tải tài liệu toàn diện cho Bài tập và Bài kiểm tra Checkpoints**):
+1. **Nhúng xem trực tiếp file PDF (`view-spec-dialog.tsx` & `checkpoint-view.tsx`):**
+   - Tích hợp nhúng PDF chất lượng cao bằng `iframe` với `#view=FitH` giúp trang PDF tự động co giãn vừa vặn chiều ngang hiển thị trên mọi độ phân giải màn hình.
+   - Chiều cao khung xem được mở rộng tối ưu (`h-[68vh] min-h-[500px]` ở modal GV và `h-[78vh] min-h-[550px]` ở trang public học viên) với viền bo tròn và bóng nền trang nhã.
+   - Bổ sung nút **"↗ Mở tab mới"** ngay trên thanh công cụ file và liên kết mở tab toàn màn hình dưới chân khung PDF: Cho phép người dùng mở xem toàn trang, phóng to thu nhỏ, in ấn hoặc tải về dễ dàng khi trình duyệt hạn chế hiển thị inline PDF.
+2. **Thanh chuyển đổi tài liệu tùy chọn (Document Tab Switcher):**
+   - Đề bài bài tập và bài kiểm tra Checkpoints hỗ trợ tải kèm các tài liệu tùy chọn (dataset CSV, JSON, file code starter .py/.sql/.js, slide bài giảng, file PDF tham khảo, ảnh hướng dẫn...).
+   - Bổ sung thanh chuyển đổi tài liệu trực quan, phân biệt rõ ràng:
+     - 📋 **Đề bài chính** (kèm badge Đề chính)
+     - 📎 **Tài liệu đính kèm / tùy chọn** (kèm badge phân loại định dạng tương ứng)
+   - **Badge định dạng thông minh:**
+     - `PDF`: badge màu đỏ/rose (`bg-rose-500/10 text-rose-600`)
+     - `CSV Data`: badge màu xanh lá/emerald (`bg-emerald-500/10 text-emerald-600`)
+     - `Word DOCX`: badge màu xanh dương/blue (`bg-blue-500/10 text-blue-600`)
+     - `Code`: badge màu vàng/amber (`bg-amber-500/10 text-amber-600`)
+     - `Ảnh`: badge màu tím/purple (`bg-purple-500/10 text-purple-600`)
+     - `File`: badge xám trung tính
+   - Người dùng click vào bất kỳ tài liệu nào trên thanh sẽ chuyển đổi màn hình xem tài liệu đó ngay lập tức mà không cần reload trang.
+3. **Xem trực tiếp đa dạng định dạng tài liệu:**
+   - **File PDF:** Nhúng iframe trực tiếp có thanh công cụ PDF của trình duyệt.
+   - **File CSV:** Nhúng trình xem bảng dữ liệu tương tác chuyên nghiệp (`CsvTableView`) với số thứ tự dòng, tiêu đề cố định và tìm kiếm.
+   - **File Code / Text:** Hiển thị khối pre font-mono thụt lề chuẩn kèm nút **"📋 Sao chép nội dung"** tiện lợi.
+   - **File Ảnh:** Hiển thị ảnh sắc nét căn giữa với nền tương phản.
+   - **File Nhị phân / Không hiển thị trực tiếp:** Hiển thị thẻ thông báo thân thiện và nút tải file về máy.
+4. **Hỗ trợ tải tài liệu đầy đủ và tiện lợi:**
+   - Nút **"⬇ Tải file này"** / **"⬇ Tải tài liệu này"** nổi bật trên thanh công cụ của tài liệu đang chọn.
+   - **Khu vực Tải nhanh tất cả tài liệu (Quick download panel):** Khi đề bài có từ 2 tài liệu trở lên, ở cuối trang hiển thị danh sách toàn bộ các tài liệu kèm nút `⬇ Tải` trực tiếp cho từng file, giúp người dùng tải nhanh bất kỳ file nào mà không cần phải chuyển từng tab.
+5. **Nâng cấp Form tạo đề bài (`assignment-form.tsx`):**
+   - `handlePreviewLocalFile`: Bổ sung xử lý tạo URL blob cục bộ (`URL.createObjectURL(file)`) cho file PDF, cho phép giáo viên xem trước trực tiếp file PDF đính kèm trong iframe trước khi upload.
+   - Thêm nút **"👁 Xem thử nội dung đề"** ngay cạnh tên file đề chính sau khi chọn file từ máy tính, giúp giáo viên kiểm tra trước toàn bộ nội dung đề bài (PDF, word, code, text...) trước khi bấm "Tạo đề bài".
+   - Tự động revoke URL blob khi đóng modal để giải phóng bộ nhớ.
+6. **Kiểm thử chất lượng:**
+   - 465/465 unit tests vitest PASS 100%.
+   - E2E tests `checkpoint.e2e.ts`: PASS 3/3 tests (kiểm tra thực tế lớp CSA buổi 5).
+   - `pnpm typecheck` 0 lỗi.
+   - `pnpm lint` 0 lỗi (0 warnings).
 
 Cập nhật bởi: Gemini
+
+---
 
 ---
 **Trước đó:** Đã hoàn thành Đợt 106 (**Hỗ trợ đính kèm file dữ liệu/bổ sung (CSV, JSON, starter code...) vào đề bài & xem/tải đầy đủ**):

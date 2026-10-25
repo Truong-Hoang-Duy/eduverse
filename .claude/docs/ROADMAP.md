@@ -1547,10 +1547,23 @@
   - Dialog xem đề (`view-spec-dialog.tsx`): bổ sung nút `🔄 Thay file khác` và `✕ Xóa file` ngay trên header file đề chính kèm form ghi đè trực tiếp.
 - [x] **Bỏ tài khoản & mật khẩu demo mặc định trên UI Login (`login-form.tsx`):**
   - State `username` và `password` đặt mặc định là chuỗi rỗng `""`, không hiện sẵn thông tin demo trên giao diện.
+### Đợt 108: Nhúng xem PDF trực tiếp, Thanh chuyển đổi tài liệu tùy chọn & Hỗ trợ tải tài liệu toàn diện (2026-10-25)
+- [x] **Nhúng xem PDF trực tiếp (`view-spec-dialog.tsx` & `checkpoint-view.tsx`):**
+  - Iframe nhúng PDF tỉ lệ cao với `#view=FitH` giúp PDF tự động co giãn vừa vặn chiều ngang hiển thị trên mọi kích thước màn hình.
+  - Tối ưu chiều cao hiển thị (`h-[68vh] min-h-[500px]` ở modal GV và `h-[78vh] min-h-[550px]` ở trang public học viên).
+  - Nút `↗ Mở tab mới` trên header và link dự phòng dưới chân iframe giúp mở xem toàn màn hình, in hoặc tải về dễ dàng khi trình duyệt hạn chế inline iframe.
+- [x] **Thanh chuyển đổi tài liệu tùy chọn (Document Tab Switcher):**
+  - Phân loại rõ ràng Đề bài chính (`📋`) và Tài liệu tùy chọn / đính kèm (`📎`) kèm badge màu định dạng trực quan (`PDF`, `CSV Data`, `Word DOCX`, `Code`, `Ảnh`, `File`).
+  - Chuyển tab lập tức xem nội dung file đó mà không tải lại trang.
+- [x] **Hỗ trợ tải tài liệu đầy đủ:**
+  - Nút `⬇ Tải file này` / `⬇ Tải tài liệu này` trên header file đang xem.
+  - Bảng Tải nhanh toàn bộ tài liệu (Quick download panel) ở cuối trang giúp tải bất kỳ file nào nhanh chóng.
+- [x] **Nâng cấp Form tạo đề bài (`assignment-form.tsx`):**
+  - Hỗ trợ tạo URL blob cục bộ để xem trước file PDF local trong iframe trước khi upload.
+  - Bổ sung nút `👁 Xem thử nội dung đề` cho file đề chính vừa chọn.
 - [x] **Kiểm thử chất lượng:**
-  - 464/464 unit tests vitest PASS (trong đó 22/22 tests `assignment-utils.test.ts`, 3/3 tests `csv-table-view.test.ts`).
+  - 465/465 unit tests PASS 100%, E2E `checkpoint.e2e.ts` PASS 3/3 tests.
   - `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
-  - `pnpm build` (Next.js Turbopack) 100% thành công, 19/19 static pages.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
