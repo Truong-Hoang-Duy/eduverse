@@ -531,6 +531,9 @@ export function ReviewEditor({
             isExam: !isFinalPresentation && Boolean(isPeriodicTest),
             isPeriodicExam,
             sessionNumber,
+            sessionTitle,
+            sessionContent,
+            sessionContext: sessionContext || undefined,
           });
           if (res.error) {
             setAiError(res.error);
@@ -621,6 +624,9 @@ export function ReviewEditor({
           isExam: !isFinalPresentation && Boolean(isPeriodicTest),
           isPeriodicExam,
           sessionNumber,
+          sessionTitle,
+          sessionContent,
+          sessionContext: sessionContext || undefined,
         });
 
         if (res.error) {

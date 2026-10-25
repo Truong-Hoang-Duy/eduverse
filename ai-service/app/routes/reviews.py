@@ -171,6 +171,9 @@ def generate_final_presentation_review(
         is_exam=body.is_exam,
         is_periodic_exam=body.is_periodic_exam,
         session_number=body.session_number,
+        session_title=body.session_title,
+        session_content=body.session_content,
+        session_context=body.session_context,
     )
 
 

@@ -299,6 +299,53 @@ CONTENT_ANCHORING_RULE = (
     "(Ví dụ: nếu buổi học về vòng lặp for và em có điểm yếu 'chưa cẩn thận', hãy chỉ ra cụ thể: em hay quên dấu hai chấm `:` hoặc thụt lề chưa đều khi viết vòng lặp)."
 )
 
+HOMEWORK_PEDAGOGY_RULE = (
+    "QUY TẮC SƯ PHẠM VỀ BÀI TẬP VỀ NHÀ & THÁI ĐỘ TỰ LUYỆN TẬP (HOMEWORK PEDAGOGY RULE):\n"
+    "Khi có thông tin hoặc ghi chú giáo viên cho thấy học viên chưa hoàn thành bài tập về nhà "
+    "(ví dụ: 'Chưa làm bài tập về nhà (0/5) bài', 'chưa làm BTVN', 'thiếu bài tập', '0/5 bài'...):\n"
+    "1. NGUYÊN TẮC TÂM LÝ & SƯ PHẠM:\n"
+    "   - TUYỆT ĐỐI KHÔNG dùng từ ngữ mang tính chỉ trích, phán xét nhân cách tiêu cực "
+    "(cấm dùng các từ như 'lười biếng', 'chểnh mảng', 'bỏ bê học tập', 'thiếu trách nhiệm').\n"
+    "   - Giải thích trên góc độ tâm lý và phương pháp học lập trình: Lập trình là bộ môn tư duy và kỹ năng thực nghiệm; thời lượng trên lớp chủ yếu giúp em tiếp thu nguyên lý mới, "
+    "còn việc tự tay viết code và giải quyết bài tập ở nhà là chìa khóa then chốt để hình thành phản xạ tư duy tự nhiên và biến kiến thức thành kỹ năng bền vững.\n"
+    "2. TRONG NHẬN XÉT GỬI PHỤ HUYNH ('comment'):\n"
+    "   - Diễn đạt tế nhị, khách quan, mang tính xây dựng và khích lệ: Ghi nhận nỗ lực và khả năng tiếp thu bài của em trên lớp, đồng thời nhắc nhở nhẹ nhàng việc em cần hoàn thiện các bài tập thực hành ở nhà.\n"
+    "   - Đưa ra lời khuyên cụ thể: Gợi ý em sắp xếp thời gian biểu hợp lý (khoảng 30-45 phút sau mỗi buổi học) để hoàn thành các bài tập tự luyện trên hệ thống, và khuyến khích em chủ động trao đổi với thầy cô nếu gặp khúc mắc khi làm bài ở nhà.\n"
+    "3. TRONG BẢNG ĐÁNH GIÁ ĐNL — TIÊU CHÍ 'thai_do_ve_nha':\n"
+    "   - Điểm số: Đặt ở mức hợp lý (score = 3, level 'Khá' trong hệ thống LMS), TUYỆT ĐỐI KHÔNG cho điểm tối đa (4 hay 5) khi chưa hoàn thành bài tập về nhà.\n"
+    "   - Nhận xét tiêu chí: Đi theo 3 bước mạch lạc: [Hiện trạng thực tế: Em chưa hoàn thành bài tập về nhà theo đúng lộ trình (0/5 bài)] "
+    "-> [Tác động sư phạm: Việc thiếu thời gian tự thực hành độc lập tại nhà khiến các kiến thức đã học trên lớp chưa được củng cố sâu và dễ bị mai một phản xạ viết code] "
+    "-> [Định hướng rèn luyện: Em cần nâng cao tính tự giác, chủ động phân bổ thời gian tự học tại nhà để hoàn thành bài tập đầy đủ trước mỗi buổi học].\n"
+    "4. TRONG THƯ TỪ MINDX — MỤC 'suggestions_from_mindx':\n"
+    "   - Đề xuất giải pháp thiết thực, ấm áp tới phụ huynh: MindX rất mong quý phụ huynh có thể đồng hành hỗ trợ nhắc nhở và tạo cho con một khung giờ cố định trong tuần để con mở máy thực hành bài tập về nhà trên hệ thống MindX; "
+    "đồng thời động viên con không ngại khó, chủ động nhắn tin hỏi thầy cô để được hướng dẫn kịp thời khi gặp bài tập phức tạp."
+)
+
+EXAM_ABSTRACTION_RULE = (
+    "QUY TẮC KHÁI QUÁT HÓA BÀI LÀM & SUY LUẬN NĂNG LỰC SƯ PHẠM (EXAM ABSTRACTION RULE):\n"
+    "Khi giáo viên cung cấp kết quả chấm bài chi tiết, báo cáo trắc nghiệm & thực hành trong phần ghi chú / quan sát / tùy chọn "
+    "(ví dụ: 'TRẮC NGHIỆM: Đúng 1..10... THỰC HÀNH: Đã làm sạch cột Price..., Câu 1 xe BMW $22,000..., Câu 2 Nissan rẻ nhất..., Câu 3 BMW giá trung bình..., Code cấu trúc rõ ràng; nên bổ sung kiểm tra dữ liệu sau khi làm sạch...'):\n"
+    "1. TUYỆT ĐỐI CẤM TƯỜNG THUẬT VỤN VẶT & SAO CHÉP MÁY MÓC:\n"
+    "   - CẤM sao chép nguyên văn tên hàm cụ thể, dữ liệu chi tiết của đề bài (như hãng xe 'BMW', 'Nissan', số tiền '$22,000', tên cột 'Price', ký hiệu '$', 'Câu 1', 'Câu 2', 'Câu 3'...). "
+    "Phụ huynh không tham gia giải đề thi nên những con số hay tên hãng xe cụ thể đó hoàn toàn vô nghĩa và tạo cảm giác nhận xét bị máy móc, chắp vá.\n"
+    "   - TUYỆT ĐỐI TRÁNH: 'Em đã tìm ra chiếc BMW giá $22,000 là đắt nhất và tính Nissan rẻ nhất...' (ĐÂY LÀ CÁCH VIẾT SAI).\n"
+    "2. LẤY NGỮ CẢNH BÀI HỌC THEO SỐ BUỔI KHÓA HỌC ĐỂ SUY LUẬN NĂNG LỰC:\n"
+    "   - Nhận diện môn học (course_name: Scratch, GameMaker, App Python & Qt, Web, hoặc Computer Science / CSA / CSB...) "
+    "và số buổi (session_number, ví dụ Buổi 5 Checkpoint) cùng nội dung bài học để xác định CHUYÊN ĐỀ CỐT LÕI "
+    "(Ví dụ: CSA Buổi 5 là Checkpoint về Phân tích và Tiền xử lý dữ liệu với Python/Pandas).\n"
+    "   - Từ kết quả chấm bài, tự động bóc tách và khái quát hóa thành HAI MẶT NĂNG LỰC SƯ PHẠM:\n"
+    "     + MẶT LÀM TỐT (Năng lực & Thế mạnh):\n"
+    "       * Về lý thuyết (trắc nghiệm): Nắm rất chắc các khái niệm nền tảng của môn học, hiểu đúng bản chất câu lệnh và kiến thức chuyên đề (hoàn thành chính xác toàn bộ câu hỏi lý thuyết).\n"
+    "       * Về thực hành (kỹ năng xử lý & tư duy): Nắm vững quy trình tiền xử lý và làm sạch dữ liệu thực tế (chuẩn hóa dữ liệu, xử lý ký tự thừa và xử lý dữ liệu khuyết hợp lý); tư duy logic sắc bén khi áp dụng các phép lọc điều kiện, gom nhóm dữ liệu và tính toán các chỉ số thống kê chuẩn xác; bài code có cấu trúc rõ ràng, mạch lạc.\n"
+    "     + MẶT CẦN LƯU Ý CẢI THIỆN (Kỹ năng hoàn thiện):\n"
+    "       * Tính cẩn trọng và kỹ năng kiểm thử (Validation): Cần rèn thói quen chủ động đối chiếu, kiểm tra lại tính toàn vẹn của dữ liệu sau khi biến đổi để đảm bảo dữ liệu luôn chính xác và không bị thiếu sót ngoài ý muốn.\n"
+    "       * Thói quen lập trình chuyên nghiệp (Documentation): Cần tập thói quen viết chú thích (comment) giải thích lý do xử lý các trường hợp đặc biệt (như cơ sở loại bỏ dữ liệu khuyết), giúp bài phân tích chặt chẽ, khoa học và chuyên nghiệp hơn.\n"
+    "3. ÁP DỤNG ĐỒNG BỘ CHO MỌI ĐẦU RA:\n"
+    "   - Trong 'comment': Viết thành câu văn nhận xét sư phạm giàu tính động viên, làm nổi bật tư duy lý thuyết và kỹ năng thực hành phân tích dữ liệu tự tin của em, đồng thời góp ý tế nhị về việc kiểm tra dữ liệu và chú thích code.\n"
+    "   - Trong 'dnl_evaluations': Thể hiện năng lực chuyên môn ở các tiêu chí 'kien_thuc_tai_lop', 'tu_duy_may_tinh', 'ky_nang_giai_quyet_van_de' dựa trên bản chất kiến thức đã khái quát ở trên, tuyệt đối không lặp lại số liệu đề bài.\n"
+    "   - Trong 'mindx_letter': Đúc kết giá trị năng lực công nghệ thực tế em làm chủ được và định hướng rèn luyện thói quen kiểm thử cẩn thận."
+)
+
 
 def build_review_prompt(
     student_name: str,
@@ -335,19 +382,21 @@ def build_review_prompt(
             "dòng (3-5 ý mỗi phần) — TUYỆT ĐỐI KHÔNG viết chung thành một đoạn "
             "văn:\n"
             "1. Quá trình học tập: dựa vào điểm mạnh/điểm cần cải thiện giáo "
-            "viên đã chọn cho buổi này.\n"
+            "viên đã chọn cho buổi này; lồng ghép nhận xét về việc rèn luyện bài tập về nhà theo HOMEWORK_PEDAGOGY_RULE nếu có ghi chú về việc chưa làm BTVN.\n"
             "2. Kết quả kiểm tra định kỳ: dựa vào quan sát của giáo viên về "
-            "quá trình làm bài (nếu có) — nếu KHÔNG có quan sát nào thì chỉ "
-            "nhận xét ngắn gọn dựa trên những gì đã biết, đừng bịa thêm chi "
-            "tiết cụ thể (điểm số, số câu đúng...).\n"
+            "quá trình làm bài (nếu có). BẮT BUỘC tuân thủ EXAM_ABSTRACTION_RULE: "
+            "khái quát hóa năng lực lý thuyết và kỹ năng thực hành theo chuyên đề bài học, "
+            "TUYỆT ĐỐI KHÔNG tường thuật vụn vặt các con số cụ thể, tên xe, tên cột, câu 1 câu 2...; "
+            "nếu KHÔNG có quan sát nào thì chỉ nhận xét ngắn gọn dựa trên những gì đã biết, "
+            "đừng bịa thêm chi tiết cụ thể (điểm số, số câu đúng...).\n"
             "Mỗi gạch đầu dòng bắt đầu bằng ký tự '- '. Không tự thêm lời chào."
         )
     else:
         instruction = (
             "Hãy viết nhận xét 3-5 câu cho một học viên sau buổi học, theo thứ "
             "tự: điểm mạnh trước, ĐIỂM CẦN CẢI THIỆN/LƯU Ý sau (bắt buộc phải có, "
-            "không khen một chiều dù học viên giỏi), chốt bằng một lời "
-            "khuyên cụ thể mang tính xây dựng.\n"
+            "không khen một chiều dù học viên giỏi, lồng ghép tinh tế việc rèn luyện BTVN theo HOMEWORK_PEDAGOGY_RULE nếu có ghi chú), "
+            "chốt bằng một lời khuyên cụ thể mang tính xây dựng.\n"
             "QUY TẮC XƯNG HÔ: Bắt buộc chỉ gọi học viên là 'em' — TUYỆT ĐỐI KHÔNG xưng tên hay gọi thẳng tên học viên trong câu nhận xét (không dùng tên riêng, chỉ xưng 'em'). "
             "Không nhắc đến số thứ tự buổi học hay tiêu đề buổi học.\n"
             "CÁCH MỞ ĐẦU VÀ CHUYỂN Ý TỰ NHIÊN, KHÔNG MÁY MÓC:\n"
@@ -371,6 +420,8 @@ def build_review_prompt(
         TONE_RULE,
         JARGON_CLARITY_RULE,
         CONTENT_ANCHORING_RULE,
+        HOMEWORK_PEDAGOGY_RULE,
+        EXAM_ABSTRACTION_RULE,
         COURSE_DOMAIN_GUIDELINES.get(domain, COURSE_DOMAIN_GUIDELINES["general"]),
         instruction,
         f"Học viên: {student_name}",
@@ -637,6 +688,9 @@ def build_final_presentation_review_prompt(
     is_exam: bool = False,
     is_periodic_exam: bool = False,
     session_number: int | None = None,
+    session_title: str | None = None,
+    session_content: str | None = None,
+    session_context: str | None = None,
 ) -> str:
     """Xây dựng prompt tổng kết toàn khóa học (Buổi 14 / Demo Day hoặc Bài kiểm tra cuối khóa)
     hoặc đánh giá bài kiểm tra định kỳ (Buổi 5, 9...).
@@ -656,14 +710,28 @@ def build_final_presentation_review_prompt(
     else:
         mission_text = "Nhiệm vụ: Bạn đang hỗ trợ giáo viên tổng kết toàn khóa học và đánh giá buổi THUYẾT TRÌNH SẢN PHẨM CUỐI KHÓA (Buổi 14 / Demo Day) cho một học viên."
 
+    domain = detect_course_domain(course_name)
     parts = [
         SYSTEM_ROLE,
         TONE_RULE,
+        JARGON_CLARITY_RULE,
+        HOMEWORK_PEDAGOGY_RULE,
+        EXAM_ABSTRACTION_RULE,
+        COURSE_DOMAIN_GUIDELINES.get(domain, COURSE_DOMAIN_GUIDELINES["general"]),
         mission_text,
         f"Học viên: {student_name}",
         f"Lớp: {class_code} — Khóa học: {course_name}",
         "QUY TẮC XƯNG HÔ BẮT BUỘC: Trong TOÀN BỘ nhận xét ('comment') và 9 tiêu chí ĐNL ('dnl_evaluations'), LUÔN LUÔN gọi học viên là 'em'. TUYỆT ĐỐI KHÔNG xưng tên riêng hay gọi thẳng tên học viên trong văn bản nhận xét (không viết tên riêng như 'em An', 'Bảo', 'Minh'...), chỉ dùng duy nhất đại từ 'em'.",
     ]
+
+    if session_number:
+        parts.append(f"Buổi số trong khóa học: {session_number}")
+    if session_title:
+        parts.append(f"Tiêu đề buổi kiểm tra/học tập: {session_title}")
+    if session_content:
+        parts.append(f"Nội dung trọng tâm bài học / chuyên đề kiểm tra: {session_content}")
+    if session_context:
+        parts.append(f"Bối cảnh buổi học / kiểm tra do giáo viên ghi chú: {session_context}")
 
     if academic_level:
         parts.append(
@@ -706,21 +774,21 @@ def build_final_presentation_review_prompt(
 
     if is_periodic_exam:
         comment_bullets = (
-            "   - Nhận xét quá trình học tập và tính chuyên cần của em từ đầu khóa đến thời điểm bài kiểm tra này (ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học nếu có).\n"
-            "   - Đánh giá cụ thể bài làm kiểm tra định kỳ hôm nay (tác phong làm bài, mức độ hiểu bài, khả năng vận dụng kiến thức).\n"
-            "   - Khen ngợi điểm làm tốt, CHỈ RÕ CỤ THỂ ĐIỂM CẦN LƯU Ý CẢI THIỆN (tác phong, tính cẩn thận, tự kiểm thử, đọc kỹ đề hoặc tối ưu thuật toán) — TUYỆT ĐỐI KHÔNG khen một chiều 100%, kèm lời khuyên/động viên cho các buổi học tiếp theo của khóa.\n"
+            "   - Nhận xét quá trình học tập và tính chuyên cần của em từ đầu khóa đến thời điểm bài kiểm tra này (ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học nếu có; đồng thời tế nhị nhắc nhở thái độ làm bài tập về nhà theo HOMEWORK_PEDAGOGY_RULE nếu có ghi nhận thiếu bài tập).\n"
+            "   - Đánh giá bài làm kiểm tra định kỳ hôm nay: BẮT BUỘC tuân thủ EXAM_ABSTRACTION_RULE (tuyệt đối không tường thuật vụn vặt các con số cụ thể, tên hãng xe, tên hàm, câu 1 câu 2...; phải khái quát hóa thành năng lực lý thuyết cốt lõi vững vàng và kỹ năng thực hành phân tích/xử lý bài toán tự tin của em).\n"
+            "   - Khen ngợi điểm làm tốt, CHỈ RÕ CỤ THỂ ĐIỂM CẦN LƯU Ý CẢI THIỆN (về tính cẩn thận kiểm tra lại dữ liệu sau xử lý, thói quen ghi chú giải thích bài làm...) — TUYỆT ĐỐI KHÔNG khen một chiều 100%, kèm lời khuyên/động viên cho các buổi học tiếp theo của khóa.\n"
         )
         req_comment_title = "1. 'comment': Đoạn văn nhận xét bài kiểm tra định kỳ gửi phụ huynh (120-180 từ, liền mạch, trang trọng, chân thành, giàu tính khích lệ, chuẩn mực học đường). Cần nêu được:\n"
     elif is_exam:
         comment_bullets = (
-            "   - QUÁ TRÌNH HỌC TẬP SUỐT KHÓA (Buổi 1 đến 13): Nhận xét tính chuyên cần, thái độ học tập, sự tập trung và mức độ tiến bộ của em qua từng giai đoạn học tập (dựa vào lịch sử nhận xét các buổi trước). Ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học nếu có buổi vắng; đánh giá khả năng tiếp thu và rèn luyện kỹ năng lập trình.\n"
-            "   - ĐÚC KẾT VỀ BÀI KIỂM TRA CUỐI KHÓA: Đánh giá sự vận dụng kiến thức toàn khóa vào bài kiểm tra hôm nay (mức độ hiểu đề, tư duy thuật toán, cách viết code, sự cẩn thận và kết quả bài làm).\n"
+            "   - QUÁ TRÌNH HỌC TẬP SUỐT KHÓA (Buổi 1 đến 13): Nhận xét tính chuyên cần, thái độ học tập, sự tập trung và mức độ tiến bộ của em qua từng giai đoạn học tập (dựa vào lịch sử nhận xét các buổi trước). Ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học nếu có buổi vắng; tế nhị nhắc nhở thái độ làm bài tập về nhà theo HOMEWORK_PEDAGOGY_RULE nếu có ghi nhận thiếu bài tập; đánh giá khả năng tiếp thu và rèn luyện kỹ năng lập trình.\n"
+            "   - ĐÚC KẾT VỀ BÀI KIỂM TRA CUỐI KHÓA: Đánh giá sự vận dụng kiến thức toàn khóa vào bài kiểm tra hôm nay. BẮT BUỘC tuân thủ EXAM_ABSTRACTION_RULE (khái quát hóa tư duy thuật toán, cách viết code mạch lạc, năng lực chuyên môn, không chép lại đề thi/số liệu vụn vặt).\n"
             "   - ĐIỂM CẦN CẢI THIỆN & ĐỊNH HƯỚNG: Nêu rõ thế mạnh nổi bật, ĐỒNG THỜI CHỈ RA RÕ ÍT NHẤT 1-2 ĐIỂM CẦN LƯU Ý CẢI THIỆN (về kỹ năng tự kiểm thử, đọc kỹ đề, hoặc tối ưu thuật toán...) để em tiếp tục hoàn thiện — TUYỆT ĐỐI KHÔNG chỉ toàn khen ngợi, kèm lời động viên và định hướng học tập tiếp theo.\n"
         )
         req_comment_title = "1. 'comment': Đoạn văn nhận xét tổng kết toàn khóa gửi phụ huynh (180-260 từ, chia 2 đoạn mạch lạc, trang trọng, chân thành, giàu tính khích lệ, chuẩn mực học đường). Bắt buộc đi từ quá trình học tập rồi đúc kết về bài thi cuối khóa:\n"
     else:
         comment_bullets = (
-            "   - QUÁ TRÌNH HỌC TẬP SUỐT KHÓA (Buổi 1 đến 13): Nhận xét tính chuyên cần, thái độ học tập, sự tập trung và mức độ tiến bộ của em qua từng giai đoạn học tập (dựa vào lịch sử nhận xét các buổi trước). Ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học nếu có buổi vắng; đánh giá sự chủ động và khả năng vượt khó, tự sửa lỗi khi làm bài.\n"
+            "   - QUÁ TRÌNH HỌC TẬP SUỐT KHÓA (Buổi 1 đến 13): Nhận xét tính chuyên cần, thái độ học tập, sự tập trung và mức độ tiến bộ của em qua từng giai đoạn học tập (dựa vào lịch sử nhận xét các buổi trước). Ghi nhận nếu em đi học đầy đủ giúp tiếp thu bài tốt, hoặc nhắc nhở việc vắng học nếu có buổi vắng; tế nhị nhắc nhở việc rèn luyện bài tập về nhà theo HOMEWORK_PEDAGOGY_RULE nếu có ghi nhận thiếu bài tập; đánh giá sự chủ động và khả năng vượt khó, tự sửa lỗi khi làm bài.\n"
             "   - ĐÚC KẾT VỀ BÀI SẢN PHẨM CUỐI KHÓA & BUỔI THUYẾT TRÌNH: Đánh giá cách em chuyển hóa toàn bộ kiến thức tích lũy cả khóa học vào dự án thực tế (ý tưởng, giao diện, tính năng, thuật toán code); nhận xét tác phong thuyết trình, độ tự tin khi demo và trả lời phản biện trước lớp.\n"
             "   - ĐIỂM CẦN CẢI THIỆN & ĐỊNH HƯỚNG: Nêu rõ thế mạnh nổi bật, ĐỒNG THỜI CHỈ RA RÕ ÍT NHẤT 1-2 ĐIỂM CẦN LƯU Ý CẢI THIỆN (về kỹ năng thuyết trình, tối ưu code, kiểm thử hoặc hoàn thiện tính năng...) để em tiếp tục phát triển — TUYỆT ĐỐI KHÔNG chỉ toàn khen ngợi, kèm lời động viên chân thành cho các khóa học tiếp theo.\n"
         )
@@ -745,16 +813,20 @@ def build_final_presentation_review_prompt(
         "3. 'dnl_evaluations': Đánh giá 9 tiêu chí ĐNL (Đo lường Năng Lực) phản ánh sự kết nối giữa QUÁ TRÌNH HỌC TẬP và THÀNH QUẢ SẢN PHẨM CUỐI KHÓA (hoặc bài thi). Để đồng bộ với điểm tổng kết không dưới 6.0, các tiêu chí đều có điểm từ 3 đến 5 (tương đương Khá hoặc Giỏi, điểm số >= 3):\n"
         "   - 'score': số nguyên từ 3 đến 5 (3-4: Khá, 5: Giỏi; không dưới 3).\n"
         "   - 'level': 'Khá' | 'Giỏi' tương ứng với score (nếu 3-4 là 'Khá', 5 là 'Giỏi', không đánh giá 'TB' nếu điểm >= 6).\n"
-        "   - 'comment': đoạn nhận xét chi tiết, đầy đặn (2-3 câu hoàn chỉnh, 35-60 từ) cho từng tiêu chí để giáo viên điền vào hệ thống LMS. BẮT BUỘC ĐI THEO CẤU TRÚC: [Biểu hiện trong quá trình học tập] -> [Minh chứng cụ thể trên Sản phẩm cuối khóa / Buổi thuyết trình] -> [Điểm cần lưu ý/góp ý rèn luyện thêm] (TUYỆT ĐỐI KHÔNG chỉ toàn khen ngợi, tránh câu cộc lốc chung chung).\n"
+        "   - 'comment': đoạn nhận xét chi tiết, đầy đặn (2-3 câu hoàn chỉnh, 35-60 từ) cho từng tiêu chí để giáo viên điền vào hệ thống LMS. BẮT BUỘC ĐI THEO CẤU TRÚC: [Biểu hiện trong quá trình học tập] -> [Minh chứng cụ thể trên Sản phẩm cuối khóa / Buổi thuyết trình / Bài kiểm tra] -> [Điểm cần lưu ý/góp ý rèn luyện thêm] (TUYỆT ĐỐI KHÔNG chỉ toàn khen ngợi, tránh câu cộc lốc chung chung; áp dụng EXAM_ABSTRACTION_RULE không kể lể chi tiết số liệu đề bài).\n"
         "   Danh sách 9 tiêu chí bắt buộc gồm:\n"
-        "   - kien_thuc_tai_lop: [ĐNL] Kiến thức học viên đã được học tại lớp (khả năng tiếp thu kiến thức trong các buổi học và áp dụng chính xác vào sản phẩm cuối khóa).\n"
-        "   - kien_thuc_tu_hoc: [ĐNL] Kiến thức học viên tự học (tinh thần tò mò, tự mày mò tìm hiểu thêm tính năng/thư viện ngoài giáo trình để đưa vào đồ án).\n"
+        "   - kien_thuc_tai_lop: [ĐNL] Kiến thức học viên đã được học tại lớp (khả năng tiếp thu kiến thức trong các buổi học và áp dụng chính xác vào sản phẩm cuối khóa hoặc bài kiểm tra định kỳ).\n"
+        "   - kien_thuc_tu_hoc: [ĐNL] Kiến thức học viên tự học (tinh thần tò mò, tự mày mò tìm hiểu thêm tính năng/thư viện ngoài giáo trình để đưa vào đồ án hoặc bài làm).\n"
         "   - ky_nang_giao_tiep: [ĐNL] Kỹ năng giao tiếp, hợp tác (sự tương tác với thầy cô/bạn bè trong các buổi học và kỹ năng thuyết trình, bảo vệ sản phẩm trước lớp).\n"
         "   - ky_nang_may_tinh: [ĐNL] Kỹ năng sử dụng máy tính (sự thành thạo trong thao tác phần mềm, gõ code, quản lý file đồ án và chạy demo mượt mà).\n"
-        "   - ky_nang_giai_quyet_van_de: [ĐNL] Kỹ năng giải quyết vấn đề (khả năng phát hiện lỗi, kiên nhẫn debug và tự khắc phục các sự cố kỹ thuật trong quá trình làm dự án).\n"
+        "   - ky_nang_giai_quyet_van_de: [ĐNL] Kỹ năng giải quyết vấn đề (khả năng phát hiện lỗi, kiên nhẫn debug và tự khắc phục các sự cố kỹ thuật trong quá trình làm dự án hoặc bài thi).\n"
         "   - tu_duy_sang_tao: [ĐNL] Tư duy sáng tạo (sáng kiến cá nhân hóa, ý tưởng kịch bản mới mẻ và thẩm mỹ giao diện của sản phẩm cuối khóa).\n"
         "   - tu_duy_may_tinh: [ĐNL] Tư duy máy tính (tư duy logic thuật toán, cấu trúc luồng lệnh, xử lý điều kiện và biến số trong bài làm).\n"
-        "   - thai_do_ve_nha: [ĐNL] Thái độ luyện tập về nhà (tính tự giác hoàn thành bài tập, xem lại bài và chủ động chuẩn bị đồ án tại nhà).\n"
+        "   - thai_do_ve_nha: [ĐNL] Thái độ luyện tập về nhà (tính tự giác hoàn thành bài tập, xem lại bài và chủ động chuẩn bị đồ án tại nhà). BẮT BUỘC TUÂN THỦ HOMEWORK_PEDAGOGY_RULE:\n"
+        "     + NẾU CÓ THÔNG TIN HỌC VIÊN CHƯA LÀM BÀI TẬP VỀ NHÀ (ví dụ: 'Chưa làm bài tập về nhà (0/5) bài', 'chưa làm BTVN', 'thiếu bài tập'...):\n"
+        "       * Điểm số ('score'): Đặt ở mức 3 (tương ứng 'Khá' trong hệ thống LMS, TUYỆT ĐỐI không cho 4 hay 5 điểm khi chưa hoàn thành BTVN).\n"
+        "       * Nhận xét ('comment'): 2-3 câu hoàn chỉnh (35-60 từ) đi theo đúng 3 bước: Nêu trung thực hiện trạng chưa hoàn thành bài tập về nhà theo lộ trình (0/5 bài) -> Chỉ ra tác động sư phạm (việc thiếu thời gian tự thực hành độc lập tại nhà khiến các kiến thức đã học trên lớp chưa được củng cố sâu và phản xạ code chưa tối ưu) -> Đưa ra định hướng rèn luyện (em cần nâng cao tính tự giác, chủ động phân bổ thời gian biểu cố định để hoàn thành bài tập đầy đủ trước mỗi buổi học).\n"
+        "     + NẾU HỌC VIÊN LÀM BÀI ĐẦY ĐỦ HOẶC KHÔNG CÓ GHI CHÚ THIẾU: Ghi nhận tinh thần tự giác luyện tập tại nhà, hoàn thành bài tập giúp củng cố kiến thức vững chắc (score 4-5).\n"
         "   - thai_do_tai_lop: [ĐNL] Thái độ học tập trên lớp (thái độ nghiêm túc, sự tập trung và CHUYÊN CẦN / ĐI HỌC). BẮT BUỘC ĐÁNH GIÁ TÌNH HÌNH ĐI HỌC DỰA VÀO 'THỐNG KÊ CHUYÊN CẦN' TRONG LỊCH SỬ:\n"
         "     + NẾU EM ĐI HỌC ĐẦY ĐỦ (không vắng buổi nào): Nhận xét PHẢI ghi nhận và khen ngợi tính chuyên cần, đi học đầy đủ, đúng giờ, thái độ học tập tích cực, là nền tảng vững chắc giúp em hoàn thành tốt sản phẩm cuối khóa.\n"
         "     + NẾU EM CÓ VẮNG HỌC (dù chỉ 1-2 buổi): Nhận xét PHẢI nêu rõ em có vắng buổi học (nêu rõ số buổi vắng nếu có), nhắc nhở việc nghỉ học làm gián đoạn bài học và có thể ảnh hưởng đến tiến độ dự án, đồng thời động viên em cố gắng sắp xếp đi học đầy đủ hơn."
@@ -782,8 +854,10 @@ def build_final_presentation_review_prompt(
 
     mindx_letter_section = (
         "4. 'mindx_letter': Ba phần nhận xét theo cấu trúc Thư từ MindX gửi phụ huynh (chuẩn Denise LMS):\n"
-        "   - 'learned_from_mindx' (Con đã học được gì từ MindX?): Đoạn văn (90-140 từ) tóm tắt các giá trị cốt lõi, kiến thức và kỹ năng thực tế em đã tích lũy và làm chủ được trong suốt khóa học. Bắt buộc gắn liền với sản phẩm cuối khóa (nếu có) hoặc bài làm cụ thể của em (ví dụ: tư duy logic, cấu trúc dữ liệu, giải thuật, thao tác phần mềm, khả năng giải quyết vấn đề...). Văn phong tự hào, chân thành, chuẩn mực sư phạm.\n"
-        "   - 'suggestions_from_mindx' (Những điều mà Mindx muốn đề xuất tới bố mẹ sau một thời gian đồng hành với em): Đoạn văn (90-140 từ) chân thành, mang tính xây dựng cao. Dựa vào lịch sử các điểm cần cải thiện qua 13 buổi và thái độ chuyên cần, đưa ra 2-3 lời khuyên hoặc hành động thiết thực mà phụ huynh có thể đồng hành cùng con tại nhà (duy trì thời gian luyện tập code hàng tuần trên hệ thống, rèn tính cẩn thận rà soát lỗi trước khi nộp, khích lệ kiên trì khi gặp bug...).\n"
+        "   - 'learned_from_mindx' (Con đã học được gì từ MindX?): Đoạn văn (90-140 từ) tóm tắt các giá trị cốt lõi, kiến thức và kỹ năng thực tế em đã tích lũy và làm chủ được trong suốt khóa học hoặc bài kiểm tra. Bắt buộc gắn liền với sản phẩm cuối khóa (nếu có) hoặc bài làm cụ thể của em theo EXAM_ABSTRACTION_RULE (ví dụ: tư duy logic, cấu trúc dữ liệu, giải thuật, quy trình làm sạch & phân tích dữ liệu, thao tác phần mềm, khả năng giải quyết vấn đề...). Tuyệt đối không liệt kê vụn vặt các con số cụ thể của đề bài. Văn phong tự hào, chân thành, chuẩn mực sư phạm.\n"
+        "   - 'suggestions_from_mindx' (Những điều mà Mindx muốn đề xuất tới bố mẹ sau một thời gian đồng hành với em): Đoạn văn (90-140 từ) chân thành, mang tính xây dựng cao. Dựa vào lịch sử các điểm cần cải thiện qua các buổi và thái độ chuyên cần, đưa ra 2-3 lời khuyên hoặc hành động thiết thực mà phụ huynh có thể đồng hành cùng con tại nhà (duy trì thời gian luyện tập code hàng tuần trên hệ thống, rèn tính cẩn thận rà soát lỗi trước khi nộp, khích lệ kiên trì khi gặp bug...).\n"
+        "     * ĐẶC BIỆT KHI CÓ THÔNG TIN CHƯA LÀM BTVN: Bắt buộc lồng ghép lời đề xuất phụ huynh hỗ trợ nhắc nhở và thiết lập một khung giờ biểu cố định trong tuần để con mở máy thực hành bài tập về nhà trên hệ thống MindX; động viên con không ngại khó, chủ động trao đổi với thầy cô khi gặp vướng mắc.\n"
+        "     * ĐẶC BIỆT KHI CÓ KẾT QUẢ BÀI LÀM: Khái quát hóa thành thói quen kiểm thử lại kết quả và thói quen giải thích logic bài làm thay vì nhắc lại số liệu chi tiết của đề thi.\n"
         f"   - 'future_direction' (Định hướng tương lai cho học viên): Đoạn văn (80-120 từ). {progression_rule}"
     )
     parts.append(mindx_letter_section)
