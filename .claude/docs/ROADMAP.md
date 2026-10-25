@@ -1534,6 +1534,24 @@
 - [x] **Kiểm thử chất lượng:**
   - 458/458 vitest unit tests PASS (`assignment-utils.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` thành công 100%.
 
+### Đợt 107: Link công khai xem đề Checkpoints không cần đăng nhập, Sửa/xóa/thay thế file đề bài chính đã lưu & Bỏ thông tin demo mặc định trên màn hình đăng nhập (2026-10-25)
+- [x] **Link công khai xem đề Checkpoints (`/checkpoints/[id]` & `/checkpoint/[id]`):**
+  - Helper `isCheckpointAssignment(title)`: nhận diện không phân biệt hoa thường các đề bài có chứa từ khóa 'checkpoint'/'checkpoints' (ví dụ: Checkpoints 1, checkpoint 2, [CSA05 - Checkpoints] Buổi 5).
+  - Middleware (`middleware.ts`): bypass xác thực cho đường dẫn `/checkpoints/` và `/checkpoint/`.
+  - Data Loader (`checkpoint-data.ts`): Server-only `loadPublicCheckpoint` dùng `createAdminClient()` kiểm tra điều kiện Checkpoints, tải nội dung file đề chính và tệp đính kèm kèm signed URL, cache per-request.
+  - Giao diện học viên xem đề (`checkpoint-view.tsx`): hiển thị tiêu đề, khóa, buổi, hướng dẫn làm bài, thanh chuyển tab đa file, bảng dữ liệu CSV chuyên nghiệp, xem text/code/PDF/ảnh, nút tải file và nút copy link đề bài.
+  - Thẻ đề bài đã lưu (`saved-assignments.tsx`) & popup xem đề (`view-spec-dialog.tsx`): huy hiệu `Checkpoints (Link mở)`, nút 🔗 copy nhanh đường dẫn chia sẻ cho học viên và nút xem trước trang học viên trên tab mới.
+- [x] **Sửa, xóa và ghi đè file đề bài chính đã lưu:**
+  - Server action `updateAssignment`, `replaceAssignmentSpecFile`, `removeAssignmentMainFile`: cho phép vừa đổi tiêu đề vừa chọn file đề bài mới để ghi đè file cũ (hoặc xóa file cũ). Tự động dọn dẹp Storage bucket `assignment-specs`.
+  - Dialog chỉnh sửa (`edit-assignment-title-button.tsx`): hiển thị tên file hiện tại, nút xóa file hiện tại và ô chọn file mới ghi đè.
+  - Dialog xem đề (`view-spec-dialog.tsx`): bổ sung nút `🔄 Thay file khác` và `✕ Xóa file` ngay trên header file đề chính kèm form ghi đè trực tiếp.
+- [x] **Bỏ tài khoản & mật khẩu demo mặc định trên UI Login (`login-form.tsx`):**
+  - State `username` và `password` đặt mặc định là chuỗi rỗng `""`, không hiện sẵn thông tin demo trên giao diện.
+- [x] **Kiểm thử chất lượng:**
+  - 464/464 unit tests vitest PASS (trong đó 22/22 tests `assignment-utils.test.ts`, 3/3 tests `csv-table-view.test.ts`).
+  - `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+  - `pnpm build` (Next.js Turbopack) 100% thành công, 19/19 static pages.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

@@ -23,8 +23,8 @@ export function LoginForm() {
     login,
     {}
   );
-  const [username, setUsername] = useState("demo");
-  const [password, setPassword] = useState("demo");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
     <Card className="border-border/60 shadow-xl shadow-black/5">

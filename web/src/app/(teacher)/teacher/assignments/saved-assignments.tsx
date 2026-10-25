@@ -11,7 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getNextSessionNumber } from "@/lib/assignment-utils";
+import {
+  getNextSessionNumber,
+  isCheckpointAssignment,
+} from "@/lib/assignment-utils";
+import { cn } from "@/lib/utils";
 
 import { AssignmentForm, type CourseChoice } from "./assignment-form";
 import { DeleteAssignmentButton } from "./delete-assignment-button";
@@ -23,8 +27,48 @@ export interface SavedAssignment {
   courseId: string;
   sessionNumber: number;
   title: string;
+  specFilePath?: string | null;
+  specFileName?: string;
   attachmentCount?: number;
   attachmentNames?: string[];
+}
+
+function CopyCheckpointButton({
+  assignmentId,
+  title,
+}: {
+  assignmentId: string;
+  title: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    const url = `${window.location.origin}/checkpoints/${assignmentId}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      aria-label={`Copy link đề checkpoint ${title}`}
+      title={
+        copied
+          ? "Đã copy link học viên!"
+          : "Copy link xem đề cho học viên (không cần đăng nhập)"
+      }
+      className={cn(
+        "shrink-0 rounded-md p-1.5 transition-colors",
+        copied
+          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+          : "text-muted-foreground hover:bg-accent hover:text-primary"
+      )}
+    >
+      {copied ? "✓" : "🔗"}
+    </button>
+  );
 }
 
 /**
@@ -149,49 +193,68 @@ export function SavedAssignments({
               </div>
             ) : (
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {courseAssignments.map((a) => (
-                  <div
-                    key={a.id}
-                    className="group flex items-start gap-3 rounded-lg border bg-card p-3"
-                  >
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
-                      {a.sessionNumber}
-                    </span>
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <p className="truncate text-sm font-medium">
-                        {a.title}
-                      </p>
-                      {a.attachmentCount != null && a.attachmentCount > 0 && (
+                {courseAssignments.map((a) => {
+                  const isCheckpoint = isCheckpointAssignment(a.title);
+                  return (
+                    <div
+                      key={a.id}
+                      className="group flex items-start gap-3 rounded-lg border bg-card p-3"
+                    >
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
+                        {a.sessionNumber}
+                      </span>
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <p className="truncate text-sm font-medium">
+                          {a.title}
+                        </p>
                         <div className="flex flex-wrap items-center gap-1.5">
-                          <span
-                            className="inline-flex items-center gap-1 rounded bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground"
-                            title={a.attachmentNames?.join(", ")}
-                          >
-                            <span>📎</span>
-                            <span>{a.attachmentCount} tệp dữ liệu</span>
-                          </span>
+                          {isCheckpoint && (
+                            <span
+                              className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary"
+                              title="Đề bài Checkpoint cho phép gửi link công khai cho học viên xem trực tiếp"
+                            >
+                              <span>🔗</span>
+                              <span>Checkpoints (Link mở)</span>
+                            </span>
+                          )}
+                          {a.attachmentCount != null && a.attachmentCount > 0 && (
+                            <span
+                              className="inline-flex items-center gap-1 rounded bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground"
+                              title={a.attachmentNames?.join(", ")}
+                            >
+                              <span>📎</span>
+                              <span>{a.attachmentCount} tệp dữ liệu</span>
+                            </span>
+                          )}
                         </div>
-                      )}
+                      </div>
+                      {/* Trên điện thoại không có hover — nút luôn hiện, chỉ
+                          mờ đi cho đỡ rối trên máy rộng. */}
+                      <div className="flex shrink-0 items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+                        {isCheckpoint && (
+                          <CopyCheckpointButton
+                            assignmentId={a.id}
+                            title={a.title}
+                          />
+                        )}
+                        <ViewSpecDialog
+                          assignmentId={a.id}
+                          sessionNumber={a.sessionNumber}
+                          title={a.title}
+                        />
+                        <EditAssignmentTitleButton
+                          assignmentId={a.id}
+                          title={a.title}
+                          specFileName={a.specFileName}
+                        />
+                        <DeleteAssignmentButton
+                          assignmentId={a.id}
+                          title={a.title}
+                        />
+                      </div>
                     </div>
-                    {/* Trên điện thoại không có hover — nút luôn hiện, chỉ
-                        mờ đi cho đỡ rối trên máy rộng. */}
-                    <div className="flex shrink-0 items-center gap-0.5 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
-                      <ViewSpecDialog
-                        assignmentId={a.id}
-                        sessionNumber={a.sessionNumber}
-                        title={a.title}
-                      />
-                      <EditAssignmentTitleButton
-                        assignmentId={a.id}
-                        title={a.title}
-                      />
-                      <DeleteAssignmentButton
-                        assignmentId={a.id}
-                        title={a.title}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <AssignmentForm
                   courses={courses}
                   defaultCourseId={course.id}

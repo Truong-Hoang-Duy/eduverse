@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,117 +16,14 @@ import {
   attachAssignmentFiles,
   getAssignmentSpec,
   removeAssignmentAttachment,
+  removeAssignmentMainFile,
+  replaceAssignmentSpecFile,
   type AssignmentSpec,
   type AssignmentSpecFile,
 } from "@/lib/actions/grading";
+import { CsvTableView } from "@/components/csv-table-view";
+import { isCheckpointAssignment } from "@/lib/assignment-utils";
 import { cn } from "@/lib/utils";
-
-function CsvTableView({ content }: { content: string }) {
-  const [viewMode, setViewMode] = useState<"table" | "raw">("table");
-
-  const rows = useMemo(() => {
-    const lines = content.split(/\r?\n/).filter((l) => l.trim().length > 0);
-    return lines.map((line) => {
-      const cells: string[] = [];
-      let current = "";
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === "," && !inQuotes) {
-          cells.push(current.trim());
-          current = "";
-        } else {
-          current += char;
-        }
-      }
-      cells.push(current.trim());
-      return cells;
-    });
-  }, [content]);
-
-  const headers = rows[0] ?? [];
-  const dataRows = rows.slice(1, 101);
-  const totalDataRows = Math.max(0, rows.length - 1);
-
-  if (viewMode === "raw" || headers.length <= 1) {
-    return (
-      <div className="space-y-2">
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs"
-            onClick={() => setViewMode(viewMode === "raw" ? "table" : "raw")}
-          >
-            {viewMode === "raw" ? "📊 Xem dạng bảng" : "📝 Xem dạng văn bản"}
-          </Button>
-        </div>
-        <pre className="max-h-[55vh] overflow-auto rounded-lg border bg-muted/20 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
-          {content}
-        </pre>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Badge variant="outline" className="text-xs">
-          📊 Bảng dữ liệu ({totalDataRows} dòng, {headers.length} cột)
-        </Badge>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => setViewMode("raw")}
-        >
-          📝 Xem dạng văn bản
-        </Button>
-      </div>
-      <div className="max-h-[55vh] overflow-auto rounded-lg border bg-card">
-        <table className="w-full border-collapse text-left text-xs">
-          <thead className="sticky top-0 z-10 border-b bg-muted font-semibold text-foreground shadow-2xs">
-            <tr>
-              <th className="w-12 border-r px-2.5 py-2 text-center text-muted-foreground">
-                #
-              </th>
-              {headers.map((h, i) => (
-                <th key={i} className="border-r px-3 py-2 last:border-r-0">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {dataRows.map((row, rIdx) => (
-              <tr key={rIdx} className="transition-colors hover:bg-muted/40">
-                <td className="border-r px-2.5 py-1.5 text-center font-mono text-muted-foreground">
-                  {rIdx + 1}
-                </td>
-                {row.map((cell, cIdx) => (
-                  <td
-                    key={cIdx}
-                    className="max-w-[220px] truncate border-r px-3 py-1.5 font-mono last:border-r-0"
-                    title={cell}
-                  >
-                    {cell}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {totalDataRows > 100 && (
-          <p className="border-t bg-muted/30 p-2 text-center text-[11px] text-muted-foreground">
-            Đang hiển thị 100 / {totalDataRows} dòng đầu tiên. Tải file về máy để xem toàn bộ dữ liệu.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export function ViewSpecDialog({
   assignmentId,
@@ -153,6 +50,12 @@ export function ViewSpecDialog({
   const [addMsg, setAddMsg] = useState("");
   const addFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Trạng thái thay thế file đề chính
+  const [showReplaceMainForm, setShowReplaceMainForm] = useState(false);
+  const [replacePending, startReplace] = useTransition();
+  const replaceFileInputRef = useRef<HTMLInputElement>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
   function loadSpecData() {
     startLoad(async () => {
       const res = await getAssignmentSpec(assignmentId);
@@ -173,7 +76,9 @@ export function ViewSpecDialog({
     setSelectedIndex(0);
     setError("");
     setShowAddForm(false);
+    setShowReplaceMainForm(false);
     setAddMsg("");
+    setCopiedLink(false);
     loadSpecData();
   }
 
@@ -191,6 +96,50 @@ export function ViewSpecDialog({
         loadSpecData();
       }
     });
+  }
+
+  // Thay thế file đề chính
+  function handleReplaceMainFile(formData: FormData) {
+    setAddMsg("");
+    setError("");
+    startReplace(async () => {
+      const res = await replaceAssignmentSpecFile(assignmentId, formData);
+      if (res.error) {
+        setError(res.error);
+      } else {
+        setAddMsg(res.success ?? "Đã thay đổi file đề.");
+        setShowReplaceMainForm(false);
+        if (replaceFileInputRef.current) replaceFileInputRef.current.value = "";
+        loadSpecData();
+      }
+    });
+  }
+
+  // Xóa file đề chính
+  function handleRemoveMainFile() {
+    if (
+      !confirm(
+        "Bạn có chắc chắn muốn xóa file đề bài chính này? Bạn có thể tải file mới lên sau."
+      )
+    ) {
+      return;
+    }
+    startLoad(async () => {
+      const res = await removeAssignmentMainFile(assignmentId);
+      if (res.error) {
+        setError(res.error);
+      } else {
+        loadSpecData();
+      }
+    });
+  }
+
+  // Copy link xem đề checkpoint gửi học viên
+  function handleCopyCheckpointLink() {
+    const url = `${window.location.origin}/checkpoints/${assignmentId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
   }
 
   // Xóa bớt một tệp đính kèm
@@ -220,6 +169,7 @@ export function ViewSpecDialog({
     activeFile?.fileName.toLowerCase().endsWith(".csv") &&
     activeFile.kind === "text" &&
     typeof activeFile.content === "string";
+  const isCheckpoint = isCheckpointAssignment(title);
 
   return (
     <>
@@ -246,7 +196,7 @@ export function ViewSpecDialog({
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
-            <div className="flex flex-wrap items-start justify-between gap-2 pr-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 pr-6">
               <div>
                 <DialogTitle>{title}</DialogTitle>
                 <DialogDescription>
@@ -258,16 +208,96 @@ export function ViewSpecDialog({
                       : ""}
                 </DialogDescription>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 gap-1 text-xs"
-                onClick={() => setShowAddForm(!showAddForm)}
-              >
-                <span>{showAddForm ? "Đóng" : "+ Đính kèm thêm file"}</span>
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                {isCheckpoint && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "h-8 gap-1.5 text-xs font-medium transition-colors",
+                        copiedLink
+                          ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                          : "text-primary hover:bg-primary/10"
+                      )}
+                      onClick={handleCopyCheckpointLink}
+                      title="Copy link xem đề trực tiếp cho học viên (không cần đăng nhập)"
+                    >
+                      <span>{copiedLink ? "✓" : "🔗"}</span>
+                      <span>
+                        {copiedLink ? "Đã copy link học viên!" : "Copy link học viên"}
+                      </span>
+                    </Button>
+                    <a
+                      href={`/checkpoints/${assignmentId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex h-8 items-center gap-1 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                      title="Mở xem trang học viên trên tab mới"
+                    >
+                      <span>↗</span>
+                      <span>Xem trang học viên</span>
+                    </a>
+                  </>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1 text-xs"
+                  onClick={() => {
+                    setShowAddForm(!showAddForm);
+                    setShowReplaceMainForm(false);
+                  }}
+                >
+                  <span>{showAddForm ? "Đóng" : "+ Đính kèm thêm file"}</span>
+                </Button>
+              </div>
             </div>
           </DialogHeader>
+
+          {/* Form thay thế / ghi đè file đề bài chính */}
+          {showReplaceMainForm && (
+            <form
+              action={handleReplaceMainFile}
+              className="space-y-2 rounded-lg border border-dashed border-amber-500/50 bg-amber-500/5 p-3"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground">
+                  Chọn file đề bài mới để ghi đè file hiện tại:
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  (File cũ sẽ được tự động xóa sạch)
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  ref={replaceFileInputRef}
+                  name="spec_file"
+                  type="file"
+                  accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.docx"
+                  className="h-8 text-xs file:text-xs"
+                  required
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={replacePending}
+                  className="h-8 shrink-0 text-xs font-medium"
+                >
+                  {replacePending ? "Đang ghi đè..." : "Tải lên & Ghi đè"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowReplaceMainForm(false)}
+                  className="h-8 px-2 text-xs"
+                >
+                  Hủy
+                </Button>
+              </div>
+            </form>
+          )}
 
           {/* Form thêm file dữ liệu trực tiếp vào đề đã có */}
           {showAddForm && (
@@ -352,7 +382,7 @@ export function ViewSpecDialog({
 
           {!pending && !error && activeFile && (
             <div className="space-y-3">
-              {/* Header tệp đang chọn + Nút Tải + Nút Xóa (cho file đính kèm) */}
+              {/* Header tệp đang chọn + Nút Tải + Nút Thay/Xóa */}
               <div className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-3 py-2 text-xs">
                 <div className="flex items-center gap-2 truncate">
                   <span
@@ -386,21 +416,49 @@ export function ViewSpecDialog({
                     </a>
                   )}
 
-                  {!activeFile.isMain && "path" in activeFile && activeFile.path && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        handleRemoveFile(
-                          (activeFile as AssignmentSpecFile).path,
-                          activeFile.fileName
-                        )
-                      }
-                      title="Xóa tệp đính kèm này"
-                      className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      ✕ Xóa tệp
-                    </Button>
+                  {activeFile.isMain ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowReplaceMainForm(!showReplaceMainForm);
+                          setShowAddForm(false);
+                        }}
+                        title="Thay thế file đề bài chính này bằng file khác"
+                        className="h-7 gap-1 px-2 text-xs font-medium"
+                      >
+                        <span>🔄</span>
+                        <span>{showReplaceMainForm ? "Đóng" : "Thay file khác"}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleRemoveMainFile}
+                        title="Xóa file đề bài chính"
+                        className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        ✕ Xóa file
+                      </Button>
+                    </>
+                  ) : (
+                    "path" in activeFile &&
+                    activeFile.path && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          handleRemoveFile(
+                            (activeFile as AssignmentSpecFile).path,
+                            activeFile.fileName
+                          )
+                        }
+                        title="Xóa tệp đính kèm này"
+                        className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        ✕ Xóa tệp
+                      </Button>
+                    )
                   )}
                 </div>
               </div>

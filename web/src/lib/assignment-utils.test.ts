@@ -7,6 +7,7 @@ import {
   formatTitleFromFileName,
   getDisplayFileName,
   getNextSessionNumber,
+  isCheckpointAssignment,
 } from "./assignment-utils";
 
 describe("getNextSessionNumber", () => {
@@ -157,5 +158,32 @@ describe("encodeInstructionsWithAttachments & extractAttachmentPaths", () => {
     expect(encoded?.startsWith("<!--attachments:")).toBe(true);
     expect(extractAttachmentPaths(encoded, null)).toEqual(paths);
     expect(cleanInstructionsForDisplay(encoded)).toBe("");
+  });
+});
+
+describe("isCheckpointAssignment", () => {
+  it("nhận diện chính xác từ khóa Checkpoints / Checkpoint không phân biệt hoa thường", () => {
+    expect(isCheckpointAssignment("Checkpoints")).toBe(true);
+    expect(isCheckpointAssignment("checkpoints")).toBe(true);
+    expect(isCheckpointAssignment("CHECKPOINTS")).toBe(true);
+    expect(isCheckpointAssignment("Checkpoint 1")).toBe(true);
+    expect(isCheckpointAssignment("checkpoint 2: OOP")).toBe(true);
+    expect(isCheckpointAssignment("CHECKPOINT ĐỢT 1")).toBe(true);
+    expect(isCheckpointAssignment("[CSA05 - Checkpoints] Buổi 5")).toBe(true);
+    expect(isCheckpointAssignment("Bài thi checkpoint giữa khóa")).toBe(true);
+  });
+
+  it("trả về false khi tiêu đề không chứa từ khóa checkpoint", () => {
+    expect(isCheckpointAssignment("Bài tập về nhà buổi 1")).toBe(false);
+    expect(isCheckpointAssignment("Homework 3")).toBe(false);
+    expect(isCheckpointAssignment("Đề thi cuối khóa")).toBe(false);
+    expect(isCheckpointAssignment("Mini Project")).toBe(false);
+  });
+
+  it("trả về false cho input rỗng, null hoặc undefined", () => {
+    expect(isCheckpointAssignment("")).toBe(false);
+    expect(isCheckpointAssignment("   ")).toBe(false);
+    expect(isCheckpointAssignment(null)).toBe(false);
+    expect(isCheckpointAssignment(undefined)).toBe(false);
   });
 });
