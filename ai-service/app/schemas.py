@@ -153,6 +153,9 @@ class FinalPresentationReviewRequest(AiRequest):
     is_exam: bool = False
     is_periodic_exam: bool = False
     session_number: int | None = None
+    session_title: str | None = None
+    session_content: str | None = None
+    session_context: str | None = None
 
 
 class MindxLetterEvaluation(BaseModel):

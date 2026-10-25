@@ -211,3 +211,34 @@ def test_final_presentation_review_prompt_includes_mindx_letter() -> None:
     assert "Computer Science Intensive (CSI)" in prompt
 
 
+def test_homework_pedagogy_and_exam_abstraction_rules_included() -> None:
+    prompt = build_final_presentation_review_prompt(
+        student_name="Nguyễn Văn A",
+        class_code="CSA01",
+        course_name="Computer Science Advance",
+        academic_level="Khá",
+        project_name=None,
+        project_description=None,
+        project_features=[],
+        presentation_notes="Chưa làm bài tập về nhà (0/5) bài. TRẮC NGHIỆM: Đúng 1..10. THỰC HÀNH: Đã làm sạch cột Price...",
+        prior_reviews_text="- Buổi 1: mạnh [Tư duy tốt]",
+        current_strengths=[],
+        current_improvements=[],
+        is_exam=True,
+        is_periodic_exam=True,
+        session_number=5,
+        session_title="Checkpoint 1 - Tiền xử lý và phân tích dữ liệu",
+        session_content="Kiểm tra trắc nghiệm lý thuyết và thực hành làm sạch dữ liệu với Python/Pandas",
+        session_context="Học sinh làm bài kiểm tra 45 phút trên lớp",
+    )
+
+    assert "HOMEWORK PEDAGOGY RULE" in prompt
+    assert "EXAM ABSTRACTION RULE" in prompt
+    assert "Chưa làm bài tập về nhà" in prompt
+    assert "Checkpoint 1 - Tiền xử lý và phân tích dữ liệu" in prompt
+    assert "Kiểm tra trắc nghiệm lý thuyết" in prompt
+    assert "Học sinh làm bài kiểm tra 45 phút trên lớp" in prompt
+    assert "score = 3" in prompt
+    assert "TUYỆT ĐỐI CẤM TƯỜNG THUẬT VỤN VẶT" in prompt
+
+
