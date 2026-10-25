@@ -237,8 +237,9 @@ def test_homework_pedagogy_and_exam_abstraction_rules_included() -> None:
     assert "Chưa làm bài tập về nhà" in prompt
     assert "Checkpoint 1 - Tiền xử lý và phân tích dữ liệu" in prompt
     assert "Kiểm tra trắc nghiệm lý thuyết" in prompt
-    assert "Học sinh làm bài kiểm tra 45 phút trên lớp" in prompt
-    assert "score = 3" in prompt
+    assert "CRITERION INDEPENDENCE" in prompt
+    assert "TUYỆT ĐỐI KHÔNG cho điểm từ 3 đến 5" in prompt
+    assert "level': 'TB'" in prompt
     assert "TUYỆT ĐỐI CẤM TƯỜNG THUẬT VỤN VẶT" in prompt
 
 
