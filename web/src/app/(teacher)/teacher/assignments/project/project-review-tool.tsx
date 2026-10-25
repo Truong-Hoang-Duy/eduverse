@@ -113,14 +113,32 @@ export function ProjectReviewTool({ courses }: { courses: CourseChoice[] }) {
     setReview(null);
     setCopied(false);
     startReview(async () => {
-      const res = await reviewProject({
-        courseId: courseId || undefined,
-        notes: notes || undefined,
-        // Bỏ `key` (thứ chỉ dùng để dựng danh sách) trước khi gửi qua mạng.
-        files: chosen.map(({ path, content, size }) => ({ path, content, size })),
-      });
-      if (res.error) picker.setError(res.error);
-      else setReview(res.review ?? null);
+      try {
+        const res = await reviewProject({
+          courseId: courseId || undefined,
+          notes: notes || undefined,
+          // Bỏ `key` (thứ chỉ dùng để dựng danh sách) trước khi gửi qua mạng.
+          files: chosen.map(({ path, content, size }) => ({ path, content, size })),
+        });
+        if (res.error) picker.setError(res.error);
+        else setReview(res.review ?? null);
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Có lỗi khi kết nối với máy chủ AI.";
+        if (
+          msg.includes("504") ||
+          msg.includes("unexpected response") ||
+          msg.includes("Failed to fetch")
+        ) {
+          picker.setError(
+            "Máy chủ AI mất quá nhiều thời gian để phản hồi (timeout 504). Vui lòng đợi 30 giây rồi thử lại."
+          );
+        } else {
+          picker.setError(msg);
+        }
+      }
     });
   }
 
