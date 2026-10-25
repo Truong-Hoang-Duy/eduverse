@@ -198,3 +198,25 @@ def test_review_prompt_forbids_robotic_starters_and_transitions() -> None:
     assert "TUYỆT ĐỐI CẤM mở đầu bằng các từ sáo rỗng, máy móc như 'Đáng khen là...'" in prompt
     assert "'Đáng khen là...', 'Riêng ở phần...'" not in prompt
 
+
+def test_review_prompt_includes_homework_pedagogy_and_exam_abstraction_rules() -> None:
+    prompt = prompts.build_review_prompt(
+        student_name="An",
+        session_title="Buổi 5",
+        session_content="Kiểm tra định kỳ Checkpoint 1",
+        strengths=["Nắm vững lý thuyết"],
+        improvements=["Chưa làm bài tập về nhà (0/5) bài"],
+        session_context="Buổi kiểm tra định kỳ 45 phút",
+        previous_comment=None,
+        course_name="Computer Science Advance (CSA)",
+        session_number=5,
+        is_periodic_test=True,
+        test_process_notes=["TRẮC NGHIỆM: Đúng 1..10", "THỰC HÀNH: Đã làm sạch cột Price, Câu 1 xe BMW $22,000"],
+    )
+
+    assert "HOMEWORK PEDAGOGY RULE" in prompt
+    assert "EXAM ABSTRACTION RULE" in prompt
+    assert "TUYỆT ĐỐI CẤM TƯỜNG THUẬT VỤN VẶT" in prompt
+    assert "KHÔNG dùng từ ngữ mang tính chỉ trích, phán xét nhân cách tiêu cực" in prompt
+    assert "khái quát hóa năng lực lý thuyết và kỹ năng thực hành theo chuyên đề bài học" in prompt
+

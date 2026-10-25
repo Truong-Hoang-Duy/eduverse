@@ -4,20 +4,31 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-25, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 115 (**Tích hợp cơ chế Auto-Warmup ngầm tự động đánh thức AI Service trên Render khi giáo viên vào trang**):
-1. **Mục tiêu:**
-   - Xóa bỏ hoàn toàn độ trễ lần đầu (cold start 30–50s) khi máy chủ AI trên Render rơi vào trạng thái ngủ đông sau 15 phút không hoạt động.
+**Đang làm:** Đã hoàn thành Đợt 116 (**Chuẩn hóa Quy tắc Sư phạm Bài tập về nhà `HOMEWORK_PEDAGOGY_RULE` & Khái quát hóa Bài làm Kiểm tra `EXAM_ABSTRACTION_RULE` trong Nhận xét AI và Đánh giá Rubric ĐNL**):
+1. **Mục tiêu & Nghiệp vụ Sư phạm:**
+   - **Xử lý ghi chú Bài tập về nhà ("Chưa làm bài tập về nhà (0/5) bài"):**
+     - Tuyệt đối không phán xét nhân cách tiêu cực (không dùng từ ngữ chỉ trích như "lười biếng", "bỏ bê học tập").
+     - Giải thích trên góc độ tâm lý và phương pháp học lập trình: Thời lượng trên lớp chỉ đủ để tiếp thu kiến thức mới, việc tự tay viết code và làm bài tập ở nhà là chìa khóa then chốt để tạo phản xạ tư duy và biến kiến thức thành kỹ năng.
+     - Trong đoạn nhận xét gửi phụ huynh (`comment`): Diễn đạt tế nhị, mang tính xây dựng và khích lệ, gợi ý sắp xếp thời gian tự học (30-45 phút sau mỗi buổi) và chủ động hỏi thầy cô khi gặp bài khó.
+     - Trong Bảng đánh giá 9 tiêu chí ĐNL (`dnl_evaluations` -> `thai_do_ve_nha`): Điểm số đặt ở mức 3 (Khá, không cho 4-5 khi chưa làm BTVN), nhận xét theo 3 bước chuẩn mực: [Hiện trạng thực tế 0/5 bài] -> [Tác động sư phạm: thiếu tự luyện tập làm giảm phản xạ code] -> [Định hướng rèn luyện: nâng cao tự giác, phân bổ khung giờ cố định].
+     - Trong Thư từ MindX (`mindx_letter` -> `suggestions_from_mindx`): Đề xuất gia đình hỗ trợ nhắc nhở và thiết lập một khung giờ cố định trong tuần để con mở máy thực hành bài tập về nhà trên hệ thống MindX; động viên con không ngại khó, chủ động trao đổi với thầy cô khi gặp vướng mắc.
+   - **Khái quát hóa kết quả bài làm kiểm tra (Trắc nghiệm + Thực hành):**
+     - Tuyệt đối CẤM tường thuật vụn vặt và sao chép máy móc các chi tiết số liệu của đề bài (không liệt kê xe BMW $22,000, Nissan rẻ nhất, loại ký hiệu $, câu 1, câu 2, câu 3...). Phụ huynh không tham gia giải đề thi nên các con số thô đó hoàn toàn vô nghĩa và tạo cảm giác nhận xét bị máy móc.
+     - Lấy ngữ cảnh môn học theo số buổi của khóa học (`course_name` như CSA, CSB, Scratch, App, Web và `session_number` như Buổi 5 Checkpoint) cùng nội dung bài học để bóc tách thành HAI MẶT NĂNG LỰC SƯ PHẠM:
+       - *Năng lực làm tốt:* Lý thuyết trắc nghiệm nền tảng vững vàng, hiểu đúng bản chất câu lệnh; thực hành thành thạo quy trình tiền xử lý và làm sạch dữ liệu; tư duy logic sắc bén trong việc lọc điều kiện, gom nhóm và tính toán các chỉ số thống kê.
+       - *Điểm cần lưu ý hoàn thiện:* Tính cẩn trọng và kỹ năng tự kiểm thử (chủ động đối chiếu, kiểm tra lại tính toàn vẹn dữ liệu sau biến đổi); thói quen lập trình chuyên nghiệp (bổ sung ghi chú comment giải thích lý do xử lý các trường hợp dữ liệu khuyết).
 2. **Triển khai kỹ thuật:**
-   - **Route Handler `GET /api/ai-warmup` (`route.ts`):** Trả về phản hồi JSON 200 ngay lập tức cho Client, đồng thời gửi tín hiệu ping ngầm tới `AI_SERVICE_URL/health` trên Render với timeout 50 giây mà không chặn luồng render giao diện.
-   - **Component Client `<AiWarmup />` (`components/ai-warmup.tsx`):** Chạy ngầm trong `TeacherLayout` (`(teacher)/teacher/layout.tsx`), tự động kích hoạt warmup định kỳ mỗi 10 phút/lần (dưới mốc 15 phút ngủ đông của Render, lưu timestamp vào `sessionStorage`).
-   - Nhờ đó, trong 30–45 giây giáo viên mở danh sách lớp hoặc chọn học sinh, máy chủ AI đã được đánh thức xong. Đến khi bấm "AI tạo nhận xét", hệ thống phản hồi ngay tức thì trong 2–3 giây.
+   - **`ai-service/app/prompts.py`:** Thêm `HOMEWORK_PEDAGOGY_RULE` và `EXAM_ABSTRACTION_RULE`; tích hợp vào cả `build_review_prompt` (buổi thường & kiểm tra định kỳ) và `build_final_presentation_review_prompt` (buổi tổng kết / kiểm tra định kỳ có rubric ĐNL).
+   - **`ai-service/app/schemas.py` & `ai-service/app/routes/reviews.py`:** Mở rộng `FinalPresentationReviewRequest` nhận thêm `session_title`, `session_content`, `session_context` để AI nắm trọn vẹn ngữ cảnh chuyên đề bài học.
+   - **`web/src/lib/actions/reviews.ts` & `review-editor.tsx`:** Đồng bộ truyền `sessionTitle`, `sessionContent`, `sessionContext` sang `generateFinalPresentationReview`.
 3. **Kiểm thử chất lượng:**
+   - `ai-service/`: `test_final_presentation_review.py` và `test_pedagogical_review.py` PASS 100%.
    - `web/`: 466/466 tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
 
 Cập nhật bởi: Gemini
 
 ---
-**Trước đó:** Đã hoàn thành Đợt 114 (**Khắc phục sự cố Timeout 504 khi gọi AI trên Vercel, tăng giới hạn 60s & Chống crash trắng trang tuyệt đối**):
+**Trước đó:** Đã hoàn thành Đợt 115 (**Tích hợp cơ chế Auto-Warmup ngầm tự động đánh thức AI Service trên Render khi giáo viên vào trang**):
 1. **Nguyên nhân sự cố:**
    - Trình duyệt báo `Failed to load resource: the server responded with a status of 504 ()` và `Uncaught Error: An unexpected response was received from the server`.
    - Vercel Serverless Functions trên gói Hobby mặc định timeout ở 10–15s. Khi máy chủ AI trên Render ở trạng thái ngủ đông (cold start 30–60s) hoặc Gemini sinh bài nhận xét dài, Vercel ngắt kết nối với mã 504 HTML. Phía React Client (`review-editor.tsx`) thiếu `try ... catch` nên lỗi 504 trở thành unhandled exception làm sập trắng toàn bộ ứng dụng (`Application error: a client-side exception has occurred...`).

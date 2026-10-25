@@ -583,6 +583,9 @@ export interface GenerateFinalPresentationReviewInput {
   isExam?: boolean;
   isPeriodicExam?: boolean;
   sessionNumber?: number;
+  sessionTitle?: string;
+  sessionContent?: string;
+  sessionContext?: string;
 }
 
 /** Gọi AI tổng kết toàn khóa học và đánh giá buổi thuyết trình hoặc bài kiểm tra định kỳ / cuối khóa. */
@@ -622,6 +625,9 @@ export async function generateFinalPresentationReview(
         is_exam: Boolean(input.isExam),
         is_periodic_exam: Boolean(input.isPeriodicExam),
         session_number: input.sessionNumber ?? null,
+        session_title: input.sessionTitle || null,
+        session_content: input.sessionContent || null,
+        session_context: input.sessionContext || null,
       }
     );
     return { evaluation: data };
