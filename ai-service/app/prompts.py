@@ -312,7 +312,13 @@ HOMEWORK_PEDAGOGY_RULE = (
     "   - Diễn đạt tế nhị, khách quan, mang tính xây dựng và khích lệ: Ghi nhận nỗ lực và khả năng tiếp thu bài của em trên lớp, đồng thời nhắc nhở nhẹ nhàng việc em cần hoàn thiện các bài tập thực hành ở nhà.\n"
     "   - Đưa ra lời khuyên cụ thể: Gợi ý em sắp xếp thời gian biểu hợp lý (khoảng 30-45 phút sau mỗi buổi học) để hoàn thành các bài tập tự luyện trên hệ thống, và khuyến khích em chủ động trao đổi với thầy cô nếu gặp khúc mắc khi làm bài ở nhà.\n"
     "3. TRONG BẢNG ĐÁNH GIÁ ĐNL — TIÊU CHÍ 'thai_do_ve_nha':\n"
-    "   - Điểm số: Đặt ở mức hợp lý (score = 3, level 'Khá' trong hệ thống LMS), TUYỆT ĐỐI KHÔNG cho điểm tối đa (4 hay 5) khi chưa hoàn thành bài tập về nhà.\n"
+    "   - NGUYÊN TẮC ĐỘC LẬP & ĐÁNH GIÁ ĐÚNG THỰC CHẤT: TUYỆT ĐỐI KHÔNG dựa vào xếp loại học lực chung (như Khá hay Giỏi) để suy luận và cho điểm cao ở tiêu chí này khi em không làm bài tập. Học lực chung thể hiện khả năng tiếp thu bài học, còn tiêu chí này phản ánh ĐÚNG THỰC TẾ Ý THỨC RÈN LUYỆN TẠI NHÀ.\n"
+    "   - Điểm số và Xếp loại khi học viên KHÔNG LÀM BTVN (ví dụ: 'Chưa làm bài tập về nhà (0/5) bài', 'chưa làm BTVN', 'thiếu bài tập'...):\n"
+    "     + BẮT BUỘC ĐÁNH GIÁ MỨC TRUNG BÌNH: 'score': 1 hoặc 2 (tương ứng 'level': 'TB'). TUYỆT ĐỐI KHÔNG cho điểm từ 3 đến 5 (không được chấm Khá hay Giỏi khi chưa làm bài tập về nhà)!\n"
+    "   - Điểm số khi em có làm bài tập:\n"
+    "     + Nếu làm bài sơ sài, thiếu nhiều bài: 'score': 2 ('level': 'TB').\n"
+    "     + Nếu hoàn thành ở mức trung bình khá (còn thiếu 1 vài bài): 'score': 3 ('level': 'Khá').\n"
+    "     + Nếu hoàn thành đầy đủ, tự giác: 'score': 4 hoặc 5 ('level': 'Khá' hoặc 'Giỏi').\n"
     "   - Nhận xét tiêu chí: Đi theo 3 bước mạch lạc: [Hiện trạng thực tế: Em chưa hoàn thành bài tập về nhà theo đúng lộ trình (0/5 bài)] "
     "-> [Tác động sư phạm: Việc thiếu thời gian tự thực hành độc lập tại nhà khiến các kiến thức đã học trên lớp chưa được củng cố sâu và dễ bị mai một phản xạ viết code] "
     "-> [Định hướng rèn luyện: Em cần nâng cao tính tự giác, chủ động phân bổ thời gian tự học tại nhà để hoàn thành bài tập đầy đủ trước mỗi buổi học].\n"
@@ -735,8 +741,12 @@ def build_final_presentation_review_prompt(
 
     if academic_level:
         parts.append(
-            f"Trình độ học lực của em do giáo viên xếp loại: {academic_level}. "
-            "Dùng thông tin này để cân đối thang điểm và giọng điệu nhận xét sao cho vừa tầm trình độ của em."
+            f"Trình độ học lực chung của em do giáo viên xếp loại: {academic_level}. "
+            "Dùng thông tin này để điều chỉnh độ sâu và giọng điệu nhận xét sao cho vừa tầm trình độ của em. "
+            "LƯU Ý QUAN TRỌNG: Học lực chung chỉ phản ánh khả năng tiếp thu và tư duy tổng quát, "
+            "TUYỆT ĐỐI KHÔNG dùng để cào bằng tất cả các tiêu chí ĐNL! "
+            "Từng tiêu chí ĐNL (đặc biệt thái độ luyện tập về nhà, thái độ trên lớp) phải phản ánh đúng thực tế hành vi của em "
+            "(ví dụ: học lực Khá nhưng không làm BTVN thì tiêu chí thai_do_ve_nha phải đánh giá mức TB 1-2 điểm, không được cho 3-5 điểm)."
         )
 
     if not is_exam:
@@ -810,9 +820,12 @@ def build_final_presentation_review_prompt(
         "     + computer_skills (Kỹ năng sử dụng máy tính): tối đa 0.5 điểm (tỷ lệ 10% của demo_total).\n"
         "   - demo_total: Tổng điểm của 5 tiêu chí demo ở trên (tối đa 5.0, làm tròn 1 chữ số thập phân, tối thiểu 3.0).\n"
         "   - total: Tổng cả điểm kiến thức + demo sản phẩm = knowledge_score + demo_total (thang 10, TUYỆT ĐỐI >= 6.0, ví dụ: 7.0, 7.5, 8.0, 8.5).\n"
-        "3. 'dnl_evaluations': Đánh giá 9 tiêu chí ĐNL (Đo lường Năng Lực) phản ánh sự kết nối giữa QUÁ TRÌNH HỌC TẬP và THÀNH QUẢ SẢN PHẨM CUỐI KHÓA (hoặc bài thi). Để đồng bộ với điểm tổng kết không dưới 6.0, các tiêu chí đều có điểm từ 3 đến 5 (tương đương Khá hoặc Giỏi, điểm số >= 3):\n"
-        "   - 'score': số nguyên từ 3 đến 5 (3-4: Khá, 5: Giỏi; không dưới 3).\n"
-        "   - 'level': 'Khá' | 'Giỏi' tương ứng với score (nếu 3-4 là 'Khá', 5 là 'Giỏi', không đánh giá 'TB' nếu điểm >= 6).\n"
+        "3. 'dnl_evaluations': Đánh giá 9 tiêu chí ĐNL (Đo lường Năng Lực) phản ánh ĐỘC LẬP VÀ ĐÚNG THỰC CHẤT từng mặt năng lực, kỹ năng và thái độ của học viên (thang điểm 1 đến 5):\n"
+        "   - NGUYÊN TẮC ĐỘC LẬP TỪNG TIÊU CHÍ (CRITERION INDEPENDENCE): Tuyệt đối KHÔNG cào bằng tất cả 9 tiêu chí dựa trên xếp loại học lực chung (academic_level). "
+        "Học lực chung chỉ phản ánh khả năng tiếp thu và tư duy tổng quát. Còn từng tiêu chí ĐNL phải phản ánh ĐÚNG THỰC TẾ biểu hiện của tiêu chí đó. "
+        "Một học sinh có thể tiếp thu bài tốt và làm bài thi tốt (Khá/Giỏi), nhưng nếu KHÔNG LÀM BÀI TẬP VỀ NHÀ thì tiêu chí 'thai_do_ve_nha' PHẢI BỊ ĐÁNH GIÁ MỨC TRUNG BÌNH (score 1-2, level 'TB'), TUYỆT ĐỐI KHÔNG ĐƯỢC CHO 3-5 ĐIỂM!\n"
+        "   - 'score': số nguyên từ 1 đến 5 (1-2: TB, 3-4: Khá, 5: Giỏi).\n"
+        "   - 'level': 'TB' | 'Khá' | 'Giỏi' tương ứng chuẩn xác với score (score 1-2 là 'TB', 3-4 là 'Khá', 5 là 'Giỏi').\n"
         "   - 'comment': đoạn nhận xét chi tiết, đầy đặn (2-3 câu hoàn chỉnh, 35-60 từ) cho từng tiêu chí để giáo viên điền vào hệ thống LMS. BẮT BUỘC ĐI THEO CẤU TRÚC: [Biểu hiện trong quá trình học tập] -> [Minh chứng cụ thể trên Sản phẩm cuối khóa / Buổi thuyết trình / Bài kiểm tra] -> [Điểm cần lưu ý/góp ý rèn luyện thêm] (TUYỆT ĐỐI KHÔNG chỉ toàn khen ngợi, tránh câu cộc lốc chung chung; áp dụng EXAM_ABSTRACTION_RULE không kể lể chi tiết số liệu đề bài).\n"
         "   Danh sách 9 tiêu chí bắt buộc gồm:\n"
         "   - kien_thuc_tai_lop: [ĐNL] Kiến thức học viên đã được học tại lớp (khả năng tiếp thu kiến thức trong các buổi học và áp dụng chính xác vào sản phẩm cuối khóa hoặc bài kiểm tra định kỳ).\n"
@@ -824,12 +837,12 @@ def build_final_presentation_review_prompt(
         "   - tu_duy_may_tinh: [ĐNL] Tư duy máy tính (tư duy logic thuật toán, cấu trúc luồng lệnh, xử lý điều kiện và biến số trong bài làm).\n"
         "   - thai_do_ve_nha: [ĐNL] Thái độ luyện tập về nhà (tính tự giác hoàn thành bài tập, xem lại bài và chủ động chuẩn bị đồ án tại nhà). BẮT BUỘC TUÂN THỦ HOMEWORK_PEDAGOGY_RULE:\n"
         "     + NẾU CÓ THÔNG TIN HỌC VIÊN CHƯA LÀM BÀI TẬP VỀ NHÀ (ví dụ: 'Chưa làm bài tập về nhà (0/5) bài', 'chưa làm BTVN', 'thiếu bài tập'...):\n"
-        "       * Điểm số ('score'): Đặt ở mức 3 (tương ứng 'Khá' trong hệ thống LMS, TUYỆT ĐỐI không cho 4 hay 5 điểm khi chưa hoàn thành BTVN).\n"
+        "       * Điểm số ('score'): Đặt ở mức 1 hoặc 2 (tương ứng 'level': 'TB'). TUYỆT ĐỐI KHÔNG cho điểm từ 3 đến 5 (cấm cho Khá hay Giỏi khi học viên không làm bài tập về nhà)!\n"
         "       * Nhận xét ('comment'): 2-3 câu hoàn chỉnh (35-60 từ) đi theo đúng 3 bước: Nêu trung thực hiện trạng chưa hoàn thành bài tập về nhà theo lộ trình (0/5 bài) -> Chỉ ra tác động sư phạm (việc thiếu thời gian tự thực hành độc lập tại nhà khiến các kiến thức đã học trên lớp chưa được củng cố sâu và phản xạ code chưa tối ưu) -> Đưa ra định hướng rèn luyện (em cần nâng cao tính tự giác, chủ động phân bổ thời gian biểu cố định để hoàn thành bài tập đầy đủ trước mỗi buổi học).\n"
-        "     + NẾU HỌC VIÊN LÀM BÀI ĐẦY ĐỦ HOẶC KHÔNG CÓ GHI CHÚ THIẾU: Ghi nhận tinh thần tự giác luyện tập tại nhà, hoàn thành bài tập giúp củng cố kiến thức vững chắc (score 4-5).\n"
+        "     + NẾU HỌC VIÊN LÀM BÀI ĐẦY ĐỦ HOẶC KHÔNG CÓ GHI CHÚ THIẾU: Ghi nhận tinh thần tự giác luyện tập tại nhà, hoàn thành bài tập giúp củng cố kiến thức vững chắc (score 4-5, level 'Khá' hoặc 'Giỏi').\n"
         "   - thai_do_tai_lop: [ĐNL] Thái độ học tập trên lớp (thái độ nghiêm túc, sự tập trung và CHUYÊN CẦN / ĐI HỌC). BẮT BUỘC ĐÁNH GIÁ TÌNH HÌNH ĐI HỌC DỰA VÀO 'THỐNG KÊ CHUYÊN CẦN' TRONG LỊCH SỬ:\n"
-        "     + NẾU EM ĐI HỌC ĐẦY ĐỦ (không vắng buổi nào): Nhận xét PHẢI ghi nhận và khen ngợi tính chuyên cần, đi học đầy đủ, đúng giờ, thái độ học tập tích cực, là nền tảng vững chắc giúp em hoàn thành tốt sản phẩm cuối khóa.\n"
-        "     + NẾU EM CÓ VẮNG HỌC (dù chỉ 1-2 buổi): Nhận xét PHẢI nêu rõ em có vắng buổi học (nêu rõ số buổi vắng nếu có), nhắc nhở việc nghỉ học làm gián đoạn bài học và có thể ảnh hưởng đến tiến độ dự án, đồng thời động viên em cố gắng sắp xếp đi học đầy đủ hơn."
+        "     + NẾU EM ĐI HỌC ĐẦY ĐỦ (không vắng buổi nào): Nhận xét PHẢI ghi nhận và khen ngợi tính chuyên cần, đi học đầy đủ, đúng giờ, thái độ học tập tích cực, là nền tảng vững chắc giúp em hoàn thành tốt sản phẩm cuối khóa (score 4-5, level 'Khá' hoặc 'Giỏi').\n"
+        "     + NẾU EM CÓ VẮNG HỌC (dù chỉ 1-2 buổi): Nhận xét PHẢI nêu rõ em có vắng buổi học (nêu rõ số buổi vắng nếu có), nhắc nhở việc nghỉ học làm gián đoạn bài học và có thể ảnh hưởng đến tiến độ dự án (score 2-3, level 'TB' hoặc 'Khá')."
     )
 
     next_course_info = resolve_next_mindx_course(course_name)

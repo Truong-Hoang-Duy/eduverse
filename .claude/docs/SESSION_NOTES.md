@@ -10,7 +10,10 @@
      - Tuyệt đối không phán xét nhân cách tiêu cực (không dùng từ ngữ chỉ trích như "lười biếng", "bỏ bê học tập").
      - Giải thích trên góc độ tâm lý và phương pháp học lập trình: Thời lượng trên lớp chỉ đủ để tiếp thu kiến thức mới, việc tự tay viết code và làm bài tập ở nhà là chìa khóa then chốt để tạo phản xạ tư duy và biến kiến thức thành kỹ năng.
      - Trong đoạn nhận xét gửi phụ huynh (`comment`): Diễn đạt tế nhị, mang tính xây dựng và khích lệ, gợi ý sắp xếp thời gian tự học (30-45 phút sau mỗi buổi) và chủ động hỏi thầy cô khi gặp bài khó.
-     - Trong Bảng đánh giá 9 tiêu chí ĐNL (`dnl_evaluations` -> `thai_do_ve_nha`): Điểm số đặt ở mức 3 (Khá, không cho 4-5 khi chưa làm BTVN), nhận xét theo 3 bước chuẩn mực: [Hiện trạng thực tế 0/5 bài] -> [Tác động sư phạm: thiếu tự luyện tập làm giảm phản xạ code] -> [Định hướng rèn luyện: nâng cao tự giác, phân bổ khung giờ cố định].
+     - **BẢNG ĐÁNH GIÁ 9 TIÊU CHÍ ĐNL (`dnl_evaluations` -> `thai_do_ve_nha`):**
+       + **Nguyên tắc phân lập tiêu chí (Criterion Independence):** Tuyệt đối KHÔNG cào bằng tất cả 9 tiêu chí theo xếp loại học lực chung (`academic_level`). Học lực Khá/Giỏi phản ánh nhận thức/tiếp thu trên lớp, còn tiêu chí này phản ánh ĐÚNG THỰC TẾ HÀNH VI LÀM BÀI TẬP Ở NHÀ.
+       + Khi học viên **KHÔNG LÀM BÀI TẬP VỀ NHÀ (0/5 bài)**: Bắt buộc đánh giá mức **TRUNG BÌNH: `score: 1 hoặc 2`, `level: 'TB'`**. Tuyệt đối KHÔNG cho điểm cao từ 3-5 (cấm cho Khá hoặc Giỏi khi không làm BTVN)!
+       + Nhận xét tiêu chí theo 3 bước chuẩn mực: [Hiện trạng thực tế 0/5 bài] -> [Tác động sư phạm: thiếu tự luyện tập làm giảm phản xạ code] -> [Định hướng rèn luyện: nâng cao tự giác, phân bổ khung giờ cố định].
      - Trong Thư từ MindX (`mindx_letter` -> `suggestions_from_mindx`): Đề xuất gia đình hỗ trợ nhắc nhở và thiết lập một khung giờ cố định trong tuần để con mở máy thực hành bài tập về nhà trên hệ thống MindX; động viên con không ngại khó, chủ động trao đổi với thầy cô khi gặp vướng mắc.
    - **Khái quát hóa kết quả bài làm kiểm tra (Trắc nghiệm + Thực hành):**
      - Tuyệt đối CẤM tường thuật vụn vặt và sao chép máy móc các chi tiết số liệu của đề bài (không liệt kê xe BMW $22,000, Nissan rẻ nhất, loại ký hiệu $, câu 1, câu 2, câu 3...). Phụ huynh không tham gia giải đề thi nên các con số thô đó hoàn toàn vô nghĩa và tạo cảm giác nhận xét bị máy móc.
@@ -18,7 +21,7 @@
        - *Năng lực làm tốt:* Lý thuyết trắc nghiệm nền tảng vững vàng, hiểu đúng bản chất câu lệnh; thực hành thành thạo quy trình tiền xử lý và làm sạch dữ liệu; tư duy logic sắc bén trong việc lọc điều kiện, gom nhóm và tính toán các chỉ số thống kê.
        - *Điểm cần lưu ý hoàn thiện:* Tính cẩn trọng và kỹ năng tự kiểm thử (chủ động đối chiếu, kiểm tra lại tính toàn vẹn dữ liệu sau biến đổi); thói quen lập trình chuyên nghiệp (bổ sung ghi chú comment giải thích lý do xử lý các trường hợp dữ liệu khuyết).
 2. **Triển khai kỹ thuật:**
-   - **`ai-service/app/prompts.py`:** Thêm `HOMEWORK_PEDAGOGY_RULE` và `EXAM_ABSTRACTION_RULE`; tích hợp vào cả `build_review_prompt` (buổi thường & kiểm tra định kỳ) và `build_final_presentation_review_prompt` (buổi tổng kết / kiểm tra định kỳ có rubric ĐNL).
+   - **`ai-service/app/prompts.py`:** Thêm `HOMEWORK_PEDAGOGY_RULE` và `EXAM_ABSTRACTION_RULE`; xóa bỏ hoàn toàn rào cản gượng ép "không dưới 3 điểm" và "cấm đánh giá TB" trong ĐNL; quy định rõ ràng `thai_do_ve_nha` mức 1-2 (TB) khi 0/5 BTVN; tích hợp vào cả `build_review_prompt` và `build_final_presentation_review_prompt`.
    - **`ai-service/app/schemas.py` & `ai-service/app/routes/reviews.py`:** Mở rộng `FinalPresentationReviewRequest` nhận thêm `session_title`, `session_content`, `session_context` để AI nắm trọn vẹn ngữ cảnh chuyên đề bài học.
    - **`web/src/lib/actions/reviews.ts` & `review-editor.tsx`:** Đồng bộ truyền `sessionTitle`, `sessionContent`, `sessionContext` sang `generateFinalPresentationReview`.
 3. **Kiểm thử chất lượng:**
