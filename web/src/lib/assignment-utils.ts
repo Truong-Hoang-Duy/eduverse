@@ -121,3 +121,14 @@ export function cleanInstructionsForDisplay(
 function removeAttachmentMeta(text: string): string {
   return text.replace(/<!--attachments:[\s\S]*?-->/g, "").trim();
 }
+
+/**
+ * Kiểm tra tiêu đề đề bài có chứa từ khóa 'checkpoint' hoặc 'checkpoints' (không phân biệt hoa thường).
+ * Các đề bài thỏa mãn điều kiện này được phép tạo link công khai cho học viên xem đề trực tiếp không cần đăng nhập.
+ */
+export function isCheckpointAssignment(
+  title: string | null | undefined
+): boolean {
+  if (!title || typeof title !== "string") return false;
+  return /(?:checkpoint|check\s+point)/i.test(title);
+}

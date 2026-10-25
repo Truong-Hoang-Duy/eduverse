@@ -55,6 +55,10 @@ export default async function AssignmentsPage() {
       courseId: a.course_id,
       sessionNumber: a.session_number,
       title: a.title,
+      specFilePath: a.spec_file_path,
+      specFileName: a.spec_file_path
+        ? getDisplayFileName(a.spec_file_path)
+        : undefined,
       attachmentCount: attPaths.length,
       attachmentNames: attPaths.map(getDisplayFileName),
     };

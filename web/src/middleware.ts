@@ -36,8 +36,20 @@ export async function middleware(request: NextRequest) {
   // huynh không có tài khoản nên đá về /login là hỏng hẳn tính năng. Dữ liệu vẫn
   // được canh ở DB — RPC `get_showcase` tự kiểm token còn hạn.
   const isPublicShowcase = path.startsWith("/showcase/");
+  const isPublicCheckpoint =
+    path === "/checkpoints" ||
+    path === "/checkpoint" ||
+    path.startsWith("/checkpoints/") ||
+    path.startsWith("/checkpoint/") ||
+    path.startsWith("/api/checkpoints/");
 
-  if (!user && !isAuthPage && !isPublicShowcase && path !== "/") {
+  if (
+    !user &&
+    !isAuthPage &&
+    !isPublicShowcase &&
+    !isPublicCheckpoint &&
+    path !== "/"
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     const redirectResponse = NextResponse.redirect(url);

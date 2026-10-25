@@ -201,6 +201,238 @@ export async function updateAssignmentTitle(
   return { success: "Đã đổi tên đề." };
 }
 
+/**
+ * Chỉnh sửa đề bài: sửa tiêu đề và/hoặc sửa/xóa/thay thế file đề chính.
+ * Nếu có file mới, file cũ trong Storage sẽ được tự động xóa sạch để giải phóng dung lượng.
+ */
+export async function updateAssignment(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const id = String(formData.get("id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  const file = formData.get("spec_file");
+  const removeFile = formData.get("remove_file") === "true";
+
+  if (!id || !title) {
+    return { error: "Vui lòng nhập tiêu đề." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  // Đọc thông tin đề bài hiện tại để lấy course_id và spec_file_path cũ
+  const { data: current, error: fetchError } = await supabase
+    .from("assignments")
+    .select("id, course_id, spec_file_path")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !current) {
+    return { error: "Không tìm thấy đề bài (hoặc không có quyền chỉnh sửa)." };
+  }
+
+  let newSpecPath: string | null = current.spec_file_path;
+  const oldSpecPath = current.spec_file_path;
+  let fileUploaded = false;
+
+  const hasNewFile = file instanceof File && file.size > 0;
+
+  if (hasNewFile) {
+    if (file.size > SPEC_MAX_BYTES) {
+      return {
+        error:
+          "File đề nặng quá 8MB — hãy dùng file .txt/.md hoặc nén ảnh lại.",
+      };
+    }
+    if (/\.(doc|xls|ppt)$/i.test(file.name)) {
+      return {
+        error: `File "${file.name}" là định dạng Office đời cũ, hệ thống không đọc được chữ. Hãy mở bằng Word rồi "Lưu thành" .docx (hoặc .pdf) và thử lại.`,
+      };
+    }
+
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (looksEncrypted(bytes)) {
+      return {
+        error: `File "${file.name}" đang bị phần mềm bảo mật của công ty mã hóa nên nội dung thật không đọc được — AI sẽ chấm sai.`,
+      };
+    }
+
+    const path = `${current.course_id}/${Date.now()}-${sanitizeFileName(file.name)}`;
+    const { error: uploadError } = await supabase.storage
+      .from(SPEC_BUCKET)
+      .upload(path, bytes, {
+        contentType: file.type || "application/octet-stream",
+      });
+
+    if (uploadError) {
+      return { error: `Upload file mới thất bại: ${uploadError.message}` };
+    }
+
+    newSpecPath = path;
+    fileUploaded = true;
+  } else if (removeFile) {
+    newSpecPath = null;
+  }
+
+  // Cập nhật DB
+  const updatePayload: { title: string; spec_file_path?: string | null } = {
+    title,
+  };
+  if (hasNewFile || removeFile) {
+    updatePayload.spec_file_path = newSpecPath;
+  }
+
+  const { error: updateError } = await supabase
+    .from("assignments")
+    .update(updatePayload)
+    .eq("id", id);
+
+  if (updateError) {
+    if (fileUploaded && newSpecPath) {
+      await removeSpecFiles(supabase, [newSpecPath]);
+    }
+    return { error: `Không thể cập nhật đề bài: ${updateError.message}` };
+  }
+
+  // Nếu đã thay file mới thành công và có file cũ, dọn sạch file cũ trong Storage
+  if (hasNewFile && oldSpecPath && oldSpecPath !== newSpecPath) {
+    await removeSpecFiles(supabase, [oldSpecPath]);
+  } else if (removeFile && oldSpecPath) {
+    await removeSpecFiles(supabase, [oldSpecPath]);
+  }
+
+  revalidatePath("/teacher/assignments");
+  return { success: "Đã cập nhật đề bài thành công." };
+}
+
+/**
+ * Thay thế file đề bài chính trực tiếp từ dialog xem đề.
+ * Tự động xóa file cũ trong Storage sau khi upload file mới.
+ */
+export async function replaceAssignmentSpecFile(
+  assignmentId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  const file = formData.get("spec_file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Chưa chọn file đề bài mới." };
+  }
+
+  if (file.size > SPEC_MAX_BYTES) {
+    return { error: "File đề nặng quá 8MB." };
+  }
+
+  if (/\.(doc|xls|ppt)$/i.test(file.name)) {
+    return {
+      error: `File "${file.name}" là định dạng Office đời cũ, hệ thống không đọc được chữ.`,
+    };
+  }
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (looksEncrypted(bytes)) {
+    return {
+      error: `File "${file.name}" đang bị phần mềm bảo mật mã hóa, không thể đọc được.`,
+    };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const { data: assignment, error: fetchErr } = await supabase
+    .from("assignments")
+    .select("id, course_id, spec_file_path")
+    .eq("id", assignmentId)
+    .single();
+
+  if (fetchErr || !assignment) {
+    return { error: "Không tìm thấy đề bài." };
+  }
+
+  const oldPath = assignment.spec_file_path;
+  const newPath = `${assignment.course_id}/${Date.now()}-${sanitizeFileName(file.name)}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from(SPEC_BUCKET)
+    .upload(newPath, bytes, {
+      contentType: file.type || "application/octet-stream",
+    });
+
+  if (uploadError) {
+    return { error: `Upload file mới thất bại: ${uploadError.message}` };
+  }
+
+  const { error: updateError } = await supabase
+    .from("assignments")
+    .update({ spec_file_path: newPath })
+    .eq("id", assignmentId);
+
+  if (updateError) {
+    await removeSpecFiles(supabase, [newPath]);
+    return { error: `Không thể cập nhật đề bài: ${updateError.message}` };
+  }
+
+  if (oldPath && oldPath !== newPath) {
+    await removeSpecFiles(supabase, [oldPath]);
+  }
+
+  revalidatePath("/teacher/assignments");
+  return { success: `Đã thay thế file đề bằng "${file.name}".` };
+}
+
+/**
+ * Xóa file đề chính hiện tại của đề bài và dọn sạch Storage.
+ */
+export async function removeAssignmentMainFile(
+  assignmentId: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const { data: assignment, error: fetchErr } = await supabase
+    .from("assignments")
+    .select("id, spec_file_path")
+    .eq("id", assignmentId)
+    .single();
+
+  if (fetchErr || !assignment) {
+    return { error: "Không tìm thấy đề bài." };
+  }
+
+  const oldPath = assignment.spec_file_path;
+  if (!oldPath) {
+    return { error: "Đề bài này hiện không có file chính." };
+  }
+
+  const { error: updateError } = await supabase
+    .from("assignments")
+    .update({ spec_file_path: null })
+    .eq("id", assignmentId);
+
+  if (updateError) {
+    return { error: `Không thể xóa file đề: ${updateError.message}` };
+  }
+
+  await removeSpecFiles(supabase, [oldPath]);
+  revalidatePath("/teacher/assignments");
+  return { success: "Đã xóa file đề bài chính." };
+}
+
 export async function deleteAssignment(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
@@ -476,10 +708,10 @@ async function loadSpecFile(
   const fileName = getDisplayFileName(path);
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
 
-  // Tạo signed URL có thời hạn 10 phút (600s) cho mọi file để hỗ trợ xem/tải
+  // Tạo signed URL có thời hạn 1 năm (31,536,000s) cho mọi file để GV có thể copy gửi học viên lâu dài
   const { data: signed } = await supabase.storage
     .from(SPEC_BUCKET)
-    .createSignedUrl(path, 600);
+    .createSignedUrl(path, 31536000);
   const downloadUrl = signed?.signedUrl;
 
   if (TEXT_EXTENSIONS.includes(ext)) {
