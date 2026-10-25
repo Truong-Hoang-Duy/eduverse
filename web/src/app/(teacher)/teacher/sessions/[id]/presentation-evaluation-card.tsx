@@ -83,7 +83,7 @@ export function PresentationEvaluationCard({
     // Đánh dấu tất cả các key DNL đã copy
     const allCopied: Record<string, boolean> = {};
     for (const c of DNL_CRITERIA) {
-      if (data.dnl_evaluations[c.key]?.comment?.trim()) {
+      if (data?.dnl_evaluations?.[c.key]?.comment?.trim()) {
         allCopied[c.key] = true;
       }
     }
@@ -122,8 +122,9 @@ export function PresentationEvaluationCard({
     await handleCopyText("mindx_letter_all", fullLetter);
   }
 
-  const knowledgeScore = Number(data.demo_score.knowledge_score ?? 3.5);
-  const demoTotal = calculateDemoTotal(data.demo_score);
+  const demoScore = data?.demo_score ?? distributeScores(7.0);
+  const knowledgeScore = Number(demoScore.knowledge_score ?? 3.5);
+  const demoTotal = calculateDemoTotal(demoScore);
   const grandTotal = calculateGrandTotal(knowledgeScore, demoTotal);
 
   function handleKnowledgeScoreChange(valStr: string) {
@@ -306,7 +307,7 @@ export function PresentationEvaluationCard({
                     DNL_CRITERIA.findIndex((c) => c.key === criterion.key) + 1;
                   const formattedIndex = globalIndex < 10 ? `0${globalIndex}` : String(globalIndex);
 
-                  const evalItem = data.dnl_evaluations[criterion.key] ?? {
+                  const evalItem = data?.dnl_evaluations?.[criterion.key] ?? {
                     score: 4,
                     level: "Khá",
                     comment: "",

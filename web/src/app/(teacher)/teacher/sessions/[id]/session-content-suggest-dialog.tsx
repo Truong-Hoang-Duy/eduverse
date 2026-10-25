@@ -33,9 +33,27 @@ export function SessionContentSuggestDialog({
   function handleSuggest() {
     setError("");
     startTransition(async () => {
-      const res = await suggestSessionContent({ sessionId, draftText: draft });
-      if (res.error) setError(res.error);
-      else setSuggestion(res.content ?? "");
+      try {
+        const res = await suggestSessionContent({ sessionId, draftText: draft });
+        if (res.error) setError(res.error);
+        else setSuggestion(res.content ?? "");
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Có lỗi khi kết nối với máy chủ AI.";
+        if (
+          msg.includes("504") ||
+          msg.includes("unexpected response") ||
+          msg.includes("Failed to fetch")
+        ) {
+          setError(
+            "Máy chủ AI mất quá nhiều thời gian để phản hồi (timeout 504). Vui lòng đợi 30 giây rồi thử lại."
+          );
+        } else {
+          setError(msg);
+        }
+      }
     });
   }
 

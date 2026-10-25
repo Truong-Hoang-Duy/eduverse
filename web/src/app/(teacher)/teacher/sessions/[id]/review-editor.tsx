@@ -505,7 +505,98 @@ export function ReviewEditor({
     setAiError("");
     setCopied(false);
     startAi(async () => {
-      if (hasFinalEvaluation) {
+      try {
+        if (hasFinalEvaluation) {
+          const combinedNotes = [
+            ...selectedObservations,
+            ...(customObservationNotes.trim() ? [customObservationNotes.trim()] : []),
+          ].join(". ");
+
+          const res = await generateFinalPresentationReview({
+            studentName,
+            classCode: classCode ?? "",
+            courseName: courseName ?? "",
+            academicLevel: academicLevelLabel(academicLevel) ?? undefined,
+            projectName: isFinalPresentation ? project?.name : undefined,
+            projectDescription: isFinalPresentation
+              ? (project?.description ?? undefined)
+              : undefined,
+            projectFeatures: isFinalPresentation
+              ? (project?.features ?? undefined)
+              : undefined,
+            presentationNotes: combinedNotes || undefined,
+            priorReviews: allPriorReviews ?? [],
+            currentStrengths: [],
+            currentImprovements: [],
+            isExam: !isFinalPresentation && Boolean(isPeriodicTest),
+            isPeriodicExam,
+            sessionNumber,
+          });
+          if (res.error) {
+            setAiError(res.error);
+          } else if (res.evaluation) {
+            setComment(res.evaluation.comment);
+            setFinalEvaluation(res.evaluation);
+            try {
+              localStorage.setItem(
+                `eduverse_rubric_${sessionId}_${studentId}`,
+                JSON.stringify(res.evaluation)
+              );
+            } catch {}
+            setRubricModalOpen(true);
+          }
+          return;
+        }
+
+        const res = await generateAiReview({
+          studentName,
+          sessionTitle,
+          sessionContent,
+          strengths: isProjectPeriod ? [] : strengths,
+          improvements: isProjectPeriod ? [] : improvements,
+          courseName: courseName || undefined,
+          sessionNumber,
+          projectName: project?.name,
+          projectDescription: project?.description ?? undefined,
+          projectFeatures: project?.features ?? undefined,
+          sessionContext: sessionContext || undefined,
+          isPeriodicTest,
+          testProcessNotes: isPeriodicTest ? testProcessNotes : undefined,
+          isProjectPeriod,
+          projectProgressNotes: isProjectPeriod ? projectProgressNotes : undefined,
+          previousComment: existing?.ai_generated_comment ?? undefined,
+          priorComments,
+          academicLevel: academicLevelLabel(academicLevel) ?? undefined,
+        });
+        if (res.error) {
+          setAiError(res.error);
+        } else {
+          setComment(res.comment ?? "");
+        }
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Có lỗi khi kết nối với máy chủ AI.";
+        if (
+          msg.includes("504") ||
+          msg.includes("unexpected response") ||
+          msg.includes("Failed to fetch")
+        ) {
+          setAiError(
+            "Máy chủ AI phản hồi quá thời gian cho phép (timeout 504). Có thể dịch vụ AI trên Render đang khởi động lại từ giấc ngủ đông, vui lòng chờ 30 giây rồi bấm thử lại!"
+          );
+        } else {
+          setAiError(msg);
+        }
+      }
+    });
+  }
+
+  function handleGenerateMindxLetterOnly() {
+    setAiError("");
+    startAiLetter(async () => {
+      try {
         const combinedNotes = [
           ...selectedObservations,
           ...(customObservationNotes.trim() ? [customObservationNotes.trim()] : []),
@@ -531,95 +622,41 @@ export function ReviewEditor({
           isPeriodicExam,
           sessionNumber,
         });
+
         if (res.error) {
           setAiError(res.error);
-        } else if (res.evaluation) {
-          setComment(res.evaluation.comment);
-          setFinalEvaluation(res.evaluation);
-          try {
-            localStorage.setItem(
-              `eduverse_rubric_${sessionId}_${studentId}`,
-              JSON.stringify(res.evaluation)
-            );
-          } catch {}
-          setRubricModalOpen(true);
+        } else if (res.evaluation?.mindx_letter) {
+          setFinalEvaluation((prev) => {
+            const base = prev ?? createDefaultFinalEvaluation(comment);
+            const updated = {
+              ...base,
+              mindx_letter: res.evaluation!.mindx_letter,
+            };
+            try {
+              localStorage.setItem(
+                `eduverse_rubric_${sessionId}_${studentId}`,
+                JSON.stringify(updated)
+              );
+            } catch {}
+            return updated;
+          });
         }
-        return;
-      }
-
-      const res = await generateAiReview({
-        studentName,
-        sessionTitle,
-        sessionContent,
-        strengths: isProjectPeriod ? [] : strengths,
-        improvements: isProjectPeriod ? [] : improvements,
-        courseName: courseName || undefined,
-        sessionNumber,
-        projectName: project?.name,
-        projectDescription: project?.description ?? undefined,
-        projectFeatures: project?.features ?? undefined,
-        sessionContext: sessionContext || undefined,
-        isPeriodicTest,
-        testProcessNotes: isPeriodicTest ? testProcessNotes : undefined,
-        isProjectPeriod,
-        projectProgressNotes: isProjectPeriod ? projectProgressNotes : undefined,
-        previousComment: existing?.ai_generated_comment ?? undefined,
-        priorComments,
-        academicLevel: academicLevelLabel(academicLevel) ?? undefined,
-      });
-      if (res.error) {
-        setAiError(res.error);
-      } else {
-        setComment(res.comment ?? "");
-      }
-    });
-  }
-
-  function handleGenerateMindxLetterOnly() {
-    startAiLetter(async () => {
-      const combinedNotes = [
-        ...selectedObservations,
-        ...(customObservationNotes.trim() ? [customObservationNotes.trim()] : []),
-      ].join(". ");
-
-      const res = await generateFinalPresentationReview({
-        studentName,
-        classCode: classCode ?? "",
-        courseName: courseName ?? "",
-        academicLevel: academicLevelLabel(academicLevel) ?? undefined,
-        projectName: isFinalPresentation ? project?.name : undefined,
-        projectDescription: isFinalPresentation
-          ? (project?.description ?? undefined)
-          : undefined,
-        projectFeatures: isFinalPresentation
-          ? (project?.features ?? undefined)
-          : undefined,
-        presentationNotes: combinedNotes || undefined,
-        priorReviews: allPriorReviews ?? [],
-        currentStrengths: [],
-        currentImprovements: [],
-        isExam: !isFinalPresentation && Boolean(isPeriodicTest),
-        isPeriodicExam,
-        sessionNumber,
-      });
-
-      if (res.error) {
-        setAiError(res.error);
-      } else if (res.evaluation?.mindx_letter) {
-        setFinalEvaluation((prev) => {
-          const base = prev ?? createDefaultFinalEvaluation(comment);
-          const updated = {
-            ...base,
-            mindx_letter: res.evaluation!.mindx_letter,
-          };
-          try {
-            localStorage.setItem(
-              `eduverse_rubric_${sessionId}_${studentId}`,
-              JSON.stringify(updated)
-            );
-          } catch {}
-          return updated;
-        });
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Có lỗi khi kết nối với máy chủ AI.";
+        if (
+          msg.includes("504") ||
+          msg.includes("unexpected response") ||
+          msg.includes("Failed to fetch")
+        ) {
+          setAiError(
+            "Máy chủ AI phản hồi quá thời gian cho phép (timeout 504). Vui lòng đợi 30 giây rồi bấm thử lại!"
+          );
+        } else {
+          setAiError(msg);
+        }
       }
     });
   }
