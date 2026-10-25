@@ -1,39 +1,20 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
 
 import { CsvTableView } from "@/components/csv-table-view";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type {
   AssignmentSpecFile,
   PublicCheckpointPayload,
 } from "@/lib/checkpoint-data";
-import { cn } from "@/lib/utils";
+
+import { CopyLinkButton } from "./copy-link-button";
 
 export function PublicCheckpointView({
   checkpoint,
 }: {
   checkpoint: PublicCheckpointPayload;
 }) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [copied, setCopied] = useState(false);
-
   const totalFiles = checkpoint.files.length;
-  const activeFile: AssignmentSpecFile | undefined =
-    checkpoint.files[selectedIndex] ?? checkpoint.files[0];
-
-  const isCsv =
-    activeFile?.fileName.toLowerCase().endsWith(".csv") &&
-    activeFile.kind === "text" &&
-    typeof activeFile.content === "string";
-
-  function handleCopyLink() {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
@@ -64,20 +45,7 @@ export function PublicCheckpointView({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleCopyLink}
-              className={cn(
-                "h-8 gap-1.5 text-xs font-medium transition-colors shadow-2xs",
-                copied
-                  ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                  : "hover:bg-accent"
-              )}
-            >
-              <span>{copied ? "✓" : "🔗"}</span>
-              <span>{copied ? "Đã sao chép link!" : "Copy link đề bài"}</span>
-            </Button>
+            <CopyLinkButton />
           </div>
         </div>
       </header>
@@ -131,134 +99,119 @@ export function PublicCheckpointView({
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {/* Tab Selector if > 1 file */}
-              {totalFiles > 1 && (
-                <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border/60 bg-muted/30 p-1.5">
-                  {checkpoint.files.map((file, idx) => {
-                    const isSelected = idx === selectedIndex;
-                    return (
-                      <button
-                        key={`${file.path}-${idx}`}
-                        type="button"
-                        onClick={() => setSelectedIndex(idx)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                          isSelected
-                            ? "bg-background text-foreground shadow-xs font-semibold border border-border/80"
-                            : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
-                        )}
-                      >
-                        <span>{file.isMain ? "📋 Đề chính:" : "📎 Dữ liệu:"}</span>
+            <div className="space-y-6">
+              {checkpoint.files.map((file, idx) => {
+                const isCurrentCsv =
+                  file.fileName.toLowerCase().endsWith(".csv") &&
+                  file.kind === "text" &&
+                  typeof file.content === "string";
+
+                return (
+                  <div
+                    key={`${file.path}-${idx}`}
+                    className="space-y-3 rounded-2xl border border-border/70 bg-card p-4 sm:p-6 shadow-xs"
+                  >
+                    {/* Active File Header */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
+                      <div className="flex items-center gap-2.5 truncate">
+                        <span className="text-lg">
+                          {file.isMain ? "📋" : "📎"}
+                        </span>
                         <span
-                          className="max-w-[200px] truncate"
+                          className="truncate font-semibold text-sm sm:text-base text-foreground"
                           title={file.fileName}
                         >
                           {file.fileName}
                         </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+                        {file.isMain ? (
+                          <Badge
+                            variant="outline"
+                            className="px-2 py-0.5 text-[11px]"
+                          >
+                            Đề bài chính
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="px-2 py-0.5 text-[11px]"
+                          >
+                            Dữ liệu đính kèm
+                          </Badge>
+                        )}
+                      </div>
 
-              {/* Active File Content Container */}
-              {activeFile && (
-                <div className="space-y-3 rounded-2xl border border-border/70 bg-card p-4 sm:p-6 shadow-xs">
-                  {/* Active File Header */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-3">
-                    <div className="flex items-center gap-2.5 truncate">
-                      <span className="text-lg">
-                        {activeFile.isMain ? "📋" : "📎"}
-                      </span>
-                      <span
-                        className="truncate font-semibold text-sm sm:text-base text-foreground"
-                        title={activeFile.fileName}
-                      >
-                        {activeFile.fileName}
-                      </span>
-                      {activeFile.isMain ? (
-                        <Badge variant="outline" className="px-2 py-0.5 text-[11px]">
-                          Đề bài chính
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="px-2 py-0.5 text-[11px]">
-                          Dữ liệu đính kèm
-                        </Badge>
-                      )}
-                    </div>
-
-                    {activeFile.url && (
-                      <a
-                        href={activeFile.url}
-                        download={activeFile.fileName}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
-                      >
-                        <span>⬇</span>
-                        <span>Tải file về máy</span>
-                      </a>
-                    )}
-                  </div>
-
-                  {/* Preview CSV */}
-                  {isCsv && (
-                    <CsvTableView
-                      content={
-                        (activeFile as AssignmentSpecFile & { content: string })
-                          .content
-                      }
-                    />
-                  )}
-
-                  {/* Preview Plain Text / Code */}
-                  {!isCsv && activeFile.kind === "text" && (
-                    <pre className="max-h-[65vh] overflow-auto rounded-xl border border-border/60 bg-muted/20 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words">
-                      {activeFile.content}
-                    </pre>
-                  )}
-
-                  {/* Preview Image */}
-                  {activeFile.kind === "image" && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={activeFile.url}
-                      alt={activeFile.fileName}
-                      className="max-h-[70vh] w-full rounded-xl border border-border/60 bg-muted/20 object-contain mx-auto shadow-2xs"
-                    />
-                  )}
-
-                  {/* Preview PDF */}
-                  {activeFile.kind === "pdf" && (
-                    <iframe
-                      src={activeFile.url}
-                      title={activeFile.fileName}
-                      className="h-[75vh] w-full rounded-xl border border-border/60 shadow-2xs"
-                    />
-                  )}
-
-                  {/* Download Binary / Word */}
-                  {activeFile.kind === "download" && (
-                    <div className="space-y-3 rounded-xl border border-dashed border-border/80 p-8 text-center bg-muted/10">
-                      <span className="text-3xl">📦</span>
-                      <p className="text-sm font-medium text-foreground">
-                        File &quot;{activeFile.fileName}&quot; là định dạng nhị phân cần tải về máy để mở.
-                      </p>
-                      {activeFile.url && (
+                      {file.url && (
                         <a
-                          href={activeFile.url}
-                          download={activeFile.fileName}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
+                          href={file.url}
+                          download={file.fileName}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
                         >
                           <span>⬇</span>
-                          <span>Tải {activeFile.fileName}</span>
+                          <span>Tải file về máy</span>
                         </a>
                       )}
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {/* Preview CSV */}
+                    {isCurrentCsv && (
+                      <CsvTableView
+                        content={
+                          (file as AssignmentSpecFile & { content: string })
+                            .content
+                        }
+                      />
+                    )}
+
+                    {/* Preview Plain Text / Code / Docx */}
+                    {!isCurrentCsv && file.kind === "text" && (
+                      <pre className="max-h-[70vh] overflow-auto rounded-xl border border-border/60 bg-muted/20 p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words">
+                        {file.content}
+                      </pre>
+                    )}
+
+                    {/* Preview Image */}
+                    {file.kind === "image" && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={file.url}
+                        alt={file.fileName}
+                        className="max-h-[70vh] w-full rounded-xl border border-border/60 bg-muted/20 object-contain mx-auto shadow-2xs"
+                      />
+                    )}
+
+                    {/* Preview PDF */}
+                    {file.kind === "pdf" && (
+                      <iframe
+                        src={file.url}
+                        title={file.fileName}
+                        className="h-[75vh] w-full rounded-xl border border-border/60 shadow-2xs"
+                      />
+                    )}
+
+                    {/* Download Binary / Word */}
+                    {file.kind === "download" && (
+                      <div className="space-y-3 rounded-xl border border-dashed border-border/80 p-8 text-center bg-muted/10">
+                        <span className="text-3xl">📦</span>
+                        <p className="text-sm font-medium text-foreground">
+                          File &quot;{file.fileName}&quot; là định dạng nhị phân cần tải về máy để mở.
+                        </p>
+                        {file.url && (
+                          <a
+                            href={file.url}
+                            download={file.fileName}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 transition-colors"
+                          >
+                            <span>⬇</span>
+                            <span>Tải {file.fileName}</span>
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

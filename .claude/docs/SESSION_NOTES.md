@@ -6,11 +6,14 @@
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-25, bởi: Gemini)
 **Đang làm:** Đã hoàn thành Đợt 107 (**Link công khai xem đề Checkpoints không cần đăng nhập, Sửa/xóa/thay thế file đề bài chính đã lưu & Bỏ thông tin demo mặc định trên màn hình đăng nhập**):
 1. **Link công khai xem đề Checkpoints không cần đăng nhập (`/checkpoints/[id]` & `/checkpoint/[id]`):**
-   - Helper `isCheckpointAssignment(title)`: nhận diện không phân biệt hoa thường mọi tiêu đề có chứa từ khóa 'checkpoint' hoặc 'checkpoints' (ví dụ: `Checkpoints 1`, `checkpoint 2`, `[CSA05 - Checkpoints] Buổi 5`).
-   - `web/src/middleware.ts`: bypass chuyển hướng đăng nhập cho đường dẫn `/checkpoints/` và `/checkpoint/`.
-   - `web/src/lib/checkpoint-data.ts`: hàm server-only `loadPublicCheckpoint(id)` đọc an toàn bằng `createAdminClient()`, kiểm tra bắt buộc tiêu đề phải chứa 'checkpoint', tải nội dung file đề chính và các tệp đính kèm với signed URL, hỗ trợ caching qua React `cache()`.
-   - Giao diện xem đề học viên (`checkpoint-view.tsx`): hiển thị tiêu đề, khóa học, số buổi, hướng dẫn làm bài, thanh chuyển tab giữa đề chính và tệp dữ liệu, xem bảng CSV chuyên nghiệp (`CsvTableView`), xem code/text/PDF/ảnh, nút tải file về máy và nút copy link đề bài.
+   - Helper `isCheckpointAssignment(title)`: nhận diện không phân biệt hoa thường mọi tiêu đề có chứa từ khóa 'checkpoint' hoặc 'checkpoints' (ví dụ: `Checkpoints 1`, `checkpoint 2`, `[CSA - Checkpoints] Buổi 5 Đề bài`).
+   - `web/src/middleware.ts`: bypass chuyển hướng đăng nhập cho đường dẫn `/checkpoints/`, `/checkpoint/` và `/api/checkpoints/`.
+   - `web/src/lib/checkpoint-data.ts`: hàm server-only `loadPublicCheckpoint(id)` đọc an toàn bằng `createAdminClient()`, kiểm tra bắt buộc tiêu đề phải chứa 'checkpoint', hỗ trợ cả UUID lẫn alias thân thiện (`csa-5`, `csb-9`, v.v.), tải nội dung file đề chính và các tệp đính kèm với signed URL.
+   - **Tối ưu parser `docxToText` (`docx-text.ts`):** thay thế regex nested lồng nhau gây V8 regex backtracking stack overflow bằng quét token tuyến tính `TOKEN_RE`, xử lý trơn tru các file Word XML lớn mà không tốn tài nguyên.
+   - **Kiến trúc tải dữ liệu mượt mà (`CheckpointClientLoader` + API route `/api/checkpoints/[id]`):** tách biệt khâu tải và giải mã file sang Node runtime, có Skeleton loading mượt mà, tránh lỗi nghẽn RSC React flight stream pipe.
+   - Giao diện xem đề học viên (`checkpoint-view.tsx`): hiển thị tiêu đề, khóa học, số buổi, hướng dẫn làm bài, xem bảng CSV chuyên nghiệp (`CsvTableView`), xem code/text/PDF/ảnh, nút tải file về máy và nút copy link đề bài (`CopyLinkButton`).
    - Thẻ đề bài đã lưu (`saved-assignments.tsx`) & dialog xem đề (`view-spec-dialog.tsx`): hiển thị huy hiệu `Checkpoints (Link mở)`, nút 🔗 copy nhanh đường dẫn chia sẻ cho học viên và nút xem trang học viên trên tab mới.
+   - **Đã kiểm tra thực tế Checkpoint Buổi 5 lớp CSA:** Đề bài `[CSA - Checkpoints] Buổi 5 Đề bài` (ID: `69318418-114e-4a7c-bbfb-27f43f7bb72e`) hoạt động 100% trên cả đường link UUID lẫn alias `/checkpoints/csa-5`, hiển thị trọn vẹn 10 câu hỏi trắc nghiệm (Pandas, Data Cleaning) và phần thực hành với file `car-sales-data.csv`.
 2. **Sửa, xóa và ghi đè file đề bài chính đã lưu (`updateAssignment`, `replaceAssignmentSpecFile`, `removeAssignmentMainFile`):**
    - Action `updateAssignment`: cho phép giáo viên vừa sửa tiêu đề vừa chọn file đề bài mới để ghi đè file cũ (hoặc đánh dấu xóa file cũ). Tự động dọn sạch file cũ trong Storage bucket `assignment-specs`.
    - Dialog chỉnh sửa (`edit-assignment-title-button.tsx`): nâng cấp hiển thị tên file đề hiện tại, nút xóa file hiện tại và ô chọn file mới để ghi đè, kèm cảnh báo rõ ràng.
@@ -18,8 +21,9 @@
 3. **Bỏ tài khoản & mật khẩu demo mặc định trên giao diện Login (`login-form.tsx`):**
    - `username` và `password` khởi tạo bằng chuỗi rỗng `""`, không tự điền sẵn `demo` / `demo` trên UI. Backend `auth.ts` vẫn hỗ trợ nếu người dùng chủ động nhập.
 4. **Kiểm thử chất lượng:**
-   - 464/464 unit tests vitest PASS (trong đó 22/22 tests `assignment-utils.test.ts`, 3/3 tests `csv-table-view.test.ts`).
-   - `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+   - 465/465 unit tests vitest PASS (10/10 tests `docx-text.test.ts`, 22/22 tests `assignment-utils.test.ts`, 3/3 tests `csv-table-view.test.ts`).
+   - E2E tests `e2e/checkpoint.e2e.ts`: PASS 100% (3/3 tests) gọi trực tiếp dữ liệu Supabase thật.
+   - `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi (0 warnings).
    - `pnpm build` (Next.js Turbopack) 100% thành công, 19/19 static pages.
 
 Cập nhật bởi: Gemini
