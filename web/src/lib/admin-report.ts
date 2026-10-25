@@ -142,18 +142,58 @@ async function listAllSpecFiles(
 export async function findOrphanSpecFiles(
   admin: ReturnType<typeof createAdminClient>
 ): Promise<OrphanFile[]> {
-  const [{ data: assignments }, specFiles] = await Promise.all([
-    admin.from("assignments").select("spec_file_path, attachment_file_paths"),
-    listAllSpecFiles(admin),
-  ]);
+  let assignments: {
+    spec_file_path: string | null;
+    attachment_file_paths?: string[] | null;
+    instructions?: string | null;
+  }[] | null = null;
+
+  const { data, error } = await admin
+    .from("assignments")
+    .select("spec_file_path, attachment_file_paths, instructions");
+
+  if (error || !data) {
+    const { data: fallback, error: fallbackError } = await admin
+      .from("assignments")
+      .select("spec_file_path, instructions");
+
+    if (fallbackError || !fallback) {
+      console.error(
+        "Lỗi truy vấn danh sách assignments khi dò orphan spec files:",
+        fallbackError?.message || error?.message
+      );
+      // Tuyệt đối không xóa file khi không đọc được danh sách đề bài
+      return [];
+    }
+    assignments = fallback;
+  } else {
+    assignments = data;
+  }
+
+  const specFiles = await listAllSpecFiles(admin);
 
   const referenced = new Set<string>();
   for (const a of assignments ?? []) {
     if (a.spec_file_path) referenced.add(a.spec_file_path);
-    const row = a as unknown as { attachment_file_paths?: string[] };
+    const row = a as { attachment_file_paths?: string[]; instructions?: string };
     if (Array.isArray(row.attachment_file_paths)) {
       for (const p of row.attachment_file_paths) {
         if (p) referenced.add(p);
+      }
+    }
+    if (row.instructions) {
+      const match = row.instructions.match(/<!--attachments:(\[.*?\])-->/);
+      if (match) {
+        try {
+          const parsed = JSON.parse(match[1]);
+          if (Array.isArray(parsed)) {
+            for (const p of parsed) {
+              if (p && typeof p === "string") referenced.add(p);
+            }
+          }
+        } catch {
+          // ignore parse error
+        }
       }
     }
   }

@@ -64,10 +64,10 @@ async function loadFileContent(
   const fileName = getDisplayFileName(path);
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
 
-  // Tạo signed URL có thời hạn 10 phút (600s) cho học viên xem/tải
+  // Tạo signed URL có thời hạn 1 năm (31536000s) cho học viên xem/tải lâu dài
   const { data: signed } = await admin.storage
     .from(SPEC_BUCKET)
-    .createSignedUrl(path, 600);
+    .createSignedUrl(path, 31536000);
   const downloadUrl = signed?.signedUrl;
 
   const needsContent = TEXT_EXTENSIONS.includes(ext) || ext === "docx";
@@ -151,9 +151,9 @@ export async function findAssignmentRecord(
     return querySingle(clean);
   }
 
-  // 2. Alias dạng [Mã khóa]-[Số buổi]: csa-5, csa_5, csa-buoi-5, csa5, csb-9...
+  // 2. Alias dạng [Mã khóa]-[Số buổi]: csa-5, csa_5, csa-buoi-5, csa5, csb-9, csb-checkpoint-5...
   const courseSessionMatch = clean.match(
-    /^([a-zA-Z0-9]+)[-_]?(?:buoi[-_]?)?(\d+)$/i
+    /^([a-zA-Z0-9]+)[-_]?(?:checkpoint|checkpoints|cp|buoi|session)?[-_]?(\d+)$/i
   );
   if (courseSessionMatch) {
     const code = courseSessionMatch[1];
@@ -165,21 +165,28 @@ export async function findAssignmentRecord(
 
     if (courses && courses.length > 0) {
       const courseIds = courses.map((c) => c.id);
-      const { data } = await admin
+      const { data: assignments } = await admin
         .from("assignments")
         .select(
           "id, course_id, session_number, title, spec_file_path, instructions, courses(id, code, name)"
         )
         .in("course_id", courseIds)
-        .eq("session_number", session)
-        .maybeSingle();
+        .eq("session_number", session);
 
-      if (data) return data;
+      if (assignments && assignments.length > 0) {
+        // Ưu tiên đề có chữ checkpoint nếu buổi này có nhiều loại đề
+        const found =
+          assignments.find((a) => isCheckpointAssignment(a.title)) ??
+          assignments[0];
+        return found;
+      }
     }
   }
 
-  // 3. Alias chỉ có số buổi: "5", "buoi-5", "buoi5"
-  const sessionOnlyMatch = clean.match(/^(?:buoi[-_]?)?(\d+)$/i);
+  // 3. Alias chỉ có số buổi hoặc kèm từ khóa: "5", "buoi-5", "checkpoint-5", "cp-5"
+  const sessionOnlyMatch = clean.match(
+    /^(?:checkpoint[-_]?|check[-_]?point[-_]?|cp[-_]?|buoi[-_]?|session[-_]?)?(\d+)$/i
+  );
   if (sessionOnlyMatch) {
     const session = Number(sessionOnlyMatch[1]);
     const { data: fbList } = await admin
@@ -194,7 +201,7 @@ export async function findAssignmentRecord(
         isCheckpointAssignment(a.title)
       );
       if (checkpoints.length > 0) {
-        // Ưu tiên lớp CSA nếu tìm thấy
+        // Ưu tiên lớp CSA nếu tìm thấy, hoặc đề checkpoint đầu tiên
         const found =
           checkpoints.find(
             (a) =>

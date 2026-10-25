@@ -708,10 +708,10 @@ async function loadSpecFile(
   const fileName = getDisplayFileName(path);
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
 
-  // Tạo signed URL có thời hạn 10 phút (600s) cho mọi file để hỗ trợ xem/tải
+  // Tạo signed URL có thời hạn 1 năm (31,536,000s) cho mọi file để GV có thể copy gửi học viên lâu dài
   const { data: signed } = await supabase.storage
     .from(SPEC_BUCKET)
-    .createSignedUrl(path, 600);
+    .createSignedUrl(path, 31536000);
   const downloadUrl = signed?.signedUrl;
 
   if (TEXT_EXTENSIONS.includes(ext)) {

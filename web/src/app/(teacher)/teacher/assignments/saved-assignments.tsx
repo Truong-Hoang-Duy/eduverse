@@ -42,7 +42,8 @@ function CopyCheckpointButton({
 }) {
   const [copied, setCopied] = useState(false);
 
-  function handleCopy() {
+  function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation();
     const url = `${window.location.origin}/checkpoints/${assignmentId}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
@@ -60,7 +61,7 @@ function CopyCheckpointButton({
           : "Copy link xem đề cho học viên (không cần đăng nhập)"
       }
       className={cn(
-        "shrink-0 rounded-md p-1.5 transition-colors",
+        "shrink-0 rounded-md p-1.5 transition-colors cursor-pointer",
         copied
           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
           : "text-muted-foreground hover:bg-accent hover:text-primary"
@@ -207,17 +208,8 @@ export function SavedAssignments({
                         <p className="truncate text-sm font-medium">
                           {a.title}
                         </p>
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          {isCheckpoint && (
-                            <span
-                              className="inline-flex items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary"
-                              title="Đề bài Checkpoint cho phép gửi link công khai cho học viên xem trực tiếp"
-                            >
-                              <span>🔗</span>
-                              <span>Checkpoints (Link mở)</span>
-                            </span>
-                          )}
-                          {a.attachmentCount != null && a.attachmentCount > 0 && (
+                        {a.attachmentCount != null && a.attachmentCount > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5">
                             <span
                               className="inline-flex items-center gap-1 rounded bg-muted/70 px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground"
                               title={a.attachmentNames?.join(", ")}
@@ -225,8 +217,8 @@ export function SavedAssignments({
                               <span>📎</span>
                               <span>{a.attachmentCount} tệp dữ liệu</span>
                             </span>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </div>
                       {/* Trên điện thoại không có hover — nút luôn hiện, chỉ
                           mờ đi cho đỡ rối trên máy rộng. */}

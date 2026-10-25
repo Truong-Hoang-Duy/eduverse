@@ -33,6 +33,10 @@
 - [x] Bảng kết quả: badge màu theo điểm (<50 đỏ, 50-79 vàng, ≥80 xanh), tiêu chí chi tiết, sửa tay điểm/nhận xét, xuất CSV (BOM cho Excel)
 - [x] E2E phase 3: 12/12 PASS kèm chấm Gemini thật (scripts/e2e-phase3.mjs)
 - [x] User click-through UI phase 3 rồi merge develop + main (đã dùng production ổn định)
+- [x] Đợt 110: Tinh gọn nút sao chép đề bài & Thiết kế lại popup xem tài liệu tối giản chuẩn 2 Tab (Đề bài chính / Tệp đính kèm), loại bỏ 100% hướng dẫn thừa.
+- [x] Đợt 111: Tối ưu xem PDF trực tiếp tại chỗ trong dialog, nút ↗ Mở xem mở trực tiếp PDF / CSV nguyên bản, đồng bộ toolbar tệp đính kèm và ẩn khối hướng dẫn nạp dữ liệu.
+- [x] Đợt 112: Khắc phục sự cố mất file Storage & Phục hồi toàn bộ 16 đề bài xem trước PDF mượt mà.
+- [x] Đợt 113: Tối ưu nút "Mở xem" & "Copy link gửi học sinh" trỏ thẳng file PDF trực tiếp, gia hạn Signed URL 1 năm & Khôi phục 100% tài liệu gốc CSA.
 
 ## Giai đoạn 4 — Sản phẩm cuối khóa
 - [x] HV CRUD sản phẩm (/student/projects, 1 sản phẩm/lớp, unique)

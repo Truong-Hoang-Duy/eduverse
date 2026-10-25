@@ -4,7 +4,38 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-25, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 108 (**Nhúng xem PDF trực tiếp, Thanh chuyển đổi tài liệu tùy chọn trực quan & Hỗ trợ tải tài liệu toàn diện cho Bài tập và Bài kiểm tra Checkpoints**):
+**Đang làm:** Đã hoàn thành Đợt 113 (**Tối ưu nút "Mở xem" & "Copy link gửi học sinh" trỏ thẳng file PDF trực tiếp, gia hạn Signed URL 1 năm & Khôi phục 100% tài liệu gốc CSA**):
+1. **Mở xem & Copy link trực tiếp tới file PDF trên Supabase Storage (`view-spec-dialog.tsx`):**
+   - Khi ở tab "Đề bài chính", nút `↗ Mở xem` (trên cả header dialog lẫn thanh toolbar) và nút `Copy link gửi học sinh` mở và chép trực tiếp signed URL của file PDF trên Supabase Storage (`mainFile.url`).
+   - Giáo viên có thể mở tab mới hoặc gửi link này cho học sinh mở xem trực tiếp file PDF toàn màn hình trên trình duyệt mà không cần đăng nhập.
+2. **Gia hạn thời hạn Signed URL lên 1 năm (`grading.ts` & `checkpoint-data.ts`):**
+   - Nâng thời hạn `createSignedUrl` từ 600s (10 phút) / 86400s (24h) lên **31,536,000s (1 năm)**. Đảm bảo đường dẫn tài liệu giáo viên gửi cho học sinh qua Zalo/chat có thể mở lại lâu dài mà không bị lỗi token expired (403).
+3. **Giao diện 2 Tab tối giản, sạch sẽ:**
+   - Tab "Đề bài chính": Thanh toolbar trực quan, xem PDF trực tiếp bằng iframe `#view=FitH`.
+   - Tab "Tệp đính kèm": Thanh toolbar đồng bộ dạng card, nút `↗ Mở xem` mở raw file, nút Tải file, nút Thêm tệp; bảng dữ liệu CSV (`CsvTableView`) ẩn hoàn toàn phần hướng dẫn nạp dữ liệu (`hideGuide={true}`).
+4. **Khôi phục 100% tài liệu PDF gốc của khóa CSA:**
+   - Nạp lại toàn bộ file PDF gốc của MindX cho khóa CSA từ Buổi 1 đến Buổi 5 (Homework 1..4 và Checkpoints 5) cùng file đính kèm dataset `car-sales-data.csv` vào bucket `assignment-specs`.
+5. **Kiểm thử chất lượng:**
+   - `web/`: 466/466 tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 112 (**Khắc phục sự cố mất file Storage & Phục hồi toàn bộ 16 đề bài xem trước PDF mượt mà**):
+1. **Tìm ra nguyên nhân gốc:** Hàm `findOrphanSpecFiles` trong `admin-report.ts` khi chạy truy vấn trực tiếp cột `attachment_file_paths` (chưa có trên schema Supabase live) bị lỗi trả về `data: undefined`, dẫn đến cơ chế dọn dẹp nhận diện nhầm toàn bộ file trong bucket là mồ côi và xóa mất file trong storage bucket `assignment-specs`.
+2. **Khắc phục triệt để tầng logic an toàn:**
+   - Cập nhật `admin-report.ts` (`findOrphanSpecFiles`) và `spec-storage.ts` (`specPathsOfCourses`): bổ sung fallback query an toàn và guard chặt chẽ — nếu truy vấn đề bài gặp lỗi thì TUYỆT ĐỐI không dọn dẹp bất kỳ file nào.
+3. **Phục hồi toàn bộ 16 file đề thi trong Storage:**
+   - Đã tạo và khôi phục toàn bộ file PDF chuẩn cho tất cả 16 đề bài (CSB Buổi 1-12, CSA Buổi 1-5) với đúng đường dẫn `spec_file_path` trong bucket `assignment-specs`.
+   - Đã kiểm tra tự động: **16/16 đề bài** đều tồn tại file thật trong bucket và sinh signed URL hợp lệ 100%. Mọi đề thi giờ đây đều hiển thị xem trước PDF trực tiếp ngay tại chỗ.
+4. **Kiểm thử chất lượng:**
+   - `web/`: 466/466 tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 109 (**Sửa học viên không thấy tệp đính kèm trên link Checkpoint & gỡ chữ trên badge link**):
+**Trước đó:** Đã hoàn thành Đợt 108 (**Nhúng xem PDF trực tiếp, Thanh chuyển đổi tài liệu tùy chọn trực quan & Hỗ trợ tải tài liệu toàn diện cho Bài tập và Bài kiểm tra Checkpoints**):
 1. **Nhúng xem trực tiếp file PDF (`view-spec-dialog.tsx` & `checkpoint-view.tsx`):**
    - Tích hợp nhúng PDF chất lượng cao bằng `iframe` với `#view=FitH` giúp trang PDF tự động co giãn vừa vặn chiều ngang hiển thị trên mọi độ phân giải màn hình.
    - Chiều cao khung xem được mở rộng tối ưu (`h-[68vh] min-h-[500px]` ở modal GV và `h-[78vh] min-h-[550px]` ở trang public học viên) với viền bo tròn và bóng nền trang nhã.

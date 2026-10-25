@@ -170,6 +170,11 @@ describe("isCheckpointAssignment", () => {
     expect(isCheckpointAssignment("checkpoint 2: OOP")).toBe(true);
     expect(isCheckpointAssignment("CHECKPOINT ĐỢT 1")).toBe(true);
     expect(isCheckpointAssignment("[CSA05 - Checkpoints] Buổi 5")).toBe(true);
+    expect(isCheckpointAssignment("[CSB - Checkpoints] Buổi 5")).toBe(true);
+    expect(isCheckpointAssignment("[CSB - Checkpoints] Buổi 9")).toBe(true);
+    expect(isCheckpointAssignment("[CSI - Checkpoint] Buổi 5")).toBe(true);
+    expect(isCheckpointAssignment("[JSB - Checkpoints] Buổi 6")).toBe(true);
+    expect(isCheckpointAssignment("Bài thi Check Point Buổi 3")).toBe(true);
     expect(isCheckpointAssignment("Bài thi checkpoint giữa khóa")).toBe(true);
   });
 

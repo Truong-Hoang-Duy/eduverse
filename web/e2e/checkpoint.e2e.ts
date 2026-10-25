@@ -18,8 +18,12 @@ describe("Public Checkpoints E2E", () => {
     expect(data?.sessionNumber).toBe(5);
     expect(data?.title).toContain("Checkpoints");
     expect(data?.files.length).toBeGreaterThan(0);
-    expect(data?.files[0].kind).toBe("text");
-    expect(data?.files[0].content).toContain("CÂU HỎI 1");
+    expect(["pdf", "text", "download"]).toContain(data?.files[0].kind);
+    if (data?.files[0].kind === "text") {
+      expect(data?.files[0].content).toContain("CÂU HỎI 1");
+    } else {
+      expect(data?.files[0].url).toBeDefined();
+    }
   });
 
 

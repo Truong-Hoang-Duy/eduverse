@@ -130,5 +130,5 @@ export function isCheckpointAssignment(
   title: string | null | undefined
 ): boolean {
   if (!title || typeof title !== "string") return false;
-  return /checkpoint/i.test(title);
+  return /(?:checkpoint|check\s+point)/i.test(title);
 }

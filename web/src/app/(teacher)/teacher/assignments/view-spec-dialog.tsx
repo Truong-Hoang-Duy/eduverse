@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -85,24 +84,31 @@ export function ViewSpecDialog({
   variant?: "icon" | "link";
 }) {
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"main" | "attachments">("main");
+  const [selectedAttachmentIdx, setSelectedAttachmentIdx] = useState(0);
+
   const [spec, setSpec] = useState<AssignmentSpec | null>(null);
   const [files, setFiles] = useState<AssignmentSpecFile[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [error, setError] = useState("");
   const [pending, startLoad] = useTransition();
-  const [copiedContent, setCopiedContent] = useState(false);
 
-  // Trạng thái đính kèm thêm file trực tiếp từ popup xem
+  const [copiedMainContent, setCopiedMainContent] = useState(false);
+  const [copiedAttachmentContent, setCopiedAttachmentContent] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const [confirmDeleteMain, setConfirmDeleteMain] = useState(false);
+  const [confirmDeleteAttPath, setConfirmDeleteAttPath] = useState<string | null>(null);
+
+  // Form đính kèm thêm file
   const [showAddForm, setShowAddForm] = useState(false);
   const [addPending, startAdd] = useTransition();
   const [addMsg, setAddMsg] = useState("");
   const addFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Trạng thái thay thế file đề chính
+  // Form thay thế file đề chính
   const [showReplaceMainForm, setShowReplaceMainForm] = useState(false);
   const [replacePending, startReplace] = useTransition();
   const replaceFileInputRef = useRef<HTMLInputElement>(null);
-  const [copiedLink, setCopiedLink] = useState(false);
 
   function loadSpecData() {
     startLoad(async () => {
@@ -119,15 +125,19 @@ export function ViewSpecDialog({
   function handleOpenChange(next: boolean) {
     setOpen(next);
     if (!next) return;
+    setActiveTab("main");
+    setSelectedAttachmentIdx(0);
     setSpec(null);
     setFiles([]);
-    setSelectedIndex(0);
     setError("");
     setShowAddForm(false);
     setShowReplaceMainForm(false);
+    setConfirmDeleteMain(false);
+    setConfirmDeleteAttPath(null);
     setAddMsg("");
     setCopiedLink(false);
-    setCopiedContent(false);
+    setCopiedMainContent(false);
+    setCopiedAttachmentContent(false);
     loadSpecData();
   }
 
@@ -139,10 +149,11 @@ export function ViewSpecDialog({
       if (res.error) {
         setAddMsg(`Lỗi: ${res.error}`);
       } else {
-        setAddMsg(res.success ?? "Đã thêm file.");
+        setAddMsg("");
         setShowAddForm(false);
         if (addFileInputRef.current) addFileInputRef.current.value = "";
         loadSpecData();
+        setActiveTab("attachments");
       }
     });
   }
@@ -156,7 +167,6 @@ export function ViewSpecDialog({
       if (res.error) {
         setError(res.error);
       } else {
-        setAddMsg(res.success ?? "Đã thay đổi file đề.");
         setShowReplaceMainForm(false);
         if (replaceFileInputRef.current) replaceFileInputRef.current.value = "";
         loadSpecData();
@@ -166,67 +176,70 @@ export function ViewSpecDialog({
 
   // Xóa file đề chính
   function handleRemoveMainFile() {
-    if (
-      !confirm(
-        "Bạn có chắc chắn muốn xóa file đề bài chính này? Bạn có thể tải file mới lên sau."
-      )
-    ) {
-      return;
-    }
     startLoad(async () => {
       const res = await removeAssignmentMainFile(assignmentId);
       if (res.error) {
         setError(res.error);
       } else {
+        setConfirmDeleteMain(false);
         loadSpecData();
       }
     });
   }
 
-  // Copy link xem đề checkpoint gửi học viên
-  function handleCopyCheckpointLink() {
-    const url = `${window.location.origin}/checkpoints/${assignmentId}`;
-    navigator.clipboard.writeText(url);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2500);
-  }
-
-  // Copy nội dung văn bản
-  function handleCopyContent(text?: string) {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    setCopiedContent(true);
-    setTimeout(() => setCopiedContent(false), 2500);
-  }
-
-  // Xóa bớt một tệp đính kèm
-  function handleRemoveFile(filePath: string, fileName: string) {
-    if (!confirm(`Bạn có chắc chắn muốn xóa tệp "${fileName}" khỏi đề bài này?`)) {
-      return;
-    }
+  // Xóa một tệp đính kèm
+  function handleRemoveAttachment(filePath: string) {
     startLoad(async () => {
       const res = await removeAssignmentAttachment(assignmentId, filePath);
       if (res.error) {
         setError(res.error);
       } else {
-        setSelectedIndex(0);
+        setConfirmDeleteAttPath(null);
+        setSelectedAttachmentIdx(0);
         loadSpecData();
       }
     });
   }
 
-  const activeFile:
-    | AssignmentSpecFile
-    | (AssignmentSpec & { isMain?: boolean; path?: string })
-    | null = files.length > 0 ? (files[selectedIndex] ?? files[0]) : spec;
+  // Copy link file đề trực tiếp (signed URL) để gửi học viên
+  function handleCopyFileLink() {
+    const targetUrl =
+      activeTab === "main" ? mainFile?.url : activeAttachment?.url;
+    const url =
+      targetUrl || `${window.location.origin}/checkpoints/${assignmentId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  }
 
-  const totalFiles = files.length > 0 ? files.length : spec ? 1 : 0;
-  const isMultiple = totalFiles > 1;
-  const isCsv =
-    activeFile?.fileName.toLowerCase().endsWith(".csv") &&
-    activeFile.kind === "text" &&
-    typeof activeFile.content === "string";
+  function handleCopyText(text: string, isMain: boolean) {
+    navigator.clipboard.writeText(text);
+    if (isMain) {
+      setCopiedMainContent(true);
+      setTimeout(() => setCopiedMainContent(false), 2000);
+    } else {
+      setCopiedAttachmentContent(true);
+      setTimeout(() => setCopiedAttachmentContent(false), 2000);
+    }
+  }
+
+  const mainFile =
+    files.find((f) => f.isMain) ??
+    (spec ? { ...spec, isMain: true, path: "" } : null);
+  const attachmentFiles = files.filter((f) => !f.isMain);
+  const activeAttachment =
+    attachmentFiles[selectedAttachmentIdx] ?? attachmentFiles[0] ?? null;
+
   const isCheckpoint = isCheckpointAssignment(title);
+  const isMainCsv =
+    mainFile?.fileName.toLowerCase().endsWith(".csv") &&
+    mainFile.kind === "text" &&
+    typeof mainFile.content === "string";
+
+  const isAttCsv =
+    activeAttachment?.fileName.toLowerCase().endsWith(".csv") &&
+    activeAttachment.kind === "text" &&
+    typeof activeAttachment.content === "string";
 
   return (
     <>
@@ -236,7 +249,7 @@ export function ViewSpecDialog({
           aria-label={`Xem đề buổi ${sessionNumber}`}
           title="Xem nội dung đề & tệp dữ liệu"
           onClick={() => handleOpenChange(true)}
-          className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-primary"
+          className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-primary cursor-pointer"
         >
           👁
         </button>
@@ -244,87 +257,136 @@ export function ViewSpecDialog({
         <button
           type="button"
           onClick={() => handleOpenChange(true)}
-          className="text-xs font-medium text-primary transition-colors hover:underline"
+          className="text-xs font-medium text-primary transition-colors hover:underline cursor-pointer"
         >
           👁 Xem đề & tệp dữ liệu
         </button>
       )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-          <DialogHeader>
-            <div className="flex flex-wrap items-start justify-between gap-3 pr-6">
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-4xl p-5">
+          {/* Header gọn gàng */}
+          <DialogHeader className="gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 pr-6">
               <div>
-                <DialogTitle className="text-base sm:text-lg">{title}</DialogTitle>
-                <DialogDescription>
-                  Buổi {sessionNumber}
-                  {totalFiles > 1
-                    ? ` · Tổng cộng ${totalFiles} tệp (1 đề chính + ${totalFiles - 1} tài liệu tùy chọn)`
-                    : activeFile
-                      ? ` · ${activeFile.fileName}`
-                      : ""}
-                </DialogDescription>
+                <DialogTitle className="text-base sm:text-lg font-bold">
+                  {title}
+                </DialogTitle>
+                <p className="text-xs text-muted-foreground">Buổi {sessionNumber}</p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {isCheckpoint && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "h-8 gap-1.5 text-xs font-medium transition-colors",
-                        copiedLink
-                          ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                          : "text-primary hover:bg-primary/10"
+
+              {/* Action trên header */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {(() => {
+                  const targetUrl =
+                    activeTab === "main" ? mainFile?.url : activeAttachment?.url;
+
+                  return (
+                    <>
+                      {targetUrl && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "h-7 gap-1 px-2 text-xs font-medium transition-colors",
+                            copiedLink
+                              ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              : "text-primary hover:bg-primary/10"
+                          )}
+                          onClick={handleCopyFileLink}
+                          title="Copy link file đề trực tiếp để gửi học sinh"
+                        >
+                          <span>{copiedLink ? "✓" : "🔗"}</span>
+                          <span>{copiedLink ? "Đã chép link!" : "Copy link gửi học sinh"}</span>
+                        </Button>
                       )}
-                      onClick={handleCopyCheckpointLink}
-                      title="Copy link xem đề trực tiếp cho học viên (không cần đăng nhập)"
-                    >
-                      <span>{copiedLink ? "✓" : "🔗"}</span>
-                      <span>
-                        {copiedLink ? "Đã copy link học viên!" : "Copy link học viên"}
-                      </span>
-                    </Button>
-                    <a
-                      href={`/checkpoints/${assignmentId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-8 items-center gap-1 rounded-md border border-input bg-background px-2.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-                      title="Mở xem trang học viên trên tab mới"
-                    >
-                      <span>↗</span>
-                      <span>Xem trang học viên</span>
-                    </a>
-                  </>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1 text-xs"
-                  onClick={() => {
-                    setShowAddForm(!showAddForm);
-                    setShowReplaceMainForm(false);
-                  }}
-                >
-                  <span>{showAddForm ? "Đóng" : "+ Đính kèm thêm file"}</span>
-                </Button>
+
+                      {targetUrl ? (
+                        <a
+                          href={targetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-input bg-background px-2 text-xs font-medium text-foreground hover:bg-accent"
+                          title="Mở thẳng tới trang file này để gửi học sinh"
+                        >
+                          <span>↗ Mở xem</span>
+                        </a>
+                      ) : isCheckpoint ? (
+                        <a
+                          href={`/checkpoints/${assignmentId}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex h-7 items-center gap-1 rounded-md border border-input bg-background px-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                          title="Mở trang đề bài học viên"
+                        >
+                          <span>↗ Mở xem</span>
+                        </a>
+                      ) : null}
+                    </>
+                  );
+                })()}
               </div>
+            </div>
+
+            {/* Thanh chuyển 2 TAB tối giản */}
+            <div className="flex items-center gap-1 rounded-xl bg-muted/60 p-1 mt-1 w-fit border border-border/40">
+              <button
+                type="button"
+                onClick={() => setActiveTab("main")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
+                  activeTab === "main"
+                    ? "bg-background text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span>📋</span>
+                <span>Đề bài chính</span>
+                {mainFile && (
+                  <Badge variant="outline" className="h-4 px-1 text-[9px]">
+                    1
+                  </Badge>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("attachments")}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
+                  activeTab === "attachments"
+                    ? "bg-background text-foreground shadow-xs"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span>📎</span>
+                <span>Tệp đính kèm</span>
+                {attachmentFiles.length > 0 && (
+                  <Badge className="h-4 px-1 text-[9px] bg-primary/15 text-primary hover:bg-primary/20 border-none font-bold">
+                    {attachmentFiles.length}
+                  </Badge>
+                )}
+              </button>
             </div>
           </DialogHeader>
 
-          {/* Form thay thế / ghi đè file đề bài chính */}
-          {showReplaceMainForm && (
+          {/* Form thay thế file đề chính */}
+          {showReplaceMainForm && activeTab === "main" && (
             <form
               action={handleReplaceMainFile}
-              className="space-y-2 rounded-lg border border-dashed border-amber-500/50 bg-amber-500/5 p-3"
+              className="space-y-2 rounded-xl border border-dashed border-amber-500/50 bg-amber-500/5 p-3 text-xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground">
-                  Chọn file đề bài mới để ghi đè file hiện tại:
+                <span className="font-semibold text-foreground">
+                  Chọn file đề bài mới để ghi đè:
                 </span>
-                <span className="text-[11px] text-muted-foreground">
-                  (File cũ sẽ được tự động xóa sạch)
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowReplaceMainForm(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕ Đóng
+                </button>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Input
@@ -341,34 +403,29 @@ export function ViewSpecDialog({
                   disabled={replacePending}
                   className="h-8 shrink-0 text-xs font-medium"
                 >
-                  {replacePending ? "Đang ghi đè..." : "Tải lên & Ghi đè"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowReplaceMainForm(false)}
-                  className="h-8 px-2 text-xs"
-                >
-                  Hủy
+                  {replacePending ? "Đang tải..." : "Tải lên & Ghi đè"}
                 </Button>
               </div>
             </form>
           )}
 
-          {/* Form thêm file dữ liệu trực tiếp vào đề đã có */}
-          {showAddForm && (
+          {/* Form thêm tệp đính kèm */}
+          {showAddForm && activeTab === "attachments" && (
             <form
               action={handleAddFiles}
-              className="space-y-2 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3"
+              className="space-y-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 p-3 text-xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-foreground">
-                  Đính kèm thêm file tài liệu vào đề này:
+                <span className="font-semibold text-foreground">
+                  Chọn file đính kèm (CSV, JSON, Python, Slide...):
                 </span>
-                <span className="text-[11px] text-muted-foreground">
-                  (PDF, CSV, JSON, Python, Dataset, Slide...)
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ✕ Đóng
+                </button>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Input
@@ -386,319 +443,429 @@ export function ViewSpecDialog({
                   disabled={addPending}
                   className="h-8 shrink-0 text-xs font-medium"
                 >
-                  {addPending ? "Đang tải lên..." : "Tải lên"}
+                  {addPending ? "Đang tải..." : "Tải lên"}
                 </Button>
               </div>
               {addMsg && (
-                <p className="text-xs font-medium text-primary">{addMsg}</p>
+                <p className="text-xs font-medium text-destructive">{addMsg}</p>
               )}
             </form>
           )}
 
           {pending && (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Đang tải đề và các tệp dữ liệu...
+            <p className="py-12 text-center text-xs text-muted-foreground">
+              Đang tải tài liệu...
             </p>
           )}
 
           {error && (
-            <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+            <p className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
               {error}
             </p>
           )}
 
-          {/* Thanh chuyển đổi tài liệu (Document Tab Switcher) */}
-          {!pending && !error && isMultiple && (
-            <div className="space-y-1.5 rounded-xl border border-border/70 bg-muted/20 p-2">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Chuyển đổi tài liệu ({totalFiles} tệp):
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  Bấm vào tài liệu bên dưới để xem hoặc tải
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {files.map((file, idx) => {
-                  const isSelected = idx === selectedIndex;
-                  return (
-                    <button
-                      key={`${file.path}-${idx}`}
-                      type="button"
-                      onClick={() => setSelectedIndex(idx)}
-                      className={cn(
-                        "group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all",
-                        isSelected
-                          ? "bg-background text-foreground shadow-xs font-semibold border border-border/80 ring-1 ring-primary/20"
-                          : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
-                      )}
-                    >
-                      <span className="text-sm">
-                        {file.isMain ? "📋" : "📎"}
-                      </span>
-                      <span
-                        className="max-w-[170px] truncate sm:max-w-[220px]"
-                        title={file.fileName}
-                      >
-                        {file.fileName}
-                      </span>
-                      {file.isMain ? (
-                        <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                          Đề chính
-                        </span>
-                      ) : (
-                        getFileFormatBadge(file.fileName, file.kind)
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {!pending && !error && activeFile && (
-            <div className="space-y-3">
-              {/* Header tệp đang chọn + Nút Tải + Nút Thay/Xóa */}
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/40 px-3.5 py-2.5 text-xs border border-border/60">
-                <div className="flex items-center gap-2 truncate">
-                  <span className="text-base">
-                    {activeFile.isMain ? "📋" : "📎"}
-                  </span>
-                  <span
-                    className="truncate font-bold text-foreground text-xs sm:text-sm"
-                    title={activeFile.fileName}
-                  >
-                    {activeFile.fileName}
-                  </span>
-                  {activeFile.isMain ? (
-                    <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
-                      Đề bài chính
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
-                      Tài liệu tùy chọn
-                    </Badge>
-                  )}
-                  {getFileFormatBadge(activeFile.fileName, activeFile.kind)}
-                </div>
-
-                <div className="flex shrink-0 flex-wrap items-center gap-1.5">
-                  {/* Nút Sao chép nội dung text/code */}
-                  {!isCsv &&
-                    activeFile.kind === "text" &&
-                    activeFile.content && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCopyContent(activeFile.content)}
-                        className="h-7 gap-1 px-2 text-xs"
-                      >
-                        <span>{copiedContent ? "✓" : "📋"}</span>
-                        <span>
-                          {copiedContent ? "Đã chép!" : "Sao chép"}
-                        </span>
-                      </Button>
-                    )}
-
-                  {/* Nút Mở tab mới (cho PDF / Ảnh) */}
-                  {activeFile.url &&
-                    (activeFile.kind === "pdf" ||
-                      activeFile.kind === "image") && (
-                      <a
-                        href={activeFile.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex h-7 items-center gap-1 rounded border border-input bg-background px-2 text-xs font-medium text-foreground shadow-2xs hover:bg-accent"
-                        title="Mở tài liệu trên tab mới để xem toàn màn hình hoặc in"
-                      >
-                        <span>↗</span>
-                        <span>Mở tab mới</span>
-                      </a>
-                    )}
-
-                  {/* Nút Tải file */}
-                  {activeFile.url && (
-                    <a
-                      href={activeFile.url}
-                      download={activeFile.fileName}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex h-7 items-center gap-1 rounded bg-primary px-2.5 text-xs font-semibold text-primary-foreground shadow-2xs hover:bg-primary/90"
-                    >
-                      <span>⬇</span>
-                      <span>Tải file</span>
-                    </a>
-                  )}
-
-                  {activeFile.isMain ? (
+          {/* NỘI DUNG 2 TAB */}
+          {!pending && !error && (
+            <div className="pt-1">
+              {/* TAB 1: ĐỀ BÀI CHÍNH */}
+              {activeTab === "main" && (
+                <div className="space-y-3">
+                  {mainFile ? (
                     <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setShowReplaceMainForm(!showReplaceMainForm);
-                          setShowAddForm(false);
-                        }}
-                        title="Thay thế file đề bài chính này bằng file khác"
-                        className="h-7 gap-1 px-2 text-xs font-medium"
-                      >
-                        <span>🔄</span>
-                        <span>{showReplaceMainForm ? "Đóng" : "Thay file khác"}</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRemoveMainFile}
-                        title="Xóa file đề bài chính"
-                        className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        ✕ Xóa file
-                      </Button>
+                      {/* Toolbar Đề chính */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/30 px-3 py-2 text-xs border border-border/60">
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="truncate font-semibold text-foreground text-xs sm:text-sm">
+                            {mainFile.fileName}
+                          </span>
+                          {getFileFormatBadge(mainFile.fileName, mainFile.kind)}
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {!isMainCsv &&
+                            mainFile.kind === "text" &&
+                            mainFile.content && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                  handleCopyText(mainFile.content ?? "", true)
+                                }
+                                className="h-7 px-2 text-xs gap-1"
+                              >
+                                <span>{copiedMainContent ? "✓" : "📋"}</span>
+                                <span>{copiedMainContent ? "Đã chép" : "Sao chép"}</span>
+                              </Button>
+                            )}
+
+                          {mainFile.url && (
+                            <a
+                              href={mainFile.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex h-7 items-center gap-1 rounded-md border border-input bg-background px-2 text-xs font-medium text-foreground hover:bg-accent"
+                              title="Mở xem file PDF trên tab mới"
+                            >
+                              <span>↗ Mở xem</span>
+                            </a>
+                          )}
+
+                          {mainFile.url && (
+                            <a
+                              href={mainFile.url}
+                              download={mainFile.fileName}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                            >
+                              <span>⬇ Tải</span>
+                            </a>
+                          )}
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setShowReplaceMainForm(!showReplaceMainForm);
+                              setShowAddForm(false);
+                            }}
+                            className="h-7 px-2 text-xs"
+                          >
+                            🔄 Thay file
+                          </Button>
+
+                          {confirmDeleteMain ? (
+                            <div className="inline-flex items-center gap-1 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs">
+                              <span className="text-[11px] font-medium text-destructive">
+                                Xóa?
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleRemoveMainFile}
+                                className="font-bold text-destructive hover:underline cursor-pointer"
+                              >
+                                Có
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteMain(false)}
+                                className="text-muted-foreground hover:text-foreground cursor-pointer ml-1"
+                              >
+                                Hủy
+                              </button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setConfirmDeleteMain(true)}
+                              className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              ✕ Xóa
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Khung xem đề chính */}
+                      {mainFile.kind === "pdf" && (
+                        mainFile.url ? (
+                          <div className="overflow-hidden rounded-xl border border-border/80 shadow-inner bg-card">
+                            <iframe
+                              src={`${mainFile.url}#view=FitH`}
+                              title={mainFile.fileName}
+                              className="h-[68vh] min-h-[500px] w-full border-none"
+                            />
+                          </div>
+                        ) : (
+                          <div className="rounded-xl border border-dashed p-8 text-center bg-muted/10 space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground">
+                              Đang chuẩn bị đường dẫn xem file PDF...
+                            </p>
+                          </div>
+                        )
+                      )}
+
+                      {isMainCsv && (
+                        <CsvTableView
+                          content={
+                            (mainFile as AssignmentSpecFile & { content: string })
+                              .content
+                          }
+                          fileName={mainFile.fileName}
+                          downloadUrl={mainFile.url}
+                          hideGuide={true}
+                        />
+                      )}
+
+                      {!isMainCsv && mainFile.kind === "text" && (
+                        <pre className="max-h-[68vh] overflow-auto rounded-xl border bg-muted/20 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
+                          {mainFile.content}
+                        </pre>
+                      )}
+
+                      {mainFile.kind === "image" && mainFile.url && (
+                        <div className="overflow-hidden rounded-xl border bg-muted/20 p-2 text-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={mainFile.url}
+                            alt={mainFile.fileName}
+                            className="max-h-[68vh] w-full rounded-lg object-contain mx-auto"
+                          />
+                        </div>
+                      )}
+
+                      {mainFile.kind === "download" && (
+                        <div className="rounded-xl border border-dashed p-8 text-center bg-muted/10 space-y-2">
+                          <span className="text-3xl">📦</span>
+                          <p className="text-xs font-semibold text-foreground">
+                            {mainFile.fileName}
+                          </p>
+                          {mainFile.url && (
+                            <a
+                              href={mainFile.url}
+                              download={mainFile.fileName}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                            >
+                              ⬇ Tải file về máy
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </>
                   ) : (
-                    "path" in activeFile &&
-                    activeFile.path && (
+                    <div className="rounded-xl border border-dashed p-8 text-center bg-muted/10 space-y-2">
+                      <p className="text-xs font-semibold text-foreground">
+                        Chưa có file đề bài chính
+                      </p>
                       <Button
-                        variant="ghost"
                         size="sm"
-                        onClick={() =>
-                          handleRemoveFile(
-                            (activeFile as AssignmentSpecFile).path,
-                            activeFile.fileName
-                          )
-                        }
-                        title="Xóa tệp đính kèm này"
-                        className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        variant="outline"
+                        onClick={() => setShowReplaceMainForm(true)}
+                        className="h-8 text-xs font-medium"
                       >
-                        ✕ Xóa tệp
+                        + Tải file đề lên
                       </Button>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {/* 1. Preview PDF */}
-              {activeFile.kind === "pdf" && activeFile.url && (
-                <div className="space-y-2">
-                  <div className="relative overflow-hidden rounded-xl border border-border/80 bg-muted/10 shadow-inner">
-                    <iframe
-                      src={`${activeFile.url}#view=FitH`}
-                      title={activeFile.fileName}
-                      className="h-[68vh] min-h-[500px] w-full border-none"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground px-1">
-                    <span>
-                      💡 Bạn có thể cuộn, phóng to, in hoặc tìm kiếm trực tiếp trên thanh công cụ PDF.
-                    </span>
-                    <a
-                      href={activeFile.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-medium text-primary hover:underline"
-                    >
-                      Mở tab riêng toàn màn hình ↗
-                    </a>
-                  </div>
-                </div>
-              )}
-
-              {/* 2. Preview định dạng CSV dạng Bảng dữ liệu hoặc Văn bản */}
-              {isCsv && (
-                <CsvTableView
-                  content={
-                    (activeFile as AssignmentSpecFile & { content: string })
-                      .content
-                  }
-                />
-              )}
-
-              {/* 3. Preview định dạng text/code thông thường */}
-              {!isCsv && activeFile.kind === "text" && (
-                <pre className="max-h-[60vh] overflow-auto rounded-xl border bg-muted/20 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
-                  {activeFile.content}
-                </pre>
-              )}
-
-              {/* 4. Preview định dạng ảnh */}
-              {activeFile.kind === "image" && activeFile.url && (
-                <div className="overflow-hidden rounded-xl border bg-muted/20 p-2 text-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={activeFile.url}
-                    alt={activeFile.fileName}
-                    className="max-h-[65vh] w-full rounded-lg object-contain mx-auto shadow-2xs"
-                  />
-                </div>
-              )}
-
-              {/* 5. Định dạng nhị phân/Word */}
-              {activeFile.kind === "download" && (
-                <div className="space-y-3 rounded-xl border border-dashed p-6 text-center bg-muted/10">
-                  <span className="text-3xl">📦</span>
-                  <p className="text-sm font-semibold text-foreground">
-                    Tài liệu &quot;{activeFile.fileName}&quot;
-                  </p>
-                  <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                    File này là định dạng nhị phân hoặc không thể hiển thị trực tiếp — hãy tải về máy để mở bằng ứng dụng tương thích.
-                  </p>
-                  {activeFile.url && (
-                    <div className="pt-1">
-                      <a
-                        href={activeFile.url}
-                        download={activeFile.fileName}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-2xs hover:bg-primary/90 transition-colors"
-                      >
-                        <span>⬇</span>
-                        <span>Tải {activeFile.fileName}</span>
-                      </a>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Danh sách tải nhanh tất cả tài liệu nếu có nhiều file */}
-              {totalFiles > 1 && (
-                <div className="rounded-xl border border-border/70 bg-card p-3 sm:p-4 shadow-2xs space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                      <span>📁</span>
-                      <span>Tải nhanh các tài liệu của đề bài này:</span>
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {totalFiles} tệp khả dụng
-                    </span>
-                  </div>
-
-                  <div className="grid gap-1.5 sm:grid-cols-2">
-                    {files.map((file, idx) => (
-                      <div
-                        key={`quick-download-${file.path}-${idx}`}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 px-2.5 py-1.5 text-xs"
-                      >
-                        <div className="flex items-center gap-1.5 truncate">
-                          <span>{file.isMain ? "📋" : "📎"}</span>
-                          <span
-                            className="truncate font-medium text-foreground"
-                            title={file.fileName}
-                          >
-                            {file.fileName}
-                          </span>
-                        </div>
-                        {file.url && (
-                          <a
-                            href={file.url}
-                            download={file.fileName}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="shrink-0 inline-flex items-center gap-1 rounded bg-background px-2 py-0.5 text-[11px] font-semibold text-primary border border-border/60 shadow-2xs hover:bg-accent transition-colors"
-                          >
-                            <span>⬇ Tải</span>
-                          </a>
-                        )}
+              {/* TAB 2: TỆP ĐÍNH KÈM */}
+              {activeTab === "attachments" && (
+                <div className="space-y-3">
+                  {attachmentFiles.length === 0 ? (
+                    !showAddForm && (
+                      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 p-10 text-center">
+                        <span className="text-3xl">📎</span>
+                        <p className="mt-2 text-xs sm:text-sm font-semibold text-foreground">
+                          Chưa có tệp đính kèm nào
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-3 h-8 text-xs font-medium gap-1"
+                          onClick={() => setShowAddForm(true)}
+                        >
+                          + Đính kèm file ngay
+                        </Button>
                       </div>
-                    ))}
-                  </div>
+                    )
+                  ) : (
+                    <>
+                      {/* Thanh chọn tệp đính kèm nếu có từ 2 file trở lên */}
+                      {attachmentFiles.length > 1 && (
+                        <div className="flex flex-wrap items-center gap-1.5 pb-1">
+                          {attachmentFiles.map((file, idx) => {
+                            const isSelected = idx === selectedAttachmentIdx;
+                            return (
+                              <button
+                                key={`${file.path}-${idx}`}
+                                type="button"
+                                onClick={() => setSelectedAttachmentIdx(idx)}
+                                className={cn(
+                                  "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer",
+                                  isSelected
+                                    ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                                )}
+                              >
+                                <span>{file.fileName}</span>
+                                {getFileFormatBadge(file.fileName, file.kind)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Toolbar tệp đính kèm hiển thị đồng bộ như phần trên */}
+                      {activeAttachment && (
+                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-muted/30 px-3 py-2 text-xs border border-border/60">
+                          <div className="flex items-center gap-2 truncate">
+                            <span className="truncate font-semibold text-foreground text-xs sm:text-sm">
+                              {activeAttachment.fileName}
+                            </span>
+                            {getFileFormatBadge(
+                              activeAttachment.fileName,
+                              activeAttachment.kind
+                            )}
+                          </div>
+
+                          <div className="flex shrink-0 items-center gap-1.5">
+                            {!isAttCsv &&
+                              activeAttachment.kind === "text" &&
+                              activeAttachment.content && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    handleCopyText(
+                                      activeAttachment.content ?? "",
+                                      false
+                                    )
+                                  }
+                                  className="h-7 px-2 text-xs gap-1"
+                                >
+                                  <span>
+                                    {copiedAttachmentContent ? "✓" : "📋"}
+                                  </span>
+                                  <span>
+                                    {copiedAttachmentContent ? "Đã chép" : "Sao chép"}
+                                  </span>
+                                </Button>
+                              )}
+
+                            {activeAttachment.url && (
+                              <a
+                                href={activeAttachment.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex h-7 items-center gap-1 rounded-md border border-input bg-background px-2 text-xs font-medium text-foreground hover:bg-accent"
+                                title="Mở xem nguyên file trên tab mới"
+                              >
+                                <span>↗ Mở xem</span>
+                              </a>
+                            )}
+
+                            {activeAttachment.url && (
+                              <a
+                                href={activeAttachment.url}
+                                download={activeAttachment.fileName}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex h-7 items-center gap-1 rounded-md bg-primary px-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                              >
+                                <span>⬇ Tải</span>
+                              </a>
+                            )}
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => setShowAddForm(!showAddForm)}
+                            >
+                              <span>{showAddForm ? "✕ Đóng" : "+ Thêm tệp"}</span>
+                            </Button>
+
+                            {confirmDeleteAttPath === activeAttachment.path ? (
+                              <div className="inline-flex items-center gap-1 rounded-md border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs">
+                                <span className="text-[11px] font-medium text-destructive">
+                                  Xóa?
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleRemoveAttachment(activeAttachment.path)
+                                  }
+                                  className="font-bold text-destructive hover:underline cursor-pointer"
+                                >
+                                  Có
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setConfirmDeleteAttPath(null)}
+                                  className="text-muted-foreground hover:text-foreground cursor-pointer ml-1"
+                                >
+                                  Hủy
+                                </button>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  setConfirmDeleteAttPath(activeAttachment.path)
+                                }
+                                className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                ✕ Xóa
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Khung hiển thị nội dung tệp đính kèm đang chọn */}
+                      {activeAttachment && (
+                        <div className="pt-1">
+                          {isAttCsv && (
+                            <CsvTableView
+                              content={activeAttachment.content as string}
+                              fileName={activeAttachment.fileName}
+                              downloadUrl={activeAttachment.url}
+                              hideGuide={true}
+                            />
+                          )}
+
+                          {!isAttCsv && activeAttachment.kind === "text" && (
+                            <pre className="max-h-[68vh] overflow-auto rounded-xl border bg-muted/20 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
+                              {activeAttachment.content}
+                            </pre>
+                          )}
+
+                          {activeAttachment.kind === "pdf" && activeAttachment.url && (
+                            <div className="overflow-hidden rounded-xl border border-border/80 shadow-inner">
+                              <iframe
+                                src={`${activeAttachment.url}#view=FitH`}
+                                title={activeAttachment.fileName}
+                                className="h-[68vh] min-h-[500px] w-full border-none"
+                              />
+                            </div>
+                          )}
+
+                          {activeAttachment.kind === "image" && activeAttachment.url && (
+                            <div className="overflow-hidden rounded-xl border bg-muted/20 p-2 text-center">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={activeAttachment.url}
+                                alt={activeAttachment.fileName}
+                                className="max-h-[68vh] w-full rounded-lg object-contain mx-auto"
+                              />
+                            </div>
+                          )}
+
+                          {activeAttachment.kind === "download" && (
+                            <div className="rounded-xl border border-dashed p-8 text-center bg-muted/10 space-y-2">
+                              <span className="text-3xl">📦</span>
+                              <p className="text-xs font-semibold text-foreground">
+                                {activeAttachment.fileName}
+                              </p>
+                              {activeAttachment.url && (
+                                <a
+                                  href={activeAttachment.url}
+                                  download={activeAttachment.fileName}
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+                                >
+                                  ⬇ Tải file về máy
+                                </a>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
             </div>

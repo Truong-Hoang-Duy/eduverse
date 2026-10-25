@@ -161,6 +161,86 @@ export function PublicCheckpointView({
             )}
           </div>
 
+          {/* Banner thông báo tệp dữ liệu thực hành đính kèm */}
+          {checkpoint.files.filter((f) => !f.isMain).length > 0 && (
+            <div className="space-y-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5 shadow-xs">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/15 text-lg">
+                    📦
+                  </span>
+                  <div>
+                    <p className="text-xs sm:text-sm font-bold text-foreground">
+                      Tệp dữ liệu thực hành đính kèm (
+                      {checkpoint.files.filter((f) => !f.isMain).length} tệp)
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Tải file về máy để nạp vào bài làm hoặc bấm &quot;Xem bảng&quot; để tra cứu trực tiếp
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2 pt-0.5">
+                {checkpoint.files
+                  .filter((f) => !f.isMain)
+                  .map((f) => {
+                    const originalIdx = checkpoint.files.findIndex(
+                      (item) => item.path === f.path
+                    );
+                    return (
+                      <div
+                        key={f.path}
+                        className="flex items-center justify-between gap-2 rounded-xl border border-border/80 bg-background/90 p-2.5 shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="text-base">📄</span>
+                          <div className="truncate">
+                            <p
+                              className="truncate font-bold text-xs text-foreground"
+                              title={f.fileName}
+                            >
+                              {f.fileName}
+                            </p>
+                            <div className="flex items-center gap-1 mt-0.5">
+                              {getFileFormatBadge(f.fileName, f.kind)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              originalIdx >= 0 && setSelectedIndex(originalIdx)
+                            }
+                            className="inline-flex h-7 items-center gap-1 rounded-lg border border-input bg-background px-2 text-[11px] font-semibold text-foreground hover:bg-accent transition-colors shadow-2xs"
+                            title="Chuyển sang xem bảng dữ liệu"
+                          >
+                            <span>👁</span>
+                            <span>Xem bảng</span>
+                          </button>
+                          {f.url && (
+                            <a
+                              href={f.url}
+                              download={f.fileName}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex h-7 items-center gap-1 rounded-lg bg-primary px-2.5 text-[11px] font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-xs"
+                              title="Tải file này về máy tính"
+                            >
+                              <span>⬇</span>
+                              <span>Tải về</span>
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
           {/* Files Container */}
           {totalFiles === 0 ? (
             <div className="rounded-2xl border border-dashed border-border p-12 text-center">
@@ -274,21 +354,19 @@ export function PublicCheckpointView({
                           </Button>
                         )}
 
-                      {/* Nút Mở tab mới xem toàn màn hình (cho PDF & Ảnh) */}
-                      {activeFile.url &&
-                        (activeFile.kind === "pdf" ||
-                          activeFile.kind === "image") && (
-                          <a
-                            href={activeFile.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-input bg-background px-3 text-xs font-semibold text-foreground shadow-2xs transition-colors hover:bg-accent"
-                            title="Mở tài liệu trên tab mới để xem toàn màn hình"
-                          >
-                            <span>↗</span>
-                            <span>Mở tab mới</span>
-                          </a>
-                        )}
+                      {/* Nút Mở tab mới xem toàn màn hình */}
+                      {activeFile.url && (
+                        <a
+                          href={activeFile.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-input bg-background px-3 text-xs font-semibold text-foreground shadow-2xs transition-colors hover:bg-accent"
+                          title="Mở tài liệu trên tab mới để xem toàn màn hình"
+                        >
+                          <span>↗</span>
+                          <span>Mở tab mới</span>
+                        </a>
+                      )}
 
                       {/* Nút Tải file về máy */}
                       {activeFile.url && (
@@ -340,6 +418,8 @@ export function PublicCheckpointView({
                           (activeFile as AssignmentSpecFile & { content: string })
                             .content
                         }
+                        fileName={activeFile.fileName}
+                        downloadUrl={activeFile.url}
                       />
                     </div>
                   )}
