@@ -52,18 +52,42 @@ export async function specPathsOfCourses(
 ): Promise<string[]> {
   if (courseIds.length === 0) return [];
 
-  const { data } = await supabase
+  const { data: initialData, error } = await supabase
     .from("assignments")
-    .select("spec_file_path, attachment_file_paths")
+    .select("spec_file_path, attachment_file_paths, instructions")
     .in("course_id", courseIds);
+
+  let data = initialData;
+  if (error || !data) {
+    const fallback = await supabase
+      .from("assignments")
+      .select("spec_file_path, instructions")
+      .in("course_id", courseIds);
+    data = fallback.data as typeof data;
+  }
 
   const paths: string[] = [];
   for (const a of data ?? []) {
     if (a.spec_file_path) paths.push(a.spec_file_path);
-    const row = a as unknown as { attachment_file_paths?: string[] };
+    const row = a as { attachment_file_paths?: string[]; instructions?: string };
     if (Array.isArray(row.attachment_file_paths)) {
       for (const p of row.attachment_file_paths) {
         if (p) paths.push(p);
+      }
+    }
+    if (row.instructions) {
+      const match = row.instructions.match(/<!--attachments:(\[.*?\])-->/);
+      if (match) {
+        try {
+          const parsed = JSON.parse(match[1]);
+          if (Array.isArray(parsed)) {
+            for (const p of parsed) {
+              if (p && typeof p === "string") paths.push(p);
+            }
+          }
+        } catch {
+          // ignore
+        }
       }
     }
   }

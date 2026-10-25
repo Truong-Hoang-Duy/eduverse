@@ -8,9 +8,9 @@
  */
 import { readZipEntry } from "@/lib/zip";
 
-/** `<w:p>` = một đoạn văn; `<w:t>` = một mẩu chữ trong đoạn. */
-const PARAGRAPH_RE = /<w:p(?:\s[^>]*)?>([\s\S]*?)<\/w:p>/g;
-const INLINE_RE = /<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|<w:(tab|br|cr)\b[^>]*>/g;
+/** Token regex: các thẻ đơn lập không lồng nhau, không gây V8 regex backtracking stack overflow */
+const TOKEN_RE =
+  /<w:p\b[^>]*>|<\/w:p>|<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>|<w:(?:tab|br|cr)\b[^>]*>/g;
 
 function decodeXmlEntities(raw: string): string {
   return (
@@ -43,15 +43,29 @@ export function docxToText(bytes: Uint8Array): string | null {
 
   const xml = new TextDecoder().decode(xmlBytes);
   const paragraphs: string[] = [];
+  let current: string[] = [];
 
-  for (const [, inner] of xml.matchAll(PARAGRAPH_RE)) {
-    let line = "";
-    for (const match of inner.matchAll(INLINE_RE)) {
-      if (match[1] !== undefined) line += decodeXmlEntities(match[1]);
-      else if (match[2] === "tab") line += "\t";
-      else line += "\n"; // br / cr
+  for (const match of xml.matchAll(TOKEN_RE)) {
+    const full = match[0];
+    if (full.startsWith("<w:p ") || full === "<w:p>") {
+      current = [];
+    } else if (full.startsWith("</w:p>")) {
+      const line = current.join("");
+      if (line.trim()) paragraphs.push(line);
+      current = [];
+    } else if (match[1] !== undefined) {
+      current.push(decodeXmlEntities(match[1]));
+    } else if (full.startsWith("<w:tab")) {
+      current.push("\t");
+    } else if (full.startsWith("<w:br") || full.startsWith("<w:cr")) {
+      current.push("\n");
     }
-    paragraphs.push(line);
+  }
+
+  // Thu hồi đoạn dở dang nếu file XML không có thẻ đóng </w:p>
+  if (current.length > 0) {
+    const line = current.join("");
+    if (line.trim()) paragraphs.push(line);
   }
 
   const text = paragraphs.join("\n").trim();

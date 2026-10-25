@@ -33,6 +33,10 @@
 - [x] Bảng kết quả: badge màu theo điểm (<50 đỏ, 50-79 vàng, ≥80 xanh), tiêu chí chi tiết, sửa tay điểm/nhận xét, xuất CSV (BOM cho Excel)
 - [x] E2E phase 3: 12/12 PASS kèm chấm Gemini thật (scripts/e2e-phase3.mjs)
 - [x] User click-through UI phase 3 rồi merge develop + main (đã dùng production ổn định)
+- [x] Đợt 110: Tinh gọn nút sao chép đề bài & Thiết kế lại popup xem tài liệu tối giản chuẩn 2 Tab (Đề bài chính / Tệp đính kèm), loại bỏ 100% hướng dẫn thừa.
+- [x] Đợt 111: Tối ưu xem PDF trực tiếp tại chỗ trong dialog, nút ↗ Mở xem mở trực tiếp PDF / CSV nguyên bản, đồng bộ toolbar tệp đính kèm và ẩn khối hướng dẫn nạp dữ liệu.
+- [x] Đợt 112: Khắc phục sự cố mất file Storage & Phục hồi toàn bộ 16 đề bài xem trước PDF mượt mà.
+- [x] Đợt 113: Tối ưu nút "Mở xem" & "Copy link gửi học sinh" trỏ thẳng file PDF trực tiếp, gia hạn Signed URL 1 năm & Khôi phục 100% tài liệu gốc CSA.
 
 ## Giai đoạn 4 — Sản phẩm cuối khóa
 - [x] HV CRUD sản phẩm (/student/projects, 1 sản phẩm/lớp, unique)
@@ -1533,6 +1537,37 @@
   - Đồng bộ `spec-storage.ts`, `admin-report.ts` và `deleteAssignment` để xóa sạch cả đề chính và các tệp đính kèm khi xóa đề bài.
 - [x] **Kiểm thử chất lượng:**
   - 458/458 vitest unit tests PASS (`assignment-utils.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` thành công 100%.
+
+### Đợt 107: Link công khai xem đề Checkpoints không cần đăng nhập, Sửa/xóa/thay thế file đề bài chính đã lưu & Bỏ thông tin demo mặc định trên màn hình đăng nhập (2026-10-25)
+- [x] **Link công khai xem đề Checkpoints (`/checkpoints/[id]` & `/checkpoint/[id]`):**
+  - Helper `isCheckpointAssignment(title)`: nhận diện không phân biệt hoa thường các đề bài có chứa từ khóa 'checkpoint'/'checkpoints' (ví dụ: Checkpoints 1, checkpoint 2, [CSA05 - Checkpoints] Buổi 5).
+  - Middleware (`middleware.ts`): bypass xác thực cho đường dẫn `/checkpoints/` và `/checkpoint/`.
+  - Data Loader (`checkpoint-data.ts`): Server-only `loadPublicCheckpoint` dùng `createAdminClient()` kiểm tra điều kiện Checkpoints, tải nội dung file đề chính và tệp đính kèm kèm signed URL, cache per-request.
+  - Giao diện học viên xem đề (`checkpoint-view.tsx`): hiển thị tiêu đề, khóa, buổi, hướng dẫn làm bài, thanh chuyển tab đa file, bảng dữ liệu CSV chuyên nghiệp, xem text/code/PDF/ảnh, nút tải file và nút copy link đề bài.
+  - Thẻ đề bài đã lưu (`saved-assignments.tsx`) & popup xem đề (`view-spec-dialog.tsx`): huy hiệu `Checkpoints (Link mở)`, nút 🔗 copy nhanh đường dẫn chia sẻ cho học viên và nút xem trước trang học viên trên tab mới.
+- [x] **Sửa, xóa và ghi đè file đề bài chính đã lưu:**
+  - Server action `updateAssignment`, `replaceAssignmentSpecFile`, `removeAssignmentMainFile`: cho phép vừa đổi tiêu đề vừa chọn file đề bài mới để ghi đè file cũ (hoặc xóa file cũ). Tự động dọn dẹp Storage bucket `assignment-specs`.
+  - Dialog chỉnh sửa (`edit-assignment-title-button.tsx`): hiển thị tên file hiện tại, nút xóa file hiện tại và ô chọn file mới ghi đè.
+  - Dialog xem đề (`view-spec-dialog.tsx`): bổ sung nút `🔄 Thay file khác` và `✕ Xóa file` ngay trên header file đề chính kèm form ghi đè trực tiếp.
+- [x] **Bỏ tài khoản & mật khẩu demo mặc định trên UI Login (`login-form.tsx`):**
+  - State `username` và `password` đặt mặc định là chuỗi rỗng `""`, không hiện sẵn thông tin demo trên giao diện.
+### Đợt 108: Nhúng xem PDF trực tiếp, Thanh chuyển đổi tài liệu tùy chọn & Hỗ trợ tải tài liệu toàn diện (2026-10-25)
+- [x] **Nhúng xem PDF trực tiếp (`view-spec-dialog.tsx` & `checkpoint-view.tsx`):**
+  - Iframe nhúng PDF tỉ lệ cao với `#view=FitH` giúp PDF tự động co giãn vừa vặn chiều ngang hiển thị trên mọi kích thước màn hình.
+  - Tối ưu chiều cao hiển thị (`h-[68vh] min-h-[500px]` ở modal GV và `h-[78vh] min-h-[550px]` ở trang public học viên).
+  - Nút `↗ Mở tab mới` trên header và link dự phòng dưới chân iframe giúp mở xem toàn màn hình, in hoặc tải về dễ dàng khi trình duyệt hạn chế inline iframe.
+- [x] **Thanh chuyển đổi tài liệu tùy chọn (Document Tab Switcher):**
+  - Phân loại rõ ràng Đề bài chính (`📋`) và Tài liệu tùy chọn / đính kèm (`📎`) kèm badge màu định dạng trực quan (`PDF`, `CSV Data`, `Word DOCX`, `Code`, `Ảnh`, `File`).
+  - Chuyển tab lập tức xem nội dung file đó mà không tải lại trang.
+- [x] **Hỗ trợ tải tài liệu đầy đủ:**
+  - Nút `⬇ Tải file này` / `⬇ Tải tài liệu này` trên header file đang xem.
+  - Bảng Tải nhanh toàn bộ tài liệu (Quick download panel) ở cuối trang giúp tải bất kỳ file nào nhanh chóng.
+- [x] **Nâng cấp Form tạo đề bài (`assignment-form.tsx`):**
+  - Hỗ trợ tạo URL blob cục bộ để xem trước file PDF local trong iframe trước khi upload.
+  - Bổ sung nút `👁 Xem thử nội dung đề` cho file đề chính vừa chọn.
+- [x] **Kiểm thử chất lượng:**
+  - 465/465 unit tests PASS 100%, E2E `checkpoint.e2e.ts` PASS 3/3 tests.
+  - `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
 
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload

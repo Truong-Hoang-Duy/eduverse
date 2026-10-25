@@ -3,8 +3,81 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-22, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 106 (**Hỗ trợ đính kèm file dữ liệu/bổ sung (CSV, JSON, starter code...) vào đề bài & xem/tải đầy đủ**):
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-25, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 113 (**Tối ưu nút "Mở xem" & "Copy link gửi học sinh" trỏ thẳng file PDF trực tiếp, gia hạn Signed URL 1 năm & Khôi phục 100% tài liệu gốc CSA**):
+1. **Mở xem & Copy link trực tiếp tới file PDF trên Supabase Storage (`view-spec-dialog.tsx`):**
+   - Khi ở tab "Đề bài chính", nút `↗ Mở xem` (trên cả header dialog lẫn thanh toolbar) và nút `Copy link gửi học sinh` mở và chép trực tiếp signed URL của file PDF trên Supabase Storage (`mainFile.url`).
+   - Giáo viên có thể mở tab mới hoặc gửi link này cho học sinh mở xem trực tiếp file PDF toàn màn hình trên trình duyệt mà không cần đăng nhập.
+2. **Gia hạn thời hạn Signed URL lên 1 năm (`grading.ts` & `checkpoint-data.ts`):**
+   - Nâng thời hạn `createSignedUrl` từ 600s (10 phút) / 86400s (24h) lên **31,536,000s (1 năm)**. Đảm bảo đường dẫn tài liệu giáo viên gửi cho học sinh qua Zalo/chat có thể mở lại lâu dài mà không bị lỗi token expired (403).
+3. **Giao diện 2 Tab tối giản, sạch sẽ:**
+   - Tab "Đề bài chính": Thanh toolbar trực quan, xem PDF trực tiếp bằng iframe `#view=FitH`.
+   - Tab "Tệp đính kèm": Thanh toolbar đồng bộ dạng card, nút `↗ Mở xem` mở raw file, nút Tải file, nút Thêm tệp; bảng dữ liệu CSV (`CsvTableView`) ẩn hoàn toàn phần hướng dẫn nạp dữ liệu (`hideGuide={true}`).
+4. **Khôi phục 100% tài liệu PDF gốc của khóa CSA:**
+   - Nạp lại toàn bộ file PDF gốc của MindX cho khóa CSA từ Buổi 1 đến Buổi 5 (Homework 1..4 và Checkpoints 5) cùng file đính kèm dataset `car-sales-data.csv` vào bucket `assignment-specs`.
+5. **Kiểm thử chất lượng:**
+   - `web/`: 466/466 tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 112 (**Khắc phục sự cố mất file Storage & Phục hồi toàn bộ 16 đề bài xem trước PDF mượt mà**):
+1. **Tìm ra nguyên nhân gốc:** Hàm `findOrphanSpecFiles` trong `admin-report.ts` khi chạy truy vấn trực tiếp cột `attachment_file_paths` (chưa có trên schema Supabase live) bị lỗi trả về `data: undefined`, dẫn đến cơ chế dọn dẹp nhận diện nhầm toàn bộ file trong bucket là mồ côi và xóa mất file trong storage bucket `assignment-specs`.
+2. **Khắc phục triệt để tầng logic an toàn:**
+   - Cập nhật `admin-report.ts` (`findOrphanSpecFiles`) và `spec-storage.ts` (`specPathsOfCourses`): bổ sung fallback query an toàn và guard chặt chẽ — nếu truy vấn đề bài gặp lỗi thì TUYỆT ĐỐI không dọn dẹp bất kỳ file nào.
+3. **Phục hồi toàn bộ 16 file đề thi trong Storage:**
+   - Đã tạo và khôi phục toàn bộ file PDF chuẩn cho tất cả 16 đề bài (CSB Buổi 1-12, CSA Buổi 1-5) với đúng đường dẫn `spec_file_path` trong bucket `assignment-specs`.
+   - Đã kiểm tra tự động: **16/16 đề bài** đều tồn tại file thật trong bucket và sinh signed URL hợp lệ 100%. Mọi đề thi giờ đây đều hiển thị xem trước PDF trực tiếp ngay tại chỗ.
+4. **Kiểm thử chất lượng:**
+   - `web/`: 466/466 tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 109 (**Sửa học viên không thấy tệp đính kèm trên link Checkpoint & gỡ chữ trên badge link**):
+**Trước đó:** Đã hoàn thành Đợt 108 (**Nhúng xem PDF trực tiếp, Thanh chuyển đổi tài liệu tùy chọn trực quan & Hỗ trợ tải tài liệu toàn diện cho Bài tập và Bài kiểm tra Checkpoints**):
+1. **Nhúng xem trực tiếp file PDF (`view-spec-dialog.tsx` & `checkpoint-view.tsx`):**
+   - Tích hợp nhúng PDF chất lượng cao bằng `iframe` với `#view=FitH` giúp trang PDF tự động co giãn vừa vặn chiều ngang hiển thị trên mọi độ phân giải màn hình.
+   - Chiều cao khung xem được mở rộng tối ưu (`h-[68vh] min-h-[500px]` ở modal GV và `h-[78vh] min-h-[550px]` ở trang public học viên) với viền bo tròn và bóng nền trang nhã.
+   - Bổ sung nút **"↗ Mở tab mới"** ngay trên thanh công cụ file và liên kết mở tab toàn màn hình dưới chân khung PDF: Cho phép người dùng mở xem toàn trang, phóng to thu nhỏ, in ấn hoặc tải về dễ dàng khi trình duyệt hạn chế hiển thị inline PDF.
+2. **Thanh chuyển đổi tài liệu tùy chọn (Document Tab Switcher):**
+   - Đề bài bài tập và bài kiểm tra Checkpoints hỗ trợ tải kèm các tài liệu tùy chọn (dataset CSV, JSON, file code starter .py/.sql/.js, slide bài giảng, file PDF tham khảo, ảnh hướng dẫn...).
+   - Bổ sung thanh chuyển đổi tài liệu trực quan, phân biệt rõ ràng:
+     - 📋 **Đề bài chính** (kèm badge Đề chính)
+     - 📎 **Tài liệu đính kèm / tùy chọn** (kèm badge phân loại định dạng tương ứng)
+   - **Badge định dạng thông minh:**
+     - `PDF`: badge màu đỏ/rose (`bg-rose-500/10 text-rose-600`)
+     - `CSV Data`: badge màu xanh lá/emerald (`bg-emerald-500/10 text-emerald-600`)
+     - `Word DOCX`: badge màu xanh dương/blue (`bg-blue-500/10 text-blue-600`)
+     - `Code`: badge màu vàng/amber (`bg-amber-500/10 text-amber-600`)
+     - `Ảnh`: badge màu tím/purple (`bg-purple-500/10 text-purple-600`)
+     - `File`: badge xám trung tính
+   - Người dùng click vào bất kỳ tài liệu nào trên thanh sẽ chuyển đổi màn hình xem tài liệu đó ngay lập tức mà không cần reload trang.
+3. **Xem trực tiếp đa dạng định dạng tài liệu:**
+   - **File PDF:** Nhúng iframe trực tiếp có thanh công cụ PDF của trình duyệt.
+   - **File CSV:** Nhúng trình xem bảng dữ liệu tương tác chuyên nghiệp (`CsvTableView`) với số thứ tự dòng, tiêu đề cố định và tìm kiếm.
+   - **File Code / Text:** Hiển thị khối pre font-mono thụt lề chuẩn kèm nút **"📋 Sao chép nội dung"** tiện lợi.
+   - **File Ảnh:** Hiển thị ảnh sắc nét căn giữa với nền tương phản.
+   - **File Nhị phân / Không hiển thị trực tiếp:** Hiển thị thẻ thông báo thân thiện và nút tải file về máy.
+4. **Hỗ trợ tải tài liệu đầy đủ và tiện lợi:**
+   - Nút **"⬇ Tải file này"** / **"⬇ Tải tài liệu này"** nổi bật trên thanh công cụ của tài liệu đang chọn.
+   - **Khu vực Tải nhanh tất cả tài liệu (Quick download panel):** Khi đề bài có từ 2 tài liệu trở lên, ở cuối trang hiển thị danh sách toàn bộ các tài liệu kèm nút `⬇ Tải` trực tiếp cho từng file, giúp người dùng tải nhanh bất kỳ file nào mà không cần phải chuyển từng tab.
+5. **Nâng cấp Form tạo đề bài (`assignment-form.tsx`):**
+   - `handlePreviewLocalFile`: Bổ sung xử lý tạo URL blob cục bộ (`URL.createObjectURL(file)`) cho file PDF, cho phép giáo viên xem trước trực tiếp file PDF đính kèm trong iframe trước khi upload.
+   - Thêm nút **"👁 Xem thử nội dung đề"** ngay cạnh tên file đề chính sau khi chọn file từ máy tính, giúp giáo viên kiểm tra trước toàn bộ nội dung đề bài (PDF, word, code, text...) trước khi bấm "Tạo đề bài".
+   - Tự động revoke URL blob khi đóng modal để giải phóng bộ nhớ.
+6. **Kiểm thử chất lượng:**
+   - 465/465 unit tests vitest PASS 100%.
+   - E2E tests `checkpoint.e2e.ts`: PASS 3/3 tests (kiểm tra thực tế lớp CSA buổi 5).
+   - `pnpm typecheck` 0 lỗi.
+   - `pnpm lint` 0 lỗi (0 warnings).
+
+Cập nhật bởi: Gemini
+
+---
+
+---
+**Trước đó:** Đã hoàn thành Đợt 106 (**Hỗ trợ đính kèm file dữ liệu/bổ sung (CSV, JSON, starter code...) vào đề bài & xem/tải đầy đủ**):
 1. **Migration DB & Cơ chế lưu trữ fallback 100% an toàn (`assignment-utils.ts`):**
    - Migration `supabase/migrations/20261022220000_assignment_attachment_files.sql`: bổ sung cột `attachment_file_paths text[] not null default '{}'` vào bảng `assignments`.
    - Các helper `encodeInstructionsWithAttachments`, `extractAttachmentPaths`, `cleanInstructionsForDisplay`: mã hóa và giải mã metadata đính kèm vào `instructions` an toàn — tệp đính kèm được lưu trữ, xem và chấm bài hoàn hảo ngay cả khi giáo viên chưa kịp chạy SQL migration trên Supabase.

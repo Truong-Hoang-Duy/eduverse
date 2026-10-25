@@ -74,6 +74,7 @@ export function AssignmentForm({
     name: string;
     content?: string;
     url?: string;
+    isPdf?: boolean;
   } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const attachmentRef = useRef<HTMLInputElement>(null);
@@ -81,7 +82,10 @@ export function AssignmentForm({
 
   async function handlePreviewLocalFile(file: File) {
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-    if (["txt", "md", "csv", "json", "py", "sql", "js", "ts"].includes(ext)) {
+    if (ext === "pdf") {
+      const url = URL.createObjectURL(file);
+      setPreviewModalFile({ name: file.name, url, isPdf: true });
+    } else if (["txt", "md", "csv", "json", "py", "sql", "js", "ts"].includes(ext)) {
       const text = await file.text();
       setPreviewModalFile({ name: file.name, content: text });
     } else if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext)) {
@@ -270,9 +274,21 @@ export function AssignmentForm({
                 Nên dùng .txt/.md — file gõ trong Notepad chắc chắn đọc được.
               </p>
               {fileName && (
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  ✓ {fileName}
-                </p>
+                <div className="flex items-center justify-between text-xs text-green-600 dark:text-green-400">
+                  <span className="truncate">✓ {fileName}</span>
+                  {fileRef.current?.files?.[0] && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        fileRef.current?.files?.[0] &&
+                        handlePreviewLocalFile(fileRef.current.files[0])
+                      }
+                      className="shrink-0 font-medium text-primary hover:underline"
+                    >
+                      👁 Xem thử nội dung đề
+                    </button>
+                  )}
+                </div>
               )}
               {fileError && <p className="text-xs text-destructive">{fileError}</p>}
             </div>
@@ -396,18 +412,45 @@ export function AssignmentForm({
     {previewModalFile && (
       <Dialog
         open={!!previewModalFile}
-        onOpenChange={(next) => !next && setPreviewModalFile(null)}
+        onOpenChange={(next) => {
+          if (!next && previewModalFile.url) {
+            URL.revokeObjectURL(previewModalFile.url);
+          }
+          if (!next) setPreviewModalFile(null);
+        }}
       >
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle className="truncate">
               Xem trước: {previewModalFile.name}
             </DialogTitle>
             <DialogDescription>
-              Nội dung tệp đính kèm trước khi tải lên
+              Xem trước nội dung tệp trước khi tải lên
             </DialogDescription>
           </DialogHeader>
-          {previewModalFile.content != null ? (
+
+          {previewModalFile.isPdf && previewModalFile.url ? (
+            <div className="space-y-2">
+              <div className="relative overflow-hidden rounded-xl border border-border/80 bg-muted/10 shadow-inner">
+                <iframe
+                  src={`${previewModalFile.url}#view=FitH`}
+                  title={previewModalFile.name}
+                  className="h-[65vh] min-h-[450px] w-full border-none"
+                />
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                <span>💡 Trình xem trước file PDF trước khi upload lên máy chủ.</span>
+                <a
+                  href={previewModalFile.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-primary hover:underline"
+                >
+                  Mở tab mới ↗
+                </a>
+              </div>
+            </div>
+          ) : previewModalFile.content != null ? (
             <pre className="max-h-[60vh] overflow-auto rounded-lg border bg-muted/20 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
               {previewModalFile.content}
             </pre>
