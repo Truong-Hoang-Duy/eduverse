@@ -38,6 +38,7 @@
 - [x] Đợt 112: Khắc phục sự cố mất file Storage & Phục hồi toàn bộ 16 đề bài xem trước PDF mượt mà.
 - [x] Đợt 113: Tối ưu nút "Mở xem" & "Copy link gửi học sinh" trỏ thẳng file PDF trực tiếp, gia hạn Signed URL 1 năm & Khôi phục 100% tài liệu gốc CSA.
 - [x] Đợt 114: Khắc phục sự cố Timeout 504 khi gọi AI trên Vercel, tăng giới hạn 60s & Chống crash trắng trang tuyệt đối.
+- [x] Đợt 115: Tích hợp cơ chế Auto-Warmup ngầm tự động đánh thức AI Service trên Render khi giáo viên vào trang.
 
 ## Giai đoạn 4 — Sản phẩm cuối khóa
 - [x] HV CRUD sản phẩm (/student/projects, 1 sản phẩm/lớp, unique)

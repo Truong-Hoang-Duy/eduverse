@@ -4,7 +4,20 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-25, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 114 (**Khắc phục sự cố Timeout 504 khi gọi AI trên Vercel, tăng giới hạn 60s & Chống crash trắng trang tuyệt đối**):
+**Đang làm:** Đã hoàn thành Đợt 115 (**Tích hợp cơ chế Auto-Warmup ngầm tự động đánh thức AI Service trên Render khi giáo viên vào trang**):
+1. **Mục tiêu:**
+   - Xóa bỏ hoàn toàn độ trễ lần đầu (cold start 30–50s) khi máy chủ AI trên Render rơi vào trạng thái ngủ đông sau 15 phút không hoạt động.
+2. **Triển khai kỹ thuật:**
+   - **Route Handler `GET /api/ai-warmup` (`route.ts`):** Trả về phản hồi JSON 200 ngay lập tức cho Client, đồng thời gửi tín hiệu ping ngầm tới `AI_SERVICE_URL/health` trên Render với timeout 50 giây mà không chặn luồng render giao diện.
+   - **Component Client `<AiWarmup />` (`components/ai-warmup.tsx`):** Chạy ngầm trong `TeacherLayout` (`(teacher)/teacher/layout.tsx`), tự động kích hoạt warmup định kỳ mỗi 10 phút/lần (dưới mốc 15 phút ngủ đông của Render, lưu timestamp vào `sessionStorage`).
+   - Nhờ đó, trong 30–45 giây giáo viên mở danh sách lớp hoặc chọn học sinh, máy chủ AI đã được đánh thức xong. Đến khi bấm "AI tạo nhận xét", hệ thống phản hồi ngay tức thì trong 2–3 giây.
+3. **Kiểm thử chất lượng:**
+   - `web/`: 466/466 tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 114 (**Khắc phục sự cố Timeout 504 khi gọi AI trên Vercel, tăng giới hạn 60s & Chống crash trắng trang tuyệt đối**):
 1. **Nguyên nhân sự cố:**
    - Trình duyệt báo `Failed to load resource: the server responded with a status of 504 ()` và `Uncaught Error: An unexpected response was received from the server`.
    - Vercel Serverless Functions trên gói Hobby mặc định timeout ở 10–15s. Khi máy chủ AI trên Render ở trạng thái ngủ đông (cold start 30–60s) hoặc Gemini sinh bài nhận xét dài, Vercel ngắt kết nối với mã 504 HTML. Phía React Client (`review-editor.tsx`) thiếu `try ... catch` nên lỗi 504 trở thành unhandled exception làm sập trắng toàn bộ ứng dụng (`Application error: a client-side exception has occurred...`).
