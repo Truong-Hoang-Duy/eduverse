@@ -398,13 +398,16 @@ function CreateTemplateForm() {
 export function TemplateManager({ templates }: { templates: TemplateRow[] }) {
   return (
     <div className="space-y-4">
-      {templates.length === 0 && (
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          Các mẫu tin sẽ tự động khớp theo hình thức buổi học (Tiêu chuẩn, SPCK, Kiểm tra, Demo Day) trong trang buổi học.
+        </p>
         <form action={seedDefaultTemplate}>
           <Button type="submit" size="sm" variant="secondary">
-            ⚡ Thêm mẫu thông báo mặc định
+            ⚡ Thêm bộ mẫu theo hình thức buổi học
           </Button>
         </form>
-      )}
+      </div>
 
       <ul className="space-y-2">
         {templates.map((t) => (

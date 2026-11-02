@@ -2,6 +2,7 @@
 
 import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import { resolveSessionFormat } from "@/lib/session-format";
 import { createClient } from "@/lib/supabase/server";
 
 interface ReviewRow {
@@ -26,7 +27,9 @@ export async function generateZaloSummary(input: {
 
   const { data: session } = await supabase
     .from("sessions")
-    .select("class_id, title, content, session_number, classes(class_code)")
+    .select(
+      "class_id, title, content, session_number, is_periodic_test, is_project_period, classes(class_code)"
+    )
     .eq("id", input.sessionId)
     .single();
   if (!session) {
@@ -42,9 +45,14 @@ export async function generateZaloSummary(input: {
         .single(),
       supabase
         .from("student_reviews")
-        .select("strengths, improvements, is_absent, profiles!student_reviews_student_id_fkey(full_name)")
+        .select(
+          "strengths, improvements, is_absent, profiles!student_reviews_student_id_fkey(full_name)"
+        )
         .eq("session_id", input.sessionId),
-      supabase.from("enrollments").select("student_id").eq("class_id", session.class_id),
+      supabase
+        .from("enrollments")
+        .select("student_id")
+        .eq("class_id", session.class_id),
     ]);
 
   if (!template) {
@@ -58,7 +66,8 @@ export async function generateZaloSummary(input: {
   );
   if (reviews.length === 0) {
     return {
-      error: "Buổi này chưa có nhận xét học viên nào — hãy nhận xét trước khi tạo tin.",
+      error:
+        "Buổi này chưa có nhận xét học viên nào — hãy nhận xét trước khi tạo tin.",
     };
   }
 
@@ -68,6 +77,12 @@ export async function generateZaloSummary(input: {
   // Lớp chỉ có 1 học viên (dạy kèm 1-1) → prompt đổi sang nhận xét riêng em
   // đó thay vì khái quát chung cả lớp (yêu cầu user 2026-07-21).
   const isOneOnOne = (enrollmentsData ?? []).length === 1;
+
+  const sessionFormat = resolveSessionFormat({
+    session_number: session.session_number,
+    is_periodic_test: session.is_periodic_test,
+    is_project_period: session.is_project_period,
+  });
 
   const aiConfig = await getAiConfig();
   if (!aiConfig.ok) {
@@ -85,6 +100,7 @@ export async function generateZaloSummary(input: {
         class_code: classCode,
         session_title: sessionLabel,
         session_content: session.content ?? "",
+        session_format: sessionFormat,
         reviews: reviews.map((r) => ({
           student_name: r.profiles?.full_name ?? "Học viên",
           strengths: r.strengths,
