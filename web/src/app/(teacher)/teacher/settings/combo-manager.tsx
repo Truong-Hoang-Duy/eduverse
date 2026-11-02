@@ -353,7 +353,7 @@ export function ComboManager({
   const pick = (category: string) =>
     options
       .filter((o) => o.category === category)
-      .map((o) => ({ id: o.id, label: o.label }));
+      .map((o) => ({ id: o.id, label: o.label, skill_group: o.skill_group }));
 
   const catalog: CatalogOptions = {
     strength: pick("strength"),

@@ -3,7 +3,34 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-25, bởi: Gemini)
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-02, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 117 (**Chuẩn hóa quy tắc xưng hô giáo viên chỉ dùng "thầy", bổ sung nút chỉnh sửa `✏️` danh mục nhận xét, chia nhóm kỹ năng đóng/mở trong dropdown Điểm mạnh/Cần cải thiện & sắp xếp khóa học theo lộ trình**):
+1. **Prompt AI Service (`ai-service/app/prompts.py`):**
+   - Bổ sung quy tắc bắt buộc vào `SYSTEM_ROLE`: *"Khi xưng hô hoặc nhắc tới giáo viên: CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'."*
+   - Cập nhật trực tiếp chỉ dẫn xưng hô tại toàn bộ các hàm sinh nhận xét (`build_review_prompt`, `build_zalo_summary_prompt`, `build_greeting_prompt`, `build_student_summary_prompt`, `build_final_presentation_review_prompt`).
+   - Đổi toàn bộ cụm `"thầy cô"` thành `"thầy"` trong `HOMEWORK_PEDAGOGY_RULE`, tiêu chí `ky_nang_giao_tiep` (ĐNL) và hướng dẫn `mindx_letter`.
+2. **Ngân hàng quan sát & Mẫu mặc định (`web/src/lib/presentation-evaluation.ts` & `web/src/lib/actions/settings.ts`):**
+   - Đổi các chip quan sát nhanh từ `"thầy cô"` sang `"thầy"` và mẫu thông báo Zalo mặc định từ `"Thầy/Cô"` sang `"Thầy"`.
+3. **Chỉnh sửa trực tiếp các nhận xét trong danh mục nhận xét (`updateReviewOption`):**
+   - `web/src/lib/actions/settings.ts`: Bổ sung Server Action `updateReviewOption` cập nhật `label` của lựa chọn và tự động revalidate cả `/teacher/settings` lẫn `/teacher/sessions/[id]`.
+   - `option-manager.tsx`, `test-process-manager.tsx`, `project-progress-manager.tsx`: Bổ sung nút `✏️` sửa trực tiếp tại chỗ (inline edit kèm Lưu / Hủy / phím tắt Escape) trên từng lựa chọn Điểm mạnh, Cần cải thiện, Quá trình làm bài kiểm tra và Quan sát SPCK.
+   - `multi-select.tsx` & `review-editor.tsx`: Bổ sung nút `✏️` ngay trên từng lựa chọn trong dropdown chọn nhận xét của buổi học, mở hộp thoại chỉnh sửa nhanh và tự động đồng bộ lại nhãn đã tick.
+4. **Chia nhóm kỹ năng dạng đóng/mở ngay trong Dropdown Điểm mạnh & Cần cải thiện (`multi-select.tsx`):**
+   - Khi mở dropdown `💪 Điểm mạnh` và `🎯 Cần cải thiện` của từng học viên (và trong quản lý Combo), các lựa chọn tự động được chia thành các nhóm kỹ năng đóng/mở giống hệt ở trang Cài đặt (`🧠 Tư duy`, `✨ Sáng tạo`, `💻 Kỹ năng code`, `🖥️ Kỹ năng sử dụng máy tính`, `🤖 Vận dụng AI`, `❓ Đặt câu hỏi`, `🌱 Thái độ học tập`, `⏰ Kỷ luật / Nề nếp`, `📚 Tự học / Nghiên cứu thêm`, `🤝 Giao tiếp & hợp tác`, `🎤 Thuyết trình`, `📌 Khác`).
+   - Mỗi nhóm hiển thị số lượng đã chọn (`✓ {n}`) và tổng số lựa chọn trong nhóm, hỗ trợ bấm tên nhóm để đóng/mở riêng lẻ, nút `Mở tất cả` / `Thu gọn tất cả`, và tự động bung các nhóm có kết quả khớp khi gõ vào ô tìm kiếm.
+5. **Sắp xếp khóa học & danh sách lớp theo đúng trình tự lộ trình từ nhỏ đến lớn (`web/src/lib/course-sort.ts`):**
+   - Bổ sung bộ hàm `detectCourseDomainRank`, `detectCourseLevelRank`, `compareCoursesByRoadmap`, `sortCoursesByRoadmap`:
+     + Thứ tự nhánh môn từ nhỏ đến lớn: `Scratch (SB, SA, SI)` -> `GameMaker / Game (GB, GA, GI, GMB, GMA, GMI)` -> `App / Python & Qt Designer (PTB, PTA, PTI, APB, APA, API)` -> `Web (JSB, JSA, JSI, WB, WA, WI)` -> `Computer Science (CSB, CSA, CSI)` -> `Khác`.
+     + Thứ tự cấp độ trong mỗi nhánh: `Basic (*B)` -> `Advance (*A)` -> `Intensive (*I)`.
+   - Áp dụng cho Danh sách lớp (`class-list.tsx`), trang Lớp học (`teacher/page.tsx`), các trang Chấm bài / Hỏi bài / Chấm SPCK (`assignments/page.tsx`, `assignments/help/page.tsx`, `assignments/project/page.tsx`) và trang Sản phẩm học viên (`gallery-view.tsx`).
+6. **Kiểm thử chất lượng:**
+   - `ai-service/`: 108/108 pytest tests PASS.
+   - `web/`: 470/470 vitest tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó (2026-10-25):**
 **Đang làm:** Đã hoàn thành Đợt 116 (**Chuẩn hóa Quy tắc Sư phạm Bài tập về nhà `HOMEWORK_PEDAGOGY_RULE` & Khái quát hóa Bài làm Kiểm tra `EXAM_ABSTRACTION_RULE` trong Nhận xét AI và Đánh giá Rubric ĐNL**):
 1. **Mục tiêu & Nghiệp vụ Sư phạm:**
    - **Xử lý ghi chú Bài tập về nhà ("Chưa làm bài tập về nhà (0/5) bài"):**

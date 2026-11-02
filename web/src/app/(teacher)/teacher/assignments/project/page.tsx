@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { sortCoursesByRoadmap } from "@/lib/course-sort";
 import { createClient } from "@/lib/supabase/server";
 
 import type { CourseChoice } from "../assignment-form";
@@ -21,7 +22,7 @@ export default async function ProjectReviewPage() {
     .select("id, code, name")
     .order("code");
 
-  const courses = (data ?? []) as CourseChoice[];
+  const courses = sortCoursesByRoadmap((data ?? []) as CourseChoice[]);
 
   return (
     <div className="space-y-8">

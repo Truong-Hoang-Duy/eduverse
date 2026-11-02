@@ -44,7 +44,11 @@ import {
   saveReview,
 } from "@/lib/actions/reviews";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
-import { addReviewOption, deleteReviewOption } from "@/lib/actions/settings";
+import {
+  addReviewOption,
+  deleteReviewOption,
+  updateReviewOption,
+} from "@/lib/actions/settings";
 import {
   createDefaultFinalEvaluation,
   FINAL_EXAM_OBSERVATION_GROUPS,
@@ -358,6 +362,13 @@ export function ReviewEditor({
     deleteReviewOption(fd).catch(() => {});
   }
 
+  function editCustomOption(id: string, newLabel: string) {
+    const fd = new FormData();
+    fd.set("id", id);
+    fd.set("label", newLabel);
+    updateReviewOption({}, fd).catch(() => {});
+  }
+
   const strengthOptions = options.filter((o) => o.category === "strength");
   const improvementOptions = options.filter((o) => o.category === "improvement");
   const testProcessOptions = options.filter((o) => o.category === "test_process");
@@ -473,22 +484,38 @@ export function ReviewEditor({
     addReviewOption({}, fd).catch(() => {});
   }
 
-  function addCustomStrength(raw: string) {
+  function persistOptionWithSkillGroup(
+    category: "strength" | "improvement",
+    label: string,
+    skillGroup?: string
+  ) {
+    const alreadyInCatalog = options.some(
+      (o) => o.category === category && o.label.toLowerCase() === label.toLowerCase()
+    );
+    if (alreadyInCatalog) return;
+    const fd = new FormData();
+    fd.set("category", category);
+    fd.set("label", label);
+    fd.set("skill_group", skillGroup ?? "other");
+    addReviewOption({}, fd).catch(() => {});
+  }
+
+  function addCustomStrength(raw: string, skillGroup?: string) {
     const value = raw.trim();
     if (!value) return;
     setStrengths((prev) =>
       prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
     );
-    persistFreeOption("strength", value);
+    persistOptionWithSkillGroup("strength", value, skillGroup);
   }
 
-  function addCustomImprovement(raw: string) {
+  function addCustomImprovement(raw: string, skillGroup?: string) {
     const value = raw.trim();
     if (!value) return;
     setImprovements((prev) =>
       prev.some((s) => s.toLowerCase() === value.toLowerCase()) ? prev : [...prev, value]
     );
-    persistFreeOption("improvement", value);
+    persistOptionWithSkillGroup("improvement", value, skillGroup);
   }
 
   function addCustomTestProcessNote(raw: string) {
@@ -1705,6 +1732,7 @@ export function ReviewEditor({
                         selected={strengths}
                         onChange={setStrengths}
                         onCreate={addCustomStrength}
+                        onEdit={editCustomOption}
                         onDelete={deleteCustomOption}
                         placeholder="Chọn hoặc gõ điểm mạnh..."
                         emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
@@ -1717,6 +1745,7 @@ export function ReviewEditor({
                         selected={improvements}
                         onChange={setImprovements}
                         onCreate={addCustomImprovement}
+                        onEdit={editCustomOption}
                         onDelete={deleteCustomOption}
                         placeholder="Chọn hoặc gõ điểm cần cải thiện..."
                         emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
@@ -1732,6 +1761,7 @@ export function ReviewEditor({
                           selected={testProcessNotes}
                           onChange={setTestProcessNotes}
                           onCreate={addCustomTestProcessNote}
+                          onEdit={editCustomOption}
                           onDelete={deleteCustomOption}
                           placeholder="Chọn hoặc gõ quan sát về bài kiểm tra..."
                           emptyText="Chưa có lựa chọn — thêm trong trang Cài đặt."
