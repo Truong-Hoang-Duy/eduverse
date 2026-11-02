@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,9 @@ import {
   generateSessionGreeting,
   generateZaloSummary,
 } from "@/lib/actions/zalo";
+import { SESSION_FORMATS, type SessionFormat } from "@/lib/session-format";
 import { zaloMarkupToHtml, zaloMarkupToPlainText } from "@/lib/zalo-format";
+import { findBestMatchingZaloTemplate } from "@/lib/zalo-template-matcher";
 
 export interface TemplateChoice {
   id: string;
@@ -27,6 +29,7 @@ export interface TemplateChoice {
 export function ZaloPanel({
   sessionId,
   sessionNumber,
+  sessionFormat = "standard",
   classCode,
   courseName,
   teacherName,
@@ -34,17 +37,32 @@ export function ZaloPanel({
 }: {
   sessionId: string;
   sessionNumber?: number;
+  sessionFormat?: SessionFormat;
   classCode?: string;
   courseName?: string;
   teacherName?: string;
   templates: TemplateChoice[];
 }) {
-  const [templateId, setTemplateId] = useState(templates[0]?.id ?? "");
+  const bestTemplate = useMemo(
+    () => findBestMatchingZaloTemplate(templates, sessionFormat),
+    [templates, sessionFormat]
+  );
+
+  const [templateId, setTemplateId] = useState(
+    () => bestTemplate?.id ?? templates[0]?.id ?? ""
+  );
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [pending, startGenerate] = useTransition();
   const [pendingGreeting, startGenerateGreeting] = useTransition();
+
+  // Tự động chuyển mẫu phù hợp khi mở buổi học hoặc khi hình thức buổi học thay đổi
+  useEffect(() => {
+    if (bestTemplate?.id) {
+      setTemplateId(bestTemplate.id);
+    }
+  }, [sessionId, sessionFormat, bestTemplate?.id]);
 
   function handleGenerate() {
     setError("");
@@ -107,11 +125,21 @@ export function ZaloPanel({
     );
   }
 
+  const formatConfig = SESSION_FORMATS[sessionFormat];
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-56 space-y-1.5">
-          <Label>Mẫu tin</Label>
+        <div className="min-w-60 space-y-1.5">
+          <div className="flex items-center justify-between gap-1">
+            <Label>Mẫu tin</Label>
+            <span
+              className="text-[11px] text-muted-foreground"
+              title={`Tự động chọn theo hình thức: ${formatConfig.label}`}
+            >
+              Theo {formatConfig.shortLabel}
+            </span>
+          </div>
           <Select value={templateId} onValueChange={setTemplateId}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Chọn mẫu" />

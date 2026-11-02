@@ -79,6 +79,7 @@ class ZaloSummaryRequest(AiRequest):
     class_code: str
     session_title: str
     session_content: str = ""
+    session_format: str = "standard"
     reviews: list[StudentReviewItem] = []
     # Lớp chỉ có 1 học viên (dạy kèm 1-1) — đổi cách nhận xét, xem prompts.py.
     is_one_on_one: bool = False
