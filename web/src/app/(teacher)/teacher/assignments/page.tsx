@@ -10,6 +10,7 @@ import {
   extractAttachmentPaths,
   getDisplayFileName,
 } from "@/lib/assignment-utils";
+import { sortCoursesByRoadmap } from "@/lib/course-sort";
 import { createClient } from "@/lib/supabase/server";
 
 import { AssignmentForm } from "./assignment-form";
@@ -45,7 +46,7 @@ export default async function AssignmentsPage() {
       .order("session_number"),
   ]);
 
-  const courses = (coursesData ?? []) as CourseChoice[];
+  const courses = sortCoursesByRoadmap((coursesData ?? []) as CourseChoice[]);
   const assignments = (assignmentsData ?? []) as AssignmentRow[];
 
   const savedAssignments: SavedAssignment[] = assignments.map((a) => {

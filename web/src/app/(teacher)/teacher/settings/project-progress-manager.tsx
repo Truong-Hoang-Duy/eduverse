@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormMessage } from "@/components/forms/form-message";
@@ -11,6 +11,7 @@ import {
   addReviewOption,
   deleteReviewOption,
   seedDefaultProjectProgressOptions,
+  updateReviewOption,
 } from "@/lib/actions/settings";
 import {
   getSpckLevel,
@@ -24,6 +25,112 @@ export interface ProjectProgressOptionRow {
   id: string;
   label: string;
   skill_group?: string;
+}
+
+function SpckOptionItem({ opt }: { opt: ProjectProgressOptionRow }) {
+  const [state, formAction, pending] = useActionState<ActionResult, FormData>(
+    updateReviewOption,
+    {}
+  );
+  const [editing, setEditing] = useState(false);
+  const [label, setLabel] = useState(opt.label);
+
+  useEffect(() => {
+    setLabel(opt.label);
+  }, [opt.label]);
+
+  useEffect(() => {
+    if (state.success) setEditing(false);
+  }, [state]);
+
+  function cancel() {
+    setLabel(opt.label);
+    setEditing(false);
+  }
+
+  const level = getSpckLevel(opt.label);
+  const levelConfig = SPCK_LEVEL_CONFIGS.find((c) => c.level === level);
+
+  if (editing) {
+    return (
+      <li className="space-y-1.5 rounded-md border bg-muted/20 p-2 text-sm">
+        <form action={formAction} className="flex items-center gap-2">
+          <input type="hidden" name="id" value={opt.id} />
+          <Input
+            name="label"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") cancel();
+            }}
+            className="h-8 flex-1 text-sm bg-background"
+            autoFocus
+          />
+          <Button
+            type="submit"
+            size="sm"
+            className="h-8 cursor-pointer"
+            disabled={pending || !label.trim()}
+          >
+            {pending ? "Đang lưu..." : "Lưu"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 cursor-pointer"
+            onClick={cancel}
+          >
+            Hủy
+          </Button>
+        </form>
+        <FormMessage result={state} />
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex items-center justify-between gap-2 rounded-md border bg-background px-3 py-2 text-sm shadow-2xs">
+      <div className="flex items-center gap-2 min-w-0 flex-1 flex-wrap">
+        <span className="min-w-0 break-words">{opt.label}</span>
+        {levelConfig && (
+          <Badge
+            variant="outline"
+            className={`text-[10px] px-1.5 py-0 font-normal shrink-0 ${levelConfig.badgeClass}`}
+          >
+            {levelConfig.icon} {levelConfig.label}
+          </Badge>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
+        <button
+          type="button"
+          aria-label={`Sửa ${opt.label}`}
+          title="Chỉnh sửa"
+          onClick={() => setEditing(true)}
+          className="cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          ✏️
+        </button>
+        <ConfirmDialog
+          trigger={
+            <button
+              type="button"
+              aria-label={`Xóa ${opt.label}`}
+              title="Xóa"
+              className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive cursor-pointer"
+            >
+              ✕
+            </button>
+          }
+          title="Xóa lựa chọn này?"
+          description={`"${opt.label}" sẽ không còn hiện khi nhận xét học viên. Các nhận xét đã lưu trước đó không bị ảnh hưởng.`}
+          action={deleteReviewOption}
+          fields={{ id: opt.id }}
+        />
+      </div>
+    </li>
+  );
 }
 
 /** 1 nhóm kỹ năng SPCK trong Accordion — nhất quán với OptionManager */
@@ -62,44 +169,9 @@ function SpckGroupAccordion({
 
       <div className="space-y-3 border-t p-3 bg-muted/5">
         <ul className="space-y-2">
-          {options.map((opt) => {
-            const level = getSpckLevel(opt.label);
-            const levelConfig = SPCK_LEVEL_CONFIGS.find((c) => c.level === level);
-
-            return (
-              <li
-                key={opt.id}
-                className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2 text-sm shadow-2xs"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                  <span className="min-w-0">{opt.label}</span>
-                  {levelConfig && (
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] px-1.5 py-0 font-normal shrink-0 ${levelConfig.badgeClass}`}
-                    >
-                      {levelConfig.icon} {levelConfig.label}
-                    </Badge>
-                  )}
-                </div>
-                <ConfirmDialog
-                  trigger={
-                    <button
-                      type="button"
-                      aria-label={`Xóa ${opt.label}`}
-                      className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  }
-                  title="Xóa lựa chọn này?"
-                  description={`"${opt.label}" sẽ không còn hiện khi nhận xét học viên. Các nhận xét đã lưu trước đó không bị ảnh hưởng.`}
-                  action={deleteReviewOption}
-                  fields={{ id: opt.id }}
-                />
-              </li>
-            );
-          })}
+          {options.map((opt) => (
+            <SpckOptionItem key={opt.id} opt={opt} />
+          ))}
           {options.length === 0 && (
             <li className="text-sm text-muted-foreground italic py-1">
               Chưa có lựa chọn nào trong nhóm này.

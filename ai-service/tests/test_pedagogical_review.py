@@ -220,3 +220,40 @@ def test_review_prompt_includes_homework_pedagogy_and_exam_abstraction_rules() -
     assert "KHÔNG dùng từ ngữ mang tính chỉ trích, phán xét nhân cách tiêu cực" in prompt
     assert "khái quát hóa năng lực lý thuyết và kỹ năng thực hành theo chuyên đề bài học" in prompt
 
+
+def test_review_prompts_strictly_use_thay_and_forbid_co() -> None:
+    for is_periodic in (False, True):
+        prompt = prompts.build_review_prompt(
+            student_name="An",
+            session_title="Buổi 5",
+            session_content="Kiểm tra định kỳ Checkpoint 1",
+            strengths=["Nắm vững lý thuyết"],
+            improvements=["Chưa làm bài tập về nhà (0/5) bài"],
+            session_context=None,
+            previous_comment=None,
+            is_periodic_test=is_periodic,
+        )
+        assert "CHỈ dùng từ 'thầy'" in prompt
+        assert "TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'" in prompt
+        assert "trao đổi với thầy cô" not in prompt
+        assert "hỏi thầy cô" not in prompt
+
+    summary_prompt = prompts.build_student_summary_prompt(
+        student_name="An",
+        class_code="CSA05",
+        course_name="Computer Science Advance",
+        reviews_text="- Buổi 1: Tiếp thu tốt",
+    )
+    assert "CHỈ dùng từ 'thầy'" in summary_prompt
+    assert "TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'" in summary_prompt
+
+    zalo_prompt = prompts.build_zalo_summary_prompt(
+        class_code="CSA05",
+        session_title="Buổi 1",
+        session_content="Làm quen Python",
+        reviews_text="- An: tốt",
+    )
+    assert "CHỈ dùng từ 'thầy'" in zalo_prompt
+    assert "TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'" in zalo_prompt
+
+
