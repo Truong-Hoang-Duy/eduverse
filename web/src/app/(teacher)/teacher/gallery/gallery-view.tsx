@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { compareCoursesByRoadmap } from "@/lib/course-sort";
 import { normalizeVi } from "@/lib/showcase";
 
 export interface GalleryClass {
@@ -74,11 +75,17 @@ export function GalleryView({
 
   // Lọc danh sách lớp khả dụng theo trạng thái Chưa hoàn thành / Đã hoàn thành / Tất cả
   const availableClasses = useMemo(() => {
-    return classes.filter((c) => {
+    const list = classes.filter((c) => {
       if (statusFilter === "active") return !c.completed;
       if (statusFilter === "completed") return c.completed;
       return true;
     });
+    return [...list].sort((a, b) =>
+        compareCoursesByRoadmap(
+          { code: a.courseCode },
+          { code: b.courseCode }
+        ) || a.class_code.localeCompare(b.class_code, "vi", { numeric: true })
+      );
   }, [classes, statusFilter]);
 
   const filteredClasses = useMemo(() => {

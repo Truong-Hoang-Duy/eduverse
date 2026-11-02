@@ -81,6 +81,42 @@ export async function addReviewOption(
   return { success: "Đã thêm." };
 }
 
+export async function updateReviewOption(
+  _prev: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
+  const id = String(formData.get("id") ?? "");
+  const label = String(formData.get("label") ?? "").trim();
+
+  if (!id) {
+    return { error: "Thiếu lựa chọn cần sửa." };
+  }
+  if (!label) {
+    return { error: "Nhập nội dung lựa chọn." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const { error } = await supabase
+    .from("review_options")
+    .update({ label })
+    .eq("id", id)
+    .eq("teacher_id", user.id);
+  if (error) {
+    return { error: `Không lưu được: ${error.message}` };
+  }
+
+  revalidatePath("/teacher/settings");
+  revalidatePath("/teacher/sessions/[id]", "page");
+  return { success: "Đã cập nhật." };
+}
+
 export async function deleteReviewOption(formData: FormData): Promise<void> {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
@@ -552,7 +588,7 @@ export async function deleteZaloTemplate(formData: FormData): Promise<void> {
 
 const DEFAULT_TEMPLATE = `**Kính gửi Quý Phụ huynh,**
 
-**Thầy/Cô xin thông tin tới Quý Phụ huynh về nội dung học tập của lớp {ten_lop} trong {buoi} như sau:**
+**Thầy xin thông tin tới Quý Phụ huynh về nội dung học tập của lớp {ten_lop} trong {buoi} như sau:**
 
 **Kiến thức đã học:**
 {tom_tat}

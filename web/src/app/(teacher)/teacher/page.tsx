@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { isClassCompleted } from "@/lib/class-completion";
+import { sortCoursesByRoadmap } from "@/lib/course-sort";
 import { createClient } from "@/lib/supabase/server";
 import type { Class, Course } from "@/lib/types";
 
@@ -39,7 +40,7 @@ export default async function TeacherDashboard() {
       supabase.from("sessions").select("id, class_id, session_number"),
     ]);
 
-  const courses = (coursesData ?? []) as Course[];
+  const courses = sortCoursesByRoadmap((coursesData ?? []) as Course[]);
   const classes = (classesData ?? []) as ClassRow[];
 
   const lastSessionIdByClass = new Map<string, string>();

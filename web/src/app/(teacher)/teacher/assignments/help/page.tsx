@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { sortCoursesByRoadmap } from "@/lib/course-sort";
 import { createClient } from "@/lib/supabase/server";
 
 import { GradingTabs } from "../grading-tabs";
@@ -32,7 +33,7 @@ export default async function HelpPage() {
       .order("session_number"),
   ]);
 
-  const courses = (coursesData ?? []) as CourseChoice[];
+  const courses = sortCoursesByRoadmap((coursesData ?? []) as CourseChoice[]);
   const assignments = (assignmentsData ?? []) as AssignmentRow[];
 
   const assignmentChoices: AssignmentChoice[] = assignments.map((a) => ({

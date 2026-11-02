@@ -5,7 +5,8 @@ import re
 SYSTEM_ROLE = (
     "Bạn là giáo viên dạy lập trình cho học sinh nhỏ tuổi tại Việt Nam. "
     "Luôn trả lời bằng tiếng Việt, giọng thân thiện và khích lệ. "
-    "QUY TẮC XƯNG HÔ: Luôn gọi học viên là 'em' — TUYỆT ĐỐI KHÔNG xưng tên hay gọi thẳng tên học viên trong nhận xét (chỉ dùng từ 'em'), và TUYỆT ĐỐI không dùng từ 'con'."
+    "QUY TẮC XƯNG HÔ: Luôn gọi học viên là 'em' — TUYỆT ĐỐI KHÔNG xưng tên hay gọi thẳng tên học viên trong nhận xét (chỉ dùng từ 'em'), và TUYỆT ĐỐI không dùng từ 'con'. "
+    "Khi xưng hô hoặc nhắc tới giáo viên: CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'."
 )
 
 # Áp cho mọi prompt viết NHẬN XÉT (review / tổng hợp HV / tin Zalo) — yêu cầu
@@ -310,7 +311,7 @@ HOMEWORK_PEDAGOGY_RULE = (
     "còn việc tự tay viết code và giải quyết bài tập ở nhà là chìa khóa then chốt để hình thành phản xạ tư duy tự nhiên và biến kiến thức thành kỹ năng bền vững.\n"
     "2. TRONG NHẬN XÉT GỬI PHỤ HUYNH ('comment'):\n"
     "   - Diễn đạt tế nhị, khách quan, mang tính xây dựng và khích lệ: Ghi nhận nỗ lực và khả năng tiếp thu bài của em trên lớp, đồng thời nhắc nhở nhẹ nhàng việc em cần hoàn thiện các bài tập thực hành ở nhà.\n"
-    "   - Đưa ra lời khuyên cụ thể: Gợi ý em sắp xếp thời gian biểu hợp lý (khoảng 30-45 phút sau mỗi buổi học) để hoàn thành các bài tập tự luyện trên hệ thống, và khuyến khích em chủ động trao đổi với thầy cô nếu gặp khúc mắc khi làm bài ở nhà.\n"
+    "   - Đưa ra lời khuyên cụ thể: Gợi ý em sắp xếp thời gian biểu hợp lý (khoảng 30-45 phút sau mỗi buổi học) để hoàn thành các bài tập tự luyện trên hệ thống, và khuyến khích em chủ động trao đổi với thầy nếu gặp khúc mắc khi làm bài ở nhà.\n"
     "3. TRONG BẢNG ĐÁNH GIÁ ĐNL — TIÊU CHÍ 'thai_do_ve_nha':\n"
     "   - NGUYÊN TẮC ĐỘC LẬP & ĐÁNH GIÁ ĐÚNG THỰC CHẤT: TUYỆT ĐỐI KHÔNG dựa vào xếp loại học lực chung (như Khá hay Giỏi) để suy luận và cho điểm cao ở tiêu chí này khi em không làm bài tập. Học lực chung thể hiện khả năng tiếp thu bài học, còn tiêu chí này phản ánh ĐÚNG THỰC TẾ Ý THỨC RÈN LUYỆN TẠI NHÀ.\n"
     "   - Điểm số và Xếp loại khi học viên KHÔNG LÀM BTVN (ví dụ: 'Chưa làm bài tập về nhà (0/5) bài', 'chưa làm BTVN', 'thiếu bài tập'...):\n"
@@ -324,7 +325,7 @@ HOMEWORK_PEDAGOGY_RULE = (
     "-> [Định hướng rèn luyện: Em cần nâng cao tính tự giác, chủ động phân bổ thời gian tự học tại nhà để hoàn thành bài tập đầy đủ trước mỗi buổi học].\n"
     "4. TRONG THƯ TỪ MINDX — MỤC 'suggestions_from_mindx':\n"
     "   - Đề xuất giải pháp thiết thực, ấm áp tới phụ huynh: MindX rất mong quý phụ huynh có thể đồng hành hỗ trợ nhắc nhở và tạo cho con một khung giờ cố định trong tuần để con mở máy thực hành bài tập về nhà trên hệ thống MindX; "
-    "đồng thời động viên con không ngại khó, chủ động nhắn tin hỏi thầy cô để được hướng dẫn kịp thời khi gặp bài tập phức tạp."
+    "đồng thời động viên con không ngại khó, chủ động nhắn tin hỏi thầy để được hướng dẫn kịp thời khi gặp bài tập phức tạp."
 )
 
 EXAM_ABSTRACTION_RULE = (
@@ -395,7 +396,8 @@ def build_review_prompt(
             "TUYỆT ĐỐI KHÔNG tường thuật vụn vặt các con số cụ thể, tên xe, tên cột, câu 1 câu 2...; "
             "nếu KHÔNG có quan sát nào thì chỉ nhận xét ngắn gọn dựa trên những gì đã biết, "
             "đừng bịa thêm chi tiết cụ thể (điểm số, số câu đúng...).\n"
-            "Mỗi gạch đầu dòng bắt đầu bằng ký tự '- '. Không tự thêm lời chào."
+            "Mỗi gạch đầu dòng bắt đầu bằng ký tự '- '. Không tự thêm lời chào. "
+            "QUY TẮC XƯNG HÔ: Chỉ gọi học viên là 'em'; khi xưng hô hoặc nhắc tới giáo viên, CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'."
         )
     else:
         instruction = (
@@ -403,7 +405,7 @@ def build_review_prompt(
             "tự: điểm mạnh trước, ĐIỂM CẦN CẢI THIỆN/LƯU Ý sau (bắt buộc phải có, "
             "không khen một chiều dù học viên giỏi, lồng ghép tinh tế việc rèn luyện BTVN theo HOMEWORK_PEDAGOGY_RULE nếu có ghi chú), "
             "chốt bằng một lời khuyên cụ thể mang tính xây dựng.\n"
-            "QUY TẮC XƯNG HÔ: Bắt buộc chỉ gọi học viên là 'em' — TUYỆT ĐỐI KHÔNG xưng tên hay gọi thẳng tên học viên trong câu nhận xét (không dùng tên riêng, chỉ xưng 'em'). "
+            "QUY TẮC XƯNG HÔ: Bắt buộc chỉ gọi học viên là 'em' — TUYỆT ĐỐI KHÔNG xưng tên hay gọi thẳng tên học viên trong câu nhận xét (không dùng tên riêng, chỉ xưng 'em'). Khi xưng hô hoặc nhắc tới giáo viên, CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'. "
             "Không nhắc đến số thứ tự buổi học hay tiêu đề buổi học.\n"
             "CÁCH MỞ ĐẦU VÀ CHUYỂN Ý TỰ NHIÊN, KHÔNG MÁY MÓC:\n"
             "- Câu mở đầu (Điểm mạnh): Bắt đầu tự nhiên bằng cách đi thẳng vào hành động, sự chủ động, thái độ tập trung hoặc tiến độ tiếp thu bài học cụ thể của em (Ví dụ: 'Hôm nay em tiếp thu bài rất nhanh khi...', 'Em thể hiện tư duy logic mạch lạc khi tiếp cận...', 'Trong buổi học, em thao tác rất chủ động và nắm vững...'). "
@@ -604,7 +606,7 @@ def build_zalo_summary_prompt(
             "- Câu lệnh break và continue",
             "2. loi_nhan — " + general_comment_intro + "dạng một đoạn VĂN XUÔI "
             "liền mạch (KHÔNG xuống dòng, KHÔNG gạch đầu dòng/số thứ tự), nối ý "
-            "bằng dấu phẩy/liên từ (và, nhưng, bên cạnh đó...).",
+            "bằng dấu phẩy/liên từ (và, nhưng, bên cạnh đó...). Khi xưng hô hoặc nhắc tới giáo viên, CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'.",
             f"Lớp: {class_code}",
             f"Buổi học: {session_title}",
             f"Nội dung buổi học: {session_content}",
@@ -628,6 +630,7 @@ def build_greeting_prompt(
             "- Lời văn TRANG TRỌNG, lịch sự, chuẩn mực ngôn ngữ học đường (chuẩn thuật ngữ trường lớp).",
             "- TUYỆT ĐỐI KHÔNG dùng các từ ngữ quá cảm xúc, thái quá như 'háo hức', 'đam mê', 'tuyệt vời', 'vô cùng', 'cực kỳ'.",
             "- Viết giống văn phong của giáo viên thật viết cho phụ huynh: thẳng thắn, rõ ràng, súc tích. KHÔNG rườm rà, sáo rỗng hay mang phong cách AI máy móc.",
+            "- Khi xưng hô hoặc nhắc tới bản thân giáo viên: CHỈ dùng từ 'thầy', TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'.",
             "- TUYỆT ĐỐI KHÔNG dùng bất kỳ icon/emoji nào (không dùng 🌟, ✅, ✨...).",
             "- Định dạng CHUẨN ZALO: bôi đậm bằng **chữ**, in nghiêng bằng _chữ_, gạch đầu dòng dùng ký tự '- '.",
             f"Khóa học: {course_name}",
@@ -661,7 +664,7 @@ def build_student_summary_prompt(
             TONE_RULE,
             "Hãy viết NHẬN XÉT TỔNG HỢP cho một học viên dựa trên toàn bộ nhận xét "
             "của các buổi đã học (gửi riêng cho phụ huynh của em này). "
-            "QUY TẮC XƯNG HÔ: Luôn gọi học viên là 'em' — TUYỆT ĐỐI KHÔNG gọi tên riêng của học viên trong các mục nhận xét.",
+            "QUY TẮC XƯNG HÔ: Luôn gọi học viên là 'em' — TUYỆT ĐỐI KHÔNG gọi tên riêng của học viên trong các mục nhận xét. Khi xưng hô hoặc nhắc tới giáo viên, CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'.",
             f"Học viên: {student_name}",
             f"Lớp: {class_code} — Khóa: {course_name}",
             f"Nhận xét theo từng buổi:\n{reviews_text}",
@@ -727,7 +730,7 @@ def build_final_presentation_review_prompt(
         mission_text,
         f"Học viên: {student_name}",
         f"Lớp: {class_code} — Khóa học: {course_name}",
-        "QUY TẮC XƯNG HÔ BẮT BUỘC: Trong TOÀN BỘ nhận xét ('comment') và 9 tiêu chí ĐNL ('dnl_evaluations'), LUÔN LUÔN gọi học viên là 'em'. TUYỆT ĐỐI KHÔNG xưng tên riêng hay gọi thẳng tên học viên trong văn bản nhận xét (không viết tên riêng như 'em An', 'Bảo', 'Minh'...), chỉ dùng duy nhất đại từ 'em'.",
+        "QUY TẮC XƯNG HÔ BẮT BUỘC: Trong TOÀN BỘ nhận xét ('comment'), 9 tiêu chí ĐNL ('dnl_evaluations') và Thư từ MindX ('mindx_letter'), LUÔN LUÔN gọi học viên là 'em' (TUYỆT ĐỐI KHÔNG xưng tên riêng hay gọi thẳng tên học viên như 'em An', 'Bảo', 'Minh'...), và khi xưng hô hoặc nhắc tới giáo viên thì CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'.",
     ]
 
     if session_number:
@@ -830,7 +833,7 @@ def build_final_presentation_review_prompt(
         "   Danh sách 9 tiêu chí bắt buộc gồm:\n"
         "   - kien_thuc_tai_lop: [ĐNL] Kiến thức học viên đã được học tại lớp (khả năng tiếp thu kiến thức trong các buổi học và áp dụng chính xác vào sản phẩm cuối khóa hoặc bài kiểm tra định kỳ).\n"
         "   - kien_thuc_tu_hoc: [ĐNL] Kiến thức học viên tự học (tinh thần tò mò, tự mày mò tìm hiểu thêm tính năng/thư viện ngoài giáo trình để đưa vào đồ án hoặc bài làm).\n"
-        "   - ky_nang_giao_tiep: [ĐNL] Kỹ năng giao tiếp, hợp tác (sự tương tác với thầy cô/bạn bè trong các buổi học và kỹ năng thuyết trình, bảo vệ sản phẩm trước lớp).\n"
+        "   - ky_nang_giao_tiep: [ĐNL] Kỹ năng giao tiếp, hợp tác (sự tương tác với thầy/bạn bè trong các buổi học và kỹ năng thuyết trình, bảo vệ sản phẩm trước lớp).\n"
         "   - ky_nang_may_tinh: [ĐNL] Kỹ năng sử dụng máy tính (sự thành thạo trong thao tác phần mềm, gõ code, quản lý file đồ án và chạy demo mượt mà).\n"
         "   - ky_nang_giai_quyet_van_de: [ĐNL] Kỹ năng giải quyết vấn đề (khả năng phát hiện lỗi, kiên nhẫn debug và tự khắc phục các sự cố kỹ thuật trong quá trình làm dự án hoặc bài thi).\n"
         "   - tu_duy_sang_tao: [ĐNL] Tư duy sáng tạo (sáng kiến cá nhân hóa, ý tưởng kịch bản mới mẻ và thẩm mỹ giao diện của sản phẩm cuối khóa).\n"
@@ -869,7 +872,7 @@ def build_final_presentation_review_prompt(
         "4. 'mindx_letter': Ba phần nhận xét theo cấu trúc Thư từ MindX gửi phụ huynh (chuẩn Denise LMS):\n"
         "   - 'learned_from_mindx' (Con đã học được gì từ MindX?): Đoạn văn (90-140 từ) tóm tắt các giá trị cốt lõi, kiến thức và kỹ năng thực tế em đã tích lũy và làm chủ được trong suốt khóa học hoặc bài kiểm tra. Bắt buộc gắn liền với sản phẩm cuối khóa (nếu có) hoặc bài làm cụ thể của em theo EXAM_ABSTRACTION_RULE (ví dụ: tư duy logic, cấu trúc dữ liệu, giải thuật, quy trình làm sạch & phân tích dữ liệu, thao tác phần mềm, khả năng giải quyết vấn đề...). Tuyệt đối không liệt kê vụn vặt các con số cụ thể của đề bài. Văn phong tự hào, chân thành, chuẩn mực sư phạm.\n"
         "   - 'suggestions_from_mindx' (Những điều mà Mindx muốn đề xuất tới bố mẹ sau một thời gian đồng hành với em): Đoạn văn (90-140 từ) chân thành, mang tính xây dựng cao. Dựa vào lịch sử các điểm cần cải thiện qua các buổi và thái độ chuyên cần, đưa ra 2-3 lời khuyên hoặc hành động thiết thực mà phụ huynh có thể đồng hành cùng con tại nhà (duy trì thời gian luyện tập code hàng tuần trên hệ thống, rèn tính cẩn thận rà soát lỗi trước khi nộp, khích lệ kiên trì khi gặp bug...).\n"
-        "     * ĐẶC BIỆT KHI CÓ THÔNG TIN CHƯA LÀM BTVN: Bắt buộc lồng ghép lời đề xuất phụ huynh hỗ trợ nhắc nhở và thiết lập một khung giờ biểu cố định trong tuần để con mở máy thực hành bài tập về nhà trên hệ thống MindX; động viên con không ngại khó, chủ động trao đổi với thầy cô khi gặp vướng mắc.\n"
+        "     * ĐẶC BIỆT KHI CÓ THÔNG TIN CHƯA LÀM BTVN: Bắt buộc lồng ghép lời đề xuất phụ huynh hỗ trợ nhắc nhở và thiết lập một khung giờ biểu cố định trong tuần để con mở máy thực hành bài tập về nhà trên hệ thống MindX; động viên con không ngại khó, chủ động trao đổi với thầy khi gặp vướng mắc.\n"
         "     * ĐẶC BIỆT KHI CÓ KẾT QUẢ BÀI LÀM: Khái quát hóa thành thói quen kiểm thử lại kết quả và thói quen giải thích logic bài làm thay vì nhắc lại số liệu chi tiết của đề thi.\n"
         f"   - 'future_direction' (Định hướng tương lai cho học viên): Đoạn văn (80-120 từ). {progression_rule}"
     )

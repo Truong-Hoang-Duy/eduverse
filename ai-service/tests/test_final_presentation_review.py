@@ -241,5 +241,11 @@ def test_homework_pedagogy_and_exam_abstraction_rules_included() -> None:
     assert "TUYỆT ĐỐI KHÔNG cho điểm từ 3 đến 5" in prompt
     assert "level': 'TB'" in prompt
     assert "TUYỆT ĐỐI CẤM TƯỜNG THUẬT VỤN VẶT" in prompt
+    assert "CHỈ dùng từ 'thầy'" in prompt
+    assert "TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'" in prompt
+    assert "thầy cô/bạn bè" not in prompt
+    assert "trao đổi với thầy cô" not in prompt
+    assert "hỏi thầy cô" not in prompt
+
 
 

@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { compareCoursesByRoadmap } from "@/lib/course-sort";
 import { EditCourseDialog } from "./edit-course-dialog";
 
 export interface ClassItem {
@@ -88,7 +89,14 @@ export function ClassList({ classes }: { classes: ClassItem[] }) {
           items: [cls],
         });
     }
-    return [...map.values()].sort((a, b) => a.code.localeCompare(b.code));
+    return [...map.values()]
+      .map((group) => ({
+        ...group,
+        items: [...group.items].sort((a, b) =>
+          a.classCode.localeCompare(b.classCode, "vi", { numeric: true })
+        ),
+      }))
+      .sort(compareCoursesByRoadmap);
   }, [filtered]);
 
   return (
