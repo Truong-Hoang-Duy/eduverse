@@ -353,6 +353,7 @@ def generate_zalo_summary(body: ZaloSummaryRequest) -> ZaloSummaryResponse:
         session_title=body.session_title,
         session_content=body.session_content,
         reviews_text=reviews_text,
+        session_format=body.session_format,
         is_one_on_one=body.is_one_on_one,
     )
     data = generate_json(

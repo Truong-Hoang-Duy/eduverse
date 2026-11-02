@@ -131,6 +131,13 @@ export default async function SessionDetailPage({
     (Boolean(session.classes?.total_sessions) &&
       session.session_number === session.classes?.total_sessions);
 
+  const currentSessionFormat = resolveSessionFormat({
+    session_number: session.session_number,
+    is_periodic_test: session.is_periodic_test,
+    is_project_period: session.is_project_period,
+    is_final_presentation: isFinalPresentation,
+  });
+
   const [
     { data: enrollments },
     { data: reviewsData },
@@ -359,7 +366,7 @@ export default async function SessionDetailPage({
             <ReviewList
               sessionId={session.id}
               sessionNumber={session.session_number}
-              sessionTitle={sessionTitle}
+            sessionTitle={sessionTitle}
               sessionContent={session.content ?? ""}
               sessionContext={session.review_context ?? ""}
               isPeriodicTest={session.is_periodic_test}
@@ -392,6 +399,7 @@ export default async function SessionDetailPage({
           <ZaloPanel
             sessionId={session.id}
             sessionNumber={session.session_number}
+            sessionFormat={currentSessionFormat}
             classCode={session.classes?.class_code ?? ""}
             courseName={session.classes?.courses?.name ?? ""}
             teacherName={profile.full_name}

@@ -4,7 +4,7 @@
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
 ## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-02, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 117 (**Chuẩn hóa quy tắc xưng hô giáo viên chỉ dùng "thầy", bổ sung nút chỉnh sửa `✏️` danh mục nhận xét, chia nhóm kỹ năng đóng/mở trong dropdown Điểm mạnh/Cần cải thiện & sắp xếp khóa học theo lộ trình**):
+**Đang làm:** Đã hoàn thành Đợt 117 (**Chuẩn hóa xưng hô "thầy", nút sửa `✏️` danh mục nhận xét, chia nhóm kỹ năng dropdown, sắp xếp lộ trình khóa học & tự động chọn mẫu tin Zalo theo hình thức buổi học**):
 1. **Prompt AI Service (`ai-service/app/prompts.py`):**
    - Bổ sung quy tắc bắt buộc vào `SYSTEM_ROLE`: *"Khi xưng hô hoặc nhắc tới giáo viên: CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'."*
    - Cập nhật trực tiếp chỉ dẫn xưng hô tại toàn bộ các hàm sinh nhận xét (`build_review_prompt`, `build_zalo_summary_prompt`, `build_greeting_prompt`, `build_student_summary_prompt`, `build_final_presentation_review_prompt`).
@@ -23,9 +23,18 @@
      + Thứ tự nhánh môn từ nhỏ đến lớn: `Scratch (SB, SA, SI)` -> `GameMaker / Game (GB, GA, GI, GMB, GMA, GMI)` -> `App / Python & Qt Designer (PTB, PTA, PTI, APB, APA, API)` -> `Web (JSB, JSA, JSI, WB, WA, WI)` -> `Computer Science (CSB, CSA, CSI)` -> `Khác`.
      + Thứ tự cấp độ trong mỗi nhánh: `Basic (*B)` -> `Advance (*A)` -> `Intensive (*I)`.
    - Áp dụng cho Danh sách lớp (`class-list.tsx`), trang Lớp học (`teacher/page.tsx`), các trang Chấm bài / Hỏi bài / Chấm SPCK (`assignments/page.tsx`, `assignments/help/page.tsx`, `assignments/project/page.tsx`) và trang Sản phẩm học viên (`gallery-view.tsx`).
-6. **Kiểm thử chất lượng:**
-   - `ai-service/`: 108/108 pytest tests PASS.
-   - `web/`: 470/470 vitest tests PASS, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+7. **Tự động thay đổi nội dung chọn mẫu tin Zalo theo hình thức buổi học (`web/src/lib/zalo-template-matcher.ts` & `zalo-panel.tsx`):**
+   - Xây dựng thuật toán tính điểm khớp mẫu tin `scoreZaloTemplateForFormat` và hàm tìm kiếm `findBestMatchingZaloTemplate`:
+     + `project_period` (Làm đồ án SPCK) -> tự động ưu tiên chọn mẫu có tên `SPCK`, `Sản phẩm cuối khóa`, `Đồ án`.
+     + `periodic_test` (Bài kiểm tra) -> tự động ưu tiên chọn mẫu có tên `Kiểm tra`, `Checkpoint`, `Test`.
+     + `final_presentation` (Thuyết trình Demo Day) -> tự động ưu tiên chọn mẫu có tên `Thuyết trình`, `Demo Day`, `Báo cáo`, `SPCK`.
+     + `standard` (Buổi học tiêu chuẩn) -> tự động ưu tiên chọn mẫu `Thông báo buổi học`, `Tiêu chuẩn`, `Mặc định` (không lẫn từ khóa SPCK/Test/Thuyết trình).
+   - `ZaloPanel` (`zalo-panel.tsx`): Tự động nhận `sessionFormat` từ buổi học (`resolveSessionFormat`) và tự động pre-select đúng mẫu tin phù hợp, hiển thị nhãn chỉ dẫn hình thức rõ ràng.
+   - Nâng cấp `build_zalo_summary_prompt` (`ai-service`): AI tự động điều chỉnh cả `tom_tat` và `loi_nhan` bám sát tính chất buổi học (tiến độ SPCK, kết quả bài kiểm tra, bảo vệ đồ án Demo Day hoặc kiến thức bài giảng thông thường). Bắt buộc ngắt câu rõ ràng bằng dấu chấm câu (`.`), cấu trúc thành 2 đến 4 câu hoàn chỉnh, chấm dứt hoàn toàn tình trạng viết câu dài lê thê chỉ toàn nối bằng dấu phẩy.
+   - Nâng cấp bộ 4 mẫu tin chuẩn theo 4 hình thức buổi học tại Cài đặt (`settings.ts` & `template-manager.tsx`).
+8. **Kiểm thử chất lượng:**
+   - `ai-service/`: 109/109 pytest tests PASS (+1 test thích ứng 4 hình thức buổi học).
+   - `web/`: 475/475 vitest tests PASS (`zalo-template-matcher.test.ts` +5 tests), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
 
 Cập nhật bởi: Gemini
 

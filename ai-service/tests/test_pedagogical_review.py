@@ -257,3 +257,21 @@ def test_review_prompts_strictly_use_thay_and_forbid_co() -> None:
     assert "TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'" in zalo_prompt
 
 
+
+
+def test_zalo_summary_adapts_to_session_formats():
+    for fmt, keyword in [
+        ("standard", "BUỔI HỌC TIÊU CHUẨN"),
+        ("project_period", "LÀM ĐỒ ÁN / SẢN PHẨM CUỐI KHÓA (SPCK)"),
+        ("periodic_test", "BÀI KIỂM TRA ĐỊNH KỲ / CHECKPOINT"),
+        ("final_presentation", "THUYẾT TRÌNH BÁO CÁO SẢN PHẨM CUỐI KHÓA (DEMO DAY)"),
+    ]:
+        p = prompts.build_zalo_summary_prompt(
+            class_code="CSB01",
+            session_title="Buổi kiểm tra",
+            session_content="Nội dung",
+            reviews_text="- An: tốt",
+            session_format=fmt,
+        )
+        assert keyword in p
+        assert "CHỈ dùng từ 'thầy'" in p

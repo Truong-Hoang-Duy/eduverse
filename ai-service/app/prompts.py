@@ -537,6 +537,7 @@ def build_zalo_summary_prompt(
     session_title: str,
     session_content: str,
     reviews_text: str,
+    session_format: str = "standard",
     is_one_on_one: bool = False,
 ) -> str:
     """`is_one_on_one`: lớp chỉ có 1 học viên (dạy kèm 1-1) — khi đó nhận xét
@@ -582,12 +583,40 @@ def build_zalo_summary_prompt(
             "liệu nhận xét từng em bên dưới): "
         )
 
+    if session_format == "project_period":
+        format_guidance = (
+            "HƯỚNG DẪN THEO HÌNH THỨC BUỔI HỌC: LÀM ĐỒ ÁN / SẢN PHẨM CUỐI KHÓA (SPCK):\n"
+            "- 'tom_tat': Liệt kê ngắn gọn tiến độ thực hiện sản phẩm trong buổi "
+            "(giao diện, logic tính năng, đồ họa, sửa lỗi/kiểm thử code). Mỗi ý bắt đầu bằng '- '.\n"
+            "- 'loi_nhan': Đánh giá chung về tinh thần chủ động sáng tạo, sự kiên trì khi xử lý lỗi "
+            "và tiến độ làm đồ án của học sinh."
+        )
+    elif session_format == "periodic_test":
+        format_guidance = (
+            "HƯỚNG DẪN THEO HÌNH THỨC BUỔI HỌC: BÀI KIỂM TRA ĐỊNH KỲ / CHECKPOINT:\n"
+            "- 'tom_tat': Liệt kê các phần kiến thức và kỹ năng thực hành trọng tâm được đánh giá trong bài kiểm tra. Mỗi ý bắt đầu bằng '- '.\n"
+            "- 'loi_nhan': Đánh giá chung về ý thức làm bài nghiêm túc, sự tập trung và mức độ nắm bài qua bài kiểm tra."
+        )
+    elif session_format == "final_presentation":
+        format_guidance = (
+            "HƯỚNG DẪN THEO HÌNH THỨC BUỔI HỌC: THUYẾT TRÌNH BÁO CÁO SẢN PHẨM CUỐI KHÓA (DEMO DAY):\n"
+            "- 'tom_tat': Tóm tắt các nội dung báo cáo sản phẩm tốt nghiệp (demo tính năng, giải thích công nghệ và trả lời câu hỏi). Mỗi ý bắt đầu bằng '- '.\n"
+            "- 'loi_nhan': Tuyên dương, chúc mừng tinh thần nỗ lực của cả khóa học, sự tự tin diễn đạt và thành quả sản phẩm của các em."
+        )
+    else:
+        format_guidance = (
+            "HƯỚNG DẪN THEO HÌNH THỨC BUỔI HỌC: BUỔI HỌC TIÊU CHUẨN:\n"
+            "- 'tom_tat': Liệt kê các kiến thức, khái niệm và kỹ năng thực hành chính của buổi học. Mỗi ý bắt đầu bằng '- '.\n"
+            "- 'loi_nhan': Đánh giá chung về mức độ tiếp thu, sự tập trung và tinh thần thực hành của học sinh."
+        )
+
     return "\n".join(
         [
             SYSTEM_ROLE,
             TONE_RULE,
             intro_rule,
             focus_rule,
+            format_guidance,
             "Hãy viết ĐÚNG HAI mảnh nội dung sau — giáo viên sẽ tự ghép vào mẫu "
             "tin có sẵn, bạn KHÔNG cần và KHÔNG được viết thêm gì khác ngoài 2 "
             "mảnh này (không lời chào, không tiêu đề, không phần nào khác):",
@@ -605,8 +634,13 @@ def build_zalo_summary_prompt(
             "- Vòng lặp while\n"
             "- Câu lệnh break và continue",
             "2. loi_nhan — " + general_comment_intro + "dạng một đoạn VĂN XUÔI "
-            "liền mạch (KHÔNG xuống dòng, KHÔNG gạch đầu dòng/số thứ tự), nối ý "
-            "bằng dấu phẩy/liên từ (và, nhưng, bên cạnh đó...). Khi xưng hô hoặc nhắc tới giáo viên, CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'.",
+            "liền mạch gồm 2 đến 4 CÂU HOÀN CHỈNH, MỖI CÂU BẮT BUỘC KẾT THÚC BẰNG DẤU CHẤM (.), "
+            "ngắt câu rõ ràng (TUYỆT ĐỐI KHÔNG viết thành một câu dài lê thê chỉ toàn dùng dấu phẩy nối ý; "
+            "KHÔNG xuống dòng, KHÔNG gạch đầu dòng hay đánh số trong đoạn này). "
+            "Cấu trúc tự nhiên: câu đầu ghi nhận điểm tiếp thu/thực hành tốt của lớp; "
+            "câu tiếp theo nhắc nhở nhẹ nhàng điểm cần lưu ý/rèn luyện thêm; "
+            "câu cuối đưa ra lời dặn dò hoặc định hướng học tập. "
+            "Khi xưng hô hoặc nhắc tới giáo viên, CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'.",
             f"Lớp: {class_code}",
             f"Buổi học: {session_title}",
             f"Nội dung buổi học: {session_content}",

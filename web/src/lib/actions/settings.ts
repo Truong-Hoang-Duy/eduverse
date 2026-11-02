@@ -586,20 +586,98 @@ export async function deleteZaloTemplate(formData: FormData): Promise<void> {
   revalidatePath("/teacher/sessions/[id]", "page");
 }
 
-const DEFAULT_TEMPLATE = `**Kính gửi Quý Phụ huynh,**
+const DEFAULT_ZALO_TEMPLATES = [
+  {
+    name: "Thông báo buổi học",
+    template_text: `**Kính gửi Quý Phụ huynh,**
 
 **Thầy xin thông tin tới Quý Phụ huynh về nội dung học tập của lớp {ten_lop} trong {buoi} như sau:**
 
 **Kiến thức đã học:**
-{tom_tat}
+- {tom_tat}
 
 **Đánh giá chung quá trình học tập:**
-{loi_nhan}
+- {loi_nhan}
 
-_Trân trọng,_
-_Giáo viên_`;
+**Hướng dẫn sau buổi học:**
+- Chủ động ôn tập bài học tại nhà
+- Nghiên cứu thêm các nội dung liên quan
+- Hoàn thành bài tập thực hành trước buổi học tiếp theo
 
-/** Thêm mẫu tin Zalo mặc định. */
+**Theo dõi kết quả học tập:**
+- Thầy đã cập nhật nhận xét chi tiết của buổi học trên Học bạ trực tuyến. Quý Phụ huynh vui lòng truy cập để theo dõi và nắm bắt tình hình học tập của con em mình.
+
+**_Trân trọng,_
+_Thầy giáo_**`,
+  },
+  {
+    name: "SPCK (Làm đồ án)",
+    template_text: `**Kính gửi Quý Phụ huynh,**
+
+**Thầy xin thông tin tới Quý Phụ huynh về tiến độ làm sản phẩm cuối khóa của lớp {ten_lop} trong {buoi} như sau:**
+
+**Nội dung thực hiện trong buổi:**
+- {tom_tat}
+
+**Đánh giá chung quá trình làm đồ án:**
+- {loi_nhan}
+
+**Hướng dẫn sau buổi học:**
+- Chủ động ôn tập lại kiến thức đã học tại nhà
+- Tiếp tục triển khai các phần việc trong kế hoạch đã đề ra cho sản phẩm cuối khóa
+- Ghi chú lại những phần còn vướng mắc để trao đổi với thầy vào buổi học tiếp theo
+- Chuẩn bị sẵn nội dung, dữ liệu cần thiết cho buổi học sau
+
+**Theo dõi kết quả học tập:**
+- Thầy đã cập nhật nhận xét chi tiết trên Học bạ trực tuyến. Quý Phụ huynh vui lòng truy cập để theo dõi và nắm bắt tiến độ của con.
+
+**_Trân trọng,_
+_Thầy giáo_**`,
+  },
+  {
+    name: "Thông báo kiểm tra",
+    template_text: `**Kính gửi Quý Phụ huynh,**
+
+**Thầy xin thông tin tới Quý Phụ huynh về buổi kiểm tra đánh giá của lớp {ten_lop} trong {buoi} như sau:**
+
+**Nội dung bài kiểm tra:**
+- {tom_tat}
+
+**Đánh giá chung tinh thần làm bài của lớp:**
+- {loi_nhan}
+
+**Hướng dẫn sau buổi học:**
+- Chủ động xem lại các câu hỏi hoặc bài thực hành chưa đạt điểm tối đa
+- Ôn tập củng cố các phần kiến thức còn thiếu sót để chuẩn bị cho giai đoạn tiếp theo
+
+**Theo dõi kết quả học tập:**
+- Thầy đã cập nhật nhận xét và kết quả kiểm tra chi tiết trên Học bạ trực tuyến. Quý Phụ huynh vui lòng truy cập để nắm bắt kết quả của con em mình.
+
+**_Trân trọng,_
+_Thầy giáo_**`,
+  },
+  {
+    name: "Buổi thuyết trình (Demo Day)",
+    template_text: `**Kính gửi Quý Phụ huynh,**
+
+**Thầy xin chúc mừng toàn thể các em học sinh lớp {ten_lop} đã hoàn thành buổi báo cáo sản phẩm cuối khóa ({buoi}) đầy ấn tượng:**
+
+**Nội dung buổi báo cáo:**
+- {tom_tat}
+
+**Đánh giá chung buổi thuyết trình:**
+- {loi_nhan}
+
+**Lời nhắn nhủ:**
+- Chúc mừng các em đã xuất sắc bảo vệ sản phẩm công nghệ của mình và hoàn thành trọn vẹn khóa học!
+- Thầy đã cập nhật bảng đánh giá năng lực toàn khóa trên Học bạ trực tuyến. Kính mời Quý Phụ huynh truy cập để theo dõi thành quả của con.
+
+**_Trân trọng,_
+_Thầy giáo_**`,
+  },
+];
+
+/** Thêm các mẫu tin Zalo chuẩn theo 4 hình thức buổi học. */
 export async function seedDefaultTemplate(): Promise<void> {
   const supabase = await createClient();
   const {
@@ -607,10 +685,23 @@ export async function seedDefaultTemplate(): Promise<void> {
   } = await supabase.auth.getUser();
   if (!user) return;
 
-  await supabase.from("zalo_templates").insert({
+  const { data: existing } = await supabase
+    .from("zalo_templates")
+    .select("name")
+    .eq("teacher_id", user.id);
+
+  const existingNames = new Set((existing ?? []).map((t) => t.name));
+  const toInsert = DEFAULT_ZALO_TEMPLATES.filter(
+    (t) => !existingNames.has(t.name)
+  ).map((t) => ({
     teacher_id: user.id,
-    name: "Mẫu thông báo mặc định",
-    template_text: DEFAULT_TEMPLATE,
-  });
+    name: t.name,
+    template_text: t.template_text,
+  }));
+
+  if (toInsert.length > 0) {
+    await supabase.from("zalo_templates").insert(toInsert);
+  }
   revalidatePath("/teacher/settings");
+  revalidatePath("/teacher/sessions/[id]", "page");
 }
