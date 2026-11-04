@@ -16,7 +16,7 @@ import { buildOpsReport } from "@/lib/admin-report";
 import { ConfirmEmailButton } from "./confirm-email-button";
 import { OpsActionButton } from "./ops-action-button";
 
-export const metadata = { title: "Vận hành hệ thống — Eduverse" };
+export const metadata = { title: "Vận hành hệ thống — CodeLuma" };
 
 // Số liệu vận hành phải tươi mỗi lần vào; cache ở đây là báo sai trạng thái.
 export const dynamic = "force-dynamic";

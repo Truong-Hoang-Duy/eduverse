@@ -12,7 +12,7 @@ import { GradingTabs } from "../grading-tabs";
 import type { AssignmentChoice, CourseChoice } from "../grading-tool";
 import { HelpTool } from "./help-tool";
 
-export const metadata = { title: "Hỏi bài — Eduverse" };
+export const metadata = { title: "Hỏi bài — CodeLuma" };
 
 interface AssignmentRow {
   id: string;

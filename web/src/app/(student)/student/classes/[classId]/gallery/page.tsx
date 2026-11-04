@@ -8,7 +8,7 @@ import { driveLinksOfStudents } from "@/lib/actions/drive-link";
 import { requireRole } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Sản phẩm của lớp — Eduverse" };
+export const metadata = { title: "Sản phẩm của lớp — CodeLuma" };
 
 interface ProjectRow {
   id: string;

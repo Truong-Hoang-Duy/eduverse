@@ -3,8 +3,56 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-10-25, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 116 (**Chuẩn hóa Quy tắc Sư phạm Bài tập về nhà `HOMEWORK_PEDAGOGY_RULE` & Khái quát hóa Bài làm Kiểm tra `EXAM_ABSTRACTION_RULE` trong Nhận xét AI và Đánh giá Rubric ĐNL**):
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-04, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 118 (**Tối ưu toàn diện tốc độ Mở trang & Chuyển trang tức thì như ReactJS SPA + Đồng bộ thương hiệu CodeLuma (`codeluma.vercel.app`)**):
+1. **Tối ưu tốc độ MỞ TRANG (Initial Open — Lớp học, Buổi học, Sản phẩm, Sổ tay Code):**
+   - **Cắt bỏ kiểm tra đăng nhập trùng lặp (`middleware.ts` & `get-profile.ts`):** `middleware.ts` sau khi xác thực `supabase.auth.getUser()` truyền thẳng `x-eduverse-user-id` nội bộ (đã lọc chống giả mạo từ client) sang `getProfile()`, giúp mọi trang không phải gọi lại `supabase.auth.getUser()` lần thứ 2 qua mạng (tiết kiệm 200–350ms mỗi lần mở trang). Bỏ qua gọi `getUser()` khi trình duyệt chạy request `prefetch` ngầm.
+   - **Xóa bỏ chuỗi truy vấn nối đuôi nhau (Waterfall → Parallel `Promise.all`):**
+     - `teacher/classes/[id]/page.tsx`: Gom 5 chặng truy vấn tuần tự (`class_showcases`, `driveLinksOfStudents`, `showcase_ratings`) về chỉ còn 2 đợt chạy song song, bỏ hẳn việc truy vấn lặp bảng `enrollments`.
+     - `teacher/sessions/[id]/page.tsx`: Đưa `review_options`, `zalo_templates`, `listMyCombos(profile.id)` lên chạy song song ngay từ Đợt 1 cùng `sessions`, không gọi lại `auth.getUser()` trong `listMyCombos`.
+     - `teacher/gallery/page.tsx`: Đưa cả 5 bảng (`classes`, `projects`, `project_comments`, `enrollments`, `sessions`) lên chạy song song ngay Đợt 1 thay vì bắt `projects` chờ `classes`.
+     - `snippets.ts`: Ghi nhớ trạng thái bảng (`codeSnippetsTableMissing`) sau lần kiểm tra đầu tiên và truyền thẳng `profile.id` từ trang xuống, loại bỏ hoàn toàn 1 lượt gọi bảng lỗi `PGRST205` dư thừa.
+2. **Tối ưu tốc độ CHUYỂN TRANG (Instant Tab / Page Switching):**
+   - **Bật Client Router Cache (`staleTimes: { dynamic: 60, static: 300 }` trong `next.config.ts`):** Giữ các trang động vừa mở trong bộ nhớ trình duyệt 60s (vẫn tự động làm mới ngay khi thêm/sửa/xóa nhờ `revalidatePath`), giúp bấm chuyển qua lại giữa các tab/lớp hiện ra tức thì (0ms) như ReactJS thuần.
+   - **Tải trước ngầm (`prefetch={true}`):** Kích hoạt trên thanh điều hướng chính (`nav-links.tsx`), tab chấm bài (`grading-tabs.tsx`), tab lớp học viên (`class-tabs.tsx`) và thẻ lớp học (`class-list.tsx`).
+   - **Khung chuyển trang tức thì (`teacher/loading.tsx` & `student/loading.tsx`):** Phản hồi chuyển màn hình ngay lập tức (<10ms) khi mở trang mới chưa có trong bộ nhớ đệm.
+3. **Đồng bộ thương hiệu giao diện sang CodeLuma (`codeluma.vercel.app`):**
+   - Cập nhật tên hiển thị trên thanh điều hướng (`app-nav.tsx`), chân trang (`app-footer.tsx`), trang đăng nhập/đăng ký (`(auth)/layout.tsx`), trang xem đề Checkpoints (`checkpoint-view.tsx`) và toàn bộ tiêu đề tab trình duyệt (`metadata.title`) sang **CodeLuma** (vẫn giữ nguyên hậu tố email nội bộ `@eduverse.local` để bảo toàn 100% tài khoản hiện có).
+4. **Kiểm thử chất lượng:**
+   - `web/`: 473/473 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 117 (**Xây dựng tab "Sổ tay Code" (`/teacher/snippets` & `/student/snippets`) với giao diện thẻ cửa sổ IDE sinh động, tô màu cú pháp & tích hợp nút "✨ AI soạn giúp hướng dẫn & mô tả"**):
+1. **Mục tiêu & Trải nghiệm giáo viên + học viên:**
+   - Bổ sung tab **"Sổ tay Code"** ở cuối thanh điều hướng chính cho cả **Giáo viên** (`/teacher/snippets`) và **Học viên** (`/student/snippets` + cuối thanh `ClassTabs` trong từng lớp học).
+   - Bên **Học viên** hiển thị ở chế độ xem & tra cứu nhanh (`readOnly`): tìm kiếm theo lỗi/câu lệnh, lọc theo môn học, xem hướng dẫn cách dùng và bấm nút **`📋 Copy đoạn code`** 1 chạm để dán ngay vào bài làm.
+   - **Thiết kế thẻ dạng Cửa sổ IDE (IDE Code Card) sinh động, cân đối:**
+     - Loại bỏ hoàn toàn khoảng trống đen thênh thang giữa khung hướng dẫn và khung code khi thẻ chỉ có 1 dòng lệnh đứng cạnh thẻ nhiều dòng.
+     - Viền màu chuyển sắc (gradient accent bar) trên đỉnh thẻ và hộp hướng dẫn có vạch màu trái đồng bộ theo từng chủ đề môn học (`CSA`, `CSB`, `Python`, `Sửa lỗi`, `Cài đặt`, `App`, `Web`).
+     - Khung code mô phỏng cửa sổ trình soạn thảo macOS/IDE (`🔴 🟡 🟢`, tên file gợi ý như `jupyter_notebook.ipynb` / `colab_script.py`, badge số dòng, nút `Copy` nhanh trên thanh tiêu đề cửa sổ).
+     - Đánh số thứ tự dòng (`01`, `02`...) kèm **tô màu cú pháp tự động (Syntax Highlighting)** cho từ khóa (`import`, `with`, `as`...), chuỗi ký tự, chú thích (`# ...`), hàm và câu lệnh đặc biệt (`%matplotlib inline`).
+   - Khởi tạo sẵn mẫu code kinh điển `%matplotlib inline` (*"Sửa lỗi không hiển thị biểu đồ khi chạy code (Jupyter / Matplotlib)"*) ngay lần đầu mở Sổ tay.
+   - **Nút "✨ AI soạn giúp hướng dẫn & mô tả" (`/suggest-code-snippet`):** Giáo viên chỉ cần dán đoạn code vào (và tùy chọn gõ vài từ gợi ý), AI sẽ tự động phân tích và điền sẵn:
+     - **Tên vấn đề / Tình huống (`title`)** ngắn gọn, dễ nhớ.
+     - **Hướng dẫn cách dùng / Lời dặn gửi học sinh (`usage_guide`)** viết sẵn bằng giọng văn thân thiện (xưng "em").
+     - **Nhãn phân loại (`category`)** phù hợp (CSA, CSB, Sửa lỗi, Cài đặt, Python, App, Web, Khác).
+   - **Thao tác siêu tốc khi đứng lớp:**
+     - **2 nút Copy 1 chạm:** `📋 Copy nguyên code` (chỉ chép lệnh) và `💬 Copy kèm hướng dẫn` (chép cả lời dặn + đoạn code để gửi thẳng qua Zalo/Zoom/Meet).
+     - **Ghim (`📌 Ghim`)** các đoạn code hay dùng lên đầu trang, tìm kiếm tức thì theo từ khóa và lọc theo chủ đề/môn học.
+2. **Triển khai kỹ thuật:**
+   - **Database & RLS (`supabase/migrations/20261104180000_code_snippets.sql`):** Bảng `public.code_snippets` với RLS `code_snippets_teacher_all` và `code_snippets_select_authenticated`; kèm cơ chế fallback tự động trong `web/src/lib/actions/snippets.ts` để hoạt động mượt mà ngay cả khi DB live chưa chạy kịp migration.
+   - **AI Service (`ai-service/app/prompts.py`, `schemas.py`, `routes/projects.py`):** Thêm `build_suggest_code_snippet_prompt` và endpoint `POST /suggest-code-snippet`.
+   - **Frontend (`web/src/lib/code-snippets.ts`, `web/src/app/(teacher)/teacher/snippets/snippets-manager.tsx`):** Trang quản lý Sổ tay Code với bộ tô màu cú pháp `highlightCodeLine` và `ConfirmDialog` cho hành động xóa.
+3. **Kiểm thử chất lượng:**
+   - `ai-service/`: 110/110 tests pytest PASS 100%.
+   - `web/`: 473/473 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 116 (**Chuẩn hóa Quy tắc Sư phạm Bài tập về nhà `HOMEWORK_PEDAGOGY_RULE` & Khái quát hóa Bài làm Kiểm tra `EXAM_ABSTRACTION_RULE` trong Nhận xét AI và Đánh giá Rubric ĐNL**):
 1. **Mục tiêu & Nghiệp vụ Sư phạm:**
    - **Xử lý ghi chú Bài tập về nhà ("Chưa làm bài tập về nhà (0/5) bài"):**
      - Tuyệt đối không phán xét nhân cách tiêu cực (không dùng từ ngữ chỉ trích như "lười biếng", "bỏ bê học tập").

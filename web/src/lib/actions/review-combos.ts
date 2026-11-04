@@ -22,17 +22,21 @@ export interface ReviewCombo {
 
 /** Bộ combo lưu sẵn của GV đang đăng nhập (RLS `review_combos_teacher_all` đã
  *  giới hạn theo chủ). Đọc server-side để trang buổi học truyền xuống editor. */
-export async function listMyCombos(): Promise<ReviewCombo[]> {
+export async function listMyCombos(teacherId?: string): Promise<ReviewCombo[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return [];
+  let uid = teacherId;
+  if (!uid) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    uid = user?.id;
+  }
+  if (!uid) return [];
 
   const { data } = await supabase
     .from("review_combos")
     .select("id, name, strengths, improvements, project_notes")
-    .eq("teacher_id", user.id)
+    .eq("teacher_id", uid)
     .order("name");
   return ((data ?? []) as unknown as {
     id: string;

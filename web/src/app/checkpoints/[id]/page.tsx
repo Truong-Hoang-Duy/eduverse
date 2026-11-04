@@ -18,7 +18,7 @@ export async function generateMetadata({
   const title = await loadCheckpointTitle(id);
 
   return {
-    title: title ? `${title} — Eduverse` : "Đề bài không khả dụng — Eduverse",
+    title: title ? `${title} — CodeLuma` : "Đề bài không khả dụng — CodeLuma",
     robots: { index: false, follow: false },
   };
 }

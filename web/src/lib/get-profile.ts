@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
@@ -7,27 +8,31 @@ import type { Profile } from "@/lib/types";
 /**
  * Đọc profile của user đang đăng nhập, null nếu chưa.
  *
- * Bọc cache() để layout và page trong CÙNG một request chỉ tốn 1 lượt
- * auth.getUser() + 1 query profiles (trước đây mỗi bên tự gọi = gấp đôi
- * roundtrip mỗi lần tải trang).
- *
- * cache() có phạm vi MỘT request, bị xóa khi request kết thúc — không phải
- * unstable_cache, không ghi đĩa, không sống qua request → không có chuyện
- * profile của người này rò sang người khác.
+ * Bọc cache() để layout và page trong CÙNG một request chỉ tốn 1 query profiles.
+ * Nếu middleware đã xác thực `auth.getUser()` và gắn header `x-eduverse-user-id`,
+ * tái sử dụng ngay `userId` đó để tiết kiệm 1 vòng gọi mạng sang Supabase Auth.
  */
 const getProfile = cache(async (): Promise<Profile | null> => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+  const [supabase, reqHeaders] = await Promise.all([
+    createClient(),
+    headers(),
+  ]);
+
+  let userId = reqHeaders.get("x-eduverse-user-id");
+  if (!userId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userId = user?.id ?? null;
+  }
+  if (!userId) {
     return null;
   }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
   return (profile as Profile | null) ?? null;
 });

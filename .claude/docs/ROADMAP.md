@@ -40,6 +40,7 @@
 - [x] Đợt 114: Khắc phục sự cố Timeout 504 khi gọi AI trên Vercel, tăng giới hạn 60s & Chống crash trắng trang tuyệt đối.
 - [x] Đợt 115: Tích hợp cơ chế Auto-Warmup ngầm tự động đánh thức AI Service trên Render khi giáo viên vào trang.
 - [x] Đợt 116: Chuẩn hóa Quy tắc Sư phạm Bài tập về nhà `HOMEWORK_PEDAGOGY_RULE` & Khái quát hóa Bài làm Kiểm tra `EXAM_ABSTRACTION_RULE` trong Nhận xét AI và Đánh giá Rubric ĐNL.
+- [x] Đợt 117: Xây dựng tab "Sổ tay Code" cho cả Giáo viên (`/teacher/snippets`) và Học viên (`/student/snippets`) — lưu trữ các đoạn code mẫu & mẹo sửa lỗi nhanh (khởi tạo sẵn `%matplotlib inline`), tích hợp nút "✨ AI soạn giúp hướng dẫn & mô tả" (`/suggest-code-snippet`), tìm kiếm/lọc theo chủ đề, ghim mục hay dùng và Copy 1 chạm.
 
 ## Giai đoạn 4 — Sản phẩm cuối khóa
 - [x] HV CRUD sản phẩm (/student/projects, 1 sản phẩm/lớp, unique)

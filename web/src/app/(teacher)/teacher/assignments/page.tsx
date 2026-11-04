@@ -21,7 +21,7 @@ import {
 } from "./grading-tool";
 import { SavedAssignments, type SavedAssignment } from "./saved-assignments";
 
-export const metadata = { title: "Chấm bài — Eduverse" };
+export const metadata = { title: "Chấm bài — CodeLuma" };
 
 interface AssignmentRow {
   id: string;

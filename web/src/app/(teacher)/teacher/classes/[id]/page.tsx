@@ -6,7 +6,7 @@ import type { ProjectView } from "@/components/project-card";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { driveLinksOfClass } from "@/lib/actions/drive-link";
+import { driveLinksOfStudents } from "@/lib/actions/drive-link";
 import {
   getSessionFormatBadge,
   resolveSessionFormat,
@@ -55,6 +55,7 @@ export default async function ClassDetailPage({
     { data: projectsData },
     { data: coursesData },
     { data: reviewsData },
+    { data: showcaseData, error: showcaseError },
   ] = await Promise.all([
     supabase
       .from("classes")
@@ -92,6 +93,14 @@ export default async function ClassDetailPage({
         "session_id, student_id, strengths, improvements, ai_generated_comment, is_absent, sessions!inner(class_id)"
       )
       .eq("sessions.class_id", id),
+    // Link triển lãm gửi phụ huynh — gom vào cùng đợt đầu để tiết kiệm 1 vòng mạng.
+    supabase
+      .from("class_showcases")
+      .select(
+        "id, token, is_enabled, expires_at, intro, allow_ratings, allow_reactions, show_rating_results, hidden_student_ids, view_count, spotlight_project_id"
+      )
+      .eq("class_id", id)
+      .maybeSingle(),
   ]);
 
   if (!classData) {
@@ -112,8 +121,42 @@ export default async function ClassDetailPage({
     }
   }
 
-  // Link Drive nộp bài của từng em (RLS: chỉ GV của lớp này đọc được).
-  const driveLinks = await driveLinksOfClass(id);
+  const enrolledStudentIds = enrollments
+    .filter((e) => e.profiles !== null)
+    .map((e) => e.profiles!.id);
+
+  const showcase = (showcaseData ?? null) as (ShowcaseRow & { id: string }) | null;
+  // KHÔNG nuốt lỗi ở đây: nếu truy vấn hỏng (thiếu cột vì migration chưa dán,
+  // RLS đổi...) thì `showcase` cũng là null y như khi chưa bật link — giáo viên
+  // sẽ thấy 'Chưa bật' và tưởng link tự biến mất. Đã dính đúng lỗi này 2026-08-29.
+  const showcaseLoadError = showcaseError
+    ? `Không đọc được cấu hình link: ${showcaseError.message}`
+    : null;
+
+  const isShowcaseExpiredNow = showcase
+    ? isShowcaseExpired(showcase.expires_at)
+    : false;
+
+  // Gom việc đọc link Drive của học viên và nhận xét phụ huynh (showcase_ratings)
+  // vào cùng 1 lượt chạy song song thay vì xếp hàng chờ nhau.
+  const [driveLinks, ratingResult] = await Promise.all([
+    driveLinksOfStudents(enrolledStudentIds),
+    showcase
+      ? isShowcaseExpiredNow
+        ? supabase
+            .from("showcase_ratings")
+            .delete()
+            .eq("showcase_id", showcase.id)
+            .then(() => ({ data: null }))
+        : supabase
+            .from("showcase_ratings")
+            .select(
+              "id, project_id, score_product, score_presentation, score_creativity, comment, created_at"
+            )
+            .eq("showcase_id", showcase.id)
+            .order("created_at", { ascending: false })
+      : Promise.resolve({ data: null }),
+  ]);
 
   const students: StudentRow[] = enrollments
     .filter((e) => e.profiles !== null)
@@ -221,55 +264,18 @@ export default async function ClassDetailPage({
     })
   );
 
-  // Link triển lãm gửi phụ huynh. RLS `class_showcases_teacher_all` đã chặn lớp
-  // của giáo viên khác, ở đây chỉ lọc theo lớp đang mở.
-  const { data: showcaseData, error: showcaseError } = await supabase
-    .from("class_showcases")
-    .select(
-      "id, token, is_enabled, expires_at, intro, allow_ratings, allow_reactions, show_rating_results, hidden_student_ids, view_count, spotlight_project_id"
-    )
-    .eq("class_id", id)
-    .maybeSingle();
-
-  const showcase = (showcaseData ?? null) as (ShowcaseRow & { id: string }) | null;
-  // KHÔNG nuốt lỗi ở đây: nếu truy vấn hỏng (thiếu cột vì migration chưa dán,
-  // RLS đổi...) thì `showcase` cũng là null y như khi chưa bật link — giáo viên
-  // sẽ thấy 'Chưa bật' và tưởng link tự biến mất. Đã dính đúng lỗi này 2026-08-29.
-  const showcaseLoadError = showcaseError
-    ? `Không đọc được cấu hình link: ${showcaseError.message}`
-    : null;
   const authorByProject = new Map(projects.map((p) => [p.id, p.authorName]));
-
-  let showcaseRatings: ShowcaseRatingRow[] = [];
-  if (showcase) {
-    const isExpired = isShowcaseExpired(showcase.expires_at);
-    if (isExpired) {
-      // Link đã hết hạn -> xóa sạch nhận xét góp ý theo yêu cầu
-      await supabase
-        .from("showcase_ratings")
-        .delete()
-        .eq("showcase_id", showcase.id);
-    } else {
-      const { data: ratingRows } = await supabase
-        .from("showcase_ratings")
-        .select(
-          "id, project_id, score_product, score_presentation, score_creativity, comment, created_at"
-        )
-        .eq("showcase_id", showcase.id)
-        .order("created_at", { ascending: false });
-      // Bài chấm ẩn danh: dòng KHÔNG có tên người gửi. `studentName` là tên em
-      // ĐƯỢC CHẤM, lấy từ chính danh sách sản phẩm phía trên.
-      showcaseRatings = (ratingRows ?? []).map((r) => ({
-        id: r.id,
-        studentName: authorByProject.get(r.project_id) ?? "Học viên",
-        score_product: r.score_product,
-        score_presentation: r.score_presentation,
-        score_creativity: r.score_creativity,
-        comment: r.comment,
-        created_at: r.created_at,
-      }));
-    }
-  }
+  const showcaseRatings: ShowcaseRatingRow[] = (ratingResult.data ?? []).map(
+    (r) => ({
+      id: r.id,
+      studentName: authorByProject.get(r.project_id) ?? "Học viên",
+      score_product: r.score_product,
+      score_presentation: r.score_presentation,
+      score_creativity: r.score_creativity,
+      comment: r.comment,
+      created_at: r.created_at,
+    })
+  );
 
   return (
     <div className="space-y-6">

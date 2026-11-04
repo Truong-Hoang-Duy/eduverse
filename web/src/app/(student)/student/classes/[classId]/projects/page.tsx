@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DriveLinkForm } from "../../../drive-link-form";
 import { ProjectEditor, type ProjectData } from "./project-editor";
 
-export const metadata = { title: "Sản phẩm của tôi — Eduverse" };
+export const metadata = { title: "Sản phẩm của tôi — CodeLuma" };
 
 export default async function StudentClassProjectsPage({
   params,

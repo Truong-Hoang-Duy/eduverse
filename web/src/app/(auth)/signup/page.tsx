@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import { SignupForm, type ClassChoice } from "./signup-form";
 
-export const metadata = { title: "Đăng ký học viên — Eduverse" };
+export const metadata = { title: "Đăng ký học viên — CodeLuma" };
 
 // Danh sách lớp đổi khi GV mở lớp mới → không cache tĩnh.
 export const dynamic = "force-dynamic";
