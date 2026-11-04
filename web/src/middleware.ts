@@ -2,7 +2,22 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
+  // Xóa mọi header nội bộ từ client bên ngoài để chống giả mạo tuyệt đối.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete("x-eduverse-user-id");
+
+  // Với request prefetch ngầm khi rê chuột/tải trước tab: trả về ngay lập tức
+  // để không tốn thêm 1 vòng gọi mạng lên Supabase Auth.
+  const isPrefetch =
+    request.headers.get("purpose") === "prefetch" ||
+    request.headers.get("next-router-prefetch") === "1";
+  if (isPrefetch) {
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
+
+  let supabaseResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,7 +31,9 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = NextResponse.next({
+            request: { headers: requestHeaders },
+          });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -57,6 +74,17 @@ export async function middleware(request: NextRequest) {
       redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
     });
     return redirectResponse;
+  }
+
+  if (user) {
+    requestHeaders.set("x-eduverse-user-id", user.id);
+    const finalResponse = NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      finalResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return finalResponse;
   }
 
   return supabaseResponse;

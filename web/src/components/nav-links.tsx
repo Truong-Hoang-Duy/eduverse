@@ -36,6 +36,7 @@ export function NavLinks({ links }: { links: NavLink[] }) {
           <Link
             key={link.href}
             href={link.href}
+            prefetch={true}
             aria-current={active ? "page" : undefined}
             className={cn(
               // px nhỏ hơn trên điện thoại: đủ để 4 mục tiếng Việt vừa một hàng

@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { type ExistingReview, isHandled } from "../sessions/[id]/review-status";
 import { GalleryView } from "./gallery-view";
 
-export const metadata = { title: "Sản phẩm học viên — Eduverse" };
+export const metadata = { title: "Sản phẩm học viên — CodeLuma" };
 
 interface ProjectRow {
   id: string;
@@ -41,39 +41,23 @@ interface EnrollmentRow {
   profiles: { full_name: string } | null;
 }
 
-interface SessionRow {
-  id: string;
-  class_id: string;
-  session_number: number;
-}
-
 export default async function TeacherGalleryPage() {
   const profile = await requireRole("teacher");
   const supabase = await createClient();
 
-  // RLS (projects_class_select → is_teacher_of_class) đã chặn lớp của GV khác;
-  // danh sách lớp ở đây dùng để nhóm hiển thị, lấy mã lớp, và giới hạn
-  // enrollments/projects lấy về đúng phạm vi lớp GV dạy.
-  const { data: classesData } = await supabase
-    .from("classes")
-    .select("id, class_code, total_sessions, courses(code)")
-    .eq("teacher_id", profile.id)
-    .order("class_code");
-
-  const classes = (classesData ?? []) as unknown as {
-    id: string;
-    class_code: string;
-    total_sessions: number;
-    courses: { code: string } | null;
-  }[];
-  const classIds = classes.map((c) => c.id);
-
+  // Gom cả 5 truy vấn độc lập vào Đợt 1 chạy song song thay vì chờ classes xong mới chạy.
   const [
+    { data: classesData },
     { data: projectsData },
     { data: commentsData },
-    { data: enrollmentsData },
-    { data: sessionsData },
+    { data: allEnrollmentsData },
+    { data: allSessionsData },
   ] = await Promise.all([
+    supabase
+      .from("classes")
+      .select("id, class_code, total_sessions, courses(code)")
+      .eq("teacher_id", profile.id)
+      .order("class_code"),
     supabase
       .from("projects")
       .select(
@@ -86,29 +70,55 @@ export default async function TeacherGalleryPage() {
         "id, project_id, content, author_id, created_at, profiles!project_comments_author_id_fkey(full_name)"
       )
       .order("created_at"),
-    classIds.length > 0
-      ? supabase
-          .from("enrollments")
-          .select("class_id, student_id, profiles(full_name)")
-          .in("class_id", classIds)
-      : Promise.resolve({ data: [] as EnrollmentRow[] }),
-    classIds.length > 0
-      ? supabase
-          .from("sessions")
-          .select("id, class_id, session_number")
-          .in("class_id", classIds)
-      : Promise.resolve({ data: [] as SessionRow[] }),
+    supabase
+      .from("enrollments")
+      .select("class_id, student_id, profiles(full_name)"),
+    supabase
+      .from("sessions")
+      .select("id, class_id, session_number"),
   ]);
+
+  const classes = (classesData ?? []) as unknown as {
+    id: string;
+    class_code: string;
+    total_sessions: number;
+    courses: { code: string } | null;
+  }[];
+  const classIdSet = new Set(classes.map((c) => c.id));
+  const enrollmentsData = (allEnrollmentsData ?? []).filter((e) =>
+    classIdSet.has(e.class_id)
+  );
+  const sessionsData = (allSessionsData ?? []).filter((s) =>
+    classIdSet.has(s.class_id)
+  );
 
   const comments = (commentsData ?? []) as unknown as CommentRow[];
   const enrollments = (enrollmentsData ?? []) as unknown as EnrollmentRow[];
   const classCodeById = new Map(classes.map((c) => [c.id, c.class_code]));
 
-  // Link "Thư mục Drive" trên thẻ sản phẩm lấy từ `student_drive_links` (link HV
-  // tự cài, dùng chung mọi lớp), KHÔNG phải cột projects.drive_url đã bỏ.
-  const driveLinks = await driveLinksOfStudents(
-    enrollments.map((e) => e.student_id)
-  );
+  // Xác định buổi cuối cùng của từng lớp để kiểm tra hoàn thành
+  const lastSessionIdByClass = new Map<string, string>();
+  for (const cls of classes) {
+    const last = (sessionsData ?? []).find(
+      (s) => s.class_id === cls.id && s.session_number === cls.total_sessions
+    );
+    if (last) lastSessionIdByClass.set(cls.id, last.id);
+  }
+
+  const lastSessionIds = [...lastSessionIdByClass.values()];
+
+  // Đợt 2 chạy song song: vừa lấy link Drive vừa lấy nhận xét buổi cuối.
+  const [driveLinks, { data: lastReviewsData }] = await Promise.all([
+    driveLinksOfStudents(enrollments.map((e) => e.student_id)),
+    lastSessionIds.length
+      ? supabase
+          .from("student_reviews")
+          .select(
+            "session_id, strengths, improvements, ai_generated_comment, is_absent"
+          )
+          .in("session_id", lastSessionIds)
+      : Promise.resolve({ data: [] }),
+  ]);
 
   const projects: GalleryProject[] = (
     (projectsData ?? []) as unknown as ProjectRow[]
@@ -144,23 +154,6 @@ export default async function TeacherGalleryPage() {
     }));
 
   const totalComments = projects.reduce((n, p) => n + p.comments.length, 0);
-
-  // Xác định buổi cuối cùng của từng lớp để kiểm tra hoàn thành
-  const lastSessionIdByClass = new Map<string, string>();
-  for (const cls of classes) {
-    const last = (sessionsData ?? []).find(
-      (s) => s.class_id === cls.id && s.session_number === cls.total_sessions
-    );
-    if (last) lastSessionIdByClass.set(cls.id, last.id);
-  }
-
-  const lastSessionIds = [...lastSessionIdByClass.values()];
-  const { data: lastReviewsData } = lastSessionIds.length
-    ? await supabase
-        .from("student_reviews")
-        .select("session_id, strengths, improvements, ai_generated_comment, is_absent")
-        .in("session_id", lastSessionIds)
-    : { data: [] };
 
   const handledCountBySession = new Map<string, number>();
   for (const row of (lastReviewsData ?? []) as (ExistingReview & {

@@ -1,6 +1,25 @@
-import { PageSkeleton } from "@/components/page-skeleton";
+export default function StudentLoading() {
+  return (
+    <div
+      className="space-y-6 animate-in fade-in duration-150"
+      aria-busy="true"
+      aria-label="Đang tải trang"
+    >
+      <div className="space-y-2">
+        <div className="h-7 w-48 animate-pulse rounded-lg bg-muted/70" />
+        <div className="h-4 w-72 max-w-full animate-pulse rounded-md bg-muted/50" />
+      </div>
 
-/** Ranh giới Suspense cho mọi trang /student/* — xem chú thích ở teacher/loading.tsx. */
-export default function Loading() {
-  return <PageSkeleton />;
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="h-24 animate-pulse rounded-xl border border-border/50 bg-muted/30" />
+        <div className="h-24 animate-pulse rounded-xl border border-border/50 bg-muted/30" />
+        <div className="h-24 animate-pulse rounded-xl border border-border/50 bg-muted/30" />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="h-44 animate-pulse rounded-xl border border-border/50 bg-muted/25" />
+        <div className="h-44 animate-pulse rounded-xl border border-border/50 bg-muted/25" />
+      </div>
+    </div>
+  );
 }

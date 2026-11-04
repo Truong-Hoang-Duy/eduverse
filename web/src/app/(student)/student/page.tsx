@@ -12,7 +12,7 @@ import {
 import { requireRole } from "@/lib/get-profile";
 import { createClient } from "@/lib/supabase/server";
 
-export const metadata = { title: "Lớp học — Eduverse" };
+export const metadata = { title: "Lớp học — CodeLuma" };
 
 interface MyClassRow {
   id: string;

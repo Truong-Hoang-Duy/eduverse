@@ -159,7 +159,11 @@ export function ClassList({ classes }: { classes: ClassItem[] }) {
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {group.items.map((cls) => (
-              <Link key={cls.id} href={`/teacher/classes/${cls.id}`}>
+              <Link
+                key={cls.id}
+                href={`/teacher/classes/${cls.id}`}
+                prefetch={true}
+              >
                 <Card className="group h-full gap-3 transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between gap-2 text-lg">

@@ -757,6 +757,50 @@ export type Database = {
           },
         ]
       }
+      code_snippets: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          teacher_id: string
+          title: string
+          updated_at: string
+          usage_guide: string
+        }
+        Insert: {
+          category?: string
+          code: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          teacher_id: string
+          title: string
+          updated_at?: string
+          usage_guide?: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          teacher_id?: string
+          title?: string
+          updated_at?: string
+          usage_guide?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_snippets_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       zalo_templates: {
         Row: {
           id: string

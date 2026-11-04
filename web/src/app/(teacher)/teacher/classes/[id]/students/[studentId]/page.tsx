@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EditStudentNameDialog } from "../../edit-student-name-dialog";
 import { StudentSummaryPanel } from "../../student-summary-panel";
 
-export const metadata = { title: "Hồ sơ học viên — Eduverse" };
+export const metadata = { title: "Hồ sơ học viên — CodeLuma" };
 
 interface ReviewRow {
   session_id: string;

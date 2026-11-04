@@ -10,7 +10,7 @@ import { ClassList, type ClassItem } from "./class-list";
 import { CourseForm } from "./course-form";
 import { type ExistingReview, isHandled } from "./sessions/[id]/review-status";
 
-export const metadata = { title: "Lớp học — Eduverse" };
+export const metadata = { title: "Lớp học — CodeLuma" };
 
 interface ClassRow extends Class {
   enrollments: { count: number }[];

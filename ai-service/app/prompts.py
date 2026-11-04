@@ -1230,3 +1230,36 @@ def build_project_review_prompt(
         '"goi_y": ["<1-3 ý nâng cấp sản phẩm này lên mức tốt hơn>"]}'
     )
     return "\n".join(parts)
+
+
+def build_suggest_code_snippet_prompt(
+    code: str,
+    teacher_hint: str | None = None,
+) -> str:
+    """Soạn tự động tiêu đề, hướng dẫn cách dùng và phân loại cho đoạn code mẫu trong Sổ tay Code của giáo viên."""
+    parts = [
+        SYSTEM_ROLE,
+        "Nhiệm vụ: Giáo viên dạy lập trình muốn lưu đoạn code dưới đây vào 'Sổ tay Code' để tái sử dụng hoặc gửi nhanh cho học viên khi gặp lỗi / cần đoạn lệnh mẫu.",
+        "Hãy phân tích đoạn code (và gợi ý nháp của giáo viên nếu có) để tự động soạn giúp giáo viên 3 thông tin sau bằng tiếng Việt tự nhiên, ngắn gọn, dễ hiểu:",
+        "1. 'title': Tên vấn đề hoặc công dụng của đoạn code (ngắn gọn 5-12 từ, nêu rõ tình huống hoặc lỗi khắc phục được để giáo viên nhìn là nhớ ngay, ví dụ: 'Khắc phục lỗi không hiển thị biểu đồ trên Jupyter Notebook').",
+        "2. 'usage_guide': Hướng dẫn cách dùng ngắn gọn (1-3 câu), viết sẵn bằng giọng điệu thân thiện của giáo viên nhắn trực tiếp cho học viên (xưng hô gọi học viên là 'em', TUYỆT ĐỐI KHÔNG dùng từ 'con'). Nêu rõ: khi nào dùng đoạn lệnh này, đặt ở vị trí nào (đầu ô code, đầu file, hay chạy trong Terminal...) và tác dụng của nó.",
+        "3. 'category': Chọn đúng 1 mã phân loại phù hợp nhất trong danh sách sau:\n"
+        "   - 'csa': Phân tích dữ liệu & Biểu đồ Python (Pandas, Matplotlib, Seaborn, Jupyter Notebook...)\n"
+        "   - 'csb': Python nền tảng, thuật toán, cấu trúc dữ liệu, OOP\n"
+        "   - 'app': Lập trình ứng dụng giao diện (PyQt, Tkinter...)\n"
+        "   - 'web': Lập trình Web (HTML, CSS, JavaScript...)\n"
+        "   - 'debug': Mẹo sửa lỗi thường gặp\n"
+        "   - 'setup': Cài đặt thư viện & cấu hình môi trường\n"
+        "   - 'python': Mẹo Python chung\n"
+        "   - 'general': Khác",
+    ]
+    if teacher_hint and teacher_hint.strip():
+        parts.append(f"Ghi chú / Gợi ý ban đầu của giáo viên: {teacher_hint.strip()}")
+    parts.append(f"Đoạn code cần lưu:\n```\n{code.strip()}\n```")
+    parts.append(
+        'Trả về JSON theo đúng định dạng: {"title": "<tiêu đề ngắn gọn>", '
+        '"usage_guide": "<hướng dẫn gửi học viên>", '
+        '"category": "<csa|csb|python|app|web|debug|setup|general>"}'
+    )
+    return "\n".join(parts)
+

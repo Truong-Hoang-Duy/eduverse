@@ -19,6 +19,7 @@ export function ClassTabs({ classId }: { classId: string }) {
     { href: `${base}/projects`, label: "Sản phẩm của tôi" },
     { href: `${base}/gallery`, label: "Sản phẩm của lớp" },
     { href: `${base}/guide`, label: "Hướng dẫn" },
+    { href: "/student/snippets", label: "Sổ tay Code" },
   ];
 
   const activeHref = tabs
@@ -33,6 +34,7 @@ export function ClassTabs({ classId }: { classId: string }) {
           <Link
             key={tab.href}
             href={tab.href}
+            prefetch={true}
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex-1 rounded-md px-3 py-1.5 text-center text-sm font-medium whitespace-nowrap transition-colors",

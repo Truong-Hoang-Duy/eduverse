@@ -13,7 +13,7 @@ import type { CourseChoice } from "../assignment-form";
 import { GradingTabs } from "../grading-tabs";
 import { ProjectReviewTool } from "./project-review-tool";
 
-export const metadata = { title: "Chấm sản phẩm cuối khóa — Eduverse" };
+export const metadata = { title: "Chấm sản phẩm cuối khóa — CodeLuma" };
 
 export default async function ProjectReviewPage() {
   const supabase = await createClient();

@@ -95,7 +95,7 @@ export function PublicCheckpointView({
               <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-base text-primary-foreground shadow-xs">
                 🎓
               </span>
-              <span>Eduverse</span>
+              <span>CodeLuma</span>
             </Link>
             <div className="hidden h-4 w-px bg-border/80 sm:block" />
             <div className="hidden items-center gap-2 sm:flex">
@@ -524,7 +524,7 @@ export function PublicCheckpointView({
       {/* Footer */}
       <footer className="border-t border-border/60 bg-muted/20 py-6 text-center text-xs text-muted-foreground">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Eduverse · Nền tảng học tập &amp; quản lý học viên lập trình</span>
+          <span>CodeLuma · Nền tảng học tập &amp; quản lý học viên lập trình</span>
           <span>Chế độ xem đề bài dành cho học viên (không yêu cầu đăng nhập)</span>
         </div>
       </footer>

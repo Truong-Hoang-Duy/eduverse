@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { requireRole } from "@/lib/get-profile";
 
-export const metadata = { title: "Hướng dẫn nộp bài — Eduverse" };
+export const metadata = { title: "Hướng dẫn nộp bài — CodeLuma" };
 
 // Dán link YouTube đầy đủ (watch?v=... / youtu.be/... / shorts/...) hoặc ID
 // thuần đều được. Để trống ("") thì hiện ô chờ thay vì video.
