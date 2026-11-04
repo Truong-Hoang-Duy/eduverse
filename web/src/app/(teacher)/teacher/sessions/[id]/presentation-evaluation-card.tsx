@@ -162,22 +162,9 @@ export function PresentationEvaluationCard({
 
   function handleAutoDistribute(targetScore: number) {
     const distributed = distributeScores(targetScore);
-    const targetDnlScore = targetScore >= 8.5 ? 5 : targetScore >= 7.0 ? 4 : 3;
-    const targetDnlLevel = scoreToLevel(targetDnlScore);
-    const updatedDnl = { ...data.dnl_evaluations };
-    for (const key of Object.keys(updatedDnl)) {
-      if (updatedDnl[key].score < 3) {
-        updatedDnl[key] = {
-          ...updatedDnl[key],
-          score: targetDnlScore,
-          level: targetDnlLevel,
-        };
-      }
-    }
     onChange({
       ...data,
       demo_score: distributed,
-      dnl_evaluations: updatedDnl,
     });
   }
 

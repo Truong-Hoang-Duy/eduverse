@@ -12,7 +12,7 @@ import { ProjectProgressManager } from "./project-progress-manager";
 import { TemplateManager } from "./template-manager";
 import { TestProcessManager } from "./test-process-manager";
 
-export const metadata = { title: "Cài đặt — Eduverse" };
+export const metadata = { title: "Cài đặt — CodeLuma" };
 
 /** Khối cài đặt thu gọn — ĐÓNG mặc định, bấm tiêu đề mới mở (yêu cầu user
  *  2026-07-27, cho trang gọn). Dùng `<details>` như các accordion khác. Nội
@@ -58,6 +58,7 @@ export default async function SettingsPage() {
         .from("zalo_templates")
         .select("id, name, template_text")
         .eq("teacher_id", profile.id)
+        .not("name", "like", "__CODE_SNIPPET__:%")
         .order("name"),
       listMyCombos(),
       listMySkillGroups(),

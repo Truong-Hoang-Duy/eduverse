@@ -92,14 +92,34 @@ export default async function SessionDetailPage({
   const supabase = await createClient();
   const { id } = await params;
 
-  let { data: sessionData } = await supabase
-    .from("sessions")
-    .select(
-      "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, is_final_presentation, session_date, classes(class_code, total_sessions, courses(name, code))"
-    )
-    .eq("id", id)
-    .single();
+  const [
+    { data: initialSessionData },
+    { data: optionsData },
+    { data: templatesData },
+    combos,
+  ] = await Promise.all([
+    supabase
+      .from("sessions")
+      .select(
+        "id, class_id, session_number, title, content, review_context, is_periodic_test, is_project_period, is_final_presentation, session_date, classes(class_code, total_sessions, courses(name, code))"
+      )
+      .eq("id", id)
+      .single(),
+    supabase
+      .from("review_options")
+      .select("id, category, label, skill_group")
+      .eq("teacher_id", profile.id)
+      .order("label"),
+    supabase
+      .from("zalo_templates")
+      .select("id, name")
+      .eq("teacher_id", profile.id)
+      .not("name", "like", "__CODE_SNIPPET__:%")
+      .order("name"),
+    listMyCombos(profile.id),
+  ]);
 
+  let sessionData = initialSessionData;
   if (!sessionData) {
     // Graceful fallback nếu DB chưa dán migration 20260911000000 (cột is_final_presentation)
     const fallback = await supabase
@@ -141,11 +161,8 @@ export default async function SessionDetailPage({
   const [
     { data: enrollments },
     { data: reviewsData },
-    { data: optionsData },
-    { data: templatesData },
     { data: priorReviewsData },
     { data: projectsData },
-    combos,
   ] = await Promise.all([
     supabase
       .from("enrollments")
@@ -159,16 +176,6 @@ export default async function SessionDetailPage({
         "student_id, strengths, improvements, ai_generated_comment, is_absent"
       )
       .eq("session_id", session.id),
-    supabase
-      .from("review_options")
-      .select("id, category, label, skill_group")
-      .eq("teacher_id", profile.id)
-      .order("label"),
-    supabase
-      .from("zalo_templates")
-      .select("id, name")
-      .eq("teacher_id", profile.id)
-      .order("name"),
     // Nhận xét các buổi khác (cùng lớp) — phục vụ: (1) AI tránh lặp lời văn,
     // (2) copy điểm mạnh/cải thiện, (3) tổng hợp toàn khóa cho buổi thuyết trình,
     // (4) áp nhận xét giống buổi khác cho cả lớp theo hình thức buổi học.
@@ -185,7 +192,6 @@ export default async function SessionDetailPage({
       .from("projects")
       .select("id, student_id, name, description, features")
       .eq("class_id", session.class_id),
-    listMyCombos(),
   ]);
 
   let enrollmentRows = enrollments;

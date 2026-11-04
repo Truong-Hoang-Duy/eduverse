@@ -3,8 +3,56 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-02, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 117 (**Chuẩn hóa xưng hô "thầy", nút sửa `✏️` danh mục nhận xét, chia nhóm kỹ năng dropdown, sắp xếp lộ trình khóa học & tự động chọn mẫu tin Zalo theo hình thức buổi học**):
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-04, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 119 (**Tối ưu toàn diện tốc độ Mở trang & Chuyển trang tức thì như ReactJS SPA + Đồng bộ thương hiệu CodeLuma (`codeluma.vercel.app`)**):
+1. **Tối ưu tốc độ MỞ TRANG (Initial Open — Lớp học, Buổi học, Sản phẩm, Sổ tay Code):**
+   - **Cắt bỏ kiểm tra đăng nhập trùng lặp (`middleware.ts` & `get-profile.ts`):** `middleware.ts` sau khi xác thực `supabase.auth.getUser()` truyền thẳng `x-eduverse-user-id` nội bộ (đã lọc chống giả mạo từ client) sang `getProfile()`, giúp mọi trang không phải gọi lại `supabase.auth.getUser()` lần thứ 2 qua mạng (tiết kiệm 200–350ms mỗi lần mở trang). Bỏ qua gọi `getUser()` khi trình duyệt chạy request `prefetch` ngầm.
+   - **Xóa bỏ chuỗi truy vấn nối đuôi nhau (Waterfall → Parallel `Promise.all`):**
+     - `teacher/classes/[id]/page.tsx`: Gom 5 chặng truy vấn tuần tự (`class_showcases`, `driveLinksOfStudents`, `showcase_ratings`) về chỉ còn 2 đợt chạy song song, bỏ hẳn việc truy vấn lặp bảng `enrollments`.
+     - `teacher/sessions/[id]/page.tsx`: Đưa `review_options`, `zalo_templates`, `listMyCombos(profile.id)` lên chạy song song ngay từ Đợt 1 cùng `sessions`, không gọi lại `auth.getUser()` trong `listMyCombos`.
+     - `teacher/gallery/page.tsx`: Đưa cả 5 bảng (`classes`, `projects`, `project_comments`, `enrollments`, `sessions`) lên chạy song song ngay Đợt 1 thay vì bắt `projects` chờ `classes`.
+     - `snippets.ts`: Ghi nhớ trạng thái bảng (`codeSnippetsTableMissing`) sau lần kiểm tra đầu tiên và truyền thẳng `profile.id` từ trang xuống, loại bỏ hoàn toàn 1 lượt gọi bảng lỗi `PGRST205` dư thừa.
+2. **Tối ưu tốc độ CHUYỂN TRANG (Instant Tab / Page Switching):**
+   - **Bật Client Router Cache (`staleTimes: { dynamic: 60, static: 300 }` trong `next.config.ts`):** Giữ các trang động vừa mở trong bộ nhớ trình duyệt 60s (vẫn tự động làm mới ngay khi thêm/sửa/xóa nhờ `revalidatePath`), giúp bấm chuyển qua lại giữa các tab/lớp hiện ra tức thì (0ms) như ReactJS thuần.
+   - **Tải trước ngầm (`prefetch={true}`):** Kích hoạt trên thanh điều hướng chính (`nav-links.tsx`), tab chấm bài (`grading-tabs.tsx`), tab lớp học viên (`class-tabs.tsx`) và thẻ lớp học (`class-list.tsx`).
+   - **Khung chuyển trang tức thì (`teacher/loading.tsx` & `student/loading.tsx`):** Phản hồi chuyển màn hình ngay lập tức (<10ms) khi mở trang mới chưa có trong bộ nhớ đệm.
+3. **Đồng bộ thương hiệu giao diện sang CodeLuma (`codeluma.vercel.app`):**
+   - Cập nhật tên hiển thị trên thanh điều hướng (`app-nav.tsx`), chân trang (`app-footer.tsx`), trang đăng nhập/đăng ký (`(auth)/layout.tsx`), trang xem đề Checkpoints (`checkpoint-view.tsx`) và toàn bộ tiêu đề tab trình duyệt (`metadata.title`) sang **CodeLuma** (vẫn giữ nguyên hậu tố email nội bộ `@eduverse.local` để bảo toàn 100% tài khoản hiện có).
+4. **Kiểm thử chất lượng:**
+   - `web/`: 480/480 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 118 (**Xây dựng tab "Sổ tay Code" (`/teacher/snippets` & `/student/snippets`) với giao diện thẻ cửa sổ IDE sinh động, tô màu cú pháp & tích hợp nút "✨ AI soạn giúp hướng dẫn & mô tả"**):
+1. **Mục tiêu & Trải nghiệm giáo viên + học viên:**
+   - Bổ sung tab **"Sổ tay Code"** ở cuối thanh điều hướng chính cho cả **Giáo viên** (`/teacher/snippets`) và **Học viên** (`/student/snippets` + cuối thanh `ClassTabs` trong từng lớp học).
+   - Bên **Học viên** hiển thị ở chế độ xem & tra cứu nhanh (`readOnly`): tìm kiếm theo lỗi/câu lệnh, lọc theo môn học, xem hướng dẫn cách dùng và bấm nút **`📋 Copy đoạn code`** 1 chạm để dán ngay vào bài làm.
+   - **Thiết kế thẻ dạng Cửa sổ IDE (IDE Code Card) sinh động, cân đối:**
+     - Loại bỏ hoàn toàn khoảng trống đen thênh thang giữa khung hướng dẫn và khung code khi thẻ chỉ có 1 dòng lệnh đứng cạnh thẻ nhiều dòng.
+     - Viền màu chuyển sắc (gradient accent bar) trên đỉnh thẻ và hộp hướng dẫn có vạch màu trái đồng bộ theo từng chủ đề môn học (`CSA`, `CSB`, `Python`, `Sửa lỗi`, `Cài đặt`, `App`, `Web`).
+     - Khung code mô phỏng cửa sổ trình soạn thảo macOS/IDE (`🔴 🟡 🟢`, tên file gợi ý như `jupyter_notebook.ipynb` / `colab_script.py`, badge số dòng, nút `Copy` nhanh trên thanh tiêu đề cửa sổ).
+     - Đánh số thứ tự dòng (`01`, `02`...) kèm **tô màu cú pháp tự động (Syntax Highlighting)** cho từ khóa (`import`, `with`, `as`...), chuỗi ký tự, chú thích (`# ...`), hàm và câu lệnh đặc biệt (`%matplotlib inline`).
+   - Khởi tạo sẵn mẫu code kinh điển `%matplotlib inline` (*"Sửa lỗi không hiển thị biểu đồ khi chạy code (Jupyter / Matplotlib)"*) ngay lần đầu mở Sổ tay.
+   - **Nút "✨ AI soạn giúp hướng dẫn & mô tả" (`/suggest-code-snippet`):** Giáo viên chỉ cần dán đoạn code vào (và tùy chọn gõ vài từ gợi ý), AI sẽ tự động phân tích và điền sẵn:
+     - **Tên vấn đề / Tình huống (`title`)** ngắn gọn, dễ nhớ.
+     - **Hướng dẫn cách dùng / Lời dặn gửi học sinh (`usage_guide`)** viết sẵn bằng giọng văn thân thiện (xưng "em").
+     - **Nhãn phân loại (`category`)** phù hợp (CSA, CSB, Sửa lỗi, Cài đặt, Python, App, Web, Khác).
+   - **Thao tác siêu tốc khi đứng lớp:**
+     - **2 nút Copy 1 chạm:** `📋 Copy nguyên code` (chỉ chép lệnh) và `💬 Copy kèm hướng dẫn` (chép cả lời dặn + đoạn code để gửi thẳng qua Zalo/Zoom/Meet).
+     - **Ghim (`📌 Ghim`)** các đoạn code hay dùng lên đầu trang, tìm kiếm tức thì theo từ khóa và lọc theo chủ đề/môn học.
+2. **Triển khai kỹ thuật:**
+   - **Database & RLS (`supabase/migrations/20261104180000_code_snippets.sql`):** Bảng `public.code_snippets` với RLS `code_snippets_teacher_all` và `code_snippets_select_authenticated`; kèm cơ chế fallback tự động trong `web/src/lib/actions/snippets.ts` để hoạt động mượt mà ngay cả khi DB live chưa chạy kịp migration.
+   - **AI Service (`ai-service/app/prompts.py`, `schemas.py`, `routes/projects.py`):** Thêm `build_suggest_code_snippet_prompt` và endpoint `POST /suggest-code-snippet`.
+   - **Frontend (`web/src/lib/code-snippets.ts`, `web/src/app/(teacher)/teacher/snippets/snippets-manager.tsx`):** Trang quản lý Sổ tay Code với bộ tô màu cú pháp `highlightCodeLine` và `ConfirmDialog` cho hành động xóa.
+3. **Kiểm thử chất lượng:**
+   - `ai-service/`: 110/110 tests pytest PASS 100%.
+   - `web/`: 480/480 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 117 (**Chuẩn hóa xưng hô "thầy", nút sửa `✏️` danh mục nhận xét, chia nhóm kỹ năng dropdown, sắp xếp lộ trình khóa học & tự động chọn mẫu tin Zalo theo hình thức buổi học**):
 1. **Prompt AI Service (`ai-service/app/prompts.py`):**
    - Bổ sung quy tắc bắt buộc vào `SYSTEM_ROLE`: *"Khi xưng hô hoặc nhắc tới giáo viên: CHỈ dùng từ 'thầy' — TUYỆT ĐỐI KHÔNG dùng từ 'cô', 'thầy cô' hay 'thầy/cô'."*
    - Cập nhật trực tiếp chỉ dẫn xưng hô tại toàn bộ các hàm sinh nhận xét (`build_review_prompt`, `build_zalo_summary_prompt`, `build_greeting_prompt`, `build_student_summary_prompt`, `build_final_presentation_review_prompt`).
@@ -19,28 +67,14 @@
    - Khi mở dropdown `💪 Điểm mạnh` và `🎯 Cần cải thiện` của từng học viên (và trong quản lý Combo), các lựa chọn tự động được chia thành các nhóm kỹ năng đóng/mở giống hệt ở trang Cài đặt (`🧠 Tư duy`, `✨ Sáng tạo`, `💻 Kỹ năng code`, `🖥️ Kỹ năng sử dụng máy tính`, `🤖 Vận dụng AI`, `❓ Đặt câu hỏi`, `🌱 Thái độ học tập`, `⏰ Kỷ luật / Nề nếp`, `📚 Tự học / Nghiên cứu thêm`, `🤝 Giao tiếp & hợp tác`, `🎤 Thuyết trình`, `📌 Khác`).
    - Mỗi nhóm hiển thị số lượng đã chọn (`✓ {n}`) và tổng số lựa chọn trong nhóm, hỗ trợ bấm tên nhóm để đóng/mở riêng lẻ, nút `Mở tất cả` / `Thu gọn tất cả`, và tự động bung các nhóm có kết quả khớp khi gõ vào ô tìm kiếm.
 5. **Sắp xếp khóa học & danh sách lớp theo đúng trình tự lộ trình từ nhỏ đến lớn (`web/src/lib/course-sort.ts`):**
-   - Bổ sung bộ hàm `detectCourseDomainRank`, `detectCourseLevelRank`, `compareCoursesByRoadmap`, `sortCoursesByRoadmap`:
-     + Thứ tự nhánh môn từ nhỏ đến lớn: `Scratch (SB, SA, SI)` -> `GameMaker / Game (GB, GA, GI, GMB, GMA, GMI)` -> `App / Python & Qt Designer (PTB, PTA, PTI, APB, APA, API)` -> `Web (JSB, JSA, JSI, WB, WA, WI)` -> `Computer Science (CSB, CSA, CSI)` -> `Khác`.
-     + Thứ tự cấp độ trong mỗi nhánh: `Basic (*B)` -> `Advance (*A)` -> `Intensive (*I)`.
-   - Áp dụng cho Danh sách lớp (`class-list.tsx`), trang Lớp học (`teacher/page.tsx`), các trang Chấm bài / Hỏi bài / Chấm SPCK (`assignments/page.tsx`, `assignments/help/page.tsx`, `assignments/project/page.tsx`) và trang Sản phẩm học viên (`gallery-view.tsx`).
-7. **Tự động thay đổi nội dung chọn mẫu tin Zalo theo hình thức buổi học (`web/src/lib/zalo-template-matcher.ts` & `zalo-panel.tsx`):**
-   - Xây dựng thuật toán tính điểm khớp mẫu tin `scoreZaloTemplateForFormat` và hàm tìm kiếm `findBestMatchingZaloTemplate`:
-     + `project_period` (Làm đồ án SPCK) -> tự động ưu tiên chọn mẫu có tên `SPCK`, `Sản phẩm cuối khóa`, `Đồ án`.
-     + `periodic_test` (Bài kiểm tra) -> tự động ưu tiên chọn mẫu có tên `Kiểm tra`, `Checkpoint`, `Test`.
-     + `final_presentation` (Thuyết trình Demo Day) -> tự động ưu tiên chọn mẫu có tên `Thuyết trình`, `Demo Day`, `Báo cáo`, `SPCK`.
-     + `standard` (Buổi học tiêu chuẩn) -> tự động ưu tiên chọn mẫu `Thông báo buổi học`, `Tiêu chuẩn`, `Mặc định` (không lẫn từ khóa SPCK/Test/Thuyết trình).
-   - `ZaloPanel` (`zalo-panel.tsx`): Tự động nhận `sessionFormat` từ buổi học (`resolveSessionFormat`) và tự động pre-select đúng mẫu tin phù hợp, hiển thị nhãn chỉ dẫn hình thức rõ ràng.
-   - Nâng cấp `build_zalo_summary_prompt` (`ai-service`): AI tự động điều chỉnh cả `tom_tat` và `loi_nhan` bám sát tính chất buổi học (tiến độ SPCK, kết quả bài kiểm tra, bảo vệ đồ án Demo Day hoặc kiến thức bài giảng thông thường). Bắt buộc ngắt câu rõ ràng bằng dấu chấm câu (`.`), cấu trúc thành 2 đến 4 câu hoàn chỉnh, chấm dứt hoàn toàn tình trạng viết câu dài lê thê chỉ toàn nối bằng dấu phẩy.
-   - Nâng cấp bộ 4 mẫu tin chuẩn theo 4 hình thức buổi học tại Cài đặt (`settings.ts` & `template-manager.tsx`).
-8. **Kiểm thử chất lượng:**
-   - `ai-service/`: 109/109 pytest tests PASS (+1 test thích ứng 4 hình thức buổi học).
-   - `web/`: 475/475 vitest tests PASS (`zalo-template-matcher.test.ts` +5 tests), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+   - Bổ sung bộ hàm `detectCourseDomainRank`, `detectCourseLevelRank`, `compareCoursesByRoadmap`, `sortCoursesByRoadmap`.
+6. **Tự động thay đổi nội dung chọn mẫu tin Zalo theo hình thức buổi học (`web/src/lib/zalo-template-matcher.ts` & `zalo-panel.tsx`):**
+   - Xây dựng thuật toán tính điểm khớp mẫu tin `scoreZaloTemplateForFormat` và hàm tìm kiếm `findBestMatchingZaloTemplate`.
 
 Cập nhật bởi: Gemini
 
 ---
-**Trước đó (2026-10-25):**
-**Đang làm:** Đã hoàn thành Đợt 116 (**Chuẩn hóa Quy tắc Sư phạm Bài tập về nhà `HOMEWORK_PEDAGOGY_RULE` & Khái quát hóa Bài làm Kiểm tra `EXAM_ABSTRACTION_RULE` trong Nhận xét AI và Đánh giá Rubric ĐNL**):
+**Trước đó:** Đã hoàn thành Đợt 116 (**Chuẩn hóa Quy tắc Sư phạm Bài tập về nhà `HOMEWORK_PEDAGOGY_RULE` & Khái quát hóa Bài làm Kiểm tra `EXAM_ABSTRACTION_RULE` trong Nhận xét AI và Đánh giá Rubric ĐNL**):
 1. **Mục tiêu & Nghiệp vụ Sư phạm:**
    - **Xử lý ghi chú Bài tập về nhà ("Chưa làm bài tập về nhà (0/5) bài"):**
      - Tuyệt đối không phán xét nhân cách tiêu cực (không dùng từ ngữ chỉ trích như "lười biếng", "bỏ bê học tập").

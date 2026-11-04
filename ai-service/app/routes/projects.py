@@ -2,7 +2,12 @@ from fastapi import APIRouter
 
 from app import prompts
 from app.llm import generate_json
-from app.schemas import SuggestFeaturesRequest, SuggestFeaturesResponse
+from app.schemas import (
+    SuggestCodeSnippetRequest,
+    SuggestCodeSnippetResponse,
+    SuggestFeaturesRequest,
+    SuggestFeaturesResponse,
+)
 
 router = APIRouter()
 
@@ -43,3 +48,41 @@ def suggest_features(body: SuggestFeaturesRequest) -> SuggestFeaturesResponse:
         provider=body.provider,
     )
     return SuggestFeaturesResponse(**data)
+
+
+@router.post("/suggest-code-snippet", response_model=SuggestCodeSnippetResponse)
+def suggest_code_snippet(
+    body: SuggestCodeSnippetRequest,
+) -> SuggestCodeSnippetResponse:
+    prompt = prompts.build_suggest_code_snippet_prompt(
+        code=body.code,
+        teacher_hint=body.teacher_hint,
+    )
+    data = generate_json(
+        prompt,
+        response_schema={
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "usage_guide": {"type": "string"},
+                "category": {
+                    "type": "string",
+                    "enum": [
+                        "csa",
+                        "csb",
+                        "python",
+                        "app",
+                        "web",
+                        "debug",
+                        "setup",
+                        "general",
+                    ],
+                },
+            },
+            "required": ["title", "usage_guide", "category"],
+        },
+        api_key=body.api_key,
+        provider=body.provider,
+    )
+    return SuggestCodeSnippetResponse(**data)
+

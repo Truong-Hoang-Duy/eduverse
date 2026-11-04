@@ -24,8 +24,8 @@ export async function generateMetadata({
 
   return {
     title: showcase
-      ? `Sản phẩm cuối khóa · Lớp ${showcase.class_code} — Eduverse`
-      : "Link không còn hiệu lực — Eduverse",
+      ? `Sản phẩm cuối khóa · Lớp ${showcase.class_code} — CodeLuma`
+      : "Link không còn hiệu lực — CodeLuma",
     // Hàng rào CHÍNH chống lên Google. `robots.ts` chỉ là lớp phụ.
     robots: { index: false, follow: false },
   };

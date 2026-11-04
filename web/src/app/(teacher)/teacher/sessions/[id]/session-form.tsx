@@ -92,7 +92,7 @@ function SessionFormatSelector({
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          Chọn hình thức để Eduverse tối ưu giao diện nhận xét và trợ lý AI phù hợp:
+          Chọn hình thức để CodeLuma tối ưu giao diện nhận xét và trợ lý AI phù hợp:
         </p>
       </div>
 

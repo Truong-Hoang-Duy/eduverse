@@ -29,6 +29,7 @@ export function GradingTabs() {
           <Link
             key={tab.href}
             href={tab.href}
+            prefetch={true}
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex-1 rounded-md px-3 py-1.5 text-center text-sm font-medium whitespace-nowrap transition-colors",

@@ -19,7 +19,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="flex items-center justify-center gap-2.5">
           <BrandMark className="size-9 rounded-xl shadow-lg shadow-primary/25" />
           <div className="leading-tight">
-            <p className="text-lg font-bold tracking-tight">Eduverse</p>
+            <p className="text-lg font-bold tracking-tight">CodeLuma</p>
             <p className="text-xs text-muted-foreground">
               Lớp học lập trình của bạn
             </p>

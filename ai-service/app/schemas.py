@@ -341,3 +341,30 @@ class HelpStudentResponse(BaseModel):
     dang_o_dau: str = ""
     can_sua: list[str] = Field(default_factory=list)
     cac_buoc: list[str] = Field(min_length=1)
+
+
+# ---------- /suggest-code-snippet ----------
+SnippetCategory = Literal[
+    "csa",
+    "csb",
+    "python",
+    "app",
+    "web",
+    "debug",
+    "setup",
+    "general",
+]
+
+
+class SuggestCodeSnippetRequest(AiRequest):
+    """Yêu cầu AI tự động soạn tiêu đề, hướng dẫn cách dùng và phân loại cho đoạn code mẫu."""
+
+    code: str = Field(min_length=1)
+    teacher_hint: str | None = None
+
+
+class SuggestCodeSnippetResponse(BaseModel):
+    title: str
+    usage_guide: str
+    category: SnippetCategory = "general"
+

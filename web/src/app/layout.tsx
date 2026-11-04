@@ -40,7 +40,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Eduverse",
+  title: "CodeLuma",
   description: "Dashboard quản lý học viên cho lớp học lập trình",
 };
 

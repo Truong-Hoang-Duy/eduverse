@@ -41,6 +41,7 @@
 - [x] Đợt 115: Tích hợp cơ chế Auto-Warmup ngầm tự động đánh thức AI Service trên Render khi giáo viên vào trang.
 - [x] Đợt 116: Chuẩn hóa Quy tắc Sư phạm Bài tập về nhà `HOMEWORK_PEDAGOGY_RULE` & Khái quát hóa Bài làm Kiểm tra `EXAM_ABSTRACTION_RULE` trong Nhận xét AI và Đánh giá Rubric ĐNL.
 - [x] Đợt 117: Chuẩn hóa quy tắc xưng hô giáo viên trong toàn bộ phần AI tạo nhận xét (chỉ dùng "thầy", không dùng "cô"), bổ sung nút chỉnh sửa (`✏️`) trực tiếp cho các nhận xét trong danh mục nhận xét (`review_options`), nâng cấp dropdown Điểm mạnh / Cần cải thiện dạng đóng mở theo nhóm kỹ năng (`🧠 Tư duy`, `✨ Sáng tạo`, `💻 Kỹ năng code`...), sắp xếp danh sách khóa học / lớp học theo đúng lộ trình từ nhỏ đến lớn (Scratch -> Game -> App -> Web -> CS) và từ Basic -> Advance -> Intensive, và tự động thay đổi nội dung chọn mẫu tin Zalo tổng hợp + điều chỉnh nội dung tóm tắt theo đúng hình thức buổi học (Tiêu chuẩn, SPCK, Kiểm tra, Demo Day).
+- [x] Đợt 118: Xây dựng tab "Sổ tay Code" cho cả Giáo viên (`/teacher/snippets`) và Học viên (`/student/snippets`) với giao diện cửa sổ IDE sinh động, tô màu cú pháp, tích hợp nút "✨ AI soạn giúp hướng dẫn & mô tả" (`/suggest-code-snippet`), tối ưu tốc độ mở/chuyển trang tức thì và đồng bộ thương hiệu sang CodeLuma (`codeluma.vercel.app`).
 
 ## Giai đoạn 4 — Sản phẩm cuối khóa
 - [x] HV CRUD sản phẩm (/student/projects, 1 sản phẩm/lớp, unique)

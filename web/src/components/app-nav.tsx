@@ -18,16 +18,22 @@ const TEACHER_LINKS = [
 // — chặn thật nằm ở `requireAdmin()` trong chính trang đó.
 const ADMIN_LINK = { href: "/teacher/admin", label: "Vận hành" };
 
+// Sổ tay Code đặt ở cuối thanh tab của giáo viên.
+const SNIPPETS_LINK = { href: "/teacher/snippets", label: "Sổ tay Code" };
+
 // Học viên: 3 tab (student-tabs.tsx) là con của "Lớp học" nên nav này sáng
 // suốt cả khu /student/* — không dùng exact.
-const STUDENT_LINKS = [{ href: "/student", label: "Lớp học" }];
+const STUDENT_LINKS = [
+  { href: "/student", label: "Lớp học" },
+  { href: "/student/snippets", label: "Sổ tay Code" },
+];
 
 export function AppNav({ profile }: { profile: Profile }) {
   const links =
     profile.role === "teacher"
       ? isAdminUsername(profile.username)
-        ? [...TEACHER_LINKS, ADMIN_LINK]
-        : TEACHER_LINKS
+        ? [...TEACHER_LINKS, ADMIN_LINK, SNIPPETS_LINK]
+        : [...TEACHER_LINKS, SNIPPETS_LINK]
       : STUDENT_LINKS;
 
   // Giáo viên có 3-4 mục tiếng Việt; cộng logo, nút đổi giao diện và avatar thì
@@ -45,7 +51,7 @@ export function AppNav({ profile }: { profile: Profile }) {
           <BrandMark />
           {/* Ẩn chữ trên điện thoại để nav không tràn — logo là đủ nhận diện. */}
           <span className="hidden text-base font-bold tracking-tight sm:inline">
-            Eduverse
+            CodeLuma
           </span>
         </Link>
 

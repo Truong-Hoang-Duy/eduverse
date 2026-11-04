@@ -6,7 +6,7 @@ import { ApiKeyForm } from "./api-key-form";
 import { PasswordForm } from "./password-form";
 import { ProfileForm } from "./profile-form";
 
-export const metadata = { title: "Hồ sơ — Eduverse" };
+export const metadata = { title: "Hồ sơ — CodeLuma" };
 
 export default async function ProfilePage() {
   const profile = await requireProfile();
