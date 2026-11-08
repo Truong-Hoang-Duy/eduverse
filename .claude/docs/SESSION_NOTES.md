@@ -3,8 +3,8 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-04, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 119 (**Tối ưu toàn diện tốc độ Mở trang & Chuyển trang tức thì như ReactJS SPA + Đồng bộ thương hiệu CodeLuma (`codeluma.vercel.app`)**):
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-08, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 119 (**Tối ưu toàn diện tốc độ Mở trang & Chuyển trang tức thì như ReactJS SPA + Đồng bộ thương hiệu CodeLuma (`codeluma.vercel.app`) + Tinh gọn Sổ tay Code theo 5 môn học chuẩn**):
 1. **Tối ưu tốc độ MỞ TRANG (Initial Open — Lớp học, Buổi học, Sản phẩm, Sổ tay Code):**
    - **Cắt bỏ kiểm tra đăng nhập trùng lặp (`middleware.ts` & `get-profile.ts`):** `middleware.ts` sau khi xác thực `supabase.auth.getUser()` truyền thẳng `x-eduverse-user-id` nội bộ (đã lọc chống giả mạo từ client) sang `getProfile()`, giúp mọi trang không phải gọi lại `supabase.auth.getUser()` lần thứ 2 qua mạng (tiết kiệm 200–350ms mỗi lần mở trang). Bỏ qua gọi `getUser()` khi trình duyệt chạy request `prefetch` ngầm.
    - **Xóa bỏ chuỗi truy vấn nối đuôi nhau (Waterfall → Parallel `Promise.all`):**
@@ -16,10 +16,14 @@
    - **Bật Client Router Cache (`staleTimes: { dynamic: 60, static: 300 }` trong `next.config.ts`):** Giữ các trang động vừa mở trong bộ nhớ trình duyệt 60s (vẫn tự động làm mới ngay khi thêm/sửa/xóa nhờ `revalidatePath`), giúp bấm chuyển qua lại giữa các tab/lớp hiện ra tức thì (0ms) như ReactJS thuần.
    - **Tải trước ngầm (`prefetch={true}`):** Kích hoạt trên thanh điều hướng chính (`nav-links.tsx`), tab chấm bài (`grading-tabs.tsx`), tab lớp học viên (`class-tabs.tsx`) và thẻ lớp học (`class-list.tsx`).
    - **Khung chuyển trang tức thì (`teacher/loading.tsx` & `student/loading.tsx`):** Phản hồi chuyển màn hình ngay lập tức (<10ms) khi mở trang mới chưa có trong bộ nhớ đệm.
-3. **Đồng bộ thương hiệu giao diện sang CodeLuma (`codeluma.vercel.app`):**
+3. **Đồng bộ thương hiệu sang CodeLuma (`codeluma.vercel.app`) & Tinh gọn Sổ tay Code theo 5 môn học (`snippets-manager.tsx`, `code-snippets.ts`):**
    - Cập nhật tên hiển thị trên thanh điều hướng (`app-nav.tsx`), chân trang (`app-footer.tsx`), trang đăng nhập/đăng ký (`(auth)/layout.tsx`), trang xem đề Checkpoints (`checkpoint-view.tsx`) và toàn bộ tiêu đề tab trình duyệt (`metadata.title`) sang **CodeLuma** (vẫn giữ nguyên hậu tố email nội bộ `@eduverse.local` để bảo toàn 100% tài khoản hiện có).
+   - **Sửa lỗi cuộn dòng code dài (30–40 dòng):** Đổi `justify-center` sang `lineCount === 1 ? "justify-center" : "justify-start"` trên vùng cuộn `overflow-y-auto`, giúp các đoạn code nhiều dòng luôn bắt đầu từ dòng `01` ở trên cùng.
+   - **Xóa bỏ phần hướng dẫn cách dùng (`usageGuide`):** Loại bỏ hộp hướng dẫn cách dùng và nút `Copy kèm hướng dẫn` trên thẻ Sổ tay Code cũng như ô nhập hướng dẫn trong popup Thêm/Sửa, giữ lại duy nhất nút `📋 Copy đoạn code` gọn gàng.
+   - **Gom gọn nhãn phân loại theo đúng 5 môn học đã định nghĩa sẵn:** `🐱 Scratch`, `🎮 GameMaker`, `🖥️ App (Python & Qt)`, `🌐 Web (HTML/CSS/JS)`, `🐍 Computer Science` (tự động ánh xạ các nhãn cũ `csa`, `csb`, `python`, `setup`, `debug`, `general` về `cs`).
 4. **Kiểm thử chất lượng:**
-   - `web/`: 480/480 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+   - `web/`: 484/484 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+   - `ai-service/`: 112/112 tests pytest PASS 100%.
 
 Cập nhật bởi: Gemini
 

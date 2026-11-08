@@ -8,28 +8,59 @@ import {
   filterAndSortSnippets,
   formatSnippetForStudent,
   getSnippetCategoryMeta,
+  getSnippetFileLabel,
   inferCodeSnippetSuggestion,
   isSnippetFallbackRow,
   normalizeSnippetCategory,
+  SNIPPET_CATEGORIES,
 } from "./code-snippets";
 
 describe("code-snippets helpers", () => {
+  it("provides the 5 predefined subjects in roadmap order", () => {
+    expect(SNIPPET_CATEGORIES.map((c) => c.value)).toEqual([
+      "scratch",
+      "gamemaker",
+      "app",
+      "web",
+      "cs",
+    ]);
+  });
+
   it("provides the default %matplotlib inline starter snippet", () => {
     expect(DEFAULT_STARTER_SNIPPETS).toHaveLength(1);
     expect(DEFAULT_STARTER_SNIPPETS[0].code).toBe("%matplotlib inline");
-    expect(DEFAULT_STARTER_SNIPPETS[0].category).toBe("csa");
+    expect(DEFAULT_STARTER_SNIPPETS[0].category).toBe("cs");
     expect(DEFAULT_STARTER_SNIPPETS[0].isPinned).toBe(true);
   });
 
-  it("normalizes categories safely", () => {
-    expect(normalizeSnippetCategory("csa")).toBe("csa");
-    expect(normalizeSnippetCategory("PYTHON")).toBe("python");
-    expect(normalizeSnippetCategory("unknown")).toBe("general");
-    expect(normalizeSnippetCategory(null)).toBe("general");
-    expect(getSnippetCategoryMeta("csa").shortLabel).toBe("CSA · Biểu đồ");
+  it("normalizes categories and maps legacy categories to the 5 subjects safely", () => {
+    expect(normalizeSnippetCategory("scratch")).toBe("scratch");
+    expect(normalizeSnippetCategory("gamemaker")).toBe("gamemaker");
+    expect(normalizeSnippetCategory("app")).toBe("app");
+    expect(normalizeSnippetCategory("web")).toBe("web");
+    expect(normalizeSnippetCategory("cs")).toBe("cs");
+    expect(normalizeSnippetCategory("csa")).toBe("cs");
+    expect(normalizeSnippetCategory("csb")).toBe("cs");
+    expect(normalizeSnippetCategory("PYTHON")).toBe("cs");
+    expect(normalizeSnippetCategory("setup")).toBe("cs");
+    expect(normalizeSnippetCategory("unknown")).toBe("cs");
+    expect(normalizeSnippetCategory(null)).toBe("cs");
+    expect(getSnippetCategoryMeta("csa").shortLabel).toBe("Computer Science");
+    expect(getSnippetCategoryMeta("app").shortLabel).toBe("App");
   });
 
-  it("formats snippet with usage guide for copying to students", () => {
+  it("detects appropriate IDE window file labels", () => {
+    expect(getSnippetFileLabel("uv pip install numpy", "cs")).toBe(
+      "terminal · bash"
+    );
+    expect(getSnippetFileLabel("%matplotlib inline", "cs")).toBe(
+      "jupyter_notebook.ipynb"
+    );
+    expect(getSnippetFileLabel("print('hello')", "cs")).toBe("main.py");
+    expect(getSnippetFileLabel("console.log(1)", "web")).toBe("app.js");
+  });
+
+  it("formats snippet for copying to students", () => {
     const formatted = formatSnippetForStudent({
       title: "Sửa lỗi biểu đồ",
       code: "%matplotlib inline",
@@ -57,8 +88,8 @@ describe("code-snippets helpers", () => {
         id: "1",
         title: "Đọc file CSV bằng Pandas",
         code: "df = pd.read_csv('data.csv')",
-        usageGuide: "Dùng để nạp bảng dữ liệu",
-        category: "csa",
+        usageGuide: "",
+        category: "cs",
         isPinned: false,
         createdAt: "2026-10-01T10:00:00Z",
         updatedAt: "2026-10-01T10:00:00Z",
@@ -67,18 +98,18 @@ describe("code-snippets helpers", () => {
         id: "2",
         title: "Sửa lỗi không hiện biểu đồ",
         code: "%matplotlib inline",
-        usageGuide: "Chèn ở đầu ô code đầu tiên",
-        category: "csa",
+        usageGuide: "",
+        category: "cs",
         isPinned: true,
         createdAt: "2026-09-01T10:00:00Z",
         updatedAt: "2026-09-01T10:00:00Z",
       },
       {
         id: "3",
-        title: "Cài đặt thư viện PyQt6",
-        code: "pip install PyQt6",
-        usageGuide: "Chạy trong Terminal",
-        category: "setup",
+        title: "Khởi tạo cửa sổ PyQt6",
+        code: "app = QApplication([])",
+        usageGuide: "",
+        category: "app",
         isPinned: false,
         createdAt: "2026-10-02T10:00:00Z",
         updatedAt: "2026-10-02T10:00:00Z",
@@ -88,8 +119,8 @@ describe("code-snippets helpers", () => {
     const allSorted = filterAndSortSnippets(items, "", "all");
     expect(allSorted.map((i) => i.id)).toEqual(["2", "3", "1"]);
 
-    const csaOnly = filterAndSortSnippets(items, "", "csa");
-    expect(csaOnly.map((i) => i.id)).toEqual(["2", "1"]);
+    const csOnly = filterAndSortSnippets(items, "", "cs");
+    expect(csOnly.map((i) => i.id)).toEqual(["2", "1"]);
 
     const searchByCode = filterAndSortSnippets(items, "matplotlib", "all");
     expect(searchByCode.map((i) => i.id)).toEqual(["2"]);
@@ -99,8 +130,8 @@ describe("code-snippets helpers", () => {
     const encoded = encodeSnippetFallback({
       title: "Sửa lỗi biểu đồ",
       code: "%matplotlib inline",
-      usageGuide: "Chèn đầu bài",
-      category: "csa",
+      usageGuide: "",
+      category: "cs",
       isPinned: true,
       createdAt: "2026-11-04T10:00:00Z",
       updatedAt: "2026-11-04T10:00:00Z",
@@ -117,22 +148,20 @@ describe("code-snippets helpers", () => {
       id: "row-1",
       title: "Sửa lỗi biểu đồ",
       code: "%matplotlib inline",
-      usageGuide: "Chèn đầu bài",
-      category: "csa",
+      usageGuide: "",
+      category: "cs",
       isPinned: true,
       createdAt: "2026-11-04T10:00:00Z",
       updatedAt: "2026-11-04T10:00:00Z",
     });
   });
 
-  it("infers intelligent suggestions for %matplotlib inline and pip commands", () => {
+  it("infers intelligent suggestions for %matplotlib inline and PyQt commands", () => {
     const mpl = inferCodeSnippetSuggestion("%matplotlib inline");
-    expect(mpl.category).toBe("csa");
+    expect(mpl.category).toBe("cs");
     expect(mpl.title).toContain("biểu đồ");
-    expect(mpl.usageGuide).toContain("em");
 
-    const pip = inferCodeSnippetSuggestion("pip install seaborn");
-    expect(pip.category).toBe("setup");
-    expect(pip.usageGuide).toContain("Terminal");
+    const pyqt = inferCodeSnippetSuggestion("from PyQt6.QtWidgets import QApplication");
+    expect(pyqt.category).toBe("app");
   });
 });
