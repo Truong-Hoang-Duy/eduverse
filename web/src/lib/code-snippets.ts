@@ -1,12 +1,9 @@
 export type SnippetCategory =
-  | "csa"
-  | "csb"
-  | "python"
+  | "scratch"
+  | "gamemaker"
   | "app"
   | "web"
-  | "debug"
-  | "setup"
-  | "general";
+  | "cs";
 
 export interface SnippetCategoryMeta {
   value: SnippetCategory;
@@ -19,49 +16,21 @@ export interface SnippetCategoryMeta {
   calloutClass: string;
 }
 
+/**
+ * 5 môn học chuẩn theo lộ trình từ nhỏ đến lớn đã định nghĩa sẵn trong hệ thống:
+ *   1. Scratch
+ *   2. GameMaker
+ *   3. App (Python & Qt Designer)
+ *   4. Web (HTML/CSS/JS)
+ *   5. Computer Science (Python / Thuật toán / Dữ liệu)
+ */
 export const SNIPPET_CATEGORIES: readonly SnippetCategoryMeta[] = [
   {
-    value: "csa",
-    label: "CSA · Dữ liệu & Biểu đồ",
-    shortLabel: "CSA · Biểu đồ",
-    icon: "📊",
-    fileLabel: "jupyter_notebook.ipynb",
-    badgeClass:
-      "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-    accentBarClass: "from-emerald-500 via-teal-400 to-cyan-500",
-    calloutClass:
-      "border-l-emerald-500 bg-emerald-500/[0.06] dark:bg-emerald-500/[0.08]",
-  },
-  {
-    value: "csb",
-    label: "CSB · Python nền tảng",
-    shortLabel: "CSB · Python",
-    icon: "🐍",
-    fileLabel: "main.py",
-    badgeClass:
-      "bg-blue-500/12 text-blue-700 dark:text-blue-300 border-blue-500/30",
-    accentBarClass: "from-blue-500 via-indigo-500 to-sky-400",
-    calloutClass:
-      "border-l-blue-500 bg-blue-500/[0.06] dark:bg-blue-500/[0.08]",
-  },
-  {
-    value: "debug",
-    label: "Sửa lỗi hay gặp",
-    shortLabel: "Sửa lỗi",
-    icon: "🛠️",
-    fileLabel: "quick_fix.py",
-    badgeClass:
-      "bg-rose-500/12 text-rose-700 dark:text-rose-300 border-rose-500/30",
-    accentBarClass: "from-rose-500 via-pink-500 to-amber-400",
-    calloutClass:
-      "border-l-rose-500 bg-rose-500/[0.06] dark:bg-rose-500/[0.08]",
-  },
-  {
-    value: "setup",
-    label: "Cài đặt & Môi trường",
-    shortLabel: "Cài đặt",
-    icon: "⚙️",
-    fileLabel: "terminal · bash",
+    value: "scratch",
+    label: "Scratch",
+    shortLabel: "Scratch",
+    icon: "🐱",
+    fileLabel: "scratch_blocks.sb3",
     badgeClass:
       "bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-500/30",
     accentBarClass: "from-amber-500 via-orange-400 to-yellow-400",
@@ -69,21 +38,21 @@ export const SNIPPET_CATEGORIES: readonly SnippetCategoryMeta[] = [
       "border-l-amber-500 bg-amber-500/[0.06] dark:bg-amber-500/[0.08]",
   },
   {
-    value: "python",
-    label: "Python chung",
-    shortLabel: "Python",
-    icon: "⚡",
-    fileLabel: "colab_script.py",
+    value: "gamemaker",
+    label: "GameMaker",
+    shortLabel: "GameMaker",
+    icon: "🎮",
+    fileLabel: "game_script.gml",
     badgeClass:
-      "bg-indigo-500/12 text-indigo-700 dark:text-indigo-300 border-indigo-500/30",
-    accentBarClass: "from-indigo-500 via-violet-500 to-purple-500",
+      "bg-rose-500/12 text-rose-700 dark:text-rose-300 border-rose-500/30",
+    accentBarClass: "from-rose-500 via-pink-500 to-orange-400",
     calloutClass:
-      "border-l-indigo-500 bg-indigo-500/[0.06] dark:bg-indigo-500/[0.08]",
+      "border-l-rose-500 bg-rose-500/[0.06] dark:bg-rose-500/[0.08]",
   },
   {
     value: "app",
-    label: "App · Giao diện PyQt/GUI",
-    shortLabel: "App / GUI",
+    label: "App (Python & Qt)",
+    shortLabel: "App",
     icon: "🖥️",
     fileLabel: "app_window.py",
     badgeClass:
@@ -94,7 +63,7 @@ export const SNIPPET_CATEGORIES: readonly SnippetCategoryMeta[] = [
   },
   {
     value: "web",
-    label: "Web · HTML/CSS/JS",
+    label: "Web (HTML/CSS/JS)",
     shortLabel: "Web",
     icon: "🌐",
     fileLabel: "app.js",
@@ -105,14 +74,16 @@ export const SNIPPET_CATEGORIES: readonly SnippetCategoryMeta[] = [
       "border-l-cyan-500 bg-cyan-500/[0.06] dark:bg-cyan-500/[0.08]",
   },
   {
-    value: "general",
-    label: "Khác",
-    shortLabel: "Khác",
-    icon: "📝",
-    fileLabel: "snippet.txt",
-    badgeClass: "bg-muted text-muted-foreground border-border",
-    accentBarClass: "from-slate-500 via-zinc-400 to-slate-400",
-    calloutClass: "border-l-slate-400 bg-muted/50",
+    value: "cs",
+    label: "Computer Science",
+    shortLabel: "Computer Science",
+    icon: "🐍",
+    fileLabel: "main.py",
+    badgeClass:
+      "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+    accentBarClass: "from-emerald-500 via-teal-400 to-cyan-500",
+    calloutClass:
+      "border-l-emerald-500 bg-emerald-500/[0.06] dark:bg-emerald-500/[0.08]",
   },
 ] as const;
 
@@ -134,9 +105,8 @@ export const DEFAULT_STARTER_SNIPPETS: ReadonlyArray<
     title:
       "Sửa lỗi không hiển thị biểu đồ khi chạy code (Jupyter / Matplotlib)",
     code: "%matplotlib inline",
-    usageGuide:
-      "Khi em đã gõ đúng câu lệnh vẽ biểu đồ nhưng chạy không thấy hình hiện ra, hãy chèn dòng lệnh này vào đầu ô code đầu tiên của bài rồi chạy lại nhé.",
-    category: "csa",
+    usageGuide: "",
+    category: "cs",
     isPinned: true,
   },
 ];
@@ -145,12 +115,70 @@ export function isValidSnippetCategory(val: string): val is SnippetCategory {
   return SNIPPET_CATEGORIES.some((c) => c.value === val);
 }
 
+/**
+ * Chuẩn hóa mã phân loại về đúng 1 trong 5 môn học đã định nghĩa:
+ *   scratch | gamemaker | app | web | cs
+ * Đồng thời tự động ánh xạ các nhãn cũ (csa, csb, python, setup, debug, general) về đúng môn.
+ */
 export function normalizeSnippetCategory(
   val: string | null | undefined
 ): SnippetCategory {
-  if (!val) return "general";
+  if (!val) return "cs";
   const lower = val.trim().toLowerCase();
-  return isValidSnippetCategory(lower) ? lower : "general";
+  if (isValidSnippetCategory(lower)) return lower;
+
+  if (
+    lower === "sb" ||
+    lower === "sa" ||
+    lower === "si" ||
+    lower.includes("scratch")
+  ) {
+    return "scratch";
+  }
+
+  if (
+    lower === "game" ||
+    lower === "gml" ||
+    lower === "gb" ||
+    lower === "ga" ||
+    lower === "gi" ||
+    lower === "gmb" ||
+    lower === "gma" ||
+    lower === "gmi" ||
+    lower.includes("gamemaker")
+  ) {
+    return "gamemaker";
+  }
+
+  if (
+    lower === "ptb" ||
+    lower === "pta" ||
+    lower === "pti" ||
+    lower === "apb" ||
+    lower === "apa" ||
+    lower === "api" ||
+    lower === "pyqt" ||
+    lower === "gui"
+  ) {
+    return "app";
+  }
+
+  if (
+    lower === "jsb" ||
+    lower === "jsa" ||
+    lower === "jsi" ||
+    lower === "wb" ||
+    lower === "wa" ||
+    lower === "wi" ||
+    lower === "html" ||
+    lower === "css" ||
+    lower === "js"
+  ) {
+    return "web";
+  }
+
+  // Các nhãn cũ (csa, csb, csi, python, setup, debug, general, computer_science) gom gọn về Computer Science
+  return "cs";
 }
 
 export function getSnippetCategoryMeta(
@@ -164,7 +192,33 @@ export function getSnippetCategoryMeta(
 }
 
 /**
- * Định dạng văn bản đầy đủ (kèm lời hướng dẫn + đoạn code) để giáo viên copy 1 chạm gửi thẳng cho học sinh qua Zalo/Zoom/Meet.
+ * Nhận diện nhãn tiêu đề cửa sổ IDE (terminal · bash, jupyter_notebook.ipynb, main.py, app.js...)
+ * dựa trên nội dung đoạn code và môn học.
+ */
+export function getSnippetFileLabel(
+  code: string,
+  category: string | null | undefined
+): string {
+  const lower = code.trim().toLowerCase();
+  if (
+    lower.includes("curl ") ||
+    lower.includes("powershell") ||
+    lower.includes("uv pip ") ||
+    lower.includes("uv venv") ||
+    lower.startsWith("pip install") ||
+    lower.startsWith("conda install") ||
+    lower.includes("source ~/.zshrc")
+  ) {
+    return "terminal · bash";
+  }
+  if (lower.includes("%matplotlib") || lower.startsWith("!pip")) {
+    return "jupyter_notebook.ipynb";
+  }
+  return getSnippetCategoryMeta(category).fileLabel;
+}
+
+/**
+ * Định dạng văn bản đầy đủ (kèm lời hướng dẫn + đoạn code) nếu cần.
  */
 export function formatSnippetForStudent(
   snippet: Pick<CodeSnippet, "title" | "code" | "usageGuide">
@@ -183,7 +237,7 @@ export function formatSnippetForStudent(
 }
 
 /**
- * Tự động phân tích đoạn code để gợi ý tiêu đề, hướng dẫn và danh mục (dùng làm fallback tức thì nếu máy chủ AI đang cập nhật).
+ * Tự động phân tích đoạn code để gợi ý tiêu đề và môn học (trong 5 môn).
  */
 export function inferCodeSnippetSuggestion(
   code: string,
@@ -202,9 +256,8 @@ export function inferCodeSnippetSuggestion(
       title:
         hint ||
         "Khắc phục lỗi không hiển thị biểu đồ Matplotlib trên Jupyter Notebook",
-      usageGuide:
-        "Khi em đã gõ đúng câu lệnh vẽ biểu đồ nhưng chạy không thấy hình hiện ra, hãy chèn dòng lệnh này vào dòng đầu tiên của ô code đầu bài rồi chạy lại nhé.",
-      category: "csa",
+      usageGuide: "",
+      category: "cs",
     };
   }
 
@@ -213,9 +266,8 @@ export function inferCodeSnippetSuggestion(
       title:
         hint ||
         "Hiển thị cửa sổ biểu đồ Matplotlib khi chạy file Python (.py)",
-      usageGuide:
-        "Em thêm dòng lệnh này vào cuối phần code vẽ biểu đồ để chương trình bật cửa sổ hiển thị hình vẽ lên màn hình nhé.",
-      category: "csa",
+      usageGuide: "",
+      category: "cs",
     };
   }
 
@@ -227,18 +279,16 @@ export function inferCodeSnippetSuggestion(
     return {
       title:
         hint || "Khắc phục lỗi font chữ tiếng Việt khi đọc file hoặc in ra màn hình",
-      usageGuide:
-        "Khi đọc file hoặc in chữ tiếng Việt bị lỗi ký tự lạ, em thêm thiết lập bảng mã UTF-8 này vào câu lệnh để hiển thị đúng tiếng Việt nhé.",
-      category: "debug",
+      usageGuide: "",
+      category: "cs",
     };
   }
 
   if (lower.includes("filterwarnings") || lower.includes("warnings.ignore")) {
     return {
       title: hint || "Ẩn các dòng cảnh báo đỏ (Warning) không cần thiết trên Jupyter",
-      usageGuide:
-        "Em chèn đoạn lệnh này vào ô code đầu tiên để ẩn bớt các thông báo cảnh báo dài dòng, giúp kết quả bài làm gọn gàng và dễ nhìn hơn nhé.",
-      category: "csa",
+      usageGuide: "",
+      category: "cs",
     };
   }
 
@@ -250,50 +300,23 @@ export function inferCodeSnippetSuggestion(
     return {
       title:
         hint || "Hiển thị đầy đủ tất cả các cột / dòng của bảng dữ liệu Pandas",
-      usageGuide:
-        "Khi bảng dữ liệu bị ẩn bớt các cột ở giữa bằng dấu '...', em chạy dòng lệnh này để xem toàn bộ các cột của bảng nhé.",
-      category: "csa",
-    };
-  }
-
-  if (
-    lower.includes("pip install") ||
-    lower.includes("conda install") ||
-    lower.startsWith("!pip")
-  ) {
-    return {
-      title: hint || `Lệnh cài đặt thư viện (${c.slice(0, 40)})`,
-      usageGuide:
-        "Em mở Terminal (hoặc ô code trong Jupyter nếu có dấu ! ở đầu) rồi dán câu lệnh này vào và nhấn Enter để cài đặt thư viện trước khi chạy bài nhé.",
-      category: "setup",
-    };
-  }
-
-  if (
-    lower.includes("pandas") ||
-    lower.includes("pd.read_") ||
-    lower.includes("plt.") ||
-    lower.includes("seaborn") ||
-    lower.includes("sns.")
-  ) {
-    return {
-      title: hint || "Đoạn lệnh xử lý dữ liệu & vẽ biểu đồ (Pandas / Matplotlib)",
-      usageGuide:
-        "Em chèn đoạn code này vào bài làm tại bước xử lý dữ liệu hoặc vẽ biểu đồ, lưu ý kiểm tra lại tên biến DataFrame và tên cột cho khớp với bộ dữ liệu của bài nhé.",
-      category: "csa",
+      usageGuide: "",
+      category: "cs",
     };
   }
 
   if (
     lower.includes("pyqt") ||
+    lower.includes("pyside") ||
     lower.includes("qapplication") ||
     lower.includes("qmainwindow") ||
+    lower.includes("qt designer") ||
+    lower.includes("uic.loadui") ||
     lower.includes("tkinter")
   ) {
     return {
-      title: hint || "Cấu trúc khởi tạo giao diện ứng dụng (GUI)",
-      usageGuide:
-        "Em đặt đoạn code này ở phần khởi tạo cửa sổ chương trình để hiển thị giao diện ứng dụng mượt mà nhé.",
+      title: hint || "Cấu trúc khởi tạo giao diện ứng dụng (Python & Qt)",
+      usageGuide: "",
       category: "app",
     };
   }
@@ -306,24 +329,75 @@ export function inferCodeSnippetSuggestion(
   ) {
     return {
       title: hint || "Đoạn code mẫu xử lý giao diện & sự kiện Web",
-      usageGuide:
-        "Em thêm đoạn code này vào file HTML/CSS/JS tương ứng trong dự án Web của mình rồi tải lại trang để kiểm tra kết quả nhé.",
+      usageGuide: "",
       category: "web",
+    };
+  }
+
+  if (
+    lower.includes("place_meeting") ||
+    lower.includes("instance_create") ||
+    lower.includes("keyboard_check") ||
+    lower.includes("sprite_index") ||
+    lower.includes("room_goto")
+  ) {
+    return {
+      title: hint || "Đoạn lệnh xử lý di chuyển & va chạm trong GameMaker",
+      usageGuide: "",
+      category: "gamemaker",
+    };
+  }
+
+  if (
+    lower.includes("khi bấm vào lá cờ") ||
+    lower.includes("scratch") ||
+    hint.toLowerCase().includes("scratch")
+  ) {
+    return {
+      title: hint || "Ghi chú kịch bản khối lệnh Scratch",
+      usageGuide: "",
+      category: "scratch",
+    };
+  }
+
+  if (
+    lower.includes("pip install") ||
+    lower.includes("conda install") ||
+    lower.startsWith("!pip") ||
+    lower.includes("uv pip install")
+  ) {
+    return {
+      title: hint || `Lệnh cài đặt thư viện (${c.split("\n")[0].slice(0, 40)})`,
+      usageGuide: "",
+      category: "cs",
+    };
+  }
+
+  if (
+    lower.includes("pandas") ||
+    lower.includes("pd.read_") ||
+    lower.includes("plt.") ||
+    lower.includes("seaborn") ||
+    lower.includes("sns.")
+  ) {
+    return {
+      title: hint || "Đoạn lệnh xử lý dữ liệu & vẽ biểu đồ (Pandas / Matplotlib)",
+      usageGuide: "",
+      category: "cs",
     };
   }
 
   return {
     title: hint || `Đoạn code mẫu: ${c.split("\n")[0].slice(0, 50)}`,
-    usageGuide:
-      "Em tham khảo và chèn đoạn lệnh này vào đúng vị trí tương ứng trong bài làm của mình, sau đó chạy thử lại chương trình nhé.",
-    category: "python",
+    usageGuide: "",
+    category: "cs",
   };
 }
 
 /**
  * Lọc và sắp xếp danh sách đoạn code:
  * - Các mục được ghim (isPinned = true) luôn hiển thị trên cùng.
- * - Hỗ trợ lọc theo danh mục và từ khóa tìm kiếm (không phân biệt hoa/thường).
+ * - Hỗ trợ lọc theo danh mục (đã chuẩn hóa về 5 môn) và từ khóa tìm kiếm (không phân biệt hoa/thường).
  */
 export function filterAndSortSnippets(
   snippets: readonly CodeSnippet[],
@@ -335,15 +409,15 @@ export function filterAndSortSnippets(
 
   return snippets
     .filter((item) => {
-      if (cat && cat !== "all" && item.category !== cat) {
+      const itemCat = normalizeSnippetCategory(item.category);
+      if (cat && cat !== "all" && itemCat !== normalizeSnippetCategory(cat)) {
         return false;
       }
       if (!q) return true;
-      const catMeta = getSnippetCategoryMeta(item.category);
+      const catMeta = getSnippetCategoryMeta(itemCat);
       const haystack = [
         item.title,
         item.code,
-        item.usageGuide,
         catMeta.label,
         catMeta.shortLabel,
       ]
@@ -399,19 +473,13 @@ export function decodeSnippetFallback(row: {
     const nowIso = new Date().toISOString();
     return {
       id: row.id,
-      title:
-        typeof parsed.title === "string" && parsed.title.trim()
-          ? parsed.title.trim()
-          : "Đoạn code mẫu",
+      title: (parsed.title ?? "Đoạn code mẫu").trim(),
       code: parsed.code,
-      usageGuide:
-        typeof parsed.usageGuide === "string" ? parsed.usageGuide : "",
+      usageGuide: (parsed.usageGuide ?? "").trim(),
       category: normalizeSnippetCategory(parsed.category),
       isPinned: Boolean(parsed.isPinned),
-      createdAt:
-        typeof parsed.createdAt === "string" ? parsed.createdAt : nowIso,
-      updatedAt:
-        typeof parsed.updatedAt === "string" ? parsed.updatedAt : nowIso,
+      createdAt: parsed.createdAt ?? nowIso,
+      updatedAt: parsed.updatedAt ?? nowIso,
     };
   } catch {
     return null;

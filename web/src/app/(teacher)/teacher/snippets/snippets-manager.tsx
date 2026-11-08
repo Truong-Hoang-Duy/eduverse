@@ -26,8 +26,9 @@ import {
 import {
   type CodeSnippet,
   filterAndSortSnippets,
-  formatSnippetForStudent,
   getSnippetCategoryMeta,
+  getSnippetFileLabel,
+  normalizeSnippetCategory,
   SNIPPET_CATEGORIES,
   type SnippetCategory,
 } from "@/lib/code-snippets";
@@ -216,15 +217,13 @@ export function SnippetsManager({
 
   // Trạng thái copy phản hồi tức thì
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
-  const [copiedFullId, setCopiedFullId] = useState<string | null>(null);
 
   // Trạng thái Dialog Thêm / Sửa
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
-  const [usageGuide, setUsageGuide] = useState("");
-  const [category, setCategory] = useState<SnippetCategory>("csa");
+  const [category, setCategory] = useState<SnippetCategory>("cs");
   const [isPinned, setIsPinned] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [aiSuccessMsg, setAiSuccessMsg] = useState<string | null>(null);
@@ -238,11 +237,12 @@ export function SnippetsManager({
     [snippets, searchQuery, categoryFilter]
   );
 
-  // Đếm số lượng theo từng danh mục để hiển thị trên thanh lọc
+  // Đếm số lượng theo từng môn học (đã chuẩn hóa về 5 môn) để hiển thị trên thanh lọc
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { all: snippets.length };
     for (const s of snippets) {
-      counts[s.category] = (counts[s.category] ?? 0) + 1;
+      const norm = normalizeSnippetCategory(s.category);
+      counts[norm] = (counts[norm] ?? 0) + 1;
     }
     return counts;
   }, [snippets]);
@@ -251,8 +251,7 @@ export function SnippetsManager({
     setEditingId(null);
     setCode("");
     setTitle("");
-    setUsageGuide("");
-    setCategory("csa");
+    setCategory("cs");
     setIsPinned(false);
     setFormError(null);
     setAiSuccessMsg(null);
@@ -263,8 +262,7 @@ export function SnippetsManager({
     setEditingId(item.id);
     setCode(item.code);
     setTitle(item.title);
-    setUsageGuide(item.usageGuide);
-    setCategory(item.category);
+    setCategory(normalizeSnippetCategory(item.category));
     setIsPinned(item.isPinned);
     setFormError(null);
     setAiSuccessMsg(null);
@@ -283,23 +281,10 @@ export function SnippetsManager({
     }
   }
 
-  async function handleCopyWithGuide(item: CodeSnippet) {
-    try {
-      const text = formatSnippetForStudent(item);
-      await navigator.clipboard.writeText(text);
-      setCopiedFullId(item.id);
-      setTimeout(() => {
-        setCopiedFullId((prev) => (prev === item.id ? null : prev));
-      }, 2000);
-    } catch {
-      // Bỏ qua nếu trình duyệt chặn clipboard
-    }
-  }
-
   function handleAiSuggest() {
     if (!code.trim()) {
       setFormError(
-        "Bạn hãy dán đoạn code vào ô bên dưới trước khi bấm '✨ AI soạn giúp' nhé."
+        "Bạn hãy dán đoạn code vào ô bên dưới trước khi bấm '✨ AI đặt tên & chọn môn' nhé."
       );
       return;
     }
@@ -310,17 +295,16 @@ export function SnippetsManager({
       try {
         const res = await suggestCodeSnippetWithAi({
           code,
-          teacherHint: title.trim() || usageGuide.trim() || undefined,
+          teacherHint: title.trim() || undefined,
         });
         if (res.error) {
           setFormError(res.error);
           return;
         }
         if (res.title) setTitle(res.title);
-        if (res.usageGuide) setUsageGuide(res.usageGuide);
-        if (res.category) setCategory(res.category);
+        if (res.category) setCategory(normalizeSnippetCategory(res.category));
         setAiSuccessMsg(
-          "✨ AI đã soạn xong tiêu đề, hướng dẫn cách dùng và phân loại! Bạn có thể bấm Lưu ngay."
+          "✨ AI đã gợi ý xong tiêu đề và môn học! Bạn có thể bấm Lưu ngay."
         );
       } catch {
         setFormError(
@@ -339,7 +323,7 @@ export function SnippetsManager({
         id: editingId ?? undefined,
         title,
         code,
-        usageGuide,
+        usageGuide: "",
         category,
         isPinned,
       });
@@ -393,7 +377,7 @@ export function SnippetsManager({
 
   return (
     <div className="space-y-6">
-      {/* Thanh công cụ: Tìm kiếm + Lọc theo chủ đề + Nút thêm mới */}
+      {/* Thanh công cụ: Tìm kiếm + Lọc theo 5 môn học + Nút thêm mới */}
       <div className="flex flex-col gap-4 rounded-2xl border bg-card p-4 shadow-xs">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1">
@@ -416,7 +400,7 @@ export function SnippetsManager({
           )}
         </div>
 
-        {/* Bộ lọc nhãn phân loại có biểu tượng trực quan */}
+        {/* Bộ lọc 5 môn học chuẩn lộ trình */}
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             type="button"
@@ -490,8 +474,8 @@ export function SnippetsManager({
         <div className="grid gap-5 md:grid-cols-2">
           {filteredSnippets.map((item) => {
             const catMeta = getSnippetCategoryMeta(item.category);
+            const fileLabel = getSnippetFileLabel(item.code, item.category);
             const isCodeCopied = copiedCodeId === item.id;
-            const isFullCopied = copiedFullId === item.id;
             const rawLines = item.code.trim().split("\n");
             const lineCount = rawLines.length;
 
@@ -505,7 +489,7 @@ export function SnippetsManager({
                     : "bg-card shadow-xs"
                 )}
               >
-                {/* Dải màu điểm nhấn trên đỉnh thẻ theo từng môn/chủ đề */}
+                {/* Dải màu điểm nhấn trên đỉnh thẻ theo 5 môn học */}
                 <div
                   className={cn(
                     "h-1.5 w-full bg-gradient-to-r",
@@ -514,7 +498,7 @@ export function SnippetsManager({
                 />
 
                 <div className="flex flex-1 flex-col p-4 sm:p-5">
-                  {/* Hàng 1: Nhãn phân loại + Cụm nút quản lý */}
+                  {/* Hàng 1: Nhãn môn học + Cụm nút quản lý */}
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-1.5">
                       {item.isPinned && (
@@ -589,24 +573,7 @@ export function SnippetsManager({
                     {item.title}
                   </h3>
 
-                  {/* Hàng 3: Khối hướng dẫn cách dùng có vạch màu nhấn bên trái */}
-                  {item.usageGuide && (
-                    <div
-                      className={cn(
-                        "mt-2.5 rounded-r-xl border border-border/50 border-l-[3px] px-3 py-2.5 text-xs leading-relaxed text-foreground/90",
-                        catMeta.calloutClass
-                      )}
-                    >
-                      <span className="font-semibold text-foreground">
-                        {readOnly
-                          ? "💡 Hướng dẫn cách dùng: "
-                          : "💡 Cách dùng / Nhắn học sinh: "}
-                      </span>
-                      {item.usageGuide}
-                    </div>
-                  )}
-
-                  {/* Hàng 4: Khung cửa sổ IDE hiển thị code (tự động lấp đầy khoảng trống, không bao giờ để hở khoảng đen trống rỗng) */}
+                  {/* Hàng 3: Khung cửa sổ IDE hiển thị code */}
                   <div className="mt-3.5 flex flex-1 flex-col overflow-hidden rounded-xl border border-zinc-800/90 bg-[#0d1117] shadow-inner">
                     {/* Thanh tiêu đề cửa sổ IDE kiểu macOS */}
                     <div className="flex items-center justify-between border-b border-zinc-800/80 bg-zinc-900/90 px-3.5 py-2">
@@ -617,7 +584,7 @@ export function SnippetsManager({
                           <span className="size-2.5 rounded-full bg-emerald-500/85" />
                         </div>
                         <span className="ml-1.5 font-mono text-[11px] font-medium text-zinc-400">
-                          {catMeta.fileLabel}
+                          {fileLabel}
                         </span>
                       </div>
 
@@ -640,8 +607,13 @@ export function SnippetsManager({
                       </div>
                     </div>
 
-                    {/* Vùng nội dung code có đánh số dòng & tô màu cú pháp */}
-                    <div className="flex flex-1 flex-col justify-center overflow-x-auto overflow-y-auto max-h-60 px-3 py-3 font-mono text-xs sm:text-[13px] leading-6">
+                    {/* Vùng nội dung code có đánh số dòng & tô màu cú pháp (chỉ căn giữa dọc khi có 1 dòng, còn nhiều dòng luôn bắt đầu từ dòng 01 ở trên cùng) */}
+                    <div
+                      className={cn(
+                        "flex flex-1 flex-col overflow-x-auto overflow-y-auto max-h-64 px-3 py-3 font-mono text-xs sm:text-[13px] leading-6",
+                        lineCount === 1 ? "justify-center" : "justify-start"
+                      )}
+                    >
                       {lineCount === 1 && (
                         <div className="flex items-baseline gap-3 text-slate-500 select-none">
                           <span className="w-5 shrink-0 text-right text-[11px] text-zinc-600">
@@ -680,42 +652,20 @@ export function SnippetsManager({
                     </div>
                   </div>
 
-                  {/* Hàng 5: Hai nút Copy 1 chạm dưới chân thẻ */}
-                  <div className="mt-3.5 flex flex-wrap items-center gap-2">
+                  {/* Hàng 4: Nút Copy 1 chạm dưới chân thẻ */}
+                  <div className="mt-3.5 flex items-center">
                     <Button
                       type="button"
                       size="sm"
                       onClick={() => handleCopyCode(item)}
                       className={cn(
-                        "h-9 flex-1 cursor-pointer text-xs font-semibold shadow-xs transition-all",
+                        "h-9 w-full cursor-pointer text-xs font-semibold shadow-xs transition-all",
                         isCodeCopied &&
                           "bg-emerald-600 text-white hover:bg-emerald-600"
                       )}
                     >
-                      {isCodeCopied
-                        ? "✓ Đã copy code!"
-                        : readOnly
-                        ? "📋 Copy đoạn code"
-                        : "📋 Copy nguyên code"}
+                      {isCodeCopied ? "✓ Đã copy code!" : "📋 Copy đoạn code"}
                     </Button>
-
-                    {!readOnly && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={isFullCopied ? "default" : "outline"}
-                        onClick={() => handleCopyWithGuide(item)}
-                        className={cn(
-                          "h-9 flex-1 cursor-pointer text-xs font-semibold transition-all",
-                          isFullCopied &&
-                            "border-transparent bg-emerald-600 text-white hover:bg-emerald-600"
-                        )}
-                      >
-                        {isFullCopied
-                          ? "✓ Đã copy kèm hướng dẫn!"
-                          : "💬 Copy kèm hướng dẫn"}
-                      </Button>
-                    )}
                   </div>
                 </div>
               </Card>
@@ -724,7 +674,7 @@ export function SnippetsManager({
         </div>
       )}
 
-      {/* Popup Thêm / Sửa đoạn code có tích hợp nút ✨ AI soạn giúp */}
+      {/* Popup Thêm / Sửa đoạn code có tích hợp nút ✨ AI đặt tên & chọn môn */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -734,15 +684,14 @@ export function SnippetsManager({
             <DialogDescription>
               Chỉ cần dán đoạn code rồi bấm{" "}
               <span className="font-semibold text-foreground">
-                ✨ AI soạn giúp
+                ✨ AI đặt tên & chọn môn
               </span>{" "}
-              — AI sẽ tự động viết tiêu đề, hướng dẫn gửi học sinh và chọn nhóm
-              phù hợp cho bạn.
+              — AI sẽ tự động đặt tiêu đề và chọn đúng môn học cho bạn.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSave} className="space-y-4">
-            {/* Bước 1: Dán đoạn code + Nút AI soạn giúp */}
+            {/* Bước 1: Dán đoạn code + Nút AI gợi ý */}
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Label htmlFor="snippet-code" className="text-sm font-semibold">
@@ -757,8 +706,8 @@ export function SnippetsManager({
                   className="h-8 cursor-pointer border border-primary/30 bg-primary/10 text-xs font-semibold text-primary hover:bg-primary/20"
                 >
                   {isAiLoading
-                    ? "⏳ AI đang soạn giúp..."
-                    : "✨ AI soạn giúp hướng dẫn & mô tả"}
+                    ? "⏳ AI đang phân tích..."
+                    : "✨ AI đặt tên & chọn môn"}
                 </Button>
               </div>
               <Textarea
@@ -766,7 +715,7 @@ export function SnippetsManager({
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="Ví dụ: %matplotlib inline"
-                rows={4}
+                rows={5}
                 className="font-mono text-sm"
                 required
               />
@@ -789,35 +738,20 @@ export function SnippetsManager({
               <Label htmlFor="snippet-title" className="text-sm font-semibold">
                 2. Tên vấn đề / Tình huống{" "}
                 <span className="text-xs font-normal text-muted-foreground">
-                  (có thể gõ vài chữ gợi ý rồi bấm AI soạn giúp)
+                  (để trống hệ thống sẽ tự đặt)
                 </span>
               </Label>
               <Input
                 id="snippet-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="VD: Sửa lỗi không hiển thị biểu đồ khi chạy code (để trống hệ thống sẽ tự đặt)"
+                placeholder="VD: Sửa lỗi không hiển thị biểu đồ khi chạy code"
               />
             </div>
 
-            {/* Bước 3: Hướng dẫn cách dùng */}
-            <div className="space-y-1.5">
-              <Label htmlFor="snippet-guide" className="text-sm font-semibold">
-                3. Hướng dẫn cách dùng / Lời dặn gửi học sinh
-              </Label>
-              <Textarea
-                id="snippet-guide"
-                value={usageGuide}
-                onChange={(e) => setUsageGuide(e.target.value)}
-                placeholder="VD: Khi em gõ đúng câu lệnh vẽ biểu đồ nhưng chạy không thấy hình hiện ra, hãy chèn dòng lệnh này vào đầu ô code đầu tiên rồi chạy lại nhé."
-                rows={3}
-                className="text-sm"
-              />
-            </div>
-
-            {/* Bước 4: Nhãn phân loại & Ghim */}
+            {/* Bước 3: Nhãn 5 môn học & Ghim */}
             <div className="space-y-2">
-              <Label className="text-sm font-semibold">4. Nhãn phân loại</Label>
+              <Label className="text-sm font-semibold">3. Môn học</Label>
               <div className="flex flex-wrap gap-1.5">
                 {SNIPPET_CATEGORIES.map((cat) => {
                   const selected = category === cat.value;
