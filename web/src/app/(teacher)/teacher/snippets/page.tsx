@@ -14,7 +14,7 @@ export default async function SnippetsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Sổ tay Code"
-        description="Lưu trữ các đoạn code mẫu và mẹo sửa lỗi nhanh cho học viên — tích hợp AI tự động soạn hướng dẫn"
+        description="Lưu trữ các đoạn code mẫu và câu lệnh thường dùng theo 5 môn học — bấm Copy để gửi nhanh cho học viên"
       />
       <SnippetsManager initialSnippets={snippets} />
     </div>

@@ -345,11 +345,14 @@ class HelpStudentResponse(BaseModel):
 
 # ---------- /suggest-code-snippet ----------
 SnippetCategory = Literal[
+    "scratch",
+    "gamemaker",
+    "app",
+    "web",
+    "cs",
     "csa",
     "csb",
     "python",
-    "app",
-    "web",
     "debug",
     "setup",
     "general",
@@ -357,7 +360,7 @@ SnippetCategory = Literal[
 
 
 class SuggestCodeSnippetRequest(AiRequest):
-    """Yêu cầu AI tự động soạn tiêu đề, hướng dẫn cách dùng và phân loại cho đoạn code mẫu."""
+    """Yêu cầu AI tự động soạn tiêu đề và phân loại môn học cho đoạn code mẫu."""
 
     code: str = Field(min_length=1)
     teacher_hint: str | None = None
@@ -365,6 +368,6 @@ class SuggestCodeSnippetRequest(AiRequest):
 
 class SuggestCodeSnippetResponse(BaseModel):
     title: str
-    usage_guide: str
-    category: SnippetCategory = "general"
+    usage_guide: str = ""
+    category: SnippetCategory = "cs"
 

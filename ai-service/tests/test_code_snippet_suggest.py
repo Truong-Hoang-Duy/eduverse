@@ -46,8 +46,8 @@ def test_suggest_code_snippet_endpoint_returns_valid_response(
         assert "%matplotlib inline" in prompt
         return {
             "title": "Khắc phục lỗi không hiển thị biểu đồ trên Jupyter Notebook",
-            "usage_guide": "Khi chạy code vẽ biểu đồ mà không thấy hình hiện ra, em chèn dòng lệnh này vào dòng đầu tiên của ô code rồi chạy lại nhé.",
-            "category": "csa",
+            "usage_guide": "",
+            "category": "cs",
         }
 
     monkeypatch.setattr("app.routes.projects.generate_json", fake_generate_json)
@@ -68,6 +68,5 @@ def test_suggest_code_snippet_endpoint_returns_valid_response(
         data["title"]
         == "Khắc phục lỗi không hiển thị biểu đồ trên Jupyter Notebook"
     )
-    assert "em chèn dòng lệnh này" in data["usage_guide"]
-    assert data["category"] == "csa"
+    assert data["category"] == "cs"
 
