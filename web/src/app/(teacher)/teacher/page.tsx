@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { isClassCompleted } from "@/lib/class-completion";
 import { sortCoursesByRoadmap } from "@/lib/course-sort";
+import { isSubstituteSession } from "@/lib/session-substitute";
 import { createClient } from "@/lib/supabase/server";
 import type { Class, Course } from "@/lib/types";
 
@@ -37,21 +38,24 @@ export default async function TeacherDashboard() {
         .from("classes")
         .select("*, enrollments(count)")
         .order("class_code"),
-      supabase.from("sessions").select("id, class_id, session_number"),
+      supabase.from("sessions").select("id, class_id, session_number, review_context"),
     ]);
 
   const courses = sortCoursesByRoadmap((coursesData ?? []) as Course[]);
   const classes = (classesData ?? []) as ClassRow[];
 
-  const lastSessionIdByClass = new Map<string, string>();
+  const lastSessionByClass = new Map<
+    string,
+    { id: string; review_context?: string | null }
+  >();
   for (const cls of classes) {
     const last = (sessionsData ?? []).find(
       (s) => s.class_id === cls.id && s.session_number === cls.total_sessions
     );
-    if (last) lastSessionIdByClass.set(cls.id, last.id);
+    if (last) lastSessionByClass.set(cls.id, last);
   }
 
-  const lastSessionIds = [...lastSessionIdByClass.values()];
+  const lastSessionIds = [...lastSessionByClass.values()].map((s) => s.id);
   const { data: lastReviewsData } = lastSessionIds.length
     ? await supabase
         .from("student_reviews")
@@ -83,7 +87,7 @@ export default async function TeacherDashboard() {
   const classItems: ClassItem[] = classes.map((cls) => {
     const course = courses.find((c) => c.id === cls.course_id);
     const studentCount = cls.enrollments[0]?.count ?? 0;
-    const lastSessionId = lastSessionIdByClass.get(cls.id);
+    const lastSession = lastSessionByClass.get(cls.id);
     return {
       id: cls.id,
       classCode: cls.class_code,
@@ -96,9 +100,10 @@ export default async function TeacherDashboard() {
       description: cls.description,
       completed: isClassCompleted({
         studentCount,
-        handledCount: lastSessionId
-          ? (handledCountBySession.get(lastSessionId) ?? 0)
+        handledCount: lastSession
+          ? (handledCountBySession.get(lastSession.id) ?? 0)
           : 0,
+        isSubstitute: isSubstituteSession(lastSession),
       }),
     };
   });

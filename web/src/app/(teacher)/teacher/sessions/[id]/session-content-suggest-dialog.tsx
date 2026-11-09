@@ -89,9 +89,9 @@ export function SessionContentSuggestDialog({
           <DialogTitle className="text-base sm:text-lg">Gợi ý nội dung buổi học</DialogTitle>
           <DialogDescription asChild>
             <div className="space-y-1 text-xs text-muted-foreground pt-0.5">
-              <p>AI tự động nhận diện môn học và nối tiếp tiến trình các buổi trước:</p>
+              <p>AI tự động sắp xếp theo tiến trình sư phạm chuẩn từ trên xuống và gắn tiền tố phân loại riêng biệt:</p>
               <ul className="list-disc pl-4 space-y-0.5">
-                <li><strong>Nhập ghi chú:</strong> Gõ từ khóa, bài tập hoặc dán giáo trình — AI biên soạn thành các mục sư phạm rõ ràng.</li>
+                <li><strong>Nhập ghi chú:</strong> Gõ từ khóa, bài tập hoặc dán giáo trình (không cần theo thứ tự — AI sẽ tự chuẩn hóa thứ tự logic và phân định rõ bài mẫu, đánh giá, tối ưu, bài tập mở rộng).</li>
                 <li><strong>Để trống:</strong> AI tự đề xuất nội dung bài học tiếp theo dựa trên mạch kiến thức các buổi trước.</li>
               </ul>
             </div>
@@ -105,7 +105,7 @@ export function SessionContentSuggestDialog({
             className="h-24 sm:h-24 resize-none text-xs sm:text-sm"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={`VD:\n- Kiến thức: Biến, vòng lặp, thiết kế widget trên Qt Designer...\n- Bài tập: Lập trình máy tính bỏ túi, xử lý va chạm game...\n- Hoặc dán giáo trình thô (để trống để AI tự đề xuất tiếp theo).`}
+            placeholder={`Gõ ghi chú, từ khóa hoặc dán giáo trình thô (có thể viết tự do, AI sẽ tự sắp xếp mạch sư phạm):\nVD:\n- Thực hành xây mô hình hồi quy dự đoán giá xe\n- Đánh giá độ chính xác, cách huấn luyện lại khi < 80%\n- Bài tập dự đoán doanh số siêu thị Walmart`}
           />
           <div className="flex items-center justify-between gap-2">
             <Button

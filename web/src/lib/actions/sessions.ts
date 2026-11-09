@@ -5,6 +5,11 @@ import { revalidatePath } from "next/cache";
 import { getAiConfig } from "@/lib/actions/api-key";
 import { applyReviewsFromSession } from "@/lib/actions/reviews";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import {
+  addSubstituteMarker,
+  isSubstituteSession,
+  removeSubstituteMarker,
+} from "@/lib/session-substitute";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
@@ -30,12 +35,28 @@ export async function updateSession(
   }
 
   const supabase = await createClient();
+
+  // Kiểm tra xem buổi học hiện tại có đang đánh dấu dạy thay không để bảo toàn marker
+  const { data: existingSession } = await supabase
+    .from("sessions")
+    .select("review_context")
+    .eq("id", id)
+    .single();
+  const isCurrentlySubstitute = isSubstituteSession(existingSession);
+
+  let finalReviewContext = reviewContext || null;
+  if (isCurrentlySubstitute) {
+    finalReviewContext = addSubstituteMarker(finalReviewContext);
+  } else if (finalReviewContext) {
+    finalReviewContext = removeSubstituteMarker(finalReviewContext);
+  }
+
   let { error } = await supabase
     .from("sessions")
     .update({
       title: title || null,
       content: content || null,
-      review_context: reviewContext || null,
+      review_context: finalReviewContext,
       is_periodic_test: isPeriodicTest,
       is_project_period: isProjectPeriod,
       is_final_presentation: isFinalPresentation,
@@ -50,7 +71,7 @@ export async function updateSession(
       .update({
         title: title || null,
         content: content || null,
-        review_context: reviewContext || null,
+        review_context: finalReviewContext,
         is_periodic_test: isPeriodicTest,
         is_project_period: isProjectPeriod,
         session_date: sessionDate || null,
@@ -90,6 +111,78 @@ export async function updateSession(
   }
 
   return { success: "Đã lưu nội dung buổi học." };
+}
+
+/**
+ * Đánh dấu hoặc hủy đánh dấu buổi học do người khác dạy thay.
+ * Buổi có người dạy thay sẽ được tính là hoàn thành trong tiến độ lớp
+ * và bị loại trừ khỏi dữ liệu nhận xét (không đưa vào chống lặp AI, copy nhận xét, tổng kết học viên).
+ */
+export async function setSessionSubstitute(input: {
+  sessionId: string;
+  isSubstitute: boolean;
+}): Promise<ActionResult> {
+  const { sessionId, isSubstitute } = input;
+  if (!sessionId) {
+    return { error: "Thiếu thông tin buổi học." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const { data: sessionData, error: fetchErr } = await supabase
+    .from("sessions")
+    .select("id, class_id, review_context")
+    .eq("id", sessionId)
+    .single();
+
+  if (fetchErr || !sessionData) {
+    return { error: "Không tìm thấy buổi học." };
+  }
+
+  const updatedContext = isSubstitute
+    ? addSubstituteMarker(sessionData.review_context)
+    : removeSubstituteMarker(sessionData.review_context);
+
+  // Thử cập nhật cả cột is_substitute và review_context
+  let { error } = await supabase
+    .from("sessions")
+    .update({
+      is_substitute: isSubstitute,
+      review_context: updatedContext,
+    })
+    .eq("id", sessionId);
+
+  if (error && error.message?.includes("is_substitute")) {
+    // Migration chưa dán trên DB -> fallback chỉ cập nhật review_context
+    const fallbackUpdate = await supabase
+      .from("sessions")
+      .update({
+        review_context: updatedContext,
+      })
+      .eq("id", sessionId);
+    error = fallbackUpdate.error;
+  }
+
+  if (error) {
+    return { error: `Không thể cập nhật trạng thái dạy thay: ${error.message}` };
+  }
+
+  revalidatePath(`/teacher/sessions/${sessionId}`);
+  revalidatePath(`/teacher/classes/${sessionData.class_id}`);
+  revalidatePath(`/teacher`);
+  revalidatePath(`/teacher/gallery`);
+
+  return {
+    success: isSubstitute
+      ? "Đã đánh dấu có người dạy thay (buổi học được tính là hoàn thành)."
+      : "Đã hủy trạng thái dạy thay, bạn có thể tự nhận xét buổi này.",
+  };
 }
 
 /** Một buổi đã có nội dung, hiện trong popup tham khảo. */
