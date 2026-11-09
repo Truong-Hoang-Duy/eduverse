@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { requireRole } from "@/lib/get-profile";
 import { driveLinksOfStudents } from "@/lib/actions/drive-link";
 import { isClassCompleted } from "@/lib/class-completion";
+import { isSubstituteSession } from "@/lib/session-substitute";
 import { createClient } from "@/lib/supabase/server";
 
 import { type ExistingReview, isHandled } from "../sessions/[id]/review-status";
@@ -75,7 +76,7 @@ export default async function TeacherGalleryPage() {
       .select("class_id, student_id, profiles(full_name)"),
     supabase
       .from("sessions")
-      .select("id, class_id, session_number"),
+      .select("id, class_id, session_number, review_context"),
   ]);
 
   const classes = (classesData ?? []) as unknown as {
@@ -97,15 +98,18 @@ export default async function TeacherGalleryPage() {
   const classCodeById = new Map(classes.map((c) => [c.id, c.class_code]));
 
   // Xác định buổi cuối cùng của từng lớp để kiểm tra hoàn thành
-  const lastSessionIdByClass = new Map<string, string>();
+  const lastSessionByClass = new Map<
+    string,
+    { id: string; review_context?: string | null }
+  >();
   for (const cls of classes) {
     const last = (sessionsData ?? []).find(
       (s) => s.class_id === cls.id && s.session_number === cls.total_sessions
     );
-    if (last) lastSessionIdByClass.set(cls.id, last.id);
+    if (last) lastSessionByClass.set(cls.id, last);
   }
 
-  const lastSessionIds = [...lastSessionIdByClass.values()];
+  const lastSessionIds = [...lastSessionByClass.values()].map((s) => s.id);
 
   // Đợt 2 chạy song song: vừa lấy link Drive vừa lấy nhận xét buổi cuối.
   const [driveLinks, { data: lastReviewsData }] = await Promise.all([
@@ -213,15 +217,19 @@ export default async function TeacherGalleryPage() {
         <GalleryView
           classes={classes.map((c) => {
             const studentCount = studentCountByClass.get(c.id) ?? 0;
-            const lastSessionId = lastSessionIdByClass.get(c.id);
-            const handledCount = lastSessionId
-              ? (handledCountBySession.get(lastSessionId) ?? 0)
+            const lastSession = lastSessionByClass.get(c.id);
+            const handledCount = lastSession
+              ? (handledCountBySession.get(lastSession.id) ?? 0)
               : 0;
             return {
               id: c.id,
               class_code: c.class_code,
               courseCode: c.courses?.code ?? "",
-              completed: isClassCompleted({ studentCount, handledCount }),
+              completed: isClassCompleted({
+                studentCount,
+                handledCount,
+                isSubstitute: isSubstituteSession(lastSession),
+              }),
             };
           })}
           projects={projects}

@@ -38,6 +38,9 @@ class GenerateReviewRequest(AiRequest):
     # Bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay kiểm tra) — CHỈ để
     # AI tham khảo, không phải nội dung nhận xét.
     session_context: str | None = None
+    # Ghi chú riêng của GV về học viên này trong buổi học khi các ô tích chưa có
+    # (VD: em tự làm thêm tính năng, em sốt nhẹ, em quên chuột, phong cách làm bài...)
+    student_note: str | None = None
     # Buổi có kiểm tra định kỳ — tách nhận xét thành 2 phần (học tập / kiểm
     # tra) thay vì một đoạn văn. Xem prompts.py.
     is_periodic_test: bool = False

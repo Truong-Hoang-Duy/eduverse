@@ -275,3 +275,20 @@ def test_zalo_summary_adapts_to_session_formats():
         )
         assert keyword in p
         assert "CHỈ dùng từ 'thầy'" in p
+
+
+def test_review_prompt_includes_individual_student_note():
+    prompt = prompts.build_review_prompt(
+        student_name="An",
+        session_title="Buổi 3",
+        session_content="Lập trình hàm và thuật toán sắp xếp",
+        strengths=["Tư duy thuật toán tốt"],
+        improvements=["Cần chú ý thụt lề code"],
+        session_context=None,
+        previous_comment=None,
+        student_note="Em tự lập trình thêm thuật toán QuickSort mở rộng, rất đam mê",
+    )
+    assert "Ghi chú riêng của giáo viên về học viên này trong buổi học" in prompt
+    assert "Em tự lập trình thêm thuật toán QuickSort mở rộng, rất đam mê" in prompt
+    assert "HƯỚNG DẪN XỬ LÝ GHI CHÚ RIÊNG" in prompt
+

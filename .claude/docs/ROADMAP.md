@@ -1574,6 +1574,54 @@
   - 465/465 unit tests PASS 100%, E2E `checkpoint.e2e.ts` PASS 3/3 tests.
   - `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
 
+### Đợt 120: Hỗ trợ nghiệp vụ "Tôi nghỉ dạy - Nhờ thầy (cô) khác dạy thay" (Substitute Teacher) (2026-11-09)
+- [x] **Nút bấm & Dialog đánh dấu Người dạy thay (`teacher/sessions/[id]`):**
+  - Component `SubstituteToggle` (`substitute-toggle.tsx`) với nút bấm `🧑‍🏫 Tôi nghỉ dạy (Nhờ người dạy thay)` và hộp thoại xác nhận chi tiết.
+  - Khi kích hoạt: Thẻ "Nhận xét học viên" hiển thị trạng thái hoàn thành gọn gàng (`✓ Đã hoàn thành`), ẩn danh sách học viên cần nhận xét và cung cấp nút `↩️ Hủy dạy thay (Tự nhận xét buổi này)` để hoàn tác.
+- [x] **Tính năng hoàn thành buổi học & Hiển thị trên các trang liên quan:**
+  - Danh sách buổi học trong lớp (`teacher/classes/[id]/page.tsx`): Hiển thị badge `Dạy thay` và trạng thái `✓ Người dạy thay (Hoàn thành)` với màu xanh lá ngọc (emerald); tính vào tỉ lệ tiến độ hoàn thành lớp (`completedSessions`).
+  - Trang chủ danh sách lớp (`teacher/page.tsx`) & Triển lãm sản phẩm (`teacher/gallery/page.tsx`): Tự động tính hoàn thành lớp học nếu buổi cuối cùng có người dạy thay qua `isClassCompleted({ ..., isSubstitute })`.
+- [x] **Loại trừ triệt để dữ liệu buổi dạy thay khỏi Nhận xét học viên & AI:**
+  - Loại trừ khỏi `prior_comments` gửi AI viết nhận xét (tránh lặp lời văn).
+  - Loại trừ khỏi `priorSelections` (sao chép điểm mạnh / điểm cần cải thiện).
+  - Loại trừ khỏi `allPriorReviews` (lịch sử đánh giá toàn khóa / Demo Day Buổi 14).
+  - Loại trừ khỏi danh sách áp nhận xét sang cả lớp (`copyFromSessions`).
+  - Chặn áp nhận xét nếu nguồn là buổi có người dạy thay (`applyReviewsFromSession`).
+  - Loại trừ khỏi tổng hợp học bạ học viên (`/generate-student-summary`).
+  - Cập nhật số buổi đã nhận xét trong hồ sơ học viên (`classes/[id]/students/[studentId]`).
+- [x] **Cơ chế lưu trữ & Graceful Fallback:**
+  - Migration `20261109080000_session_substitute.sql` (thêm cột `is_substitute`).
+  - Helper `session-substitute.ts`: Cơ chế dự phòng qua thẻ `[SUBSTITUTE_TEACHER]` trong `review_context` và hàm `cleanContextForDisplay` ẩn thẻ kỹ thuật khỏi giao diện.
+- [x] **Kiểm thử chất lượng:**
+  - 489/489 vitest unit tests PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` thành công 100%.
+  - 112/112 pytest PASS 100% trong `ai-service/`.
+
+### Đợt 121: Chuẩn hóa tạo sinh gợi ý nội dung bài học (`/suggest-session-content`): Tự động sắp xếp theo tiến trình sư phạm từ trên xuống & Chống trùng lặp tiền tố phân loại (`Thực hành:`) (2026-11-09)
+- [x] **Cập nhật Prompt tạo sinh nội dung buổi học (`ai-service/app/prompts.py`):**
+  - Bổ sung quy tắc bắt buộc về **Tiến trình sư phạm từ trên xuống (Pedagogical Flow)**: Tự động phân tích ghi chú thô của giáo viên và sắp xếp theo 4 pha logic (1. Khái niệm/Kiến thức nền tảng $\rightarrow$ 2. Thực hành trọng tâm $\rightarrow$ 3. Đánh giá/Kiểm thử/Tối ưu $\rightarrow$ 4. Ứng dụng/Bài tập mở rộng).
+  - Bổ sung quy tắc **Chống trùng lặp tiền tố phân loại (Unique Category Tags)**: Mỗi đầu mục mang tiền tố độc nhất, tuyệt đối không lặp lại `Thực hành:` 2 lần; phân định rõ giữa bài thực hành mẫu ban đầu (`Thực hành:`) và bài toán áp dụng thực tế mở rộng (`Ứng dụng:` / `Luyện tập:` / `Dự án:`).
+- [x] **Bộ lọc an toàn hậu xử lý ở Backend (`ai-service/app/routes/reviews.py`):**
+  - Hàm `_deduplicate_bullet_prefixes` tự động thay thế các tiền tố trùng lặp (ví dụ `Thực hành:` lần 2 đổi thành `Ứng dụng:` hoặc `Luyện tập:`) đảm bảo đầu ra luôn sạch sẽ và mạch lạc 100%.
+- [x] **Cải tiến giao diện Dialog (`session-content-suggest-dialog.tsx`):**
+  - Cập nhật mô tả và placeholder giúp giáo viên yên tâm gõ ghi chú tự do, AI sẽ tự động chuẩn hóa tiến trình sư phạm.
+- [x] **Kiểm thử chất lượng:**
+  - 114/114 pytest PASS 100% trong `ai-service/`.
+  - 489/489 vitest unit tests PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+### Đợt 122: Bổ sung ô ghi chú riêng nhận xét từng học viên (`student_note`) khi ô tích chưa có — Truyền bối cảnh cho AI tạo nhận xét cá nhân hóa sâu sắc (2026-11-09)
+- [x] **Giao diện nhận xét từng em (`review-editor.tsx`):**
+  - Thêm ô nhập liệu `📝 Ghi chú riêng về em (khi ô tích chưa có)` ngay phía trên khung lời nhận xét gửi phụ huynh.
+  - Tự động ghi nhớ theo từng em và buổi học qua `localStorage` (`eduverse_student_note_${sessionId}_${studentId}`) giúp không bị mất nội dung khi chuyển đổi học viên.
+- [x] **Server Actions & AI Client (`reviews.ts` & `review-editor.tsx`):**
+  - Mở rộng `GenerateReviewInput` với `studentNote?: string` và truyền `student_note` sang backend AI Service.
+  - Tích hợp `studentNote` trong cả chế độ nhận xét thường, kiểm tra định kỳ và Demo Day Buổi 14.
+- [x] **Prompt AI Service & Backend Handler (`prompts.py`, `schemas.py`, `reviews.py`):**
+  - Bổ sung `student_note` vào `GenerateReviewRequest` và `build_review_prompt`.
+  - Hướng dẫn AI phân tích bối cảnh ghi chú riêng để lồng ghép tự nhiên vào điểm mạnh, điểm cần cải thiện hoặc lời khuyên.
+- [x] **Kiểm thử chất lượng:**
+  - 115/115 pytest PASS 100% trong `ai-service/`.
+  - 489/489 vitest unit tests PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
 ## Ý tưởng còn để ngỏ (chưa làm)
 - Nếu DLP công ty mã hóa cả file code: thêm ô dán code dạng text thay vì upload
 - ~~Hiện kết quả random nhóm cho HV xem~~ — bỏ (2026-07-18): GV chiếu TV cho cả

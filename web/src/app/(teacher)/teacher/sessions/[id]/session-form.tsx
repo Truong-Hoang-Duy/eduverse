@@ -22,6 +22,7 @@ import {
   SESSION_FORMATS,
   type SessionFormat,
 } from "@/lib/session-format";
+import { cleanContextForDisplay } from "@/lib/session-substitute";
 import type { ActionResult } from "@/lib/types";
 
 import { SessionContentReferenceDialog } from "./session-content-reference-dialog";
@@ -238,8 +239,8 @@ export function SessionForm({
     {}
   );
   const [content, setContent] = useState(session.content ?? "");
-  const [reviewContext, setReviewContext] = useState(
-    session.review_context ?? ""
+  const [reviewContext, setReviewContext] = useState(() =>
+    cleanContextForDisplay(session.review_context)
   );
   const [format, setFormat] = useState<SessionFormat>(() =>
     resolveSessionFormat(session)

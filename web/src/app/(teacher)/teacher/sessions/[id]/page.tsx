@@ -27,6 +27,8 @@ import {
   resolveSessionFormat,
   type SessionFormat,
 } from "@/lib/session-format";
+import { isSubstituteSession } from "@/lib/session-substitute";
+import { SubstituteToggle } from "./substitute-toggle";
 
 interface SessionRow {
   id: string;
@@ -38,6 +40,7 @@ interface SessionRow {
   is_periodic_test: boolean;
   is_project_period: boolean;
   is_final_presentation?: boolean;
+  is_substitute?: boolean;
   session_date: string | null;
   classes: {
     class_code: string;
@@ -65,6 +68,8 @@ interface PriorReviewRow {
     id: string;
     session_number: number;
     title?: string | null;
+    review_context?: string | null;
+    is_substitute?: boolean | null;
     is_periodic_test?: boolean | null;
     is_project_period?: boolean | null;
     is_final_presentation?: boolean | null;
@@ -151,6 +156,8 @@ export default async function SessionDetailPage({
     (Boolean(session.classes?.total_sessions) &&
       session.session_number === session.classes?.total_sessions);
 
+  const isSubstitute = isSubstituteSession(session);
+
   const currentSessionFormat = resolveSessionFormat({
     session_number: session.session_number,
     is_periodic_test: session.is_periodic_test,
@@ -183,8 +190,8 @@ export default async function SessionDetailPage({
       .from("student_reviews")
       .select(
         hasFinalColumn
-          ? "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id, is_periodic_test, is_project_period, is_final_presentation)"
-          : "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id, is_periodic_test, is_project_period)"
+          ? "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id, review_context, is_periodic_test, is_project_period, is_final_presentation)"
+          : "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id, review_context, is_periodic_test, is_project_period)"
       )
       .eq("sessions.class_id", session.class_id)
       .neq("sessions.id", session.id),
@@ -227,7 +234,9 @@ export default async function SessionDetailPage({
   }[];
   const projectByStudentId = new Map(projects.map((p) => [p.student_id, p]));
 
-  const priorReviews = (priorReviewsData ?? []) as unknown as PriorReviewRow[];
+  const priorReviews = ((priorReviewsData ?? []) as unknown as PriorReviewRow[]).filter(
+    (r) => !isSubstituteSession(r.sessions)
+  );
   const priorCommentsByStudentId = new Map<string, string[]>();
   const priorSelectionsByStudentId = new Map<string, PriorSelection[]>();
   const allPriorReviewsByStudentId = new Map<string, PriorReviewHistoryItem[]>();
@@ -313,15 +322,22 @@ export default async function SessionDetailPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <Button asChild variant="outline" size="sm" className="mb-3 cursor-pointer">
-          <Link href={`/teacher/classes/${session.class_id}`}>
-            ← Quay lại lớp {session.classes?.class_code}
-          </Link>
-        </Button>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Buổi {session.session_number}: {sessionTitle}
-        </h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <Button asChild variant="outline" size="sm" className="mb-3 cursor-pointer">
+            <Link href={`/teacher/classes/${session.class_id}`}>
+              ← Quay lại lớp {session.classes?.class_code}
+            </Link>
+          </Button>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Buổi {session.session_number}: {sessionTitle}
+          </h1>
+        </div>
+        <SubstituteToggle
+          sessionId={session.id}
+          sessionNumber={session.session_number}
+          isSubstitute={isSubstitute}
+        />
       </div>
 
       <Card className="shadow-sm">
@@ -338,11 +354,20 @@ export default async function SessionDetailPage({
 
       <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base">
-            Nhận xét học viên ({handledCount}/{students.length})
-          </CardTitle>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <CardTitle className="text-base">
+              Nhận xét học viên {isSubstitute ? "(Người dạy thay đã hoàn thành)" : `(${handledCount}/${students.length})`}
+            </CardTitle>
+            {isSubstitute && (
+              <span className="inline-flex items-center rounded-full bg-emerald-600/20 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                ✓ Đã hoàn thành
+              </span>
+            )}
+          </div>
           <CardDescription>
-            {isFinalPresentation
+            {isSubstitute
+              ? "Buổi học này có thầy (cô) khác dạy thay và đã được đánh dấu hoàn thành. Dữ liệu không đưa vào nhận xét hoặc tổng hợp của lớp."
+              : isFinalPresentation
               ? "Buổi thuyết trình sản phẩm cuối khóa: Bấm 'AI tổng kết Buổi 14' để tổng hợp toàn khóa và chấm ĐNL / Demo Score."
               : session.is_periodic_test && isFinalSession
                 ? "Buổi kiểm tra cuối khóa: Bấm 'AI tổng kết bài thi' để tổng hợp toàn khóa và chấm 9 tiêu chí Đánh Giá Năng Lực."
@@ -354,42 +379,56 @@ export default async function SessionDetailPage({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {students.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Lớp chưa có học viên nào.
-            </p>
-          )}
-          {options.length === 0 && students.length > 0 && (
-            <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-              Chưa có danh mục nhận xét —{" "}
-              <Link href="/teacher/settings" className="text-primary underline">
-                vào Cài đặt để thêm
-              </Link>{" "}
-              rồi tạo bộ combo áp nhanh (có nút thêm nhanh bộ mặc định).
-            </p>
-          )}
-          {students.length > 0 && (
-            <ReviewList
-              sessionId={session.id}
-              sessionNumber={session.session_number}
-            sessionTitle={sessionTitle}
-              sessionContent={session.content ?? ""}
-              sessionContext={session.review_context ?? ""}
-              isPeriodicTest={session.is_periodic_test}
-              isProjectPeriod={session.is_project_period}
-              isFinalPresentation={isFinalPresentation}
-              isFinalSession={isFinalSession}
-              classCode={session.classes?.class_code ?? ""}
-              courseName={session.classes?.courses?.name ?? ""}
-              students={students}
-              options={options}
-              reviewByStudentId={reviewByStudentId}
-              priorCommentsByStudentId={priorCommentsByStudentId}
-              priorSelectionsByStudentId={priorSelectionsByStudentId}
-              allPriorReviewsByStudentId={allPriorReviewsByStudentId}
-              projectsByStudentId={projectByStudentId}
-              combos={combos}
-            />
+          {isSubstitute ? (
+            <div className="rounded-lg border border-dashed border-emerald-500/40 bg-emerald-50/50 p-6 text-center text-sm dark:bg-emerald-950/20">
+              <span className="mb-1 block text-2xl">🧑‍🏫</span>
+              <p className="font-semibold text-emerald-800 dark:text-emerald-300">
+                Buổi học do người khác dạy thay (Đã hoàn thành)
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Tiến độ lớp học đã được ghi nhận hoàn thành. Nếu muốn tự nhập nhận xét cho học viên buổi này, bạn có thể bấm nút &quot;Hủy dạy thay&quot; ở trên.
+              </p>
+            </div>
+          ) : (
+            <>
+              {students.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Lớp chưa có học viên nào.
+                </p>
+              )}
+              {options.length === 0 && students.length > 0 && (
+                <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                  Chưa có danh mục nhận xét —{" "}
+                  <Link href="/teacher/settings" className="text-primary underline">
+                    vào Cài đặt để thêm
+                  </Link>{" "}
+                  rồi tạo bộ combo áp nhanh (có nút thêm nhanh bộ mặc định).
+                </p>
+              )}
+              {students.length > 0 && (
+                <ReviewList
+                  sessionId={session.id}
+                  sessionNumber={session.session_number}
+                  sessionTitle={sessionTitle}
+                  sessionContent={session.content ?? ""}
+                  sessionContext={session.review_context ?? ""}
+                  isPeriodicTest={session.is_periodic_test}
+                  isProjectPeriod={session.is_project_period}
+                  isFinalPresentation={isFinalPresentation}
+                  isFinalSession={isFinalSession}
+                  classCode={session.classes?.class_code ?? ""}
+                  courseName={session.classes?.courses?.name ?? ""}
+                  students={students}
+                  options={options}
+                  reviewByStudentId={reviewByStudentId}
+                  priorCommentsByStudentId={priorCommentsByStudentId}
+                  priorSelectionsByStudentId={priorSelectionsByStudentId}
+                  allPriorReviewsByStudentId={allPriorReviewsByStudentId}
+                  projectsByStudentId={projectByStudentId}
+                  combos={combos}
+                />
+              )}
+            </>
           )}
         </CardContent>
       </Card>
