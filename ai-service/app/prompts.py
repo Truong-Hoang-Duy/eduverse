@@ -373,6 +373,7 @@ def build_review_prompt(
     project_name: str | None = None,
     project_description: str | None = None,
     project_features: list[str] | None = None,
+    student_note: str | None = None,
 ) -> str:
     """`is_periodic_test`: buổi có kiểm tra định kỳ (GV tự đánh dấu — KHÔNG cứng
     theo số buổi, vì buổi 14 tùy lớp có thể là thuyết trình thay vì kiểm tra;
@@ -461,6 +462,14 @@ def build_review_prompt(
         parts.append(
             f"Bối cảnh buổi học do giáo viên ghi (VD: có kiểm tra, ôn tập...), "
             f"dùng chung cho cả buổi: {session_context}"
+        )
+    if student_note and student_note.strip():
+        parts.append(
+            f"Ghi chú riêng của giáo viên về học viên này trong buổi học (khi các ô tích chọn chưa bao hàm hết): {student_note.strip()}\n"
+            "🔴 HƯỚNG DẪN XỬ LÝ GHI CHÚ RIÊNG: Hãy kết hợp tự nhiên bối cảnh ghi chú này vào câu nhận xét "
+            "(nếu là tiến bộ, sáng tạo hoặc nỗ lực thì đưa vào điểm mạnh; nếu là khó khăn, sơ suất hoặc tình huống cần lưu ý "
+            "thì đưa vào điểm cần cải thiện/lời khuyên với lời lẽ khích lệ, tế nhị). "
+            "TUYỆT ĐỐI KHÔNG bỏ qua ghi chú này của giáo viên."
         )
     if is_periodic_test and test_process_notes:
         parts.append(
@@ -1003,14 +1012,36 @@ def build_session_content_prompt(
         )
     parts.append(
         "Viết lại thành DANH SÁCH GẠCH ĐẦU DÒNG (3-5 ý) — CHỈ LIỆT KÊ CÁC ĐẦU MỤC SẼ HỌC:\n"
+        "QUY TẮC TIẾN TRÌNH SƯ PHẠM VÀ THỨ TỰ TỪ TRÊN XUỐNG (BẮT BUỘC):\n"
+        "- Giáo viên có thể ghi chú lộn xộn hoặc ngẫu hứng, bạn PHẢI tự động sắp xếp lại các đầu mục theo đúng TIẾN TRÌNH SƯ PHẠM LOGIC từ trên xuống dưới:\n"
+        "  1. Khái niệm / Kiến thức nền tảng: Giới thiệu nguyên lý, cấu trúc cú pháp, mô hình hoặc bài toán mới.\n"
+        "  2. Thực hành trọng tâm: Bài thực hành mẫu hoặc kỹ thuật cốt lõi giáo viên hướng dẫn cả lớp.\n"
+        "  3. Đánh giá / Kiểm thử / Tối ưu: Đo đạc độ chính xác, chạy test case, xử lý lỗi (debug) hoặc kỹ thuật huấn luyện lại.\n"
+        "  4. Ứng dụng thực tế / Bài tập mở rộng: Bài toán áp dụng thực tế, dự án mini hoặc bài tập nâng cao độc lập.\n"
+        "- TUYỆT ĐỐI KHÔNG để thứ tự bị lộn xộn hay ngược chiều (ví dụ: không đánh giá/tối ưu trước khi xây dựng sản phẩm/mô hình).\n\n"
+        "QUY TẮC KHÔNG TRÙNG LẶP TIỀN TỐ PHÂN LOẠI (BẮT BUỘC):\n"
+        "- Mỗi đầu mục BẮT BUỘC phải mang một tiền tố phân loại RIÊNG BIỆT, phản ánh đúng vai trò của từng bước.\n"
+        "- TUYỆT ĐỐI KHÔNG lặp lại cùng một tiền tố trong cùng một buổi học (ví dụ: TUYỆT ĐỐI KHÔNG để 2 dòng cùng bắt đầu bằng 'Thực hành:').\n"
+        "- Quy chuẩn phân định tiền tố:\n"
+        "  + 'Lý thuyết:' hoặc 'Kiến thức:' — Dành cho nguyên lý, công thức, cú pháp mới.\n"
+        "  + 'Thực hành:' — Dành cho bài thực hành mẫu / bài tập cơ bản ban đầu.\n"
+        "  + 'Đánh giá:' hoặc 'Kiểm thử:' — Dành cho việc đo đạc, kiểm tra độ chính xác, test case.\n"
+        "  + 'Tối ưu:' hoặc 'Kỹ thuật:' — Dành cho kỹ thuật gỡ lỗi, tinh chỉnh thông số, huấn luyện lại khi chưa đạt.\n"
+        "  + 'Ứng dụng:' hoặc 'Luyện tập:' hoặc 'Dự án:' — Dành cho bài tập mở rộng, bài toán thực tế nâng cao (ví dụ: dự đoán dữ liệu thực tế siêu thị).\n\n"
         "QUY TẮC VĂN PHONG VÀ ĐỘ DÀI CHO MỖI ĐẦU MỤC:\n"
         "- Mỗi gạch đầu dòng là MỘT ĐẦU MỤC ngắn gọn, súc tích (khoảng 5-15 từ trên 1 dòng duy nhất), đi thẳng vào trọng tâm kiến thức, bài tập hoặc kỹ năng.\n"
-        "- Cấu trúc ngắn gọn chuẩn: [Phân loại/Chủ đề]: [Tên bài học / Khái niệm / Bài thực hành cụ thể].\n"
+        "- Cấu trúc ngắn gọn chuẩn: [Tiền tố phân loại]: [Tên bài học / Khái niệm / Bài thực hành cụ thể].\n"
         "- TUYỆT ĐỐI KHÔNG viết thành câu văn hay đoạn mô tả dài dòng, không giải thích lan man, không tả cách thức dạy hay học.\n"
-        "- Ví dụ chuẩn:\n"
+        "- Ví dụ chuẩn đối chiếu (đúng thứ tự và không trùng tiền tố):\n"
+        "  + 'Thực hành: Xây dựng mô hình hồi quy tuyến tính dự đoán giá xe'\n"
+        "  + 'Đánh giá: Đo đạc và kiểm tra độ chính xác của mô hình'\n"
+        "  + 'Tối ưu: Kỹ thuật huấn luyện lại khi độ chính xác dưới 80%'\n"
+        "  + 'Ứng dụng: Xây dựng mô hình dự đoán doanh số bán hàng siêu thị Walmart'\n"
+        "- Ví dụ chuẩn cơ bản:\n"
         "  + 'Lý thuyết: Vòng lặp for và cơ chế biến đếm'\n"
         "  + 'Thực hành: Lập trình in bảng cửu chương tự động'\n"
         "  + 'Kỹ thuật: Nhận diện và xử lý lỗi lặp vô tận (infinite loop)'\n"
+        "  + 'Luyện tập: Xây dựng trò chơi đoán số có giới hạn lượt thử'\n"
         "- TUYỆT ĐỐI KHÔNG dùng từ 'em', 'học sinh', 'thầy', 'cô' trong các đầu mục."
     )
     parts.append(

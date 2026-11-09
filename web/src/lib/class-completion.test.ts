@@ -19,10 +19,23 @@ describe("isClassCompleted", () => {
     // Lớp vừa mở, chưa có ai — 0/0 mà tính "xong" thì lớp mới biến mất khỏi
     // danh sách đang học ngay lập tức.
     expect(isClassCompleted({ studentCount: 0, handledCount: 0 })).toBe(false);
+    expect(
+      isClassCompleted({ studentCount: 0, handledCount: 0, isSubstitute: true })
+    ).toBe(false);
   });
 
   it("should stay completed when a review row outlives a removed student", () => {
     // GV xóa 1 em sau khi đã nhận xét buổi cuối → handled nhiều hơn sĩ số.
     expect(isClassCompleted({ studentCount: 11, handledCount: 12 })).toBe(true);
+  });
+
+  it("should be completed when the last session was taught by a substitute teacher", () => {
+    expect(
+      isClassCompleted({
+        studentCount: 10,
+        handledCount: 0,
+        isSubstitute: true,
+      })
+    ).toBe(true);
   });
 });

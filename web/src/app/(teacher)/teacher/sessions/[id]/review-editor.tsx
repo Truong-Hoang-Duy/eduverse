@@ -204,6 +204,18 @@ export function ReviewEditor({
   );
   const [comment, setComment] = useState(existing?.ai_generated_comment ?? "");
   const [isAbsent, setIsAbsent] = useState(existing?.is_absent ?? false);
+  const [studentNote, setStudentNote] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return (
+          localStorage.getItem(
+            `eduverse_student_note_${sessionId}_${studentId}`
+          ) ?? ""
+        );
+      } catch {}
+    }
+    return "";
+  });
   // KHÔNG lưu vào student_reviews (user chốt 2026-08-05) — chỉ dùng ngay khi
   // bấm "AI tạo nhận xét", mất khi tải lại trang, giống session_context cũ.
   const [testProcessNotes, setTestProcessNotes] = useState<string[]>([]);
@@ -536,6 +548,7 @@ export function ReviewEditor({
         if (hasFinalEvaluation) {
           const combinedNotes = [
             ...selectedObservations,
+            ...(studentNote.trim() ? [studentNote.trim()] : []),
             ...(customObservationNotes.trim() ? [customObservationNotes.trim()] : []),
           ].join(". ");
 
@@ -590,6 +603,7 @@ export function ReviewEditor({
           projectDescription: project?.description ?? undefined,
           projectFeatures: project?.features ?? undefined,
           sessionContext: sessionContext || undefined,
+          studentNote: studentNote.trim() || undefined,
           isPeriodicTest,
           testProcessNotes: isPeriodicTest ? testProcessNotes : undefined,
           isProjectPeriod,
@@ -629,6 +643,7 @@ export function ReviewEditor({
       try {
         const combinedNotes = [
           ...selectedObservations,
+          ...(studentNote.trim() ? [studentNote.trim()] : []),
           ...(customObservationNotes.trim() ? [customObservationNotes.trim()] : []),
         ].join(". ");
 
@@ -1772,6 +1787,37 @@ export function ReviewEditor({
                 )}
               </>
             )}
+
+            {/* Ghi chú riêng cho từng em khi ô tích chưa có */}
+            <div className="space-y-1.5 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20 p-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-1.5">
+                <Label
+                  htmlFor={`student-note-${studentId}`}
+                  className="text-xs font-semibold text-foreground flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>📝</span>
+                  <span>Ghi chú riêng về em (khi ô tích chưa có)</span>
+                </Label>
+                <span className="text-[11px] text-muted-foreground italic">
+                  Chỉ gửi cho AI hiểu bối cảnh khi tạo nhận xét
+                </span>
+              </div>
+              <Input
+                id={`student-note-${studentId}`}
+                value={studentNote}
+                onChange={(e) => {
+                  setStudentNote(e.target.value);
+                  try {
+                    localStorage.setItem(
+                      `eduverse_student_note_${sessionId}_${studentId}`,
+                      e.target.value
+                    );
+                  } catch {}
+                }}
+                placeholder="VD: Em tự làm thêm giao diện đẹp, hôm nay hơi mệt nhưng vẫn cố gắng nghe giảng, em quên chuột nên thao tác chậm..."
+                className="h-8 text-xs bg-background"
+              />
+            </div>
 
             {/* --- NHẬN XÉT GỬI PHỤ HUYNH --- */}
             <div className="space-y-2.5">

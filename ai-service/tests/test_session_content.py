@@ -118,3 +118,31 @@ def test_should_forbid_student_pronoun_em_in_session_content() -> None:
     # Không áp SYSTEM_ROLE xưng 'em' của phần nhận xét
     assert prompts.SYSTEM_ROLE not in prompt
 
+
+def test_should_enforce_pedagogical_flow_and_unique_prefixes() -> None:
+    prompt = build(draft="thuc hanh mo hinh hoi quy, danh gia do chinh xac, thuc hanh du doan walmart")
+
+    assert "TIẾN TRÌNH SƯ PHẠM VÀ THỨ TỰ TỪ TRÊN XUỐNG" in prompt
+    assert "KHÔNG TRÙNG LẶP TIỀN TỐ PHÂN LOẠI" in prompt
+    assert "TUYỆT ĐỐI KHÔNG để 2 dòng cùng bắt đầu bằng 'Thực hành:'" in prompt
+
+
+def test_deduplicate_bullet_prefixes_helper() -> None:
+    from app.routes.reviews import _deduplicate_bullet_prefixes
+
+    raw_bullets = [
+        "Thực hành: Xây dựng mô hình hồi quy tuyến tính dự đoán giá xe",
+        "Đánh giá: Độ chính xác của mô hình dự đoán giá xe",
+        "Kỹ thuật: Huấn luyện lại mô hình khi độ chính xác dưới 80%",
+        "Thực hành: Xây dựng mô hình dự đoán giá bán hàng Walmart",
+    ]
+
+    deduped = _deduplicate_bullet_prefixes(raw_bullets)
+
+    assert deduped[0] == "Thực hành: Xây dựng mô hình hồi quy tuyến tính dự đoán giá xe"
+    assert deduped[1] == "Đánh giá: Độ chính xác của mô hình dự đoán giá xe"
+    assert deduped[2] == "Kỹ thuật: Huấn luyện lại mô hình khi độ chính xác dưới 80%"
+    # Lần thứ 2 xuất hiện "Thực hành:" tự động đổi thành "Ứng dụng:"
+    assert deduped[3] == "Ứng dụng: Xây dựng mô hình dự đoán giá bán hàng Walmart"
+
+

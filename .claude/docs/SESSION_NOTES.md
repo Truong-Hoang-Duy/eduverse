@@ -3,8 +3,71 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-08, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 119 (**Tối ưu toàn diện tốc độ Mở trang & Chuyển trang tức thì như ReactJS SPA + Đồng bộ thương hiệu CodeLuma (`codeluma.vercel.app`) + Tinh gọn Sổ tay Code theo 5 môn học chuẩn**):
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-09, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 122 (**Bổ sung ô ghi chú riêng nhận xét từng học viên (`student_note`) khi ô tích chọn chưa có — Truyền bối cảnh cho AI tạo nhận xét cá nhân hóa sâu sắc**):
+1. **Giao diện người dùng (`review-editor.tsx`):**
+   - Thêm ô nhập liệu **`📝 Ghi chú riêng về em (khi ô tích chưa có)`** đặt ngay trên khung Lời nhận xét gửi phụ huynh.
+   - Placeholder gợi ý thực tế: *"VD: Em tự làm thêm giao diện đẹp, hôm nay hơi mệt nhưng vẫn cố gắng nghe giảng, em quên chuột nên thao tác chậm..."*
+   - Tự động ghi nhớ theo từng học viên trong buổi qua `localStorage` (`eduverse_student_note_${sessionId}_${studentId}`) giúp giáo viên không bị mất nháp ghi chú khi chuyển qua lại giữa các học viên.
+2. **Server Actions & AI Client (`reviews.ts` & `review-editor.tsx`):**
+   - Mở rộng `GenerateReviewInput` với trường `studentNote?: string` và truyền `student_note` sang backend AI Service.
+   - Hỗ trợ kết hợp `studentNote` trong cả chế độ nhận xét thường, chế độ kiểm tra định kỳ và chế độ tổng kết toàn khóa Buổi 14 Demo Day (`generateFinalPresentationReview`).
+3. **Prompt AI Service & Backend Handler (`ai-service/app/prompts.py`, `schemas.py`, `reviews.py`):**
+   - Bổ sung `student_note` vào schema `GenerateReviewRequest` và hàm `build_review_prompt`.
+   - Chỉ dẫn sư phạm bắt buộc: AI phân tích bối cảnh ghi chú riêng của giáo viên để lồng ghép tự nhiên vào nhận xét (nếu là tiến bộ/nỗ lực đưa vào điểm mạnh; nếu là khó khăn/sơ suất đưa vào điểm cần cải thiện/lời khuyên với lời lẽ khích lệ, tế nhị; tuyệt đối không bỏ qua).
+4. **Kiểm thử chất lượng:**
+   - `ai-service/`: 115/115 tests pytest PASS 100% (bổ sung `test_review_prompt_includes_individual_student_note` trong `test_pedagogical_review.py`).
+   - `web/`: 489/489 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 121 (**Chuẩn hóa tạo sinh gợi ý nội dung bài học (`/suggest-session-content`): Tự động sắp xếp theo tiến trình sư phạm từ trên xuống & Chống trùng lặp tiền tố phân loại (`Thực hành:`)**):
+1. **Nghiệp vụ cốt lõi & Tiến trình sư phạm chuẩn (Pedagogical Flow):**
+   - **Tự động sắp xếp thứ tự logic từ trên xuống:** Khi giáo viên gõ ghi chú thô lộn xộn hoặc ngẫu hứng, AI tự động phân tích và tái cấu trúc các đầu mục theo tiến trình sư phạm 4 pha chuẩn:
+     1. Khái niệm / Kiến thức nền tảng (`Lý thuyết:` / `Kiến thức:`)
+     2. Thực hành trọng tâm / Thao tác mẫu (`Thực hành:` / `Kỹ thuật:`)
+     3. Đo đạc / Kiểm thử / Tối ưu hóa (`Đánh giá:` / `Kiểm thử:` / `Tối ưu:`)
+     4. Bài toán thực tế / Dự án mở rộng (`Ứng dụng:` / `Luyện tập:` / `Dự án:`)
+   - **Xóa bỏ triệt để lỗi trùng lặp tiền tố (`Thực hành:` xuất hiện 2 lần):**
+     - Prompt (`ai-service/app/prompts.py`): Quy tắc cấm trùng lặp tiền tố phân loại trong cùng một buổi học. Phân định rõ bài thực hành mẫu (`Thực hành:`) và bài toán áp dụng thực tế mở rộng (`Ứng dụng:` / `Luyện tập:` / `Dự án:`).
+     - Backend Handler (`ai-service/app/routes/reviews.py`): Bổ sung bộ lọc an toàn `_deduplicate_bullet_prefixes`, tự động chuyển đổi tiền tố lặp lại lần thứ 2 sang `Ứng dụng:` / `Luyện tập:` một cách tự nhiên.
+2. **Giao diện người dùng (`session-content-suggest-dialog.tsx`):**
+   - Cập nhật mô tả và placeholder hướng dẫn giáo viên có thể nhập ghi chú tự do, AI sẽ tự động chuẩn hóa tiến trình và phân loại rõ ràng.
+3. **Kiểm thử chất lượng:**
+   - `ai-service/`: 114/114 tests pytest PASS 100% (bổ sung tests kiểm tra tiến trình sư phạm và helper lọc trùng tiền tố trong `test_session_content.py`).
+   - `web/`: 489/489 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 120 (**Hỗ trợ nghiệp vụ "Tôi nghỉ dạy - Nhờ thầy (cô) khác dạy thay" (Substitute Teacher) — Đánh dấu hoàn thành buổi học & Loại trừ dữ liệu dạy thay khỏi nhận xét/AI**):
+1. **Nghiệp vụ cốt lõi & Trải nghiệm giao diện:**
+   - Thêm nút bấm **`🧑‍🏫 Tôi nghỉ dạy (Nhờ người dạy thay)`** trên trang chi tiết buổi học (`teacher/sessions/[id]`) kèm Dialog giải thích và xác nhận rõ ràng.
+   - Khi đã kích hoạt dạy thay:
+     - Buổi học được tính là **ĐÃ HOÀN THÀNH** (`completed`) trong tiến độ lớp học (`teacher/classes/[id]`), trang danh sách lớp (`teacher/page.tsx`), và triển lãm sản phẩm (`teacher/gallery/page.tsx`).
+     - Hiển thị badge **`Dạy thay`** và dòng trạng thái **`✓ Người dạy thay (Hoàn thành)`** màu xanh lá ngọc (emerald) trên danh sách buổi học của lớp.
+     - Tại trang chi tiết buổi học, thẻ "Nhận xét học viên" hiển thị trạng thái hoàn thành gọn gàng, ẩn danh sách cần nhận xét để giáo viên không phải thao tác dư thừa; kèm nút **`↩️ Hủy dạy thay (Tự nhận xét buổi này)`** để hoàn tác linh hoạt.
+2. **Loại trừ triệt để buổi dạy thay khỏi dữ liệu nhận xét & Trợ lý AI:**
+   - Loại trừ khỏi `prior_comments` gửi AI (tránh AI tham khảo / lặp lời văn các buổi sau).
+   - Loại trừ khỏi danh sách sao chép điểm mạnh / điểm cần cải thiện (`priorSelections`).
+   - Loại trừ khỏi danh sách lịch sử đánh giá toàn khóa (`allPriorReviews` / Buổi 14 Demo Day).
+   - Loại trừ khỏi dropdown "Áp nhận xét giống buổi trước cho CẢ LỚP" (`copyFromSessions`).
+   - Chặn không cho áp nhận xét nếu buổi nguồn được đánh dấu là dạy thay (`applyReviewsFromSession`).
+   - Loại trừ khỏi tổng hợp học bạ cá nhân học viên (`/generate-student-summary`).
+   - Chuẩn hóa thống kê "Đã nhận xét" trên trang hồ sơ học viên (`classes/[id]/students/[studentId]`) loại trừ các buổi dạy thay.
+3. **Cơ chế lưu trữ 2 lớp an toàn (Graceful Fallback):**
+   - Migration `supabase/migrations/20261109080000_session_substitute.sql` (thêm cột `is_substitute boolean not null default false`).
+   - Module helper `web/src/lib/session-substitute.ts` hỗ trợ song song cả cột DB lẫn thẻ đánh dấu dự phòng `[SUBSTITUTE_TEACHER]` trong `sessions.review_context`. Đảm bảo hệ thống hoạt động 100% bình thường kể cả khi cơ sở dữ liệu live chưa kịp chạy migration.
+   - Hàm `cleanContextForDisplay` lọc sạch thẻ kỹ thuật, giáo viên không bao giờ nhìn thấy thẻ tag trong ô nhập bối cảnh buổi học.
+4. **Kiểm thử chất lượng:**
+   - `web/`: 489/489 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi, `pnpm build` biên dịch thành công 22/22 routes.
+   - `ai-service/`: 112/112 tests pytest PASS 100%.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 119 (**Tối ưu toàn diện tốc độ Mở trang & Chuyển trang tức thì như ReactJS SPA + Đồng bộ thương hiệu CodeLuma (`codeluma.vercel.app`) + Tinh gọn Sổ tay Code theo 5 môn học chuẩn**):
 1. **Tối ưu tốc độ MỞ TRANG (Initial Open — Lớp học, Buổi học, Sản phẩm, Sổ tay Code):**
    - **Cắt bỏ kiểm tra đăng nhập trùng lặp (`middleware.ts` & `get-profile.ts`):** `middleware.ts` sau khi xác thực `supabase.auth.getUser()` truyền thẳng `x-eduverse-user-id` nội bộ (đã lọc chống giả mạo từ client) sang `getProfile()`, giúp mọi trang không phải gọi lại `supabase.auth.getUser()` lần thứ 2 qua mạng (tiết kiệm 200–350ms mỗi lần mở trang). Bỏ qua gọi `getUser()` khi trình duyệt chạy request `prefetch` ngầm.
    - **Xóa bỏ chuỗi truy vấn nối đuôi nhau (Waterfall → Parallel `Promise.all`):**

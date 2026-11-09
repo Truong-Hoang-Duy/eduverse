@@ -11,6 +11,7 @@ import {
   getSessionFormatBadge,
   resolveSessionFormat,
 } from "@/lib/session-format";
+import { isSubstituteSession } from "@/lib/session-substitute";
 import { isShowcaseExpired } from "@/lib/showcase";
 import { createClient } from "@/lib/supabase/server";
 import type { ClassWithCourse, EnrollmentWithStudent } from "@/lib/types";
@@ -75,7 +76,7 @@ export default async function ClassDetailPage({
     supabase
       .from("sessions")
       .select(
-        "id, session_number, title, content, session_date, is_periodic_test, is_project_period, is_final_presentation"
+        "id, session_number, title, content, session_date, review_context, is_periodic_test, is_project_period, is_final_presentation"
       )
       .eq("class_id", id)
       .order("session_number"),
@@ -195,7 +196,7 @@ export default async function ClassDetailPage({
     const { data: fallback } = await supabase
       .from("sessions")
       .select(
-        "id, session_number, title, content, session_date, is_periodic_test, is_project_period"
+        "id, session_number, title, content, session_date, review_context, is_periodic_test, is_project_period"
       )
       .eq("class_id", id)
       .order("session_number");
@@ -223,6 +224,7 @@ export default async function ClassDetailPage({
 
   const studentCount = students.length;
   const completedSessions = sessions.filter((s) => {
+    if (isSubstituteSession(s)) return true;
     const handled = handledCountBySession.get(s.id) ?? 0;
     return (
       resolveSessionReviewState({ studentCount, handledCount: handled }) ===
@@ -347,6 +349,7 @@ export default async function ClassDetailPage({
           {sessions.map((session) => {
             const filled = Boolean(session.content);
             const handledCount = handledCountBySession.get(session.id) ?? 0;
+            const isSubstitute = isSubstituteSession(session);
             const reviewState = resolveSessionReviewState({
               studentCount,
               handledCount,
@@ -364,7 +367,7 @@ export default async function ClassDetailPage({
                   <span
                     className={cn(
                       "flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold transition-colors",
-                      isReviewed
+                      isSubstitute || isReviewed
                         ? "bg-emerald-600 text-white font-bold shadow-xs dark:bg-emerald-500"
                         : isPartiallyReviewed
                           ? "bg-amber-500 text-white font-bold shadow-xs dark:bg-amber-500"
@@ -378,6 +381,11 @@ export default async function ClassDetailPage({
                       <p className="truncate text-sm font-medium">
                         {session.title ?? `Buổi ${session.session_number}`}
                       </p>
+                      {isSubstitute && (
+                        <span className="inline-flex items-center rounded border border-emerald-500/30 bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium leading-none text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                          Dạy thay
+                        </span>
+                      )}
                       {badge && (
                         <span
                           className={`inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium leading-none ${badge.className}`}
@@ -387,7 +395,11 @@ export default async function ClassDetailPage({
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                      {isReviewed ? (
+                      {isSubstitute ? (
+                        <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                          <span>✓</span> Người dạy thay (Hoàn thành)
+                        </span>
+                      ) : isReviewed ? (
                         <span className="inline-flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
                           <span>✓</span> Đã nhận xét
                         </span>

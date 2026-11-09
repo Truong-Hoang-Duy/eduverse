@@ -506,6 +506,7 @@ export type Database = {
           is_final_presentation: boolean
           is_periodic_test: boolean
           is_project_period: boolean
+          is_substitute: boolean
           review_context: string | null
           session_date: string | null
           session_number: number
@@ -518,6 +519,7 @@ export type Database = {
           is_final_presentation?: boolean
           is_periodic_test?: boolean
           is_project_period?: boolean
+          is_substitute?: boolean
           review_context?: string | null
           session_date?: string | null
           session_number: number
@@ -530,6 +532,7 @@ export type Database = {
           is_final_presentation?: boolean
           is_periodic_test?: boolean
           is_project_period?: boolean
+          is_substitute?: boolean
           review_context?: string | null
           session_date?: string | null
           session_number?: number

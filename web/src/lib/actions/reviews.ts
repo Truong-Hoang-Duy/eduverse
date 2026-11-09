@@ -6,6 +6,7 @@ import { academicLevelLabel } from "@/lib/academic-levels";
 import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import type { FinalPresentationEvaluation } from "@/lib/presentation-evaluation";
+import { isSubstituteSession } from "@/lib/session-substitute";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/types";
 
@@ -144,7 +145,7 @@ export async function applyReviewsFromSession(input: {
   // đọc mọi buổi mình dạy, nên phải tự kiểm ở đây).
   const { data: sourceSession } = await supabase
     .from("sessions")
-    .select("id, class_id, session_number")
+    .select("id, class_id, session_number, review_context")
     .eq("id", input.sourceSessionId)
     .single();
   if (!sourceSession || sourceSession.class_id !== sessionData.class_id) {
@@ -152,6 +153,12 @@ export async function applyReviewsFromSession(input: {
   }
   if (sourceSession.id === sessionData.id) {
     return { ...empty, error: "Không thể áp nhận xét từ chính buổi này." };
+  }
+  if (isSubstituteSession(sourceSession)) {
+    return {
+      ...empty,
+      error: "Buổi nguồn là buổi có người dạy thay, không thể áp nhận xét.",
+    };
   }
 
   const [
@@ -178,7 +185,7 @@ export async function applyReviewsFromSession(input: {
     supabase
       .from("student_reviews")
       .select(
-        "student_id, ai_generated_comment, sessions!inner(session_number, class_id)"
+        "student_id, ai_generated_comment, sessions!inner(session_number, class_id, review_context)"
       )
       .eq("sessions.class_id", sessionData.class_id)
       .lt("sessions.session_number", sessionData.session_number)
@@ -214,8 +221,9 @@ export async function applyReviewsFromSession(input: {
   for (const row of (priorRows ?? []) as unknown as {
     student_id: string;
     ai_generated_comment: string | null;
-    sessions: { session_number: number } | null;
+    sessions: { session_number: number; review_context?: string | null } | null;
   }[]) {
+    if (isSubstituteSession(row.sessions)) continue;
     const list = priorCommentsByStudent.get(row.student_id) ?? [];
     list.push(
       `Buổi ${row.sessions?.session_number}: ${row.ai_generated_comment}`
@@ -393,7 +401,12 @@ interface SummaryReviewRow {
   strengths: string[];
   improvements: string[];
   ai_generated_comment: string | null;
-  sessions: { session_number: number; title: string | null } | null;
+  sessions: {
+    session_number: number;
+    title: string | null;
+    review_context?: string | null;
+    is_substitute?: boolean | null;
+  } | null;
 }
 
 /** Tổng hợp nhận xét 1 học viên từ TẤT CẢ buổi đã nhận xét trong lớp. */
@@ -424,14 +437,15 @@ export async function generateStudentSummary(input: {
       supabase
         .from("student_reviews")
         .select(
-          "strengths, improvements, ai_generated_comment, sessions!inner(session_number, title, class_id)"
+          "strengths, improvements, ai_generated_comment, sessions!inner(session_number, title, class_id, review_context)"
         )
         .eq("student_id", input.studentId)
         .eq("sessions.class_id", input.classId),
     ]);
 
   const reviews = (reviewsData ?? []) as unknown as SummaryReviewRow[];
-  if (reviews.length === 0) {
+  const validReviews = reviews.filter((r) => !isSubstituteSession(r.sessions));
+  if (validReviews.length === 0) {
     return {
       error:
         "Học viên này chưa có nhận xét buổi nào — hãy nhận xét trong các buổi học trước.",
@@ -454,7 +468,7 @@ export async function generateStudentSummary(input: {
         course_name:
           (cls as unknown as { courses: { name: string } | null })?.courses
             ?.name ?? "",
-        reviews: reviews
+        reviews: validReviews
           .map((r) => ({
             session_number: r.sessions?.session_number ?? 0,
             session_title: r.sessions?.title ?? "",
@@ -488,6 +502,9 @@ export interface GenerateReviewInput {
   /** Bối cảnh buổi học GV gõ 1 lần cho cả buổi (VD: hôm nay kiểm tra) — chỉ để
    *  AI tham khảo, không phải nội dung nhận xét. */
   sessionContext?: string;
+  /** Ghi chú riêng của GV về học viên này trong buổi học khi các ô tích chưa có
+   *  (VD: em sốt nhẹ, tự làm tính năng mới, quên chuột...) — AI tham khảo để hiểu bối cảnh. */
+  studentNote?: string;
   /** Buổi có kiểm tra định kỳ — tách nhận xét AI thành 2 phần (học tập / kiểm
    *  tra) thay vì viết chung một đoạn. */
   isPeriodicTest?: boolean;
@@ -542,6 +559,7 @@ export async function generateAiReview(
       project_description: input.projectDescription || null,
       project_features: input.projectFeatures ?? [],
       session_context: input.sessionContext || null,
+      student_note: input.studentNote || null,
       is_periodic_test: input.isPeriodicTest ?? false,
       test_process_notes: input.testProcessNotes ?? [],
       is_project_period: input.isProjectPeriod ?? false,

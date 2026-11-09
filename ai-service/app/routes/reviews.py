@@ -61,6 +61,7 @@ def generate_review(body: GenerateReviewRequest) -> GenerateReviewResponse:
         project_name=body.project_name,
         project_description=body.project_description,
         project_features=body.project_features,
+        student_note=body.student_note,
     )
     data = generate_json(
         prompt,
@@ -307,6 +308,41 @@ def generate_final_presentation_review(
     return FinalPresentationReviewResponse(**data)
 
 
+def _deduplicate_bullet_prefixes(bullets: list[str]) -> list[str]:
+    """Đảm bảo không bị trùng lặp tiền tố phân loại như 'Thực hành:' xuất hiện 2 lần."""
+    seen_prefixes: set[str] = set()
+    result: list[str] = []
+    fallback_practice_prefixes = ["Ứng dụng:", "Luyện tập:", "Dự án:"]
+    practice_count = 0
+
+    for raw_line in bullets:
+        line = raw_line.lstrip("-•* \t").strip()
+        if not line:
+            continue
+        if ":" in line:
+            prefix, rest = line.split(":", 1)
+            prefix_clean = prefix.strip().lower()
+            rest = rest.strip()
+            if prefix_clean == "thực hành":
+                practice_count += 1
+                if practice_count > 1:
+                    idx = min(practice_count - 2, len(fallback_practice_prefixes) - 1)
+                    line = f"{fallback_practice_prefixes[idx]} {rest}"
+                else:
+                    line = f"Thực hành: {rest}"
+            elif prefix_clean in seen_prefixes:
+                if prefix_clean == "kỹ thuật":
+                    line = f"Tối ưu: {rest}"
+                elif prefix_clean == "đánh giá":
+                    line = f"Kiểm thử: {rest}"
+                elif prefix_clean == "lý thuyết":
+                    line = f"Kiến thức: {rest}"
+            else:
+                seen_prefixes.add(prefix_clean)
+        result.append(line)
+    return result
+
+
 @router.post("/suggest-session-content", response_model=SuggestSessionContentResponse)
 def suggest_session_content(
     body: SuggestSessionContentRequest,
@@ -330,13 +366,13 @@ def suggest_session_content(
         api_key=body.api_key,
         provider=body.provider,
     )
-    # Model thỉnh thoảng vẫn tự thêm "-"/"•" dù prompt cấm; cắt ở đây để phía web
-    # khỏi ra "- - Ôn vòng lặp".
-    data["bullets"] = [
+    # Model thỉnh thoảng vẫn tự thêm "-"/"•" dù prompt cấm; lọc và xử lý chống trùng tiền tố
+    raw_bullets = [
         line.lstrip("-•* \t").strip()
         for line in data.get("bullets", [])
         if line.strip()
     ]
+    data["bullets"] = _deduplicate_bullet_prefixes(raw_bullets)
     return SuggestSessionContentResponse(**data)
 
 

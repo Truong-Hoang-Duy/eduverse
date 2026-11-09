@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { isSubstituteSession } from "@/lib/session-substitute";
 import { createClient } from "@/lib/supabase/server";
 
 import { EditStudentNameDialog } from "../../edit-student-name-dialog";
@@ -28,6 +29,8 @@ interface ReviewRow {
     title: string | null;
     session_date: string | null;
     class_id: string;
+    review_context?: string | null;
+    is_substitute?: boolean | null;
   } | null;
 }
 
@@ -67,11 +70,11 @@ export default async function StudentProfilePage({
     supabase
       .from("student_reviews")
       .select(
-        "session_id, strengths, improvements, ai_generated_comment, sessions!inner(session_number, title, session_date, class_id)"
+        "session_id, strengths, improvements, ai_generated_comment, sessions!inner(session_number, title, session_date, class_id, review_context)"
       )
       .eq("student_id", studentId)
       .eq("sessions.class_id", id),
-    supabase.from("sessions").select("session_number").eq("class_id", id),
+    supabase.from("sessions").select("session_number, review_context").eq("class_id", id),
   ]);
 
   // Lớp không thuộc GV, HV không tồn tại, hoặc HV không thuộc lớp này → 404.
@@ -85,13 +88,16 @@ export default async function StudentProfilePage({
   };
 
   const reviews = ((reviewsData ?? []) as unknown as ReviewRow[])
-    .slice()
+    .filter((r) => !isSubstituteSession(r.sessions))
     .sort(
       (a, b) =>
         (a.sessions?.session_number ?? 0) - (b.sessions?.session_number ?? 0)
     );
 
-  const totalSessions = (sessionsData ?? []).length;
+  const nonSubstituteSessions = (sessionsData ?? []).filter(
+    (s) => !isSubstituteSession(s)
+  );
+  const totalSessions = nonSubstituteSessions.length;
   const totalStrengths = reviews.reduce((n, r) => n + r.strengths.length, 0);
   const totalImprovements = reviews.reduce(
     (n, r) => n + r.improvements.length,
