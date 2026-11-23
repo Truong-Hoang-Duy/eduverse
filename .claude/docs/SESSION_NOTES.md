@@ -3,8 +3,106 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-09, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 122 (**Bổ sung ô ghi chú riêng nhận xét từng học viên (`student_note`) khi ô tích chọn chưa có — Truyền bối cảnh cho AI tạo nhận xét cá nhân hóa sâu sắc**):
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-23, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 127 (**Xây dựng & nâng cấp v1.1.0 cầu nối CodeLuma → MindX LMS (`extensions/codeluma-lms-bridge/` + nút gửi trên CodeLuma) hỗ trợ cả 14 buổi, tự bỏ qua học viên đã Pending, hiển thị icon siêu gọn `✅`/`❌` và tự động đọc-điền điểm Thực hành & Trắc nghiệm từ `"Sản phẩm của học sinh"`**):
+1. **Phân tích thực tế DOM `lms.mindx.edu.vn/admin/classes?tab=10` (chỉ đọc, không sửa/lưu dữ liệu):**
+   - Xác định chuẩn giao diện LMS dùng **React + Material UI (MUI v5 + JSS động) + ReactQuill** (không phụ thuộc class `jssNNNN` động).
+   - Xử lý trọn vẹn các điểm đặc thù của LMS: tự chuyển từ Preview Mode sang Edit Mode cho học sinh đã có nhận xét, tự chuyển về By-Areas Mode, bỏ qua các nút `.btn-group-cmt-mindx` của extension khác khi đọc nhãn `[ĐNL]`, chọn đúng `<textarea>` thật (bỏ shadow `readonly` của MUI), **click trực tiếp `<input type="radio">` điểm `1..5` TRƯỚC rồi chờ React cập nhật mới ghi đè nhận xét** (tránh bị câu mẫu mặc định của LMS đè mất), và bắn đủ `input`/`change`/`blur` cho ô điểm `Demo Score` (`Kn`).
+   - Phát hiện toàn bộ bình luận `"Sản phẩm của học sinh"` (`latestData.comment`) đã được React nạp sẵn trong `memoizedProps.studentWorks` của từng dòng bảng học viên → tạo helper read-only `lms-page-reader.js` (`world: "MAIN"`) đọc tức thì mà **không cần click mở popup sản phẩm, không gọi API LMS**.
+2. **Chrome Extension Manifest V3 v1.1.0 (`extensions/codeluma-lms-bridge/`):**
+   - `manifest.json`, `background.js`, `content-codeluma.js`, `lms-page-reader.js`, `content-lms.js`, `popup.html`, `popup.js`, `README.md`.
+   - Hỗ trợ **cả 14 buổi**: Buổi thường/SPCK (ReactQuill `Đánh giá chung`), Buổi 5 & 9 (`9 ĐNL` + **`Practice score` 0..5 & 10 checkbox Trắc nghiệm `1..10`** + `Đánh giá chung`), Buổi 14 (`9 ĐNL` + `Demo Score` + `Đánh giá chung` + `3 mục Thư từ MindX`).
+   - **Tự bỏ qua học viên đã `Pending`/`Approved` trên LMS:** nhận diện cột `Comment` đã có trạng thái, hiển thị emoji siêu gọn **`✅`** (đã điền/Pending) hoặc **`❌`** (chưa điền) nằm ngang ngay cạnh nút `Nhận xét học sinh` (không che tên học viên, không đẩy cao dòng), chỉ đếm các em còn `❌` trên thanh góc dưới-trái, kèm chống vòng lặp `MutationObserver`.
+   - **Tự động đọc & điền điểm Checkpoint (`Practice And Quiz Scores`) + Khảo sát PH:** trích xuất `Thực hành: X/100` (quy về thang `0..5` và làm tròn tối đa 2 chữ số thập phân, VD `70/100 → 3.5`, `83.33/100 → 4.17`, `98/100 → 4.9`, trần 5 điểm) và câu đúng Trắc nghiệm (`Đúng: 1, 2, ...` / `Sai: ...` / `10/10`, hỗ trợ cả plain text lẫn HTML ReactQuill) từ `"Sản phẩm của học sinh"` (lùi về `gradingSummary` từ CodeLuma nếu sản phẩm chưa ghi). Tích 10 checkbox trước rồi mới điền `Practice score` bằng cơ chế `focusout` + gọi trực tiếp `onBlur` React (`COMMIT_INPUT_BLUR` trong `lms-page-reader.js`) do ô số uncontrolled của MindX LMS chỉ commit vào state khi `onBlur` (áp dụng chung cho cả `Demo Score` Buổi 14). Đồng thời tự tích radio `0` ở mục **`KHẢO SÁT ĐÁNH GIÁ CHẤT LƯỢNG DỊCH VỤ - DÀNH CHO PHỤ HUYNH`** để LMS tự điền mẫu khảo sát phụ huynh. **TUYỆT ĐỐI KHÔNG tự bấm Save**.
+3. **Tích hợp giao diện CodeLuma (`web/`):**
+   - `web/src/lib/lms-bridge.ts` + `lms-bridge.test.ts`: đóng gói dữ liệu học viên/cả lớp (kèm `gradingSummary` đọc từ `localStorage`), kiểm thử unit test thuật toán `parseCheckpointScoresFromText`, đẩy sang Extension qua `window.postMessage` và tự động chuyển focus sang tab LMS đang mở.
+   - `review-list.tsx`: thêm nút **`🚀 Gửi cả lớp sang LMS`** trên thanh đầu danh sách cho tất cả các buổi.
+   - `review-editor.tsx`: thêm nút **`🚀 Gửi LMS`** trên từng học viên và **`🚀 Gửi em này sang LMS`** trong footer popup Bảng Đánh Giá Năng Lực.
+   - `lms-install-dialog.tsx`: tự hiện hộp thoại hướng dẫn cài 1 lần (30 giây) kèm nút chép nhanh đường dẫn thư mục extension nếu trình duyệt chưa cài.
+4. **Kiểm thử chất lượng:**
+   - `extensions/codeluma-lms-bridge/`: kiểm tra cú pháp toàn bộ 5 file JS (`node --check`) & `manifest.json` OK.
+   - `web/`: 504/504 tests vitest PASS 100% (`lms-bridge.test.ts` gồm 9 tests), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+   - `ai-service/`: 124/124 tests pytest PASS 100%.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 126 (**Khắc phục lỗi mất các mục đã chọn trong 2 ô quan sát bài kiểm tra (`Quá trình & tác phong làm bài`, `Nắm vững kiến thức & tư duy`) sau khi bấm AI đánh giá & Lưu nhận xét**):
+1. **Nguyên nhân gốc rễ:**
+   - Khi bấm "Lưu nhận xét" ở buổi kiểm tra/thuyết trình (`hasFinalEvaluation = true`), form trước đây không gửi hidden inputs `strengths`/`improvements` nên DB lưu mảng rỗng; đồng thời `reviewSignature(existing)` thay đổi khiến React remount `ReviewEditor` và reset state `selectedObservations` về `[]` (không được lưu vào DB lẫn `localStorage`).
+   - Ngoài ra, nếu giáo viên chọn mục ở tab mức học lực khác mức mặc định (VD chọn ở tab `Giỏi` trong khi tab mặc định là `Khá`), khi mở lại dropdown các mục đó bị ẩn khỏi tab đang lọc.
+2. **Cách khắc phục đồng bộ (`web/src/lib/presentation-evaluation.ts`, `review-editor.tsx`):**
+   - Bổ sung 2 hàm thuần có unit test: `splitObservationsByPolarity` (tách `selectedObservations` thành `strengths` / `improvements`) và `restoreInitialObservations` (ưu tiên khôi phục từ DB, lùi về nháp `localStorage` khi chưa bấm Lưu).
+   - Bổ sung hidden inputs `strengths` / `improvements` trong `<form>` khi `hasFinalEvaluation = true` → bấm "Lưu nhận xét" lưu thẳng xuống `student_reviews` trong Supabase (giữ nguyên khi mở lại, tải lại trang, chuyển thiết bị, đồng thời làm giàu dữ liệu lịch sử cho các buổi sau & tin Zalo).
+   - Lưu song song bản nháp vào `localStorage` (`eduverse_observations_${sessionId}_${studentId}`) ngay khi tích/bỏ chọn.
+   - Chỉ hiển thị khung tóm tắt **`✓ Đã chọn ở mức khác (N)`** khi có mục đã chọn đang bị ẩn ở mức đánh giá khác (VD chọn ở tab `Giỏi` khi đang lọc `Khá`), tránh hoàn toàn việc hiển thị trùng lặp các mục đã tích sẵn trong danh sách bên dưới.
+   - Thay thế lớp phủ `fixed inset-0 z-40` bằng listener `mousedown`/`touchstart` (capture phase) + phím `Escape` gắn với `activeDropdownRef` để đóng dropdown (`Quá trình & Tác phong làm bài`, `Nắm vững kiến thức & Tư duy`, và 3 nhóm thuyết trình) chắc chắn khi bấm ra ngoài bất kỳ đâu, đồng thời cho phép bấm chuyển thẳng giữa 2 dropdown chỉ trong 1 lần click.
+   - **Nâng cấp đồng bộ TOÀN BỘ các khối prompt nhận xét (`ai-service/app/prompts.py`):**
+     - Mở rộng `NATURAL_VIETNAMESE_STYLE_RULE`: cấm các cụm khẩu hiệu/sượng tai (`từng bước biết...`, `từng bước nắm bắt...`, `có tinh thần tìm hiểu`, `để việc tự học rõ nét hơn`, `thử biến đổi bài mẫu`, `suy luận theo trình tự`), cấm lặp từ gần nhau trong cùng câu (`Qua bài kiểm tra, em tự kiểm tra...`, `trong bài làm... khi làm bài`), bắt buộc viết thành một mạch ý thống nhất, và bổ sung quy tắc viết hoa chuẩn tiếng Việt (cấm viết hoa giữa câu như `ở Buổi 2`, `trong Bài kiểm tra`, `làm Sản phẩm cuối khóa`).
+     - Mở rộng hậu kiểm `polish_review_phrasing` + sửa input `attendance_summary` (`(vắng buổi ...)` thay cho `(vắng ở Buổi: ...)`) trong `ai-service/app/routes/reviews.py` để tự động chuyển viết thường các danh từ chung bị viết hoa giữa câu (`ở Buổi 2` → `ở buổi 2`, `từ Buổi 1` → `từ buổi 1`, `trong Bài kiểm tra` → `trong bài kiểm tra`...) mà vẫn giữ nguyên chữ hoa đầu câu/đầu dòng/danh từ riêng.
+     - Chuẩn hóa **cả 9 tiêu chí ĐNL** với ranh giới phạm vi rõ ràng (`CHỈ đánh giá ...`, không mượn dẫn chứng lạc tiêu chí) và **tự động thích ứng theo bối cảnh** `bài kiểm tra định kỳ / cuối khóa` vs `thuyết trình sản phẩm cuối khóa` (chấm dứt tình trạng buổi 5/9 nhắc nhầm "thuyết trình / sản phẩm cuối khóa" ở `ky_nang_giao_tiep`, `ky_nang_may_tinh`, `tu_duy_sang_tao`, `thai_do_tai_lop`).
+     - Tinh chỉnh đồng bộ **Thư từ MindX (3 phần)**, **Tổng hợp học bạ (5 mục với ranh giới rõ giữa `diem_yeu` và `kho_khan`)**, **Nhận xét buổi thường**, và **Tin nhắn Zalo tổng hợp**.
+3. **Kiểm thử chất lượng:**
+   - `ai-service/`: 124/124 tests pytest PASS 100% (bổ sung test kiểm chứng 9 khối ĐNL thích ứng bối cảnh kiểm tra vs thuyết trình, hậu kiểm viết hoa giữa câu & 5 mục học bạ + Zalo).
+   - `web/`: 495/495 tests vitest PASS 100% (bổ sung test `splitObservationsByPolarity` & `restoreInitialObservations` trong `presentation-evaluation.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 125 (**Nâng cấp đánh giá tổng kết buổi 5, 9, 14: Tổng hợp đầy đủ TẤT CẢ các buổi trước + Ô dán Mô tả bài làm từ AI Chấm bài + Nhận xét dạng gạch đầu dòng 2 phần giàu ý, tự nhiên, không thuật ngữ code rườm rà**):
+1. **Giao diện buổi đánh giá 5, 9, 14 (`web/src/app/(teacher)/teacher/sessions/[id]/review-editor.tsx`, `page.tsx`, `actions/reviews.ts`):**
+   - Hiển thị badge `📚 Lịch sử X buổi trước` trên khung đánh giá buổi 5, 9, 14 để giáo viên thấy rõ AI tự động nạp toàn bộ quá trình các buổi trước (`1..N-1`).
+   - Bổ sung `session_content` (nội dung đã học từng buổi trước) vào `allPriorReviews` truyền sang `ai-service` bên cạnh chuyên cần, điểm mạnh, điểm cần cải thiện và nhận xét cũ.
+   - Nâng cấp ô ghi chú đơn dòng thành khung nhiều dòng `<Textarea>` chuyên dụng **`📋 Mô tả bài làm / Kết quả từ mục Chấm bài AI (tùy chọn)`** (tự lưu nháp theo từng học viên trong `localStorage`, có nút xóa nhanh), truyền qua trường riêng `gradingSummary` (`grading_summary`).
+   - Mở rộng ô `Lời nhận xét` lên 7 dòng (`rows={7}`) ở các buổi đánh giá để xem và sửa bản nhận xét gạch đầu dòng thoải mái hơn.
+2. **Backend AI Service & Prompt (`ai-service/app/schemas.py`, `routes/reviews.py`, `prompts.py`):**
+   - Mở rộng `SessionReviewItem` thêm `session_content` và `FinalPresentationReviewRequest` thêm `grading_summary`.
+   - Nâng cấp `EXAM_ABSTRACTION_RULE` với bảng chuyển hóa chi tiết thuật ngữ kỹ thuật/ML/Data Science sang ngôn ngữ sư phạm gần gũi phụ huynh (cấm chép `LinearRegression`, `R² = 0.9821`, `80:20`, `X/y`, `Size/Age/Price`, `housing_data (3).csv`, `seaborn`, `mean_squared_error`, `import`... nhưng vẫn bắt buộc bóc tách đủ từng ý làm tốt và thói quen nhỏ cần rèn của riêng học viên).
+   - Chuyển cấu trúc `comment` của buổi 5, 9, 14 trong `build_final_presentation_review_prompt` sang **dạng gạch đầu dòng (`- `) 2 phần mạch lạc** (`Quá trình học tập...` + `Kết quả bài kiểm tra... / Sản phẩm cuối khóa...`), giúp nhận xét giàu ý, cá nhân hóa sâu cho từng em mà không bị dài dòng.
+3. **Kiểm thử chất lượng:**
+   - `ai-service/`: 122/122 tests pytest PASS 100% (bổ sung test `grading_summary`, `session_content` các buổi trước và cấu trúc gạch đầu dòng trong `test_final_presentation_review.py`).
+   - `web/`: 493/493 tests vitest PASS 100%, `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 124 (**Nâng cấp chất lượng lời văn tiếng Việt tự nhiên cho toàn bộ nhận xét AI (`NATURAL_VIETNAMESE_STYLE_RULE` + lớp hậu kiểm `polish_review_phrasing`)**):
+1. **Phân tích và chuẩn hóa quy tắc viết tiếng Việt tự nhiên như thầy giáo thật (`ai-service/app/prompts.py`):**
+   - Bổ sung quy tắc `NATURAL_VIETNAMESE_STYLE_RULE` áp dụng đồng bộ cho cả 4 luồng nhận xét (`build_review_prompt`, `build_final_presentation_review_prompt`, `build_student_summary_prompt`, `build_zalo_summary_prompt`):
+     - Cấm lỗi kết hợp từ kiểu dịch máy (`Bài làm thể hiện em...`, `Sản phẩm thể hiện em...`, `Điều này thể hiện em...`), thay bằng cách diễn đạt tự nhiên (`Bài làm cho thấy em...`, `Qua bài làm, thầy thấy em...`, hoặc lấy học viên `'em'` làm chủ ngữ trực tiếp).
+     - Cấm các cụm văn báo cáo/dịch sát tiếng Anh mơ hồ (`sự chủ động nhất định`, `đưa ra kết luận`, `mang tính chất...`, `có xu hướng...`, `ghi lại điều mới học được`...).
+     - Ưu tiên động từ trực tiếp, đa dạng cách mở câu/chuyển ý, không lặp động từ đánh giá (`cho thấy` / `thể hiện` / `có khả năng`) trong hai câu liền kề; kèm cặp ví dụ đối chiếu KHÔNG TỐT vs TỐT.
+   - Nâng cấp riêng cho **9 tiêu chí ĐNL** trong `build_final_presentation_review_prompt`: bắt buộc luân phiên cách mở đầu và kết câu giữa 9 ô ĐNL trên cùng một phiếu đánh giá (tránh ô nào cũng mở bằng `"Em có khả năng..."` và kết bằng `"Em nên..."`).
+   - Dọn sạch các cụm từ mớm cũ hơi cứng trong prompt (`Em thể hiện tư duy logic mạch lạc...`, `tư duy logic sắc bén`, `phản xạ tư duy tự nhiên`, `phản xạ code chưa tối ưu`).
+2. **Lớp hậu kiểm an toàn (`ai-service/app/routes/reviews.py`):**
+   - Bổ sung `polish_review_phrasing` tự động chuyển các trường hợp LLM còn lỡ sinh `<Bài làm/Bài kiểm tra/Sản phẩm/Dự án/Kết quả/Điều này> (đã) thể hiện (rõ) (rằng) em/các em` sang `cho thấy`, giữ nguyên hoa/thường và không đụng các cách dùng tiếng Việt hợp lệ (`Em thể hiện sự tự tin`, `thể hiện sự cẩn thận`).
+   - Áp dụng trên toàn bộ đầu ra của `/generate-review`, `/generate-final-presentation-review` (comment, 9 ô ĐNL, 3 phần Thư từ MindX), `/generate-student-summary`, `/generate-zalo-summary`.
+3. **Kiểm thử chất lượng:**
+   - `ai-service/`: 120/120 tests pytest PASS 100% (bổ sung test `NATURAL_VIETNAMESE_STYLE_RULE`, `polish_review_phrasing`, và route test ĐNL + MindX letter trong `test_pedagogical_review.py` & `test_final_presentation_review.py`).
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 123 (**Hỗ trợ đầy đủ tệp tin Jupyter Notebook (`.ipynb`) cho hệ thống nạp bài, chấm điểm AI, hỏi bài và tài liệu đề bài**):
+1. **Trích xuất nội dung Notebook tối ưu cho AI (`web/src/lib/ipynb-text.ts` & `ai-service/app/storage.py`):**
+   - Xây dựng module `ipynbToText` (TS) và `ipynb_to_text` (Python) trích xuất toàn bộ các ô Code, Markdown theo thứ tự (`# [Cell N - ...]`), kèm các kết quả hiển thị dạng văn bản (text outputs, stdout, stderr, exception tracebacks).
+   - **Tối ưu token & lọc nhiễu:** Tự động loại bỏ hoàn toàn các chuỗi ảnh base64 lớn (do matplotlib/seaborn sinh ra trong notebook) để tiết kiệm quota, tránh vượt trần token và giữ ngữ cảnh AI tập trung 100% vào mã nguồn bài làm của học viên.
+2. **Cập nhật phân loại tệp tin và backend AI Service (`ai-service/app/storage.py`, `grading.py`):**
+   - Đưa `.ipynb` vào danh sách `_CODE_EXTENSIONS` để xử lý dưới dạng text part thay vì gửi nhị phân thô gây lỗi `Unsupported MIME type` ở Gemini API / OpenAI.
+   - Bổ sung tên notebook phổ biến (`main.ipynb`, `notebook.ipynb`, `solution.ipynb`) vào `_ENTRY_NAMES` để AI ưu tiên đọc đầu tiên khi sắp xếp thứ tự phân tích.
+3. **Mở rộng tiếp nhận tệp tin ở khu vực Chấm bài & Đề bài (`web/`):**
+   - `web/src/lib/submission-files.ts`: Bổ sung thư mục ngầm `.ipynb_checkpoints` vào `SKIP_DIRS` để tự động lọc bỏ file cache checkpoint do Jupyter sinh ra; tăng nhẹ `PROJECT_BUDGET.maxFileBytes` lên 500KB.
+   - `web/src/lib/actions/grading.ts`: Thêm `"ipynb"` vào `TEXT_EXTENSIONS` và dùng `ipynbToText` trong `loadSpecFile` giúp giáo viên xem trực tiếp nội dung file notebook trong `ViewSpecDialog`.
+   - `assignment-form.tsx`, `view-spec-dialog.tsx`, `edit-assignment-title-button.tsx`: Bổ sung `.ipynb` vào thuộc tính `accept` của form upload đề bài và tệp đính kèm.
+   - `read-dropped-files.ts` & `project-review.ts`: Tích hợp `ipynbToText` xử lý cả kéo thả thư mục và giải nén file `.zip`.
+4. **Kiểm thử chất lượng:**
+   - `ai-service/`: 117/117 tests pytest PASS 100% (bổ sung tests trích xuất notebook, Part Gemini, Content block OpenAI trong `test_storage.py`).
+   - `web/`: 493/493 tests vitest PASS 100% (bổ sung suite test `ipynb-text.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 122 (**Bổ sung ô ghi chú riêng nhận xét từng học viên (`student_note`) khi ô tích chọn chưa có — Truyền bối cảnh cho AI tạo nhận xét cá nhân hóa sâu sắc**):
 1. **Giao diện người dùng (`review-editor.tsx`):**
    - Thêm ô nhập liệu **`📝 Ghi chú riêng về em (khi ô tích chưa có)`** đặt ngay trên khung Lời nhận xét gửi phụ huynh.
    - Placeholder gợi ý thực tế: *"VD: Em tự làm thêm giao diện đẹp, hôm nay hơi mệt nhưng vẫn cố gắng nghe giảng, em quên chuột nên thao tác chậm..."*

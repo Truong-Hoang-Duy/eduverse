@@ -68,6 +68,7 @@ interface PriorReviewRow {
     id: string;
     session_number: number;
     title?: string | null;
+    content?: string | null;
     review_context?: string | null;
     is_substitute?: boolean | null;
     is_periodic_test?: boolean | null;
@@ -190,8 +191,8 @@ export default async function SessionDetailPage({
       .from("student_reviews")
       .select(
         hasFinalColumn
-          ? "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id, review_context, is_periodic_test, is_project_period, is_final_presentation)"
-          : "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, class_id, review_context, is_periodic_test, is_project_period)"
+          ? "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, content, class_id, review_context, is_periodic_test, is_project_period, is_final_presentation)"
+          : "student_id, ai_generated_comment, strengths, improvements, is_absent, sessions!inner(id, session_number, title, content, class_id, review_context, is_periodic_test, is_project_period)"
       )
       .eq("sessions.class_id", session.class_id)
       .neq("sessions.id", session.id),
@@ -275,7 +276,7 @@ export default async function SessionDetailPage({
       }));
     priorSelectionsByStudentId.set(studentId, selections);
 
-    // (3) Toàn bộ lịch sử các buổi trước (1..13) để AI tổng kết buổi 14
+    // (3) Toàn bộ lịch sử tất cả các buổi trước (1..N-1) để AI tổng kết buổi 5, 9, 14
     const chronological = [...mine].reverse();
     allPriorReviewsByStudentId.set(
       studentId,
@@ -283,6 +284,7 @@ export default async function SessionDetailPage({
         session_number: r.sessions?.session_number ?? 0,
         session_title:
           r.sessions?.title ?? `Buổi ${r.sessions?.session_number ?? 0}`,
+        session_content: r.sessions?.content ?? null,
         strengths: r.strengths,
         improvements: r.improvements,
         comment: r.ai_generated_comment,

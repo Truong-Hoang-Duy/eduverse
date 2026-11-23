@@ -5,8 +5,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
 import type { PriorReviewHistoryItem } from "@/lib/actions/reviews";
+import {
+  buildLmsStudentPayload,
+  type LmsStudentReviewPayload,
+  pushToLmsBridge,
+  readCachedGradingSummaryFromStorage,
+  readCachedRubricFromStorage,
+} from "@/lib/lms-bridge";
 import { cn } from "@/lib/utils";
 
+import { LmsInstallDialog } from "./lms-install-dialog";
 import {
   type CopySource,
   ReviewEditor,
@@ -75,6 +83,9 @@ export function ReviewList({
   combos: ReviewCombo[];
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [lmsSending, setLmsSending] = useState(false);
+  const [lmsNotice, setLmsNotice] = useState("");
+  const [lmsInstallOpen, setLmsInstallOpen] = useState(false);
 
   const totalCount = students.length;
   const doneCount = students.filter((s) =>
@@ -140,6 +151,78 @@ export function ReviewList({
     detailsEls.forEach((el) => {
       el.open = open;
     });
+  }
+
+  async function handlePushClassToLms() {
+    setLmsNotice("");
+    const includeDemoScore = Boolean(isFinalPresentation);
+    const sessionFormat = isFinalPresentation
+      ? "final_presentation"
+      : isPeriodicTest
+        ? "periodic_test"
+        : isProjectPeriod
+          ? "project_period"
+          : "standard";
+
+    const payloads: LmsStudentReviewPayload[] = [];
+    for (const student of students) {
+      const review = reviewByStudentId.get(student.id);
+      if (review?.is_absent) continue;
+      const cachedEval =
+        isPeriodicTest || isFinalPresentation
+          ? readCachedRubricFromStorage(sessionId, student.id)
+          : null;
+      const cachedGrading =
+        isPeriodicTest || isFinalPresentation
+          ? readCachedGradingSummaryFromStorage(sessionId, student.id)
+          : "";
+      const item = buildLmsStudentPayload({
+        studentName: student.full_name,
+        isAbsent: review?.is_absent,
+        comment: review?.ai_generated_comment ?? null,
+        gradingSummary: cachedGrading,
+        evaluation: cachedEval,
+        includeDemoScore,
+      });
+      if (item) payloads.push(item);
+    }
+
+    if (payloads.length === 0) {
+      setLmsNotice("Chưa có nhận xét nào đã lưu để gửi sang LMS.");
+      return;
+    }
+
+    setLmsSending(true);
+    const res = await pushToLmsBridge(
+      {
+        classCode: classCode ?? "",
+        courseName: courseName ?? "",
+        sessionId,
+        sessionNumber: sessionNumber ?? null,
+        sessionTitle,
+        sessionFormat,
+        students: payloads,
+      },
+      { replaceAll: true, focusLmsTab: true }
+    );
+    setLmsSending(false);
+
+    if (!res.installed) {
+      setLmsInstallOpen(true);
+      return;
+    }
+
+    if (!res.ok) {
+      setLmsNotice(res.error || "Không gửi được sang MindX LMS.");
+      return;
+    }
+
+    setLmsNotice(
+      res.focusedTab
+        ? `✓ Đã gửi ${res.count} em sang tab MindX LMS!`
+        : `✓ Đã gửi ${res.count} em vào hàng đợi LMS — hãy chuyển sang tab MindX LMS để điền.`
+    );
+    setTimeout(() => setLmsNotice(""), 5000);
   }
 
   return (
@@ -213,8 +296,19 @@ export function ReviewList({
             </button>
           </div>
 
-          {/* Thao tác Bung / Thu gọn tất cả */}
-          <div className="flex items-center gap-1 border-l border-border/50 pl-2">
+          {/* Thao tác Bung / Thu gọn tất cả & Gửi cả lớp sang MindX LMS */}
+          <div className="flex flex-wrap items-center gap-1.5 border-l border-border/50 pl-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={lmsSending}
+              onClick={handlePushClassToLms}
+              className="h-7 px-2.5 text-xs font-semibold border-indigo-500/40 bg-indigo-500/10 text-indigo-700 hover:bg-indigo-500/20 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200 cursor-pointer"
+              title="Đưa toàn bộ nhận xét đã tạo của lớp sang giao diện MindX LMS (bạn sẽ soát lại và tự bấm Save)"
+            >
+              {lmsSending ? "⏳ Đang gửi..." : "🚀 Gửi cả lớp sang LMS"}
+            </Button>
             <Button
               type="button"
               variant="ghost"
@@ -238,6 +332,24 @@ export function ReviewList({
           </div>
         </div>
       </div>
+
+      {lmsNotice && (
+        <div
+          className={cn(
+            "rounded-lg border px-3 py-2 text-xs font-medium",
+            lmsNotice.startsWith("✓")
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+              : "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300"
+          )}
+        >
+          {lmsNotice}
+        </div>
+      )}
+
+      <LmsInstallDialog
+        open={lmsInstallOpen}
+        onOpenChange={setLmsInstallOpen}
+      />
 
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground bg-muted/10">

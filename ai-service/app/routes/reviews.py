@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter
 
 from app import prompts
@@ -18,6 +20,50 @@ from app.schemas import (
 )
 
 router = APIRouter()
+
+_AWKWARD_THE_HIEN_RE = re.compile(
+    r"\b("
+    r"(?:bài làm|bài kiểm tra|bài tập|bài thi|sản phẩm|dự án|kết quả|"
+    r"quá trình làm bài|phần trình bày|phần thuyết trình|điều này)"
+    r"(?:\s+của\s+(?:em|các em))?"
+    r")(\s+đã)?\s+thể hiện(\s+rõ)?(?:\s+rằng)?\s+(em|các em|học viên)\b",
+    flags=re.IGNORECASE,
+)
+
+
+_MID_SENTENCE_COMMON_NOUN_RE = re.compile(
+    r"((?<=[\w,;])[ \t]+|(?<=\())"
+    r"(Buổi(?:[ \t]+\d+|[ \t]+học)?|"
+    r"Bài kiểm tra|Bài thi|Bài tập về nhà|Bài tập|Bài làm|"
+    r"Sản phẩm cuối khóa|Sản phẩm|Dự án|Đồ án|Thuyết trình)\b"
+)
+
+
+def polish_review_phrasing(text: str) -> str:
+    """Lớp hậu kiểm nhẹ sửa lỗi diễn đạt dịch máy và lỗi viết hoa giữa câu.
+
+    - 'Bài làm thể hiện em biết...' -> 'Bài làm cho thấy em biết...'
+    - 'Em đã vắng 1 buổi ở Buổi 2' -> 'Em đã vắng 1 buổi ở buổi 2'
+    Giữ nguyên chữ hoa đầu câu / đầu dòng / sau dấu câu kết thúc và giữ nguyên
+    danh từ riêng cũng như cách dùng hợp lệ ('Em thể hiện tốt', 'thể hiện sự cẩn thận').
+    """
+    if not text:
+        return text
+
+    def _replace_the_hien(match: re.Match[str]) -> str:
+        subject = match.group(1)
+        past = match.group(2) or ""
+        clearly = match.group(3) or ""
+        pronoun = match.group(4)
+        return f"{subject}{past} cho thấy{clearly} {pronoun}"
+
+    def _lowercase_mid_sentence(match: re.Match[str]) -> str:
+        prefix = match.group(1)
+        phrase = match.group(2)
+        return f"{prefix}{phrase[0].lower()}{phrase[1:]}"
+
+    polished = _AWKWARD_THE_HIEN_RE.sub(_replace_the_hien, text)
+    return _MID_SENTENCE_COMMON_NOUN_RE.sub(_lowercase_mid_sentence, polished)
 
 
 @router.post("/generate-greeting", response_model=GenerateGreetingResponse)
@@ -73,6 +119,8 @@ def generate_review(body: GenerateReviewRequest) -> GenerateReviewResponse:
         api_key=body.api_key,
         provider=body.provider,
     )
+    if isinstance(data, dict) and isinstance(data.get("comment"), str):
+        data["comment"] = polish_review_phrasing(data["comment"])
     return GenerateReviewResponse(**data)
 
 
@@ -114,6 +162,10 @@ def generate_student_summary(body: StudentSummaryRequest) -> StudentSummaryRespo
         api_key=body.api_key,
         provider=body.provider,
     )
+    if isinstance(data, dict):
+        for key in ("qua_trinh_hoc", "diem_manh", "diem_yeu", "dinh_huong", "kho_khan"):
+            if isinstance(data.get(key), str):
+                data[key] = polish_review_phrasing(data[key])
     return StudentSummaryResponse(**data)
 
 
@@ -130,7 +182,7 @@ def generate_final_presentation_review(
         if absent_sessions:
             attendance_summary = (
                 f"Có vắng {len(absent_sessions)}/{total_prior} buổi học trước "
-                f"(vắng ở Buổi: {', '.join(str(s) for s in absent_sessions)}). "
+                f"(vắng buổi {', '.join(str(s) for s in absent_sessions)}). "
                 f"Việc vắng học này có thể làm gián đoạn kiến thức và ảnh hưởng đến kết quả của em."
             )
         else:
@@ -142,19 +194,27 @@ def generate_final_presentation_review(
     else:
         attendance_summary = "Chưa có dữ liệu điểm danh các buổi trước."
 
-    reviews_lines = [
-        f"- Buổi {r.session_number} ({r.session_title or 'chưa có tiêu đề'}): "
-        + ("[VẮNG HỌC]; " if r.is_absent else "")
-        + f"mạnh [{', '.join(r.strengths) or 'chưa ghi'}]; "
-        f"cần cải thiện [{', '.join(r.improvements) or 'chưa ghi'}]"
-        + (f"; nhận xét: {r.comment}" if r.comment else "")
-        for r in body.prior_reviews
-    ]
+    reviews_lines = []
+    for r in body.prior_reviews:
+        line = f"- Buổi {r.session_number} ({r.session_title or 'chưa có tiêu đề'})"
+        if r.session_content and r.session_content.strip():
+            compact_content = " ".join(r.session_content.split())[:180]
+            line += f" [Nội dung: {compact_content}]"
+        line += ": "
+        if r.is_absent:
+            line += "[VẮNG HỌC]; "
+        line += (
+            f"mạnh [{', '.join(r.strengths) or 'chưa ghi'}]; "
+            f"cần cải thiện [{', '.join(r.improvements) or 'chưa ghi'}]"
+        )
+        if r.comment:
+            line += f"; nhận xét: {r.comment}"
+        reviews_lines.append(line)
 
     prior_reviews_text = (
         f"THỐNG KÊ CHUYÊN CẦN: {attendance_summary}\n\n"
         + "CHI TIẾT LỊCH SỬ TỪNG BUỔI:\n"
-        + "\n".join(reviews_lines)
+        + ("\n".join(reviews_lines) if reviews_lines else "(Chưa có dữ liệu các buổi trước)")
     )
 
     prompt = prompts.build_final_presentation_review_prompt(
@@ -166,6 +226,7 @@ def generate_final_presentation_review(
         project_description=body.project_description,
         project_features=body.project_features,
         presentation_notes=body.presentation_notes,
+        grading_summary=body.grading_summary,
         prior_reviews_text=prior_reviews_text,
         current_strengths=body.current_strengths,
         current_improvements=body.current_improvements,
@@ -275,6 +336,18 @@ def generate_final_presentation_review(
                 "suggestions_from_mindx": "",
                 "future_direction": "",
             }
+        if isinstance(data.get("comment"), str):
+            data["comment"] = polish_review_phrasing(data["comment"])
+        dnl = data.get("dnl_evaluations")
+        if isinstance(dnl, dict):
+            for item in dnl.values():
+                if isinstance(item, dict) and isinstance(item.get("comment"), str):
+                    item["comment"] = polish_review_phrasing(item["comment"])
+        letter = data.get("mindx_letter")
+        if isinstance(letter, dict):
+            for key in ("learned_from_mindx", "suggestions_from_mindx", "future_direction"):
+                if isinstance(letter.get(key), str):
+                    letter[key] = polish_review_phrasing(letter[key])
 
     # Bảo đảm tổng cả điểm kiến thức + demo sản phẩm tự động chia đều không dưới 6.0
     if isinstance(data, dict) and "demo_score" in data:
@@ -405,4 +478,6 @@ def generate_zalo_summary(body: ZaloSummaryRequest) -> ZaloSummaryResponse:
         api_key=body.api_key,
         provider=body.provider,
     )
+    if isinstance(data, dict) and isinstance(data.get("loi_nhan"), str):
+        data["loi_nhan"] = polish_review_phrasing(data["loi_nhan"])
     return ZaloSummaryResponse(**data)

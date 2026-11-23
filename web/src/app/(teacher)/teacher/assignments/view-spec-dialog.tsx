@@ -393,7 +393,7 @@ export function ViewSpecDialog({
                   ref={replaceFileInputRef}
                   name="spec_file"
                   type="file"
-                  accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.docx"
+                  accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.docx,.ipynb"
                   className="h-8 text-xs file:text-xs"
                   required
                 />
@@ -433,7 +433,7 @@ export function ViewSpecDialog({
                   name="attachment_files"
                   type="file"
                   multiple
-                  accept=".csv,.json,.sql,.py,.txt,.md,.pdf,.png,.jpg,.jpeg,.docx"
+                  accept=".csv,.json,.sql,.py,.ipynb,.txt,.md,.pdf,.png,.jpg,.jpeg,.docx"
                   className="h-8 text-xs file:text-xs"
                   required
                 />
