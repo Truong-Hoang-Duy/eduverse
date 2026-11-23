@@ -102,6 +102,7 @@ class ZaloSummaryResponse(BaseModel):
 class SessionReviewItem(BaseModel):
     session_number: int
     session_title: str = ""
+    session_content: str | None = None
     strengths: list[str] = []
     improvements: list[str] = []
     comment: str | None = None
@@ -151,6 +152,7 @@ class FinalPresentationReviewRequest(AiRequest):
     project_description: str | None = None
     project_features: list[str] = []
     presentation_notes: str | None = None
+    grading_summary: str | None = None
     prior_reviews: list[SessionReviewItem] = []
     current_strengths: list[str] = []
     current_improvements: list[str] = []

@@ -2,6 +2,7 @@
 
 import { getAiConfig } from "@/lib/actions/api-key";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
+import { ipynbToText } from "@/lib/ipynb-text";
 import {
   emptyTally,
   PROJECT_BUDGET,
@@ -49,11 +50,17 @@ export async function extractZipFiles(input: { zipB64: string }): Promise<{
   if (res.error) return { error: res.error };
 
   const decoder = new TextDecoder("utf-8", { fatal: false });
-  const files: SubmissionFile[] = (res.entries ?? []).map((entry) => ({
-    path: entry.name,
-    content: decoder.decode(entry.data),
-    size: entry.data.length,
-  }));
+  const files: SubmissionFile[] = (res.entries ?? []).map((entry) => {
+    const raw = decoder.decode(entry.data);
+    const content = entry.name.toLowerCase().endsWith(".ipynb")
+      ? ipynbToText(raw)
+      : raw;
+    return {
+      path: entry.name,
+      content,
+      size: entry.data.length,
+    };
+  });
 
   return { files: stripCommonRoot(files), skipped: res.skipped ?? emptyTally() };
 }

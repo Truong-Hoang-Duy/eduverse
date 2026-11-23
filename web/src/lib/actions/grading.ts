@@ -12,6 +12,7 @@ import {
 } from "@/lib/assignment-utils";
 import { docxToText } from "@/lib/docx-text";
 import { looksEncrypted } from "@/lib/file-check";
+import { ipynbToText } from "@/lib/ipynb-text";
 import {
   removeSpecFiles,
   sanitizeFileName,
@@ -683,7 +684,7 @@ export async function removeAssignmentAttachment(
 
 /** Đuôi file mở ra đọc thẳng dạng chữ; còn lại xem bằng link ký (ảnh/PDF/tải về). */
 const TEXT_EXTENSIONS = [
-  "txt", "md", "markdown", "json", "csv", "sql",
+  "txt", "md", "markdown", "json", "csv", "sql", "ipynb",
   "js", "jsx", "ts", "tsx", "py", "java", "c", "cpp", "cs", "html", "css",
 ];
 
@@ -725,13 +726,15 @@ async function loadSpecFile(
           error: `File "${fileName}" bị phần mềm bảo mật mã hóa nên không đọc được nội dung thật.`,
         };
       }
+      const decoded = new TextDecoder().decode(bytes);
+      const content = ext === "ipynb" ? ipynbToText(decoded) : decoded;
       return {
         file: {
           path,
           fileName,
           isMain,
           kind: "text",
-          content: new TextDecoder().decode(bytes),
+          content,
           url: downloadUrl,
         },
       };

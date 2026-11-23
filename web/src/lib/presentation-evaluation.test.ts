@@ -11,7 +11,9 @@ import {
   formatFullEvaluationText,
   isImprovementObservation,
   PRESENTATION_OBSERVATION_GROUPS,
+  restoreInitialObservations,
   scoreToLevel,
+  splitObservationsByPolarity,
 } from "./presentation-evaluation";
 
 
@@ -280,6 +282,49 @@ describe("presentation-evaluation", () => {
     expect(text).toContain("Nắm vững lập trình Python hướng đối tượng");
     expect(text).toContain("Bố mẹ tiếp tục nhắc em rèn tính cẩn thận khi nộp bài");
     expect(text).toContain("Định hướng lên Computer Science Intensive (CSI)");
+  });
+
+  it("should split observations into strengths and improvements without duplicates", () => {
+    const result = splitObservationsByPolarity([
+      "Làm bài tập trung cao độ, thái độ rất nghiêm túc",
+      "Cần chú ý đọc kỹ yêu cầu đề thi, tránh làm vội bỏ sót câu nhỏ",
+      "Nắm chắc kiến thức trọng tâm và cú pháp các câu lệnh",
+      "Làm bài tập trung cao độ, thái độ rất nghiêm túc",
+      "Đôi lúc còn nôn nóng nộp bài sớm, cần kiểm tra lại các điều kiện đề bài",
+    ]);
+
+    expect(result.strengths).toEqual([
+      "Làm bài tập trung cao độ, thái độ rất nghiêm túc",
+      "Nắm chắc kiến thức trọng tâm và cú pháp các câu lệnh",
+    ]);
+    expect(result.improvements).toEqual([
+      "Cần chú ý đọc kỹ yêu cầu đề thi, tránh làm vội bỏ sót câu nhỏ",
+      "Đôi lúc còn nôn nóng nộp bài sớm, cần kiểm tra lại các điều kiện đề bài",
+    ]);
+  });
+
+  it("should restore observations preferring saved DB data and falling back to localStorage draft", () => {
+    // 1. Có dữ liệu DB → ưu tiên DB
+    expect(
+      restoreInitialObservations(
+        ["Nắm chắc kiến thức trọng tâm"],
+        ["Cần chú ý đọc kỹ đề"],
+        JSON.stringify(["Nháp cũ"])
+      )
+    ).toEqual(["Nắm chắc kiến thức trọng tâm", "Cần chú ý đọc kỹ đề"]);
+
+    // 2. DB trống (chưa bấm Lưu) → khôi phục từ nháp localStorage
+    expect(
+      restoreInitialObservations(
+        [],
+        [],
+        JSON.stringify(["Thái độ làm bài nghiêm túc", "Cần rèn luyện thêm"])
+      )
+    ).toEqual(["Thái độ làm bài nghiêm túc", "Cần rèn luyện thêm"]);
+
+    // 3. Nháp đã bị xóa rỗng hoặc hỏng JSON → trả []
+    expect(restoreInitialObservations([], [], "[]")).toEqual([]);
+    expect(restoreInitialObservations(undefined, undefined, "{invalid")).toEqual([]);
   });
 });
 

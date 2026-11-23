@@ -292,3 +292,108 @@ def test_review_prompt_includes_individual_student_note():
     assert "Em tự lập trình thêm thuật toán QuickSort mở rộng, rất đam mê" in prompt
     assert "HƯỚNG DẪN XỬ LÝ GHI CHÚ RIÊNG" in prompt
 
+
+def test_natural_vietnamese_style_rule_injected_in_all_review_prompts() -> None:
+    review_prompt = prompts.build_review_prompt(
+        student_name="An",
+        session_title="Buổi 5",
+        session_content="Phân tích dữ liệu bằng biểu đồ",
+        strengths=["Chủ động tìm hiểu"],
+        improvements=["Cần kiểm tra lại kết quả"],
+        session_context=None,
+        previous_comment=None,
+    )
+    summary_prompt = prompts.build_student_summary_prompt(
+        student_name="An",
+        class_code="CSA05",
+        course_name="Computer Science Advance",
+        reviews_text="- Buổi 1: Tiếp thu tốt",
+    )
+    zalo_prompt = prompts.build_zalo_summary_prompt(
+        class_code="CSA05",
+        session_title="Buổi 5",
+        session_content="Phân tích dữ liệu",
+        reviews_text="- An: tốt",
+    )
+
+    for p in (review_prompt, summary_prompt, zalo_prompt):
+        assert "NATURAL VIETNAMESE WRITING" in p
+        assert "Bài làm cho thấy em..." in p
+        assert "TUYỆT ĐỐI KHÔNG viết 'Bài làm thể hiện em...'" in p
+
+    assert "QUY TẮC RÕ RANH GIỚI & ĐA DẠNG CÂU GIỮA 5 MỤC" in summary_prompt
+    assert "như thầy nhắn tin trực tiếp cho nhóm phụ huynh cuối buổi" in zalo_prompt
+
+    # Đảm bảo ví dụ mớm cũ không còn trong build_review_prompt
+    assert "Em thể hiện tư duy logic mạch lạc" not in review_prompt
+
+
+def test_polish_review_phrasing_fixes_awkward_the_hien_and_preserves_valid_vietnamese() -> None:
+    from app.routes.reviews import polish_review_phrasing
+
+    assert (
+        polish_review_phrasing(
+            "Bài làm thể hiện em biết kết hợp nhiều bước phân tích dữ liệu."
+        )
+        == "Bài làm cho thấy em biết kết hợp nhiều bước phân tích dữ liệu."
+    )
+    assert (
+        polish_review_phrasing(
+            "Sản phẩm của em thể hiện rằng em đã nắm chắc kiến thức."
+        )
+        == "Sản phẩm của em cho thấy em đã nắm chắc kiến thức."
+    )
+    assert (
+        polish_review_phrasing(
+            "Bài kiểm tra đã thể hiện rõ em hiểu bản chất thuật toán."
+        )
+        == "Bài kiểm tra đã cho thấy rõ em hiểu bản chất thuật toán."
+    )
+    assert (
+        polish_review_phrasing(
+            "Kết quả thể hiện các em nắm vững nội dung buổi học."
+        )
+        == "Kết quả cho thấy các em nắm vững nội dung buổi học."
+    )
+    assert (
+        polish_review_phrasing("Qua đó, điều này thể hiện em khá chủ động.")
+        == "Qua đó, điều này cho thấy em khá chủ động."
+    )
+
+    # Cách dùng tiếng Việt tự nhiên / hợp lệ phải được giữ nguyên
+    valid_1 = "Em thể hiện sự tự tin khi thuyết trình trước lớp."
+    valid_2 = "Bài làm thể hiện sự cẩn thận và chỉn chu."
+    valid_3 = "Em cần kiểm tra email thông báo lịch học."
+    assert polish_review_phrasing(valid_1) == valid_1
+    assert polish_review_phrasing(valid_2) == valid_2
+    assert polish_review_phrasing(valid_3) == valid_3
+
+
+def test_polish_review_phrasing_fixes_mid_sentence_capitalization_and_preserves_sentence_starts() -> None:
+    from app.routes.reviews import polish_review_phrasing
+
+    assert (
+        polish_review_phrasing("Em đã vắng 1 buổi ở Buổi 2, vì vậy mạch kiến thức bị gián đoạn.")
+        == "Em đã vắng 1 buổi ở buổi 2, vì vậy mạch kiến thức bị gián đoạn."
+    )
+    assert (
+        polish_review_phrasing("Từ Buổi 1 đến Buổi 13, em hoàn thành tốt Sản phẩm cuối khóa.")
+        == "Từ buổi 1 đến buổi 13, em hoàn thành tốt sản phẩm cuối khóa."
+    )
+    assert (
+        polish_review_phrasing("Em vắng 1 buổi (Buổi 2) và chưa nộp Bài tập về nhà.")
+        == "Em vắng 1 buổi (buổi 2) và chưa nộp bài tập về nhà."
+    )
+    assert (
+        polish_review_phrasing("Ở Buổi 5, em làm tốt trong Bài kiểm tra định kỳ.")
+        == "Ở buổi 5, em làm tốt trong bài kiểm tra định kỳ."
+    )
+
+    # Đầu câu, đầu dòng, sau dấu chấm, sau gạch đầu dòng và danh từ riêng phải giữ nguyên viết hoa
+    keep_1 = "Buổi 2 em nghỉ học. Buổi 3 em đã theo kịp lớp với Python và MindX."
+    keep_2 = "Kết quả bài kiểm tra:\n- Bài làm cho thấy em nắm chắc bài.\n- Buổi 5 em rất tập trung."
+    assert polish_review_phrasing(keep_1) == keep_1
+    assert polish_review_phrasing(keep_2) == keep_2
+
+
+

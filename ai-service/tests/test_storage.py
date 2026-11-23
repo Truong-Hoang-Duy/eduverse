@@ -105,6 +105,32 @@ def test_code_file_still_goes_through_as_text() -> None:
     assert "<h1>Xin chao</h1>" in part.text
 
 
+def test_ipynb_becomes_text_part_with_extracted_cells() -> None:
+    notebook_json = b"""{
+        "cells": [
+            {"cell_type": "markdown", "source": ["# Tieu de\\n", "Mo ta"]},
+            {
+                "cell_type": "code",
+                "source": ["import math\\n", "print(math.pi)"],
+                "outputs": [
+                    {"text": ["3.141592653589793\\n"]},
+                    {"data": {"image/png": "iVBORw0KGgoAAAANSUhEUgAA...base64..."}}
+                ]
+            }
+        ]
+    }"""
+    part = bytes_to_part("solution.ipynb", notebook_json)
+
+    assert part.text is not None
+    assert "[Cell 1 - Markdown]" in part.text
+    assert "# Tieu de" in part.text
+    assert "[Cell 2 - Code]" in part.text
+    assert "print(math.pi)" in part.text
+    assert "3.141592653589793" in part.text
+    assert "base64" not in part.text
+    assert part.inline_data is None
+
+
 # ---------- bytes_to_openai_content: cùng luật phân loại text/binary với
 # bytes_to_part (dùng chung app.storage._classify), chỉ khác kiểu bọc ra. ----------
 
@@ -113,6 +139,19 @@ def test_openai_content_code_file_is_text_block() -> None:
     block = bytes_to_openai_content("index.html", b"<h1>Xin chao</h1>")
 
     assert block == {"type": "text", "text": "--- File: index.html ---\n<h1>Xin chao</h1>"}
+
+
+def test_openai_content_ipynb_is_text_block() -> None:
+    notebook_json = b"""{
+        "cells": [
+            {"cell_type": "code", "source": "print(42)", "outputs": [{"text": "42"}]}
+        ]
+    }"""
+    block = bytes_to_openai_content("lab.ipynb", notebook_json)
+
+    assert block["type"] == "text"
+    assert "print(42)" in block["text"]
+    assert "42" in block["text"]
 
 
 def test_openai_content_docx_is_text_block() -> None:

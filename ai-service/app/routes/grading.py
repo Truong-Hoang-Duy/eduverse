@@ -91,6 +91,7 @@ STUDENT_HELP_SCHEMA = {
 # File vào đầu tiên cho AI đọc trước — hiểu luồng chương trình rồi mới xét chi tiết.
 _ENTRY_NAMES = (
     "index.html", "index.js", "main.py", "app.py", "main.js", "app.js",
+    "main.ipynb", "notebook.ipynb", "solution.ipynb",
     "readme.md", "readme.txt",
 )
 

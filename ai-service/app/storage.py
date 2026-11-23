@@ -3,6 +3,7 @@ Storage (đề bài) hoặc bytes inline (bài làm)."""
 
 import base64
 import io
+import json
 import mimetypes
 import zipfile
 from typing import Literal
@@ -15,8 +16,10 @@ from supabase import Client, create_client
 from app.config import get_settings
 
 _CODE_EXTENSIONS = {
-    ".py", ".js", ".ts", ".jsx", ".tsx", ".html", ".css", ".json",
-    ".java", ".c", ".cpp", ".cs", ".md", ".sql", ".txt",
+    ".py", ".js", ".mjs", ".cjs", ".ts", ".jsx", ".tsx", ".html", ".htm", ".css",
+    ".scss", ".json", ".xml", ".yml", ".yaml", ".java", ".c", ".h", ".cpp", ".hpp",
+    ".cs", ".php", ".rb", ".go", ".rs", ".kt", ".swift", ".dart", ".lua", ".r",
+    ".sql", ".sh", ".bat", ".ipynb", ".vue", ".svelte", ".md", ".txt", ".csv",
 }
 
 # Chữ ký đầu file để phát hiện file hỏng/bị mã hóa TRƯỚC khi gửi Gemini
@@ -104,6 +107,76 @@ def docx_to_text(name: str, data: bytes) -> str:
     return text
 
 
+def ipynb_to_text(name: str, data: bytes) -> str:
+    """Trích xuất mã nguồn và markdown từ Jupyter Notebook (.ipynb).
+
+    Lấy code cells, markdown cells và text outputs (bỏ ảnh base64 trong outputs
+    để tránh tràn token khi gửi AI). Nếu không parse được JSON thì giải mã UTF-8 thông thường.
+    """
+    raw_str = data.decode("utf-8", errors="replace")
+    try:
+        nb = json.loads(raw_str)
+        cells = nb.get("cells", [])
+        if not isinstance(cells, list):
+            return raw_str
+    except Exception:
+        return raw_str
+
+    parts: list[str] = []
+    for idx, cell in enumerate(cells, start=1):
+        if not isinstance(cell, dict):
+            continue
+        cell_type = cell.get("cell_type", "code")
+        source = cell.get("source", "")
+        if isinstance(source, list):
+            source_text = "".join(source).strip()
+        else:
+            source_text = str(source).strip()
+
+        if not source_text:
+            continue
+
+        if cell_type == "markdown":
+            parts.append(f"# [Cell {idx} - Markdown]\n{source_text}")
+        elif cell_type == "code":
+            cell_str = f"# [Cell {idx} - Code]\n{source_text}"
+            outputs = cell.get("outputs", [])
+            output_texts: list[str] = []
+            if isinstance(outputs, list):
+                for out in outputs:
+                    if not isinstance(out, dict):
+                        continue
+                    if "text" in out:
+                        t = out["text"]
+                        text_str = "".join(t) if isinstance(t, list) else str(t)
+                        if text_str.strip():
+                            output_texts.append(text_str.strip())
+                    elif "data" in out and isinstance(out["data"], dict):
+                        data_obj = out["data"]
+                        if "text/plain" in data_obj:
+                            t = data_obj["text/plain"]
+                            text_str = "".join(t) if isinstance(t, list) else str(t)
+                            if text_str.strip():
+                                output_texts.append(text_str.strip())
+                    elif out.get("output_type") == "error":
+                        ename = out.get("ename", "")
+                        evalue = out.get("evalue", "")
+                        output_texts.append(f"Error: {ename}: {evalue}".strip())
+
+            if output_texts:
+                combined_output = "\n".join(output_texts)
+                if len(combined_output) > 2000:
+                    combined_output = combined_output[:2000] + "\n... [Output truncated]"
+                cell_str += f"\n# [Output]\n# " + combined_output.replace("\n", "\n# ")
+            parts.append(cell_str)
+        else:
+            parts.append(f"# [Cell {idx} - {cell_type}]\n{source_text}")
+
+    if not parts:
+        return raw_str
+    return "\n\n".join(parts)
+
+
 def _supabase() -> Client:
     settings = get_settings()
     return create_client(settings.supabase_url, settings.supabase_service_key)
@@ -126,7 +199,7 @@ def _classify(
     """
     _reject_if_unreadable(name, data)
 
-    if mime is None:
+    if not mime:
         mime, _ = mimetypes.guess_type(name)
 
     lowered = name.lower()
@@ -147,7 +220,10 @@ def _classify(
     if lowered.endswith(".docx") or mime == DOCX_MIME:
         return "text", docx_to_text(name, data), None
 
-    if mime is None or mime.startswith("text/") or _is_code_file(name):
+    if lowered.endswith(".ipynb"):
+        return "text", ipynb_to_text(name, data), None
+
+    if not mime or mime.startswith("text/") or _is_code_file(name):
         return "text", data.decode("utf-8", errors="replace"), None
 
     # Ảnh/PDF hỏng → báo rõ thay vì để AI trả lỗi khó hiểu.

@@ -688,4 +688,66 @@ export function isImprovementObservation(text: string): boolean {
   );
 }
 
+/**
+ * Tách danh sách quan sát bài kiểm tra / thuyết trình thành 2 mảng
+ * `strengths` và `improvements` (loại trùng) để lưu vào `student_reviews`.
+ */
+export function splitObservationsByPolarity(observations: string[]): {
+  strengths: string[];
+  improvements: string[];
+} {
+  const seen = new Set<string>();
+  const strengths: string[] = [];
+  const improvements: string[] = [];
+
+  for (const raw of observations) {
+    const item = raw.trim();
+    if (!item || seen.has(item)) continue;
+    seen.add(item);
+    if (isImprovementObservation(item)) {
+      improvements.push(item);
+    } else {
+      strengths.push(item);
+    }
+  }
+
+  return { strengths, improvements };
+}
+
+/**
+ * Khôi phục danh sách quan sát đã chọn cho buổi kiểm tra / thuyết trình:
+ * - Ưu tiên dữ liệu đã lưu trong DB (`strengths` + `improvements`) để đồng bộ
+ *   được giữa các thiết bị và giữ nguyên sau khi bấm "Lưu nhận xét" (remount).
+ * - Khi DB chưa lưu mục nào, dùng bản nháp `localStorage` (`draftJson`) nếu có.
+ */
+export function restoreInitialObservations(
+  savedStrengths: string[] | undefined,
+  savedImprovements: string[] | undefined,
+  draftJson: string | null
+): string[] {
+  const dedupe = (list: string[]): string[] => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const raw of list) {
+      const item = raw.trim();
+      if (!item || seen.has(item)) continue;
+      seen.add(item);
+      out.push(item);
+    }
+    return out;
+  };
+
+  const fromDb = dedupe([...(savedStrengths ?? []), ...(savedImprovements ?? [])]);
+  if (fromDb.length > 0) return fromDb;
+
+  if (!draftJson) return [];
+  try {
+    const parsed: unknown = JSON.parse(draftJson);
+    if (!Array.isArray(parsed)) return [];
+    return dedupe(parsed.filter((v): v is string => typeof v === "string"));
+  } catch {
+    return [];
+  }
+}
+
 

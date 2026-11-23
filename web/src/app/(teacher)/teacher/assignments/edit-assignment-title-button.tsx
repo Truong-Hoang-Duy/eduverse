@@ -170,7 +170,7 @@ export function EditAssignmentTitleButton({
                   id={`edit-assignment-file-${assignmentId}`}
                   name="spec_file"
                   type="file"
-                  accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.docx"
+                  accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.docx,.ipynb"
                   onChange={handleFileChange}
                   className="h-9 text-xs file:text-xs"
                 />
