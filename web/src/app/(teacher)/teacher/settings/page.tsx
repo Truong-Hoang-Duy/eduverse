@@ -59,6 +59,7 @@ export default async function SettingsPage() {
         .select("id, name, template_text")
         .eq("teacher_id", profile.id)
         .not("name", "like", "__CODE_SNIPPET__:%")
+        .not("name", "like", "__SUBSTITUTE_CLASS__:%")
         .order("name"),
       listMyCombos(),
       listMySkillGroups(),

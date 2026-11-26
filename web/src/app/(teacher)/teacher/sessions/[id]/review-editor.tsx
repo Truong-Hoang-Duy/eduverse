@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { academicLevelLabel } from "@/lib/academic-levels";
+import { ACADEMIC_LEVELS, academicLevelLabel } from "@/lib/academic-levels";
 import {
   generateAiReview,
   generateFinalPresentationReview,
@@ -50,6 +50,7 @@ import {
   updateReviewOption,
 } from "@/lib/actions/settings";
 import { buildLmsStudentPayload, pushToLmsBridge } from "@/lib/lms-bridge";
+import { withSubstituteTeachingContext } from "@/lib/substitute-classes";
 import {
   createDefaultFinalEvaluation,
   FINAL_EXAM_OBSERVATION_GROUPS,
@@ -156,6 +157,10 @@ export function ReviewEditor({
   priorComments,
   copySources,
   combos,
+  saveAction,
+  extraHiddenFields,
+  onAcademicLevelChange,
+  isSubstituteTeaching,
 }: {
   index?: number;
   sessionId: string;
@@ -197,11 +202,29 @@ export function ReviewEditor({
   copySources?: CopySource[];
   /** Bộ combo lưu sẵn của GV — áp cả bộ điểm mạnh/cải thiện/SPCK 1 chạm. */
   combos?: ReviewCombo[];
+  /** Tùy chọn thay thế action lưu mặc định (dùng cho buổi lớp dạy thay). */
+  saveAction?: (prev: ActionResult, formData: FormData) => Promise<ActionResult>;
+  /** Các hidden field bổ sung gửi cùng form lưu (VD: substitute_class_id). */
+  extraHiddenFields?: Record<string, string>;
+  /** Khi truyền vào (lớp dạy thay), cho phép chọn nhanh học lực ngay trên thẻ học viên. */
+  onAcademicLevelChange?: (studentId: string, level: string | null) => Promise<void>;
+  /** Gắn ngữ cảnh "giáo viên nhận dạy thay buổi này" cho AI tránh bịa lịch sử buổi cũ. */
+  isSubstituteTeaching?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
-    saveReview,
+    saveAction ?? saveReview,
     {}
   );
+  const [levelPending, startLevelChange] = useTransition();
+  const [localAcademicLevel, setLocalAcademicLevel] = useState<string | null>(
+    academicLevel
+  );
+  useEffect(() => {
+    setLocalAcademicLevel(academicLevel);
+  }, [academicLevel]);
+  const effectiveAcademicLevel = onAcademicLevelChange
+    ? localAcademicLevel
+    : academicLevel;
   const [strengths, setStrengths] = useState<string[]>(existing?.strengths ?? []);
   const [improvements, setImprovements] = useState<string[]>(
     existing?.improvements ?? []
@@ -689,7 +712,7 @@ export function ReviewEditor({
             studentName,
             classCode: classCode ?? "",
             courseName: courseName ?? "",
-            academicLevel: academicLevelLabel(academicLevel) ?? undefined,
+            academicLevel: academicLevelLabel(effectiveAcademicLevel) ?? undefined,
             projectName: isFinalPresentation ? project?.name : undefined,
             projectDescription: isFinalPresentation
               ? (project?.description ?? undefined)
@@ -707,7 +730,10 @@ export function ReviewEditor({
             sessionNumber,
             sessionTitle,
             sessionContent,
-            sessionContext: sessionContext || undefined,
+            sessionContext: withSubstituteTeachingContext(
+              sessionContext,
+              isSubstituteTeaching
+            ),
           });
           if (res.error) {
             setAiError(res.error);
@@ -736,7 +762,10 @@ export function ReviewEditor({
           projectName: project?.name,
           projectDescription: project?.description ?? undefined,
           projectFeatures: project?.features ?? undefined,
-          sessionContext: sessionContext || undefined,
+          sessionContext: withSubstituteTeachingContext(
+            sessionContext,
+            isSubstituteTeaching
+          ),
           studentNote: studentNote.trim() || undefined,
           isPeriodicTest,
           testProcessNotes: isPeriodicTest ? testProcessNotes : undefined,
@@ -744,7 +773,7 @@ export function ReviewEditor({
           projectProgressNotes: isProjectPeriod ? projectProgressNotes : undefined,
           previousComment: existing?.ai_generated_comment ?? undefined,
           priorComments,
-          academicLevel: academicLevelLabel(academicLevel) ?? undefined,
+          academicLevel: academicLevelLabel(effectiveAcademicLevel) ?? undefined,
         });
         if (res.error) {
           setAiError(res.error);
@@ -784,7 +813,7 @@ export function ReviewEditor({
           studentName,
           classCode: classCode ?? "",
           courseName: courseName ?? "",
-          academicLevel: academicLevelLabel(academicLevel) ?? undefined,
+          academicLevel: academicLevelLabel(effectiveAcademicLevel) ?? undefined,
           projectName: isFinalPresentation ? project?.name : undefined,
           projectDescription: isFinalPresentation
             ? (project?.description ?? undefined)
@@ -802,7 +831,10 @@ export function ReviewEditor({
           sessionNumber,
           sessionTitle,
           sessionContent,
-          sessionContext: sessionContext || undefined,
+          sessionContext: withSubstituteTeachingContext(
+            sessionContext,
+            isSubstituteTeaching
+          ),
         });
 
         if (res.error) {
@@ -875,7 +907,7 @@ export function ReviewEditor({
   }
 
   const reviewed = isReviewed(existing);
-  const levelLabel = academicLevelLabel(academicLevel);
+  const levelLabel = academicLevelLabel(effectiveAcademicLevel);
 
   const formattedIndex =
     typeof index === "number"
@@ -1012,32 +1044,69 @@ export function ReviewEditor({
         <input type="hidden" name="session_id" value={sessionId} />
         <input type="hidden" name="student_id" value={studentId} />
         <input type="hidden" name="is_absent" value={String(isAbsent)} />
+        {extraHiddenFields &&
+          Object.entries(extraHiddenFields).map(([k, v]) => (
+            <input key={k} type="hidden" name={k} value={v} />
+          ))}
 
-        {/* Đánh vắng — dạng toggle card thanh lịch */}
-        <label
-          className={cn(
-            "flex cursor-pointer items-center justify-between rounded-lg p-2.5 sm:px-3 text-xs sm:text-sm font-medium transition-all shadow-2xs",
-            isAbsent
-              ? "bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/60"
-              : "bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground border border-slate-300 dark:border-slate-700"
+        {/* Đánh vắng + chọn nhanh xếp loại học lực (nếu là lớp dạy thay) */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <label
+            className={cn(
+              "flex flex-1 min-w-[230px] cursor-pointer items-center justify-between rounded-lg p-2.5 sm:px-3 text-xs sm:text-sm font-medium transition-all shadow-2xs",
+              isAbsent
+                ? "bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/60"
+                : "bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground border border-slate-300 dark:border-slate-700"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isAbsent}
+                onChange={(e) => toggleAbsent(e.target.checked)}
+                disabled={pending}
+                className="size-4 rounded accent-primary cursor-pointer"
+              />
+              <span>🚫 Vắng mặt buổi này (không cần nhận xét)</span>
+            </div>
+            {isAbsent && (
+              <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded">
+                ✓ Đã tự động lưu
+              </span>
+            )}
+          </label>
+
+          {onAcademicLevelChange && !isAbsent && (
+            <div className="flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-background/80 px-2.5 py-1.5">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                🏷️ Học lực:
+              </span>
+              <Select
+                value={effectiveAcademicLevel ?? "__none__"}
+                disabled={levelPending}
+                onValueChange={(val) => {
+                  const next = val === "__none__" ? null : val;
+                  setLocalAcademicLevel(next);
+                  startLevelChange(async () => {
+                    await onAcademicLevelChange(studentId, next);
+                  });
+                }}
+              >
+                <SelectTrigger className="h-7 w-36 text-xs">
+                  <SelectValue placeholder="Chưa chọn" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Chưa chọn</SelectItem>
+                  {ACADEMIC_LEVELS.map((lv) => (
+                    <SelectItem key={lv.value} value={lv.value}>
+                      {lv.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
-        >
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isAbsent}
-              onChange={(e) => toggleAbsent(e.target.checked)}
-              disabled={pending}
-              className="size-4 rounded accent-primary cursor-pointer"
-            />
-            <span>🚫 Vắng mặt buổi này (không cần nhận xét)</span>
-          </div>
-          {isAbsent && (
-            <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded">
-              ✓ Đã tự động lưu
-            </span>
-          )}
-        </label>
+        </div>
 
         {isAbsent && (
           <p className="rounded-lg border border-dashed border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-300">

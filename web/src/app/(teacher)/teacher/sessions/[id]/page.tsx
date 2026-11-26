@@ -121,6 +121,7 @@ export default async function SessionDetailPage({
       .select("id, name")
       .eq("teacher_id", profile.id)
       .not("name", "like", "__CODE_SNIPPET__:%")
+      .not("name", "like", "__SUBSTITUTE_CLASS__:%")
       .order("name"),
     listMyCombos(profile.id),
   ]);

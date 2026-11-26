@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "CodeLuma → MindX LMS Bridge",
-  "version": "1.1.0",
-  "description": "Hỗ trợ chuyển nhận xét buổi học, 9 tiêu chí ĐNL, điểm Checkpoint từ Sản phẩm học sinh, Demo Score và Thư từ MindX sang giao diện MindX LMS (giáo viên tự soát và bấm Save).",
+  "version": "1.2.0",
+  "description": "Chuyển nhận xét 2 chiều giữa CodeLuma và MindX LMS (điền tự động cả 14 buổi, 9 ĐNL, điểm Checkpoint, Khảo sát PH, và kéo nhanh danh sách lớp dạy thay từ LMS sang CodeLuma — giáo viên luôn tự soát và bấm Save).",
   "permissions": ["storage", "tabs"],
   "host_permissions": [
     "https://lms.mindx.edu.vn/*",

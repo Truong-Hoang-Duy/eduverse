@@ -34,6 +34,7 @@ export function ZaloPanel({
   courseName,
   teacherName,
   templates,
+  customGenerateSummary,
 }: {
   sessionId: string;
   sessionNumber?: number;
@@ -42,6 +43,10 @@ export function ZaloPanel({
   courseName?: string;
   teacherName?: string;
   templates: TemplateChoice[];
+  /** Tùy chọn thay thế hàm tổng hợp mặc định (dùng cho buổi lớp dạy thay). */
+  customGenerateSummary?: (
+    templateId: string
+  ) => Promise<{ message?: string; error?: string }>;
 }) {
   const bestTemplate = useMemo(
     () => findBestMatchingZaloTemplate(templates, sessionFormat),
@@ -68,7 +73,9 @@ export function ZaloPanel({
     setError("");
     setCopied(false);
     startGenerate(async () => {
-      const res = await generateZaloSummary({ sessionId, templateId });
+      const res = customGenerateSummary
+        ? await customGenerateSummary(templateId)
+        : await generateZaloSummary({ sessionId, templateId });
       if (res.error) {
         setError(res.error);
       } else {

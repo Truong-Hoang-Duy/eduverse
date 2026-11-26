@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { ReviewCombo } from "@/lib/actions/review-combos";
 import type { PriorReviewHistoryItem } from "@/lib/actions/reviews";
+import type { ActionResult } from "@/lib/types";
 import {
   buildLmsStudentPayload,
   type LmsStudentReviewPayload,
@@ -58,6 +59,10 @@ export function ReviewList({
   allPriorReviewsByStudentId,
   projectsByStudentId,
   combos,
+  saveAction,
+  extraHiddenFields,
+  onAcademicLevelChange,
+  isSubstituteTeaching,
 }: {
   sessionId: string;
   sessionNumber?: number;
@@ -81,6 +86,10 @@ export function ReviewList({
     { id: string; name: string; description: string | null; features: string[] | null }
   >;
   combos: ReviewCombo[];
+  saveAction?: (prev: ActionResult, formData: FormData) => Promise<ActionResult>;
+  extraHiddenFields?: Record<string, string>;
+  onAcademicLevelChange?: (studentId: string, level: string | null) => Promise<void>;
+  isSubstituteTeaching?: boolean;
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [lmsSending, setLmsSending] = useState(false);
@@ -393,6 +402,10 @@ export function ReviewList({
                 priorComments={priorCommentsByStudentId.get(student.id) ?? []}
                 copySources={copySourcesFor(student.id)}
                 combos={combos}
+                saveAction={saveAction}
+                extraHiddenFields={extraHiddenFields}
+                onAcademicLevelChange={onAcademicLevelChange}
+                isSubstituteTeaching={isSubstituteTeaching}
               />
             );
           })}

@@ -1,6 +1,7 @@
 "use server";
 
 import { getAiConfig } from "@/lib/actions/api-key";
+import { getSubstituteClass } from "@/lib/actions/substitute-classes";
 import { AiServiceError, callAiService } from "@/lib/ai-client";
 import { resolveSessionFormat } from "@/lib/session-format";
 import { createClient } from "@/lib/supabase/server";
@@ -114,6 +115,108 @@ export async function generateZaloSummary(input: {
     // placeholder cố định {ten_lop} {buoi} {tom_tat} {loi_nhan} được thay.
     const message = template.template_text
       .replaceAll("{ten_lop}", classCode)
+      .replaceAll("{buoi}", sessionLabel)
+      .replaceAll("{tom_tat}", data.tom_tat)
+      .replaceAll("{loi_nhan}", data.loi_nhan);
+    return { message };
+  } catch (err) {
+    if (err instanceof AiServiceError) {
+      return { error: `Lỗi AI: ${err.message}` };
+    }
+    return { error: "Lỗi hệ thống khi tạo tin nhắn Zalo" };
+  }
+}
+
+/** Tổng hợp tình hình 1 buổi DẠY THAY và ghép vào mẫu tin Zalo đã chọn. */
+export async function generateSubstituteZaloSummary(input: {
+  substituteClassId: string;
+  sessionId: string;
+  templateId: string;
+}): Promise<{ message?: string; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Phiên đăng nhập hết hạn." };
+  }
+
+  const [cls, { data: template }] = await Promise.all([
+    getSubstituteClass(input.substituteClassId, user.id),
+    supabase
+      .from("zalo_templates")
+      .select("template_text")
+      .eq("id", input.templateId)
+      .eq("teacher_id", user.id)
+      .maybeSingle(),
+  ]);
+
+  if (!cls) {
+    return { error: "Không tìm thấy lớp dạy thay." };
+  }
+  const session = cls.sessions.find((s) => s.id === input.sessionId);
+  if (!session) {
+    return { error: "Không tìm thấy buổi dạy thay." };
+  }
+  if (!template) {
+    return { error: "Chưa chọn mẫu tin — tạo mẫu trong trang Cài đặt." };
+  }
+
+  const reviews = cls.students
+    .map((student) => {
+      const rev = session.reviews[student.id];
+      if (!rev || rev.is_absent) return null;
+      if (
+        rev.strengths.length === 0 &&
+        rev.improvements.length === 0 &&
+        !rev.ai_generated_comment
+      ) {
+        return null;
+      }
+      return {
+        student_name: student.full_name,
+        strengths: rev.strengths,
+        improvements: rev.improvements,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+
+  if (reviews.length === 0) {
+    return {
+      error:
+        "Buổi dạy thay này chưa có nhận xét học viên nào — hãy lưu nhận xét trước khi tạo tin.",
+    };
+  }
+
+  const aiConfig = await getAiConfig();
+  if (!aiConfig.ok) {
+    return { error: aiConfig.error };
+  }
+
+  const sessionFormat = resolveSessionFormat({
+    session_number: session.sessionNumber,
+    is_periodic_test: session.isPeriodicTest,
+    is_project_period: session.isProjectPeriod,
+    is_final_presentation: session.isFinalPresentation,
+  });
+  const sessionLabel = session.title ?? `Buổi ${session.sessionNumber}`;
+
+  try {
+    const data = await callAiService<{ tom_tat: string; loi_nhan: string }>(
+      "/generate-zalo-summary",
+      {
+        api_key: aiConfig.api_key,
+        provider: aiConfig.provider,
+        class_code: cls.classCode,
+        session_title: sessionLabel,
+        session_content: session.content ?? "",
+        session_format: sessionFormat,
+        reviews,
+        is_one_on_one: cls.students.length === 1,
+      }
+    );
+    const message = template.template_text
+      .replaceAll("{ten_lop}", cls.classCode)
       .replaceAll("{buoi}", sessionLabel)
       .replaceAll("{tom_tat}", data.tom_tat)
       .replaceAll("{loi_nhan}", data.loi_nhan);

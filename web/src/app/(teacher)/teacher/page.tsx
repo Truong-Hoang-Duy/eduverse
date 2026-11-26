@@ -1,5 +1,10 @@
+import Link from "next/link";
+
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { listSubstituteClasses } from "@/lib/actions/substitute-classes";
 import { isClassCompleted } from "@/lib/class-completion";
 import { sortCoursesByRoadmap } from "@/lib/course-sort";
 import { isSubstituteSession } from "@/lib/session-substitute";
@@ -29,17 +34,21 @@ function nextClassCode(courseCode: string, classes: ClassRow[]): string {
 export default async function TeacherDashboard() {
   const supabase = await createClient();
 
-  // Gom cả 3 query ban đầu (courses, classes, sessions) vào một Promise.all song song
-  // để loại bỏ 1 roundtrip mạng tuần tự (tiết kiệm 100-200ms khi tải trang).
-  const [{ data: coursesData }, { data: classesData }, { data: sessionsData }] =
-    await Promise.all([
-      supabase.from("courses").select("*").order("code"),
-      supabase
-        .from("classes")
-        .select("*, enrollments(count)")
-        .order("class_code"),
-      supabase.from("sessions").select("id, class_id, session_number, review_context"),
-    ]);
+  // Gom cả 4 query ban đầu vào Promise.all song song để không tăng roundtrip.
+  const [
+    { data: coursesData },
+    { data: classesData },
+    { data: sessionsData },
+    substituteClasses,
+  ] = await Promise.all([
+    supabase.from("courses").select("*").order("code"),
+    supabase
+      .from("classes")
+      .select("*, enrollments(count)")
+      .order("class_code"),
+    supabase.from("sessions").select("id, class_id, session_number, review_context"),
+    listSubstituteClasses(),
+  ]);
 
   const courses = sortCoursesByRoadmap((coursesData ?? []) as Course[]);
   const classes = (classesData ?? []) as ClassRow[];
@@ -118,7 +127,24 @@ export default async function TeacherDashboard() {
         title="Khóa học & lớp"
         description="Quản lý các khóa học và lớp bạn đang dạy"
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              asChild
+              variant="outline"
+              className="cursor-pointer border-indigo-500/40 bg-indigo-500/5 text-indigo-700 hover:bg-indigo-500/15 dark:text-indigo-300"
+            >
+              <Link href="/teacher/substitute" prefetch={true}>
+                <span>🔄 Dạy thay</span>
+                {substituteClasses.length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="ml-1.5 rounded-full px-1.5 py-0 text-[10px]"
+                  >
+                    {substituteClasses.length}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
             <CourseForm />
             <ClassForm courses={courseOptions} />
           </div>

@@ -3,8 +3,26 @@
 > MỖI PHIÊN (hoặc khi user gõ /handoff). Giữ tối đa ~150 dòng: phiên cũ hơn 2 tuần
 > thì xóa hoặc chuyển vào docs/archive/.
 ---
-## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-23, bởi: Gemini)
-**Đang làm:** Đã hoàn thành Đợt 127 (**Xây dựng & nâng cấp v1.1.0 cầu nối CodeLuma → MindX LMS (`extensions/codeluma-lms-bridge/` + nút gửi trên CodeLuma) hỗ trợ cả 14 buổi, tự bỏ qua học viên đã Pending, hiển thị icon siêu gọn `✅`/`❌` và tự động đọc-điền điểm Thực hành & Trắc nghiệm từ `"Sản phẩm của học sinh"`**):
+## 🎯 Trạng thái hiện tại (cập nhật gần nhất: 2026-11-26, bởi: Gemini)
+**Đang làm:** Đã hoàn thành Đợt 128 (**Xây dựng không gian riêng "🔄 Lớp dạy thay" (`/teacher/substitute` & `/teacher/substitute/[id]`) cho trường hợp giáo viên đi dạy thay lớp khác — không cần tạo tài khoản học viên, viết nhận xét AI & gửi sang MindX LMS đầy đủ như lớp cố định, xóa sạch lớp bằng 1 chạm khi dạy xong**):
+1. **Database & RLS (`supabase/migrations/20261126000000_substitute_classes.sql`, `web/src/lib/database.types.ts`, `web/src/lib/substitute-classes.ts`):**
+   - Tạo 2 bảng tách biệt hoàn toàn khỏi `classes`/`enrollments`/`profiles`: `substitute_classes` (danh sách học viên + học lực dạng JSONB, mã lớp tự do như `BH-CSA06`, `ONL-JSB12`) và `substitute_sessions` (`ON DELETE CASCADE`, chỉ tạo buổi nào dạy thay buổi đó, không sinh 14 buổi trống).
+   - RLS chặt cho cả 2 bảng: `teacher_id = auth.uid() and public.is_teacher()` (học viên không thể truy cập).
+   - Có cơ chế dự phòng an toàn (`__SUBSTITUTE_CLASS__:` trong `zalo_templates` — đã lọc ẩn khỏi danh sách mẫu Zalo ở `settings/page.tsx` và `sessions/[id]/page.tsx`) để chạy ngay cả khi DB live chưa kịp áp file migration SQL.
+2. **Backend Actions & tái sử dụng trọn vẹn luồng Nhận xét AI / Zalo (`web/src/lib/actions/substitute-classes.ts`, `zalo.ts`, `review-editor.tsx`, `review-list.tsx`, `zalo-panel.tsx`):**
+   - Full CRUD lớp dạy thay (tạo nhanh, sửa thông tin, **xóa sạch lớp + toàn bộ buổi/nhận xét qua `ConfirmDialog`**), quản lý danh sách học viên không cần tài khoản (dán hàng loạt bỏ số thứ tự & lọc trùng, đổi học lực inline, xóa từng em), tạo/sửa/xóa từng buổi dạy thay, **chép nhanh giáo án cùng số buổi từ lớp cố định cùng khóa**.
+   - Tái sử dụng trực tiếp `ReviewList`, `ReviewEditor` (thêm props tùy chọn `saveAction`, `extraHiddenFields`, `onAcademicLevelChange`, `isSubstituteTeaching` truyền bối cảnh dạy thay cho AI để không bịa lời so sánh với các buổi trước) và `ZaloPanel` (`customGenerateSummary` → `generateSubstituteZaloSummary`).
+3. **Giao diện & Extension MindX LMS v1.2.0 (`web/src/app/(teacher)/teacher/substitute/`, `extensions/codeluma-lms-bridge/`):**
+   - Nút **`🔄 Dạy thay`** (kèm badge số lớp) trên thanh đầu `/teacher`, trang danh sách `/teacher/substitute` (có nút `🗑️ Xóa` kèm `ConfirmDialog` trên từng thẻ) và trang chi tiết `/teacher/substitute/[id]` (có `loading.tsx` cho prefetch).
+   - Nâng cấp Chrome Extension v1.2.0 (`manifest.json`, `background.js`, `content-codeluma.js`, `lms-page-reader.js`, `content-lms.js`) hỗ trợ **2 chiều**: thêm nút **`📥 Đưa lớp sang Dạy thay`** trên trang MindX LMS đọc trực tiếp React props `detailData`/`studentAttendances`/`courseProcess` (100% chỉ đọc, không click/gọi API) để kéo chuẩn mã lớp, tên khóa học, danh sách học viên (chuẩn hóa NFC), trạng thái điểm danh (`Absent` tự đánh vắng), nội dung bài học `summary`, nhận xét Sản phẩm và **toàn bộ nhận xét đã lưu (kèm 9 ĐNL nếu có) của TẤT CẢ các buổi đã chấm trên LMS** sang `/teacher/substitute` (cả khi tạo mới lẫn khi bấm `📥 Đồng bộ từ MindX LMS` trong lớp dạy thay có sẵn); chiều ngược lại dùng nguyên nút `🚀 Gửi cả lớp sang LMS`.
+4. **Kiểm thử chất lượng:**
+   - `web/`: 510/510 tests vitest PASS 100% (bổ sung `substitute-classes.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+   - `extensions/codeluma-lms-bridge/`: kiểm tra cú pháp toàn bộ 5 file JS & `manifest.json` OK.
+
+Cập nhật bởi: Gemini
+
+---
+**Trước đó:** Đã hoàn thành Đợt 127 (**Xây dựng & nâng cấp v1.1.0 cầu nối CodeLuma → MindX LMS (`extensions/codeluma-lms-bridge/` + nút gửi trên CodeLuma) hỗ trợ cả 14 buổi, tự bỏ qua học viên đã Pending, hiển thị icon siêu gọn `✅`/`❌` và tự động đọc-điền điểm Thực hành & Trắc nghiệm từ `"Sản phẩm của học sinh"`**):
 1. **Phân tích thực tế DOM `lms.mindx.edu.vn/admin/classes?tab=10` (chỉ đọc, không sửa/lưu dữ liệu):**
    - Xác định chuẩn giao diện LMS dùng **React + Material UI (MUI v5 + JSS động) + ReactQuill** (không phụ thuộc class `jssNNNN` động).
    - Xử lý trọn vẹn các điểm đặc thù của LMS: tự chuyển từ Preview Mode sang Edit Mode cho học sinh đã có nhận xét, tự chuyển về By-Areas Mode, bỏ qua các nút `.btn-group-cmt-mindx` của extension khác khi đọc nhãn `[ĐNL]`, chọn đúng `<textarea>` thật (bỏ shadow `readonly` của MUI), **click trực tiếp `<input type="radio">` điểm `1..5` TRƯỚC rồi chờ React cập nhật mới ghi đè nhận xét** (tránh bị câu mẫu mặc định của LMS đè mất), và bắn đủ `input`/`change`/`blur` cho ô điểm `Demo Score` (`Kn`).

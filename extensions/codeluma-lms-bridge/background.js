@@ -5,6 +5,7 @@
  */
 
 const STORAGE_KEY = "codeluma_lms_queue";
+const ROSTER_IMPORT_KEY = "codeluma_lms_roster_import";
 
 function normalizeKey(name) {
   return String(name || "")
@@ -152,6 +153,76 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "CODELUMA_CLEAR_QUEUE") {
     (async () => {
       await chrome.storage.local.remove(STORAGE_KEY);
+      sendResponse({ ok: true });
+    })();
+    return true;
+  }
+
+  if (message.type === "CODELUMA_EXPORT_ROSTER") {
+    (async () => {
+      try {
+        const roster = {
+          classCode: String(message.payload?.classCode || "").trim(),
+          courseName: String(message.payload?.courseName || "").trim(),
+          courseShortName: String(message.payload?.courseShortName || "").trim(),
+          sessionNumber: message.payload?.sessionNumber ?? null,
+          exportedAt: new Date().toISOString(),
+          students: Array.isArray(message.payload?.students)
+            ? message.payload.students
+            : [],
+          sessions: Array.isArray(message.payload?.sessions)
+            ? message.payload.sessions
+            : [],
+        };
+        await chrome.storage.local.set({ [ROSTER_IMPORT_KEY]: roster });
+
+        // Ưu tiên mở/focus tab CodeLuma đang chạy (localhost hoặc production)
+        const tabs = await chrome.tabs.query({
+          url: [
+            "http://localhost:3000/*",
+            "http://127.0.0.1:3000/*",
+            "https://codeluma.vercel.app/*",
+          ],
+        });
+        if (tabs.length > 0 && tabs[0].id != null) {
+          const origin = new URL(tabs[0].url || "https://codeluma.vercel.app").origin;
+          await chrome.tabs.update(tabs[0].id, {
+            active: true,
+            url: `${origin}/teacher/substitute?import=lms`,
+          });
+          if (tabs[0].windowId != null) {
+            await chrome.windows.update(tabs[0].windowId, { focused: true });
+          }
+        } else {
+          await chrome.tabs.create({
+            url: "https://codeluma.vercel.app/teacher/substitute?import=lms",
+          });
+        }
+        sendResponse({ ok: true, count: roster.students.length });
+      } catch (err) {
+        sendResponse({
+          ok: false,
+          error:
+            err instanceof Error
+              ? err.message
+              : "Không chuyển được danh sách sang CodeLuma.",
+        });
+      }
+    })();
+    return true;
+  }
+
+  if (message.type === "CODELUMA_GET_ROSTER") {
+    (async () => {
+      const res = await chrome.storage.local.get(ROSTER_IMPORT_KEY);
+      sendResponse({ ok: true, roster: res[ROSTER_IMPORT_KEY] || null });
+    })();
+    return true;
+  }
+
+  if (message.type === "CODELUMA_CLEAR_ROSTER") {
+    (async () => {
+      await chrome.storage.local.remove(ROSTER_IMPORT_KEY);
       sendResponse({ ok: true });
     })();
     return true;
