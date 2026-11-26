@@ -725,6 +725,123 @@ export type Database = {
           },
         ]
       }
+      substitute_classes: {
+        Row: {
+          class_code: string
+          course_id: string | null
+          course_name: string
+          created_at: string
+          id: string
+          notes: string | null
+          students: Json
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          class_code: string
+          course_id?: string | null
+          course_name?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          students?: Json
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          class_code?: string
+          course_id?: string | null
+          course_name?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          students?: Json
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "substitute_classes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "substitute_classes_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      substitute_sessions: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_final_presentation: boolean
+          is_periodic_test: boolean
+          is_project_period: boolean
+          review_context: string | null
+          reviews: Json
+          session_date: string | null
+          session_number: number
+          substitute_class_id: string
+          teacher_id: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_final_presentation?: boolean
+          is_periodic_test?: boolean
+          is_project_period?: boolean
+          review_context?: string | null
+          reviews?: Json
+          session_date?: string | null
+          session_number?: number
+          substitute_class_id: string
+          teacher_id: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_final_presentation?: boolean
+          is_periodic_test?: boolean
+          is_project_period?: boolean
+          review_context?: string | null
+          reviews?: Json
+          session_date?: string | null
+          session_number?: number
+          substitute_class_id?: string
+          teacher_id?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "substitute_sessions_substitute_class_id_fkey"
+            columns: ["substitute_class_id"]
+            isOneToOne: false
+            referencedRelation: "substitute_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "substitute_sessions_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_secrets: {
         Row: {
           gemini_api_key: string | null

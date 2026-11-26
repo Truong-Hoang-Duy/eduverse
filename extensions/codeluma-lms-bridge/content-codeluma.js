@@ -5,7 +5,7 @@
  */
 
 (function initCodeLumaBridge() {
-  const BRIDGE_VERSION = "1.0.0";
+  const BRIDGE_VERSION = "1.2.0";
 
   // Đánh dấu cho web CodeLuma biết Extension đã được cài sẵn
   document.documentElement.dataset.codelumaLmsBridge = BRIDGE_VERSION;
@@ -57,6 +57,29 @@
           );
         }
       );
+      return;
+    }
+
+    if (data.type === "GET_LMS_ROSTER") {
+      chrome.runtime.sendMessage({ type: "CODELUMA_GET_ROSTER" }, (response) => {
+        const runtimeError = chrome.runtime.lastError?.message;
+        window.postMessage(
+          {
+            source: "codeluma-lms-bridge",
+            type: "LMS_ROSTER_RESULT",
+            requestId: data.requestId,
+            ok: Boolean(!runtimeError && response?.ok),
+            roster: response?.roster || null,
+            error: runtimeError || response?.error || "",
+          },
+          "*"
+        );
+      });
+      return;
+    }
+
+    if (data.type === "CLEAR_LMS_ROSTER") {
+      chrome.runtime.sendMessage({ type: "CODELUMA_CLEAR_ROSTER" }, () => {});
     }
   });
 })();

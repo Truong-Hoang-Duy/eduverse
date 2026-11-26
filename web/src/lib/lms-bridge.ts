@@ -40,6 +40,41 @@ export interface PushToLmsResult {
   error?: string;
 }
 
+export interface LmsImportedStudent {
+  fullName: string;
+  attendance: "attended" | "late" | "absent" | "unknown";
+  hasSavedComment: boolean;
+  comment?: string;
+  dnlEvaluations?: Record<string, DnlCriterionEvaluation>;
+  gradingSummary?: string;
+}
+
+export interface LmsImportedSession {
+  sessionNumber: number;
+  title?: string;
+  content?: string;
+  sessionDate?: string;
+  sessionFormat?: "standard" | "project_period" | "periodic_test" | "final_presentation";
+  students: LmsImportedStudent[];
+}
+
+export interface LmsRosterImportPayload {
+  classCode: string;
+  courseName?: string;
+  courseShortName?: string;
+  sessionNumber: number | null;
+  exportedAt: string;
+  students: LmsImportedStudent[];
+  sessions?: LmsImportedSession[];
+}
+
+export interface ReadLmsRosterResult {
+  ok: boolean;
+  installed: boolean;
+  roster: LmsRosterImportPayload | null;
+  error?: string;
+}
+
 /**
  * Đóng gói dữ liệu của 1 học viên để gửi sang MindX LMS.
  * Trả về `null` nếu học viên vắng mặt hoặc chưa có nội dung gì để điền.
@@ -361,4 +396,102 @@ export function pushToLmsBridge(
       "*"
     );
   });
+}
+
+/**
+ * Đọc danh sách lớp + buổi + học viên vừa kéo từ MindX LMS (nút "📥 Đưa sang Dạy thay" trên LMS).
+ */
+export function readLmsRosterImport(): Promise<ReadLmsRosterResult> {
+  if (typeof window === "undefined") {
+    return Promise.resolve({
+      ok: false,
+      installed: false,
+      roster: null,
+      error: "Chỉ hỗ trợ trên trình duyệt.",
+    });
+  }
+
+  if (!isLmsBridgeInstalled()) {
+    return Promise.resolve({
+      ok: false,
+      installed: false,
+      roster: null,
+      error: "Chưa cài Chrome Extension CodeLuma → MindX LMS.",
+    });
+  }
+
+  const requestId = `roster-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  return new Promise((resolve) => {
+    let settled = false;
+
+    function finish(result: ReadLmsRosterResult) {
+      if (settled) return;
+      settled = true;
+      window.removeEventListener("message", handleMessage);
+      window.clearTimeout(timer);
+      resolve(result);
+    }
+
+    function handleMessage(event: MessageEvent) {
+      if (event.source !== window) return;
+      const data = event.data as
+        | {
+            source?: string;
+            type?: string;
+            requestId?: string;
+            ok?: boolean;
+            roster?: LmsRosterImportPayload | null;
+            error?: string;
+          }
+        | undefined;
+      if (
+        !data ||
+        data.source !== "codeluma-lms-bridge" ||
+        data.type !== "LMS_ROSTER_RESULT" ||
+        data.requestId !== requestId
+      ) {
+        return;
+      }
+      finish({
+        ok: Boolean(data.ok),
+        installed: true,
+        roster: data.roster ?? null,
+        error: data.error || undefined,
+      });
+    }
+
+    window.addEventListener("message", handleMessage);
+    const timer = window.setTimeout(() => {
+      finish({
+        ok: false,
+        installed: true,
+        roster: null,
+        error:
+          "Hãy cập nhật (Reload) Chrome Extension CodeLuma → MindX LMS lên bản v1.2.0 rồi tải lại trang.",
+      });
+    }, 1500);
+
+    window.postMessage(
+      {
+        source: "codeluma-app",
+        type: "GET_LMS_ROSTER",
+        requestId,
+      },
+      "*"
+    );
+  });
+}
+
+/** Xóa bộ đệm danh sách lớp vừa kéo từ LMS sau khi đã nạp xong. */
+export function clearLmsRosterImport(): void {
+  if (typeof window === "undefined" || !isLmsBridgeInstalled()) return;
+  window.postMessage(
+    {
+      source: "codeluma-app",
+      type: "CLEAR_LMS_ROSTER",
+      requestId: `clear-roster-${Date.now()}`,
+    },
+    "*"
+  );
 }

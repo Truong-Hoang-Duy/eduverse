@@ -12,6 +12,7 @@
   const BAR_ATTR = "data-codeluma-modal-bar";
   const ROW_BADGE_ATTR = "data-codeluma-row-badge";
   const STATUS_PILL_ID = "codeluma-lms-floating-status";
+  const TABLE_ACTION_BAR_ID = "codeluma-lms-table-action-bar";
 
   let currentQueue = null;
   let fillInProgress = false;
@@ -1474,10 +1475,229 @@
     lmsCompletedStudentKeys = completedSet;
   }
 
-  /** Thanh trạng thái nổi gọn góc dưới-trái — chỉ đếm các em CÒN CHƯA điền (bỏ qua em đã Pending). */
+  /** Nhận diện mã lớp đang mở trên bảng chi tiết lớp của MindX LMS (VD: BH-CSA06, ONL-JSB12). */
+  function detectActiveLmsClassCode() {
+    const codeRegex = /\b(?:[A-Z]{2,4}-)?[A-Z0-9]{2,5}(?:-[A-Z0-9]{2,5})?\d{1,3}\b/;
+
+    // 1. Dòng lớp đang chọn ở bảng bên trái (nếu có class selected / active)
+    const selectedRow = document.querySelector(
+      "table.MuiTable-root tbody tr.Mui-selected, table.MuiTable-root tbody tr.active"
+    );
+    if (selectedRow) {
+      for (const cell of selectedRow.querySelectorAll("td")) {
+        const txt = (cell.textContent || "").trim();
+        if (txt.length >= 4 && txt.length <= 28 && codeRegex.test(txt)) {
+          return txt;
+        }
+      }
+    }
+
+    // 2. Tiêu đề / thanh drawer phía trên bảng học viên
+    const headings = document.querySelectorAll("h1, h2, h3, h4, h5, h6, [class*='title'], [class*='header']");
+    for (const el of headings) {
+      if (el.closest('div.MuiDialog-paper[role="dialog"]')) continue;
+      const txt = (el.textContent || "").trim();
+      if (txt.length >= 4 && txt.length <= 32) {
+        const m = txt.match(/\b(?:BH|ONL|HN|HCM|DN|HP|CT|SG|BD|NT)-[A-Z0-9-]{3,20}\b/i);
+        if (m) return m[0].toUpperCase();
+      }
+    }
+
+    return "";
+  }
+
+  /** Yêu cầu lms-page-reader.js (MAIN world) đọc trọn bộ lớp + các buổi đã nhận xét từ React props. */
+  function requestFullLmsRosterFromReader() {
+    const requestId = `full-roster-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    return new Promise((resolve) => {
+      let done = false;
+      function finish(roster) {
+        if (done) return;
+        done = true;
+        window.removeEventListener("message", onMsg);
+        clearTimeout(timer);
+        resolve(roster);
+      }
+      function onMsg(event) {
+        if (event.source !== window) return;
+        const data = event.data;
+        if (
+          !data ||
+          data.source !== "codeluma-lms-page-reader" ||
+          data.type !== "FULL_LMS_ROSTER_RESULT" ||
+          data.requestId !== requestId
+        ) {
+          return;
+        }
+        finish(data.ok && data.roster ? data.roster : null);
+      }
+      window.addEventListener("message", onMsg);
+      const timer = setTimeout(() => finish(null), 600);
+      window.postMessage(
+        {
+          source: "codeluma-lms-content",
+          type: "READ_FULL_LMS_ROSTER",
+          requestId,
+        },
+        "*"
+      );
+    });
+  }
+
+  /** Đọc toàn bộ danh sách học viên + điểm danh + nhận xét đã lưu + Sản phẩm trên bảng LMS đang mở. */
+  async function extractCurrentLmsRoster() {
+    // Ưu tiên đọc trực tiếp từ React props (lấy chuẩn mã lớp, khóa học, nội dung bài học & TẤT CẢ nhận xét đã lưu)
+    const rich = await requestFullLmsRosterFromReader();
+    if (rich && Array.isArray(rich.students) && rich.students.length > 0) {
+      return rich;
+    }
+
+    // Fallback DOM nếu không tìm thấy React props
+    await refreshStudentProductsCache();
+    const rows = document.querySelectorAll(
+      "table.MuiTable-root tbody tr.MuiTableRow-root"
+    );
+    const students = [];
+    const seen = new Set();
+
+    for (const row of rows) {
+      const nameEl = row.querySelector(".full-name .name-display");
+      const fullName = nameEl?.textContent?.trim();
+      if (!fullName) continue;
+      const key = normalizeText(fullName);
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const firstCell = row.querySelector("td");
+      const cellText = normalizeText(firstCell?.textContent || "");
+      let attendance = "unknown";
+      if (cellText.includes("absent") || cellText.includes("vắng")) {
+        attendance = "absent";
+      } else if (cellText.includes("late")) {
+        attendance = "late";
+      } else if (cellText.includes("attended") || cellText.includes("có mặt")) {
+        attendance = "attended";
+      }
+
+      const productComments =
+        productCommentsByStudent.get(key) ||
+        productCommentsByStudent.get(stripDiacritics(fullName)) ||
+        [];
+
+      students.push({
+        fullName,
+        attendance,
+        hasSavedComment: rowHasSavedLmsComment(row),
+        gradingSummary: productComments.join("\n\n").trim(),
+      });
+    }
+
+    return {
+      classCode: detectActiveLmsClassCode(),
+      courseName: "",
+      courseShortName: "",
+      sessionNumber: detectActiveLmsSessionNumber(),
+      students,
+      sessions: [],
+    };
+  }
+
+  /**
+   * Gắn nút "📥 Đưa lớp (X HV) sang Dạy thay (CodeLuma)" nổi bật ngay phía trên bảng học viên
+   * (trong khung trắng bên phải, ngay cạnh bộ lọc lớp) để giáo viên nhìn thấy ngay lập tức.
+   */
+  function renderTableActionBar() {
+    const studentTable = Array.from(
+      document.querySelectorAll("table.MuiTable-root")
+    ).find((t) => Boolean(t.querySelector(".full-name .name-display")));
+
+    const existing = document.getElementById(TABLE_ACTION_BAR_ID);
+    if (!studentTable || !studentTable.parentElement) {
+      if (existing) existing.remove();
+      return;
+    }
+
+    const studentRowCount = studentTable.querySelectorAll(
+      "tbody tr.MuiTableRow-root .full-name .name-display"
+    ).length;
+    if (studentRowCount === 0) {
+      if (existing) existing.remove();
+      return;
+    }
+
+    const activeSession = detectActiveLmsSessionNumber();
+    const sig = `${studentRowCount}|${activeSession || ""}`;
+    if (
+      existing &&
+      existing.getAttribute("data-sig") === sig &&
+      existing.nextElementSibling === studentTable
+    ) {
+      return;
+    }
+    if (existing) existing.remove();
+
+    const bar = document.createElement("div");
+    bar.id = TABLE_ACTION_BAR_ID;
+    bar.setAttribute("data-sig", sig);
+    Object.assign(bar.style, {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      gap: "8px",
+      margin: "6px 0 10px 0",
+      fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+    });
+
+    const exportBtn = document.createElement("button");
+    exportBtn.type = "button";
+    exportBtn.textContent = `📥 Đưa lớp (${studentRowCount} HV) sang Dạy thay (CodeLuma)`;
+    exportBtn.title =
+      "Kéo nhanh danh sách học viên, điểm danh, nội dung bài học và toàn bộ nhận xét đã lưu sang mục Lớp dạy thay trên CodeLuma";
+    Object.assign(exportBtn.style, {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: "6px",
+      height: "34px",
+      padding: "0 14px",
+      borderRadius: "8px",
+      border: "1px solid #4f46e5",
+      background: "linear-gradient(90deg, #4f46e5 0%, #6366f1 100%)",
+      color: "#ffffff",
+      fontSize: "13px",
+      fontWeight: "600",
+      cursor: "pointer",
+      boxShadow: "0 2px 8px rgba(79, 70, 229, 0.25)",
+    });
+
+    exportBtn.addEventListener("click", async () => {
+      const origLabel = exportBtn.textContent;
+      exportBtn.disabled = true;
+      exportBtn.style.opacity = "0.75";
+      exportBtn.textContent = "⏳ Đang đọc danh sách & nhận xét...";
+      const roster = await extractCurrentLmsRoster();
+      chrome.runtime.sendMessage(
+        { type: "CODELUMA_EXPORT_ROSTER", payload: roster },
+        () => {
+          exportBtn.disabled = false;
+          exportBtn.style.opacity = "1";
+          exportBtn.textContent = "✓ Đã chuyển sang CodeLuma!";
+          setTimeout(() => {
+            exportBtn.textContent = origLabel;
+          }, 2200);
+        }
+      );
+    });
+
+    bar.appendChild(exportBtn);
+    studentTable.insertAdjacentElement("beforebegin", bar);
+  }
+
+  /** Thanh trạng thái nổi gọn góc dưới-trái — hiển thị tiến độ hàng đợi CodeLuma -> LMS. */
   function renderFloatingStatus() {
     const existing = document.getElementById(STATUS_PILL_ID);
-    if (!currentQueue || !currentQueue.students?.length) {
+    const hasQueue = Boolean(currentQueue && currentQueue.students?.length);
+
+    if (!hasQueue) {
       if (existing) existing.remove();
       return;
     }
@@ -1492,7 +1712,7 @@
       Boolean(activeSession) &&
       Number(currentQueue.sessionNumber) !== Number(activeSession);
 
-    const sig = `${currentQueue.classCode || ""}|${currentQueue.sessionNumber || ""}|${activeSession || ""}|${total}|${remaining}`;
+    const sig = `q|${currentQueue.classCode || ""}|${currentQueue.sessionNumber || ""}|${activeSession || ""}|${total}|${remaining}`;
     if (existing && existing.getAttribute("data-sig") === sig) {
       return;
     }
@@ -1508,7 +1728,7 @@
       display: "flex",
       alignItems: "center",
       gap: "8px",
-      padding: "7px 12px",
+      padding: "6px 12px",
       borderRadius: "999px",
       background: mismatch
         ? "#fffbeb"
@@ -1528,6 +1748,7 @@
     });
 
     pill.innerHTML = "";
+
     const textSpan = document.createElement("span");
     const classPart = currentQueue.classCode ? `${currentQueue.classCode} · ` : "";
     const sessionPart = currentQueue.sessionNumber
@@ -1573,6 +1794,7 @@
     isMutatingOwnDom = true;
     try {
       decorateStudentTableRows();
+      renderTableActionBar();
       renderFloatingStatus();
       const dialogs = document.querySelectorAll('div.MuiDialog-paper[role="dialog"]');
       dialogs.forEach((dialog) => attachModalToolbar(dialog));
@@ -1604,9 +1826,10 @@
     if (!node || node.nodeType !== Node.ELEMENT_NODE) return false;
     return Boolean(
       node.id === STATUS_PILL_ID ||
+        node.id === TABLE_ACTION_BAR_ID ||
         node.hasAttribute?.(ROW_BADGE_ATTR) ||
         node.hasAttribute?.(BAR_ATTR) ||
-        node.closest?.(`#${STATUS_PILL_ID}, [${BAR_ATTR}]`)
+        node.closest?.(`#${STATUS_PILL_ID}, #${TABLE_ACTION_BAR_ID}, [${BAR_ATTR}]`)
     );
   }
 
