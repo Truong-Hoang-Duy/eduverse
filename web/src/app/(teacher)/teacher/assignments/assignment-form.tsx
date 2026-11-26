@@ -267,7 +267,7 @@ export function AssignmentForm({
                 ref={fileRef}
                 name="spec_file"
                 type="file"
-                accept=".pdf,.docx,.png,.jpg,.jpeg,.txt,.md"
+                accept=".pdf,.docx,.png,.jpg,.jpeg,.txt,.md,.ipynb"
                 onChange={(e) => handleFileChange(e.target.files?.[0])}
               />
               <p className="text-xs text-muted-foreground">
@@ -308,7 +308,7 @@ export function AssignmentForm({
                 name="attachment_files"
                 type="file"
                 multiple
-                accept=".csv,.json,.sql,.py,.txt,.md,.pdf,.png,.jpg,.jpeg,.docx"
+                accept=".csv,.json,.sql,.py,.ipynb,.txt,.md,.pdf,.png,.jpg,.jpeg,.docx"
                 onChange={(e) => {
                   handleAddAttachments(e.target.files);
                   e.target.value = "";

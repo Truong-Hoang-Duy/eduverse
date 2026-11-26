@@ -246,6 +246,252 @@ def test_homework_pedagogy_and_exam_abstraction_rules_included() -> None:
     assert "thầy cô/bạn bè" not in prompt
     assert "trao đổi với thầy cô" not in prompt
     assert "hỏi thầy cô" not in prompt
+    assert "NATURAL VIETNAMESE WRITING" in prompt
+    assert "Bài làm cho thấy em..." in prompt
+    assert "PHẢI đa dạng cách mở câu và chuyển ý giữa các tiêu chí" in prompt
+    assert "từng bước biết..." in prompt
+    assert "LIỀN MẠCH Ý" in prompt
+    assert "không kéo sang chuyện sửa lỗi/debug lạc đề" in prompt
+
+
+def test_final_presentation_route_polishes_dnl_and_letter_phrasing(monkeypatch) -> None:
+    from app.routes import reviews as reviews_route
+
+    dnl_template = {
+        "score": 3,
+        "level": "Khá",
+        "comment": "Bài làm thể hiện em biết kết hợp nhiều bước phân tích dữ liệu.",
+    }
+    fake_ai_response = {
+        "comment": "Sản phẩm thể hiện em nắm chắc kiến thức cơ bản.",
+        "demo_score": {
+            "knowledge_score": 4.0,
+            "computational_thinking": 1.6,
+            "creative_thinking": 0.4,
+            "communication": 0.8,
+            "problem_solving": 0.8,
+            "computer_skills": 0.4,
+            "demo_total": 4.0,
+            "total": 8.0,
+        },
+        "dnl_evaluations": {
+            k: dict(dnl_template)
+            for k in (
+                "kien_thuc_tu_hoc",
+                "kien_thuc_tai_lop",
+                "ky_nang_giao_tiep",
+                "ky_nang_may_tinh",
+                "ky_nang_giai_quyet_van_de",
+                "tu_duy_sang_tao",
+                "tu_duy_may_tinh",
+                "thai_do_tai_lop",
+                "thai_do_ve_nha",
+            )
+        },
+        "mindx_letter": {
+            "learned_from_mindx": "Bài kiểm tra thể hiện em đã vận dụng tốt Python.",
+            "suggestions_from_mindx": "Em nên duy trì thói quen luyện tập.",
+            "future_direction": "Dự án thể hiện em sẵn sàng học lên CSA.",
+        },
+    }
+
+    monkeypatch.setattr(reviews_route, "generate_json", lambda *args, **kwargs: fake_ai_response)
+
+    req = FinalPresentationReviewRequest(
+        student_name="Nguyễn Văn A",
+        class_code="CSA01",
+        course_name="Computer Science Advance",
+    )
+    resp = reviews_route.generate_final_presentation_review(req)
+
+    assert resp.comment == "Sản phẩm cho thấy em nắm chắc kiến thức cơ bản."
+    assert (
+        resp.dnl_evaluations["kien_thuc_tu_hoc"].comment
+        == "Bài làm cho thấy em biết kết hợp nhiều bước phân tích dữ liệu."
+    )
+    assert (
+        resp.mindx_letter.learned_from_mindx
+        == "Bài kiểm tra cho thấy em đã vận dụng tốt Python."
+    )
+    assert (
+        resp.mindx_letter.future_direction
+        == "Dự án cho thấy em sẵn sàng học lên CSA."
+    )
+
+
+def test_grading_summary_and_bullet_structure_for_periodic_and_final_evaluations() -> None:
+    ml_grading = (
+        "THỰC HÀNH - Đã chọn đúng X gồm Size, Age và y là Price; xây dựng, huấn luyện và "
+        "dự đoán bằng mô hình LinearRegression đúng yêu cầu. - Đã chia dữ liệu train/test "
+        "theo tỷ lệ 80:20 và đánh giá bằng R²; kết quả R² = 0.9821 cho thấy mô hình dự đoán rất tốt. "
+        "- Nên sửa cách đọc file để tránh lỗi housing_data (3).csv; bỏ import thừa seaborn và mean_squared_error."
+    )
+    prompt_periodic = build_final_presentation_review_prompt(
+        student_name="Lê Minh D",
+        class_code="CSI04",
+        course_name="Computer Science Intensive",
+        academic_level="Giỏi",
+        project_name=None,
+        project_description=None,
+        project_features=[],
+        presentation_notes="Tập trung cao độ, hoàn thành bài sớm.",
+        grading_summary=ml_grading,
+        prior_reviews_text="THỐNG KÊ CHUYÊN CẦN: Đi học đầy đủ 8/8 buổi\n- Buổi 1: mạnh [Nắm bài nhanh]",
+        current_strengths=[],
+        current_improvements=[],
+        is_exam=True,
+        is_periodic_exam=True,
+        session_number=9,
+        session_title="Buổi 9: Checkpoint 2 - Hồi quy tuyến tính",
+        session_content="Xây dựng và đánh giá mô hình hồi quy tuyến tính dự đoán giá nhà",
+    )
+
+    assert "MÔ TẢ CHI TIẾT BÀI LÀM TỪ CÔNG CỤ CHẤM BÀI AI" in prompt_periodic
+    assert ml_grading in prompt_periodic
+    assert "HƯỚNG DẪN CHUYỂN HÓA BÀI LÀM" in prompt_periodic
+    assert "TRÌNH BÀY DẠNG GẠCH ĐẦU DÒNG 2 PHẦN" in prompt_periodic
+    assert "Quá trình học tập các buổi vừa qua:" in prompt_periodic
+    assert "Kết quả bài kiểm tra định kỳ:" in prompt_periodic
+    assert "LinearRegression" in prompt_periodic
+    assert "R² = 0.9821" in prompt_periodic
+    assert "housing_data (3).csv" in prompt_periodic
+    assert "TẤT CẢ CÁC BUỔI TRƯỚC ĐÓ" in prompt_periodic
+
+
+def test_final_presentation_route_forwards_all_prior_session_contents_and_grading_summary(
+    monkeypatch,
+) -> None:
+    from app.routes import reviews as reviews_route
+
+    captured_prompt: dict[str, str] = {}
+
+    def fake_generate_json(prompt: str, *args, **kwargs):
+        captured_prompt["text"] = prompt
+        dnl_item = {"score": 4, "level": "Khá", "comment": "Bài làm cho thấy em nắm chắc bài."}
+        return {
+            "comment": "Quá trình học tập các buổi vừa qua:\n- Em đi học đầy đủ.",
+            "demo_score": {
+                "knowledge_score": 4.0,
+                "computational_thinking": 1.6,
+                "creative_thinking": 0.4,
+                "communication": 0.8,
+                "problem_solving": 0.8,
+                "computer_skills": 0.4,
+                "demo_total": 4.0,
+                "total": 8.0,
+            },
+            "dnl_evaluations": {
+                k: dict(dnl_item)
+                for k in (
+                    "kien_thuc_tu_hoc",
+                    "kien_thuc_tai_lop",
+                    "ky_nang_giao_tiep",
+                    "ky_nang_may_tinh",
+                    "ky_nang_giai_quyet_van_de",
+                    "tu_duy_sang_tao",
+                    "tu_duy_may_tinh",
+                    "thai_do_tai_lop",
+                    "thai_do_ve_nha",
+                )
+            },
+            "mindx_letter": {
+                "learned_from_mindx": "Em học tốt.",
+                "suggestions_from_mindx": "Em nên rà soát lại bài.",
+                "future_direction": "Tiếp tục phát triển.",
+            },
+        }
+
+    monkeypatch.setattr(reviews_route, "generate_json", fake_generate_json)
+
+    req = FinalPresentationReviewRequest(
+        student_name="Lê Minh D",
+        class_code="CSI04",
+        course_name="Computer Science Intensive",
+        is_exam=True,
+        is_periodic_exam=True,
+        session_number=5,
+        grading_summary="THỰC HÀNH - Đã huấn luyện mô hình dự đoán và vẽ đủ hai biểu đồ phân tán.",
+        prior_reviews=[
+            SessionReviewItem(
+                session_number=1,
+                session_title="Buổi 1",
+                session_content="Làm quen hồi quy tuyến tính",
+                strengths=["Tiếp thu nhanh"],
+                improvements=["Cần ghi chú kỹ hơn"],
+                comment="Em nắm bài nhanh.",
+            ),
+            SessionReviewItem(
+                session_number=2,
+                session_title="Buổi 2",
+                session_content="Đánh giá mô hình và trực quan hóa dữ liệu",
+                strengths=["Thực hành chủ động"],
+                improvements=["Chú ý dọn gọn code"],
+                comment="Em hoàn thành tốt bài thực hành.",
+            ),
+        ],
+    )
+
+    reviews_route.generate_final_presentation_review(req)
+    sent = captured_prompt["text"]
+    assert "Đi học đầy đủ 2/2 buổi học trước" in sent
+    assert "[Nội dung: Làm quen hồi quy tuyến tính]" in sent
+    assert "[Nội dung: Đánh giá mô hình và trực quan hóa dữ liệu]" in sent
+    assert "MÔ TẢ CHI TIẾT BÀI LÀM TỪ CÔNG CỤ CHẤM BÀI AI" in sent
+    assert "Đã huấn luyện mô hình dự đoán và vẽ đủ hai biểu đồ phân tán." in sent
+
+
+def test_all_nine_dnl_criteria_adapt_scope_between_exam_and_presentation() -> None:
+    exam_prompt = build_final_presentation_review_prompt(
+        student_name="Lê Minh D",
+        class_code="CSI04",
+        course_name="Computer Science Intensive",
+        academic_level="Khá",
+        project_name=None,
+        project_description=None,
+        project_features=[],
+        presentation_notes="Tập trung làm bài.",
+        prior_reviews_text="THỐNG KÊ CHUYÊN CẦN: Đi học đầy đủ 4/4 buổi",
+        current_strengths=[],
+        current_improvements=[],
+        is_exam=True,
+        is_periodic_exam=True,
+        session_number=5,
+    )
+    presentation_prompt = build_final_presentation_review_prompt(
+        student_name="Lê Minh D",
+        class_code="CSI04",
+        course_name="Computer Science Intensive",
+        academic_level="Giỏi",
+        project_name="App dự đoán giá nhà",
+        project_description="Ứng dụng trực quan hóa và dự đoán",
+        project_features=["Biểu đồ", "Dự đoán"],
+        presentation_notes="Thuyết trình tự tin.",
+        prior_reviews_text="THỐNG KÊ CHUYÊN CẦN: Đi học đầy đủ 13/13 buổi",
+        current_strengths=[],
+        current_improvements=[],
+        is_exam=False,
+        is_periodic_exam=False,
+        session_number=14,
+    )
+
+    # Cả 2 đều có ranh giới rõ cho cả 9 khối ĐNL & Thư từ MindX
+    for p in (exam_prompt, presentation_prompt):
+        assert "BẮT BUỘC GIỮ ĐÚNG RANH GIỚI TỪNG KHỐI" in p
+        assert "suy luận theo trình tự" in p
+        assert "TOÀN BỘ 3 phần đều BẮT BUỘC tuân thủ NATURAL_VIETNAMESE_STYLE_RULE" in p
+
+    # Buổi kiểm tra (Buổi 5/9) KHÔNG bịa chuyện thuyết trình hay sản phẩm cuối khóa
+    assert "KHÔNG bịa chuyện thuyết trình" in exam_prompt
+    assert "hoàn thành tốt bài kiểm tra định kỳ" in exam_prompt
+    assert "hoàn thành tốt sản phẩm cuối khóa" not in exam_prompt
+
+    # Buổi thuyết trình (Buổi 14) bám sát thuyết trình & sản phẩm cuối khóa
+    assert "phong thái tự tin, rõ ràng khi thuyết trình" in presentation_prompt
+    assert "ý tưởng kịch bản mới mẻ" in presentation_prompt
+    assert "hoàn thành tốt sản phẩm cuối khóa và buổi thuyết trình" in presentation_prompt
+
+
+
 
 
 

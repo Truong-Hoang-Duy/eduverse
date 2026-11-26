@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { academicLevelLabel } from "@/lib/academic-levels";
+import { ACADEMIC_LEVELS, academicLevelLabel } from "@/lib/academic-levels";
 import {
   generateAiReview,
   generateFinalPresentationReview,
@@ -49,6 +49,8 @@ import {
   deleteReviewOption,
   updateReviewOption,
 } from "@/lib/actions/settings";
+import { buildLmsStudentPayload, pushToLmsBridge } from "@/lib/lms-bridge";
+import { withSubstituteTeachingContext } from "@/lib/substitute-classes";
 import {
   createDefaultFinalEvaluation,
   FINAL_EXAM_OBSERVATION_GROUPS,
@@ -56,6 +58,8 @@ import {
   isImprovementObservation,
   type ObservationLevel,
   PRESENTATION_OBSERVATION_GROUPS,
+  restoreInitialObservations,
+  splitObservationsByPolarity,
 } from "@/lib/presentation-evaluation";
 import { PRELOADED_MINDX_LETTERS } from "@/lib/preloaded-mindx-letters";
 import {
@@ -73,6 +77,7 @@ import type { ActionResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { ComboBar } from "./combo-bar";
+import { LmsInstallDialog } from "./lms-install-dialog";
 import { PresentationEvaluationCard } from "./presentation-evaluation-card";
 import { type ExistingReview, isReviewed } from "./review-status";
 
@@ -152,6 +157,10 @@ export function ReviewEditor({
   priorComments,
   copySources,
   combos,
+  saveAction,
+  extraHiddenFields,
+  onAcademicLevelChange,
+  isSubstituteTeaching,
 }: {
   index?: number;
   sessionId: string;
@@ -193,11 +202,29 @@ export function ReviewEditor({
   copySources?: CopySource[];
   /** Bộ combo lưu sẵn của GV — áp cả bộ điểm mạnh/cải thiện/SPCK 1 chạm. */
   combos?: ReviewCombo[];
+  /** Tùy chọn thay thế action lưu mặc định (dùng cho buổi lớp dạy thay). */
+  saveAction?: (prev: ActionResult, formData: FormData) => Promise<ActionResult>;
+  /** Các hidden field bổ sung gửi cùng form lưu (VD: substitute_class_id). */
+  extraHiddenFields?: Record<string, string>;
+  /** Khi truyền vào (lớp dạy thay), cho phép chọn nhanh học lực ngay trên thẻ học viên. */
+  onAcademicLevelChange?: (studentId: string, level: string | null) => Promise<void>;
+  /** Gắn ngữ cảnh "giáo viên nhận dạy thay buổi này" cho AI tránh bịa lịch sử buổi cũ. */
+  isSubstituteTeaching?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<ActionResult, FormData>(
-    saveReview,
+    saveAction ?? saveReview,
     {}
   );
+  const [levelPending, startLevelChange] = useTransition();
+  const [localAcademicLevel, setLocalAcademicLevel] = useState<string | null>(
+    academicLevel
+  );
+  useEffect(() => {
+    setLocalAcademicLevel(academicLevel);
+  }, [academicLevel]);
+  const effectiveAcademicLevel = onAcademicLevelChange
+    ? localAcademicLevel
+    : academicLevel;
   const [strengths, setStrengths] = useState<string[]>(existing?.strengths ?? []);
   const [improvements, setImprovements] = useState<string[]>(
     existing?.improvements ?? []
@@ -221,8 +248,15 @@ export function ReviewEditor({
   const [testProcessNotes, setTestProcessNotes] = useState<string[]>([]);
   // Cùng cơ chế với testProcessNotes — quan sát SPCK cũng KHÔNG lưu DB.
   const [projectProgressNotes, setProjectProgressNotes] = useState<string[]>([]);
-  const [selectedObservations, setSelectedObservations] = useState<string[]>([]);
-  const [customObservationNotes, setCustomObservationNotes] = useState("");
+  const observationsStorageKey = `eduverse_observations_${sessionId}_${studentId}`;
+  const gradingSummaryStorageKey = `eduverse_grading_summary_${sessionId}_${studentId}`;
+
+  const [selectedObservations, setSelectedObservations] = useState<string[]>(() =>
+    restoreInitialObservations(existing?.strengths, existing?.improvements, null)
+  );
+  // Mô tả bài làm / kết quả từ mục Chấm bài AI (dán vào khi chấm buổi 5, 9, 14) —
+  // lưu tạm vào localStorage để GV chuyển qua lại giữa các học viên không bị mất nháp.
+  const [gradingSummary, setGradingSummary] = useState("");
   const [rubricModalOpen, setRubricModalOpen] = useState(false);
   const [finalEvaluation, setFinalEvaluation] =
     useState<FinalPresentationEvaluation | null>(null);
@@ -234,6 +268,14 @@ export function ReviewEditor({
     isPeriodicTest && !isFinalSession && !isFinalPresentation
   );
   const hideDemoScore = isExam;
+
+  const {
+    strengths: observationStrengths,
+    improvements: observationImprovements,
+  } = useMemo(
+    () => splitObservationsByPolarity(selectedObservations),
+    [selectedObservations]
+  );
 
   const defaultExamLevel: ObservationLevel | "all" =
     academicLevelLabel(academicLevel) === "Giỏi"
@@ -248,9 +290,50 @@ export function ReviewEditor({
     ObservationLevel | "all"
   >(defaultExamLevel);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const activeDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeDropdown) return;
+
+    function handleOutsidePointer(e: MouseEvent | TouchEvent) {
+      const target = e.target as Node | null;
+      if (
+        activeDropdownRef.current &&
+        target &&
+        !activeDropdownRef.current.contains(target)
+      ) {
+        setActiveDropdown(null);
+      }
+    }
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setActiveDropdown(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsidePointer, true);
+    document.addEventListener("touchstart", handleOutsidePointer, true);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleOutsidePointer, true);
+      document.removeEventListener("touchstart", handleOutsidePointer, true);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeDropdown]);
+
+  function updateSelectedObservations(updater: (prev: string[]) => string[]) {
+    setSelectedObservations((prev) => {
+      const next = updater(prev);
+      try {
+        localStorage.setItem(observationsStorageKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }
 
   function toggleObservation(item: string) {
-    setSelectedObservations((prev) =>
+    updateSelectedObservations((prev) =>
       prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
     );
   }
@@ -268,10 +351,29 @@ export function ReviewEditor({
     : FINAL_EXAM_OBSERVATION_GROUPS;
 
   const initialComment = existing?.ai_generated_comment ?? "";
+  const hasDbObservations = Boolean(
+    (existing?.strengths?.length ?? 0) > 0 ||
+      (existing?.improvements?.length ?? 0) > 0
+  );
 
   useEffect(() => {
     if (hasFinalEvaluation) {
       try {
+        if (!hasDbObservations) {
+          const draftObs = localStorage.getItem(observationsStorageKey);
+          const restoredDraft = restoreInitialObservations(
+            undefined,
+            undefined,
+            draftObs
+          );
+          if (restoredDraft.length > 0) {
+            setSelectedObservations(restoredDraft);
+          }
+        }
+        const savedSummary = localStorage.getItem(gradingSummaryStorageKey);
+        if (savedSummary) {
+          setGradingSummary(savedSummary);
+        }
         const cached = localStorage.getItem(
           `eduverse_rubric_${sessionId}_${studentId}`
         );
@@ -305,7 +407,15 @@ export function ReviewEditor({
         }
       } catch {}
     }
-  }, [hasFinalEvaluation, sessionId, studentId, initialComment]);
+  }, [
+    hasFinalEvaluation,
+    hasDbObservations,
+    sessionId,
+    studentId,
+    initialComment,
+    observationsStorageKey,
+    gradingSummaryStorageKey,
+  ]);
 
   const formRef = useRef<HTMLFormElement>(null);
   const detailsRef = useRef<HTMLDetailsElement>(null);
@@ -313,6 +423,53 @@ export function ReviewEditor({
   const [aiPending, startAi] = useTransition();
   const [aiLetterPending, startAiLetter] = useTransition();
   const [copied, setCopied] = useState(false);
+  const [lmsSent, setLmsSent] = useState(false);
+  const [lmsInstallOpen, setLmsInstallOpen] = useState(false);
+
+  async function handlePushStudentToLms() {
+    const item = buildLmsStudentPayload({
+      studentName,
+      isAbsent,
+      comment,
+      gradingSummary: hasFinalEvaluation ? gradingSummary : null,
+      evaluation: hasFinalEvaluation ? finalEvaluation : null,
+      includeDemoScore: Boolean(isFinalPresentation),
+    });
+    if (!item) return;
+
+    const sessionFormat = isFinalPresentation
+      ? "final_presentation"
+      : isPeriodicTest
+        ? "periodic_test"
+        : isProjectPeriod
+          ? "project_period"
+          : "standard";
+
+    const res = await pushToLmsBridge(
+      {
+        classCode: classCode ?? "",
+        courseName: courseName ?? "",
+        sessionId,
+        sessionNumber: sessionNumber ?? null,
+        sessionTitle,
+        sessionFormat,
+        students: [item],
+      },
+      { replaceAll: false, focusLmsTab: true }
+    );
+
+    if (!res.installed) {
+      setLmsInstallOpen(true);
+      return;
+    }
+
+    if (res.ok) {
+      setLmsSent(true);
+      setTimeout(() => setLmsSent(false), 3000);
+    } else if (res.error) {
+      setAiError(res.error);
+    }
+  }
 
   useEffect(() => {
     if (state?.error && detailsRef.current) {
@@ -549,14 +706,13 @@ export function ReviewEditor({
           const combinedNotes = [
             ...selectedObservations,
             ...(studentNote.trim() ? [studentNote.trim()] : []),
-            ...(customObservationNotes.trim() ? [customObservationNotes.trim()] : []),
           ].join(". ");
 
           const res = await generateFinalPresentationReview({
             studentName,
             classCode: classCode ?? "",
             courseName: courseName ?? "",
-            academicLevel: academicLevelLabel(academicLevel) ?? undefined,
+            academicLevel: academicLevelLabel(effectiveAcademicLevel) ?? undefined,
             projectName: isFinalPresentation ? project?.name : undefined,
             projectDescription: isFinalPresentation
               ? (project?.description ?? undefined)
@@ -565,6 +721,7 @@ export function ReviewEditor({
               ? (project?.features ?? undefined)
               : undefined,
             presentationNotes: combinedNotes || undefined,
+            gradingSummary: gradingSummary.trim() || undefined,
             priorReviews: allPriorReviews ?? [],
             currentStrengths: [],
             currentImprovements: [],
@@ -573,7 +730,10 @@ export function ReviewEditor({
             sessionNumber,
             sessionTitle,
             sessionContent,
-            sessionContext: sessionContext || undefined,
+            sessionContext: withSubstituteTeachingContext(
+              sessionContext,
+              isSubstituteTeaching
+            ),
           });
           if (res.error) {
             setAiError(res.error);
@@ -602,7 +762,10 @@ export function ReviewEditor({
           projectName: project?.name,
           projectDescription: project?.description ?? undefined,
           projectFeatures: project?.features ?? undefined,
-          sessionContext: sessionContext || undefined,
+          sessionContext: withSubstituteTeachingContext(
+            sessionContext,
+            isSubstituteTeaching
+          ),
           studentNote: studentNote.trim() || undefined,
           isPeriodicTest,
           testProcessNotes: isPeriodicTest ? testProcessNotes : undefined,
@@ -610,7 +773,7 @@ export function ReviewEditor({
           projectProgressNotes: isProjectPeriod ? projectProgressNotes : undefined,
           previousComment: existing?.ai_generated_comment ?? undefined,
           priorComments,
-          academicLevel: academicLevelLabel(academicLevel) ?? undefined,
+          academicLevel: academicLevelLabel(effectiveAcademicLevel) ?? undefined,
         });
         if (res.error) {
           setAiError(res.error);
@@ -644,14 +807,13 @@ export function ReviewEditor({
         const combinedNotes = [
           ...selectedObservations,
           ...(studentNote.trim() ? [studentNote.trim()] : []),
-          ...(customObservationNotes.trim() ? [customObservationNotes.trim()] : []),
         ].join(". ");
 
         const res = await generateFinalPresentationReview({
           studentName,
           classCode: classCode ?? "",
           courseName: courseName ?? "",
-          academicLevel: academicLevelLabel(academicLevel) ?? undefined,
+          academicLevel: academicLevelLabel(effectiveAcademicLevel) ?? undefined,
           projectName: isFinalPresentation ? project?.name : undefined,
           projectDescription: isFinalPresentation
             ? (project?.description ?? undefined)
@@ -660,6 +822,7 @@ export function ReviewEditor({
             ? (project?.features ?? undefined)
             : undefined,
           presentationNotes: combinedNotes || undefined,
+          gradingSummary: gradingSummary.trim() || undefined,
           priorReviews: allPriorReviews ?? [],
           currentStrengths: [],
           currentImprovements: [],
@@ -668,7 +831,10 @@ export function ReviewEditor({
           sessionNumber,
           sessionTitle,
           sessionContent,
-          sessionContext: sessionContext || undefined,
+          sessionContext: withSubstituteTeachingContext(
+            sessionContext,
+            isSubstituteTeaching
+          ),
         });
 
         if (res.error) {
@@ -741,7 +907,7 @@ export function ReviewEditor({
   }
 
   const reviewed = isReviewed(existing);
-  const levelLabel = academicLevelLabel(academicLevel);
+  const levelLabel = academicLevelLabel(effectiveAcademicLevel);
 
   const formattedIndex =
     typeof index === "number"
@@ -878,32 +1044,69 @@ export function ReviewEditor({
         <input type="hidden" name="session_id" value={sessionId} />
         <input type="hidden" name="student_id" value={studentId} />
         <input type="hidden" name="is_absent" value={String(isAbsent)} />
+        {extraHiddenFields &&
+          Object.entries(extraHiddenFields).map(([k, v]) => (
+            <input key={k} type="hidden" name={k} value={v} />
+          ))}
 
-        {/* Đánh vắng — dạng toggle card thanh lịch */}
-        <label
-          className={cn(
-            "flex cursor-pointer items-center justify-between rounded-lg p-2.5 sm:px-3 text-xs sm:text-sm font-medium transition-all shadow-2xs",
-            isAbsent
-              ? "bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/60"
-              : "bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground border border-slate-300 dark:border-slate-700"
+        {/* Đánh vắng + chọn nhanh xếp loại học lực (nếu là lớp dạy thay) */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <label
+            className={cn(
+              "flex flex-1 min-w-[230px] cursor-pointer items-center justify-between rounded-lg p-2.5 sm:px-3 text-xs sm:text-sm font-medium transition-all shadow-2xs",
+              isAbsent
+                ? "bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-500/60"
+                : "bg-background/80 hover:bg-background text-muted-foreground hover:text-foreground border border-slate-300 dark:border-slate-700"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isAbsent}
+                onChange={(e) => toggleAbsent(e.target.checked)}
+                disabled={pending}
+                className="size-4 rounded accent-primary cursor-pointer"
+              />
+              <span>🚫 Vắng mặt buổi này (không cần nhận xét)</span>
+            </div>
+            {isAbsent && (
+              <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded">
+                ✓ Đã tự động lưu
+              </span>
+            )}
+          </label>
+
+          {onAcademicLevelChange && !isAbsent && (
+            <div className="flex items-center gap-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-background/80 px-2.5 py-1.5">
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                🏷️ Học lực:
+              </span>
+              <Select
+                value={effectiveAcademicLevel ?? "__none__"}
+                disabled={levelPending}
+                onValueChange={(val) => {
+                  const next = val === "__none__" ? null : val;
+                  setLocalAcademicLevel(next);
+                  startLevelChange(async () => {
+                    await onAcademicLevelChange(studentId, next);
+                  });
+                }}
+              >
+                <SelectTrigger className="h-7 w-36 text-xs">
+                  <SelectValue placeholder="Chưa chọn" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Chưa chọn</SelectItem>
+                  {ACADEMIC_LEVELS.map((lv) => (
+                    <SelectItem key={lv.value} value={lv.value}>
+                      {lv.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           )}
-        >
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isAbsent}
-              onChange={(e) => toggleAbsent(e.target.checked)}
-              disabled={pending}
-              className="size-4 rounded accent-primary cursor-pointer"
-            />
-            <span>🚫 Vắng mặt buổi này (không cần nhận xét)</span>
-          </div>
-          {isAbsent && (
-            <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded">
-              ✓ Đã tự động lưu
-            </span>
-          )}
-        </label>
+        </div>
 
         {isAbsent && (
           <p className="rounded-lg border border-dashed border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-300">
@@ -925,6 +1128,17 @@ export function ReviewEditor({
               </>
             )}
 
+            {hasFinalEvaluation && (
+              <>
+                {observationStrengths.map((s) => (
+                  <input key={s} type="hidden" name="strengths" value={s} />
+                ))}
+                {observationImprovements.map((i) => (
+                  <input key={i} type="hidden" name="improvements" value={i} />
+                ))}
+              </>
+            )}
+
             {/* --- BUỔI 14 (TỔNG KẾT): THUYẾT TRÌNH HOẶC BÀI KIỂM TRA CUỐI KHÓA --- */}
             {hasFinalEvaluation && (
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3.5">
@@ -938,34 +1152,43 @@ export function ReviewEditor({
                         ? "Bài kiểm tra định kỳ & Đánh giá năng lực"
                         : "Bài kiểm tra cuối khóa & Đánh giá năng lực"}
                   </span>
-                  {isFinalPresentation ? (
-                    project ? (
-                      <Badge variant="outline" className="text-xs bg-background">
-                        💻 Đề tài: {project.name}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge
+                      variant="outline"
+                      className="text-xs bg-background text-muted-foreground border-border/70"
+                      title="AI tự động tổng hợp nhận xét & chuyên cần của toàn bộ các buổi trước"
+                    >
+                      📚 Lịch sử {allPriorReviews?.length ?? 0} buổi trước
+                    </Badge>
+                    {isFinalPresentation ? (
+                      project ? (
+                        <Badge variant="outline" className="text-xs bg-background">
+                          💻 Đề tài: {project.name}
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="text-xs text-muted-foreground bg-background"
+                        >
+                          Chưa nộp đề tài trên hệ thống
+                        </Badge>
+                      )
+                    ) : isPeriodicExam ? (
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-background text-primary border-primary/30"
+                      >
+                        Kiểm tra định kỳ
                       </Badge>
                     ) : (
                       <Badge
                         variant="outline"
-                        className="text-xs text-muted-foreground bg-background"
+                        className="text-xs bg-background text-primary border-primary/30"
                       >
-                        Chưa nộp đề tài trên hệ thống
+                        Tổng kết toàn khóa
                       </Badge>
-                    )
-                  ) : isPeriodicExam ? (
-                    <Badge
-                      variant="outline"
-                      className="text-xs bg-background text-primary border-primary/30"
-                    >
-                      Kiểm tra định kỳ
-                    </Badge>
-                  ) : (
-                    <Badge
-                      variant="outline"
-                      className="text-xs bg-background text-primary border-primary/30"
-                    >
-                      Tổng kết toàn khóa
-                    </Badge>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {isFinalPresentation && project && (
@@ -1010,7 +1233,7 @@ export function ReviewEditor({
                         </span>
                         <button
                           type="button"
-                          onClick={() => setSelectedObservations([])}
+                          onClick={() => updateSelectedObservations(() => [])}
                           className="text-[11px] text-muted-foreground hover:text-destructive cursor-pointer transition-colors"
                         >
                           ✕ Bỏ chọn tất cả
@@ -1093,7 +1316,11 @@ export function ReviewEditor({
                       const isOpen = activeDropdown === grp.group;
 
                       return (
-                        <div key={grp.group} className="relative">
+                        <div
+                          key={grp.group}
+                          ref={isOpen ? activeDropdownRef : undefined}
+                          className={cn("relative", isOpen && "z-50")}
+                        >
                           {/* Thanh Header Dropdown Trigger - Chiều cao CỐ ĐỊNH h-11, KHÔNG hiển thị ra ngoài làm giật giao diện */}
                           <button
                             type="button"
@@ -1139,14 +1366,6 @@ export function ReviewEditor({
 
                           {/* DROPDOWN NỔI LÊN BỀ MẶT (FLOATING OVERLAY) - Không chiếm vị trí, không đẩy các phần tử khác */}
                           {isOpen && (
-                            <>
-                              {/* Lớp phủ vô hình bắt click bên ngoài để đóng dropdown */}
-                              <div
-                                className="fixed inset-0 z-40"
-                                onClick={() => setActiveDropdown(null)}
-                              />
-
-                              {/* Menu nổi có bóng đổ & viền sắc nét */}
                               <div
                                 className={cn(
                                   "absolute top-full mt-1.5 z-50 rounded-xl border border-border bg-popover/95 backdrop-blur-md text-popover-foreground shadow-2xl ring-1 ring-black/10 dark:ring-white/10 p-3 space-y-2.5 animate-in fade-in-0 zoom-in-95 duration-150",
@@ -1179,7 +1398,7 @@ export function ReviewEditor({
                                       <button
                                         type="button"
                                         onClick={() => {
-                                          setSelectedObservations((prev) =>
+                                          updateSelectedObservations((prev) =>
                                             prev.filter((it) => !grp.items.includes(it))
                                           );
                                         }}
@@ -1197,6 +1416,48 @@ export function ReviewEditor({
                                     </button>
                                   </div>
                                 </div>
+
+                                {/* Chỉ hiện mục đã chọn bị ẩn ở mức đánh giá khác (tránh trùng lặp với danh sách bên dưới) */}
+                                {(() => {
+                                  if (!grp.sections || selectedExamLevel === "all") return null;
+                                  const activeSec = grp.sections.find(
+                                    (s) => s.level === selectedExamLevel
+                                  );
+                                  const visibleSet = new Set(activeSec?.items ?? []);
+                                  const hiddenSelectedItems = groupSelectedItems.filter(
+                                    (it) => !visibleSet.has(it)
+                                  );
+                                  if (hiddenSelectedItems.length === 0) return null;
+                                  return (
+                                    <div className="rounded-lg border border-primary/25 bg-primary/5 p-2 space-y-1.5">
+                                      <span className="text-[10px] font-semibold text-primary flex items-center gap-1">
+                                        <span>✓</span> Đã chọn ở mức khác ({hiddenSelectedItems.length}) — bấm để bỏ chọn:
+                                      </span>
+                                      <div className="flex flex-wrap gap-1 max-h-[80px] overflow-y-auto pr-0.5">
+                                        {hiddenSelectedItems.map((item) => {
+                                          const isImp = isImprovementObservation(item);
+                                          return (
+                                            <button
+                                              key={`hidden-selected-${item}`}
+                                              type="button"
+                                              onClick={() => toggleObservation(item)}
+                                              className={cn(
+                                                "text-[11px] px-2 py-0.5 rounded-full border transition-all text-left flex items-center gap-1 cursor-pointer select-none leading-tight font-medium",
+                                                isImp
+                                                  ? "border-amber-500/60 bg-amber-500/15 text-amber-800 dark:text-amber-200 hover:bg-amber-500/25"
+                                                  : "border-primary/60 bg-primary/10 text-primary hover:bg-primary/20"
+                                              )}
+                                              title="Bấm để bỏ chọn mục này"
+                                            >
+                                              <span>{item}</span>
+                                              <span className="text-[10px] opacity-75 ml-0.5">✕</span>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
 
                                 {/* Nội dung danh sách tiêu chí quan sát cuộn mượt */}
                                 <div className="space-y-2">
@@ -1457,7 +1718,6 @@ export function ReviewEditor({
                                   })()}
                                 </div>
                               </div>
-                            </>
                           )}
                         </div>
                       );
@@ -1465,25 +1725,63 @@ export function ReviewEditor({
                   </div>
                 </div>
 
-                  {/* Ghi chú thêm */}
-                  <div className="pt-1 space-y-1">
-                    <Input
-                      id={`pres-notes-${studentId}`}
-                      value={customObservationNotes}
-                      onChange={(e) => setCustomObservationNotes(e.target.value)}
+                  {/* Mô tả bài làm / Kết quả từ mục Chấm bài AI */}
+                  <div className="pt-1 space-y-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Label
+                        htmlFor={`grading-summary-${studentId}`}
+                        className="text-xs font-semibold text-foreground flex items-center gap-1.5"
+                      >
+                        <span>📋</span>
+                        <span>
+                          {isFinalPresentation
+                            ? "Mô tả bài làm / Kết quả từ mục Chấm bài AI hoặc ghi chú sản phẩm (tùy chọn)"
+                            : "Mô tả bài làm / Kết quả từ mục Chấm bài AI (tùy chọn)"}
+                        </span>
+                      </Label>
+                      {gradingSummary.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGradingSummary("");
+                            try {
+                              localStorage.removeItem(
+                                `eduverse_grading_summary_${sessionId}_${studentId}`
+                              );
+                            } catch {}
+                          }}
+                          className="text-[11px] text-muted-foreground hover:text-destructive cursor-pointer transition-colors"
+                        >
+                          ✕ Xóa nội dung dán
+                        </button>
+                      )}
+                    </div>
+                    <Textarea
+                      id={`grading-summary-${studentId}`}
+                      rows={4}
+                      value={gradingSummary}
+                      onChange={(e) => {
+                        setGradingSummary(e.target.value);
+                        try {
+                          localStorage.setItem(
+                            `eduverse_grading_summary_${sessionId}_${studentId}`,
+                            e.target.value
+                          );
+                        } catch {}
+                      }}
                       placeholder={
                         isFinalPresentation
-                          ? "Ghi chú thêm về buổi thuyết trình / sản phẩm của em (tùy chọn)..."
-                          : "Ghi chú thêm về bài làm hoặc tác phong kiểm tra của em (tùy chọn)..."
+                          ? "Dán nhận xét chi tiết sản phẩm/code từ mục Chấm bài AI (nếu có) — AI sẽ tự chuyển hóa thuật ngữ kỹ thuật thành gạch đầu dòng dễ hiểu cho phụ huynh..."
+                          : "Dán kết quả từ mục Chấm bài AI vào đây (VD: THỰC HÀNH - Đã xây dựng mô hình..., chia dữ liệu kiểm thử..., vẽ biểu đồ..., còn lỗi nhỏ...) — AI sẽ tự chuyển hóa thuật ngữ kỹ thuật thành nhận xét gạch đầu dòng dễ hiểu."
                       }
-                      className="h-8 text-xs bg-background"
+                      className="text-xs leading-relaxed bg-background resize-y min-h-[84px]"
                     />
-                    <p className="text-[11px] text-muted-foreground/80 italic flex items-center gap-1">
+                    <p className="text-[11px] text-muted-foreground/85 italic flex items-start gap-1">
                       <span>💡</span>
                       <span>
-                        {isPeriodicExam
-                          ? "Điểm mạnh & điểm cần cải thiện được AI phân tích từ quá trình học và bài kiểm tra định kỳ để đưa vào nhận xét."
-                          : "Điểm mạnh & cần cải thiện được AI tổng hợp từ lịch sử 13 buổi trước vào nhận xét toàn khóa."}
+                        {(allPriorReviews?.length ?? 0) > 0
+                          ? `AI sẽ tự động tổng hợp tình hình học tập của tất cả ${allPriorReviews?.length} buổi trước kết hợp mô tả bài làm trên để viết nhận xét gạch đầu dòng giàu ý, tự nhiên và không dùng thuật ngữ code quá chi tiết.`
+                          : "Dán kết quả từ mục Chấm bài AI vào ô trên — AI sẽ kết hợp với lịch sử các buổi trước để viết nhận xét gạch đầu dòng giàu ý, tự nhiên và dễ hiểu với phụ huynh."}
                       </span>
                     </p>
                   </div>
@@ -1828,7 +2126,23 @@ export function ReviewEditor({
                 >
                   <span>💬</span> Lời nhận xét
                 </Label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant={lmsSent ? "default" : "outline"}
+                    size="sm"
+                    onClick={handlePushStudentToLms}
+                    disabled={!comment.trim() && !finalEvaluation}
+                    className={cn(
+                      "h-8 px-2.5 text-xs font-semibold cursor-pointer transition-all shadow-2xs",
+                      lmsSent
+                        ? "bg-emerald-600 hover:bg-emerald-600 text-white border-transparent"
+                        : "border-indigo-500/40 bg-indigo-500/10 text-indigo-700 hover:bg-indigo-500/20 dark:text-indigo-300"
+                    )}
+                    title="Gửi nhận xét của em này sang giao diện MindX LMS (bạn tự soát và bấm Save)"
+                  >
+                    {lmsSent ? "✓ Đã gửi LMS" : "🚀 Gửi LMS"}
+                  </Button>
                   <Button
                     type="button"
                     variant={copied ? "default" : "outline"}
@@ -1869,7 +2183,7 @@ export function ReviewEditor({
                 <Textarea
                   id={`comment-${studentId}`}
                   name="ai_comment"
-                  rows={4}
+                  rows={hasFinalEvaluation ? 7 : 4}
                   value={comment}
                   onChange={(e) => {
                     setComment(e.target.value);
@@ -2019,14 +2333,30 @@ export function ReviewEditor({
                             <span>💾</span>
                             <span>Dữ liệu được tự động lưu tạm trên trình duyệt của bạn.</span>
                           </span>
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => setRubricModalOpen(false)}
-                            className="text-xs cursor-pointer shrink-0"
-                          >
-                            Đóng
-                          </Button>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Button
+                              type="button"
+                              variant={lmsSent ? "default" : "outline"}
+                              size="sm"
+                              onClick={handlePushStudentToLms}
+                              className={cn(
+                                "text-xs font-semibold cursor-pointer",
+                                lmsSent
+                                  ? "bg-emerald-600 hover:bg-emerald-600 text-white border-transparent"
+                                  : "border-indigo-500/40 bg-indigo-500/10 text-indigo-700 hover:bg-indigo-500/20 dark:text-indigo-300"
+                              )}
+                            >
+                              {lmsSent ? "✓ Đã gửi sang LMS" : "🚀 Gửi em này sang LMS"}
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => setRubricModalOpen(false)}
+                              className="text-xs cursor-pointer shrink-0"
+                            >
+                              Đóng
+                            </Button>
+                          </div>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
@@ -2061,6 +2391,10 @@ export function ReviewEditor({
           <FormMessage result={state} />
         </div>
       </form>
+      <LmsInstallDialog
+        open={lmsInstallOpen}
+        onOpenChange={setLmsInstallOpen}
+      />
     </details>
   );
 }

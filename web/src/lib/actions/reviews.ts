@@ -580,6 +580,7 @@ export async function generateAiReview(
 export interface PriorReviewHistoryItem {
   session_number: number;
   session_title: string;
+  session_content?: string | null;
   strengths: string[];
   improvements: string[];
   comment?: string | null;
@@ -595,6 +596,7 @@ export interface GenerateFinalPresentationReviewInput {
   projectDescription?: string;
   projectFeatures?: string[];
   presentationNotes?: string;
+  gradingSummary?: string;
   priorReviews?: PriorReviewHistoryItem[];
   currentStrengths?: string[];
   currentImprovements?: string[];
@@ -637,6 +639,7 @@ export async function generateFinalPresentationReview(
         project_description: input.projectDescription || null,
         project_features: input.projectFeatures ?? [],
         presentation_notes: input.presentationNotes || null,
+        grading_summary: input.gradingSummary || null,
         prior_reviews: input.priorReviews ?? [],
         current_strengths: input.currentStrengths ?? [],
         current_improvements: input.currentImprovements ?? [],

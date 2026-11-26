@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "CodeLuma → MindX LMS Bridge",
+  "version": "1.2.0",
+  "description": "Chuyển nhận xét 2 chiều giữa CodeLuma và MindX LMS (điền tự động cả 14 buổi, 9 ĐNL, điểm Checkpoint, Khảo sát PH, và kéo nhanh danh sách lớp dạy thay từ LMS sang CodeLuma — giáo viên luôn tự soát và bấm Save).",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": [
+    "https://lms.mindx.edu.vn/*",
+    "https://codeluma.vercel.app/*",
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "CodeLuma → MindX LMS",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://codeluma.vercel.app/*",
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*"
+      ],
+      "js": ["content-codeluma.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://lms.mindx.edu.vn/*"],
+      "js": ["lms-page-reader.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://lms.mindx.edu.vn/*"],
+      "js": ["content-lms.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

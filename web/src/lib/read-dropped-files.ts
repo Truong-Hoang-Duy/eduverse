@@ -5,6 +5,7 @@
  * Luật lọc rác và ngân sách KHÔNG nằm ở đây mà ở `submission-files.ts` để đường
  * .zip (giải nén phía server) dùng chung cùng một luật.
  */
+import { ipynbToText } from "@/lib/ipynb-text";
 import {
   emptyTally,
   skipReasonFor,
@@ -152,7 +153,11 @@ export async function readPickedAsText(
 
   for (const { file, path } of picked) {
     try {
-      items.push({ path, content: await file.text(), size: file.size });
+      const raw = await file.text();
+      const content = path.toLowerCase().endsWith(".ipynb")
+        ? ipynbToText(raw)
+        : raw;
+      items.push({ path, content, size: file.size });
     } catch {
       skipped.junk += 1;
     }

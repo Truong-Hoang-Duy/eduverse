@@ -24,6 +24,7 @@ describe("skipReasonFor", () => {
     expect(skipReasonFor("js/app.js")).toBeNull();
     expect(skipReasonFor("src/main.py")).toBeNull();
     expect(skipReasonFor("bai-lam/style.css")).toBeNull();
+    expect(skipReasonFor("notebooks/bai1.ipynb")).toBeNull();
   });
 
   it("should skip generated directories anywhere in the path", () => {
@@ -32,6 +33,7 @@ describe("skipReasonFor", () => {
     expect(skipReasonFor("bai/.git/HEAD")).toBe("folder");
     expect(skipReasonFor("bai/dist/bundle.js")).toBe("folder");
     expect(skipReasonFor("bai/__pycache__/m.pyc")).toBe("folder");
+    expect(skipReasonFor("bai/.ipynb_checkpoints/bai1-checkpoint.ipynb")).toBe("folder");
   });
 
   it("should skip lock files and generated bundles", () => {

@@ -38,8 +38,8 @@ export interface Budget {
 /** Sản phẩm cuối khóa: toàn file chữ, nên siết chặt. */
 export const PROJECT_BUDGET: Budget = {
   maxFiles: 30,
-  /** Code người viết hiếm khi quá 200KB; to hơn gần như luôn là file sinh tự động. */
-  maxFileBytes: 200 * 1024,
+  /** Code người viết hoặc notebook trích xuất hiếm khi quá 500KB; to hơn gần như luôn là file sinh tự động. */
+  maxFileBytes: 500 * 1024,
   /**
    * Tổng 2MB — dưới xa trần `bodySizeLimit: "10mb"` của Server Action
    * (`web/next.config.ts`), đã chừa cho base64 (+33%) và các field khác.
@@ -67,6 +67,7 @@ const SKIP_DIRS = new Set([
   "__pycache__", ".venv", "venv", "env",
   "vendor", "target", "bin", "obj",
   ".idea", ".vscode", ".gradle",
+  ".ipynb_checkpoints",
 ]);
 
 /** File rác / sinh tự động — không phải thứ học viên viết ra. */
