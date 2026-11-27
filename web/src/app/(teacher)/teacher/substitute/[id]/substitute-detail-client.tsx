@@ -64,6 +64,7 @@ import {
 } from "@/lib/session-format";
 import {
   countHandledInSubstituteSession,
+  formatSubstituteSessionHeading,
   normalizeStudentNameKey,
   parseBulkStudentNames,
   type SubstituteClass,
@@ -841,7 +842,7 @@ export function SubstituteDetailClient({
         <>
           {/* Khối 3: Thông tin buổi học (có chép nhanh từ lớp cố định cùng khóa) */}
           <CollapsibleCard
-            title={`📘 Nội dung Buổi ${activeSession.sessionNumber}: ${sessTitle || `Buổi ${activeSession.sessionNumber}`}`}
+            title={`📘 ${formatSubstituteSessionHeading(activeSession.sessionNumber, sessTitle)}`}
             description="Điều chỉnh tiêu đề, nội dung bài học, bối cảnh & hình thức buổi (AI sẽ dùng thông tin này để viết nhận xét)."
             defaultOpen={!activeSession.content}
           >

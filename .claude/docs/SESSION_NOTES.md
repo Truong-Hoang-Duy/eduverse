@@ -16,7 +16,7 @@
    - Nút **`🔄 Dạy thay`** (kèm badge số lớp) trên thanh đầu `/teacher`, trang danh sách `/teacher/substitute` (có nút `🗑️ Xóa` kèm `ConfirmDialog` trên từng thẻ) và trang chi tiết `/teacher/substitute/[id]` (có `loading.tsx` cho prefetch).
    - Nâng cấp Chrome Extension v1.2.0 (`manifest.json`, `background.js`, `content-codeluma.js`, `lms-page-reader.js`, `content-lms.js`) hỗ trợ **2 chiều**: thêm nút **`📥 Đưa lớp sang Dạy thay`** trên trang MindX LMS đọc trực tiếp React props `detailData`/`studentAttendances`/`courseProcess` (100% chỉ đọc, không click/gọi API) để kéo chuẩn mã lớp, tên khóa học, danh sách học viên (chuẩn hóa NFC), trạng thái điểm danh (`Absent` tự đánh vắng), nội dung bài học `summary`, nhận xét Sản phẩm và **toàn bộ nhận xét đã lưu (kèm 9 ĐNL nếu có) của TẤT CẢ các buổi đã chấm trên LMS** sang `/teacher/substitute` (cả khi tạo mới lẫn khi bấm `📥 Đồng bộ từ MindX LMS` trong lớp dạy thay có sẵn); chiều ngược lại dùng nguyên nút `🚀 Gửi cả lớp sang LMS`.
 4. **Kiểm thử chất lượng:**
-   - `web/`: 510/510 tests vitest PASS 100% (bổ sung `substitute-classes.test.ts`), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
+   - `web/`: 511/511 tests vitest PASS 100% (bổ sung `substitute-classes.test.ts` gồm cả test chống lặp tiêu đề `Nội dung Buổi N: Buổi N` và tự thay tiêu đề mặc định khi đồng bộ từ LMS), `pnpm typecheck` 0 lỗi, `pnpm lint` 0 lỗi.
    - `extensions/codeluma-lms-bridge/`: kiểm tra cú pháp toàn bộ 5 file JS & `manifest.json` OK.
 
 Cập nhật bởi: Gemini
