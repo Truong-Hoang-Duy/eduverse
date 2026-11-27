@@ -223,6 +223,38 @@ export function countHandledInSubstituteSession(
   return count;
 }
 
+/** Kiểm tra tiêu đề buổi có chỉ là nhãn mặc định "Buổi N" hay trống không. */
+export function isGenericSessionTitle(
+  sessionNumber: number,
+  title?: string | null
+): boolean {
+  const trimmed = (title ?? "").trim();
+  if (!trimmed) return true;
+  const re = new RegExp(`^buổi\\s*${sessionNumber}$`, "i");
+  return re.test(trimmed);
+}
+
+/**
+ * Định dạng tiêu đề khối "Nội dung Buổi N" tránh lặp chữ "Buổi N: Buổi N"
+ * (VD: title="Buổi 2" -> "Nội dung Buổi 2"; title="Buổi 2: Thu thập dữ liệu" -> "Nội dung Buổi 2: Thu thập dữ liệu").
+ */
+export function formatSubstituteSessionHeading(
+  sessionNumber: number,
+  title?: string | null
+): string {
+  const trimmed = (title ?? "").trim();
+  if (!trimmed) return `Nội dung Buổi ${sessionNumber}`;
+
+  const prefixRe = new RegExp(
+    `^buổi\\s*${sessionNumber}\\s*(?:[:\\-–—]\\s*)?`,
+    "i"
+  );
+  const subtitle = trimmed.replace(prefixRe, "").trim();
+  return subtitle
+    ? `Nội dung Buổi ${sessionNumber}: ${subtitle}`
+    : `Nội dung Buổi ${sessionNumber}`;
+}
+
 /** Gắn ngữ cảnh dạy thay vào `sessionContext` khi gọi AI (tránh trùng lặp nếu đã có). */
 export function withSubstituteTeachingContext(
   sessionContext: string | null | undefined,

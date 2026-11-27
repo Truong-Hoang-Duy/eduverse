@@ -4,6 +4,8 @@ import {
   countHandledInSubstituteSession,
   decodeSubstituteClassFallback,
   encodeSubstituteClassFallback,
+  formatSubstituteSessionHeading,
+  isGenericSessionTitle,
   mergeSubstituteStudents,
   normalizeSubstituteClassCode,
   parseBulkStudentNames,
@@ -165,5 +167,21 @@ describe("substitute-classes domain helpers", () => {
     expect(withNote).toContain("Kiểm tra giữa khóa");
     expect(withNote).toContain(SUBSTITUTE_TEACHING_AI_NOTE);
     expect(withSubstituteTeachingContext(withNote, true)).toBe(withNote);
+  });
+
+  it("formats substitute session heading without duplicating 'Buổi N'", () => {
+    expect(formatSubstituteSessionHeading(2, "")).toBe("Nội dung Buổi 2");
+    expect(formatSubstituteSessionHeading(2, "Buổi 2")).toBe("Nội dung Buổi 2");
+    expect(formatSubstituteSessionHeading(2, "  buổi 2  ")).toBe("Nội dung Buổi 2");
+    expect(formatSubstituteSessionHeading(2, "Buổi 2: Thu thập dữ liệu")).toBe(
+      "Nội dung Buổi 2: Thu thập dữ liệu"
+    );
+    expect(formatSubstituteSessionHeading(2, "THU THẬP DỮ LIỆU")).toBe(
+      "Nội dung Buổi 2: THU THẬP DỮ LIỆU"
+    );
+
+    expect(isGenericSessionTitle(2, "")).toBe(true);
+    expect(isGenericSessionTitle(2, "Buổi 2")).toBe(true);
+    expect(isGenericSessionTitle(2, "THU THẬP DỮ LIỆU")).toBe(false);
   });
 });
