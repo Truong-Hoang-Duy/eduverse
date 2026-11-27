@@ -11,6 +11,7 @@ import {
   createLocalUuid,
   decodeSubstituteClassFallback,
   encodeSubstituteClassFallback,
+  isGenericSessionTitle,
   mergeSubstituteStudents,
   normalizeStudentNameKey,
   normalizeSubstituteClassCode,
@@ -882,8 +883,9 @@ export async function syncSubstituteRosterFromLms(input: {
           importedCommentsCount += addedComments;
           const nextContent =
             existingSess.content?.trim() || (imp.content ?? "").trim() || null;
-          const nextTitle =
-            existingSess.title?.trim() || (imp.title ?? "").trim() || `Buổi ${num}`;
+          const nextTitle = !isGenericSessionTitle(num, existingSess.title)
+            ? existingSess.title!.trim()
+            : (imp.title ?? "").trim() || `Buổi ${num}`;
           await supabase
             .from("substitute_sessions")
             .update({
@@ -955,7 +957,9 @@ export async function syncSubstituteRosterFromLms(input: {
       importedCommentsCount += addedComments;
       nextSessions[idx] = {
         ...existingSess,
-        title: existingSess.title?.trim() || (imp.title ?? "").trim() || `Buổi ${num}`,
+        title: !isGenericSessionTitle(num, existingSess.title)
+          ? existingSess.title!.trim()
+          : (imp.title ?? "").trim() || `Buổi ${num}`,
         content: existingSess.content?.trim() || (imp.content ?? "").trim() || null,
         reviews: next,
         updatedAt: nowIso,
